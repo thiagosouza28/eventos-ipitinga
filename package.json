@@ -1,0 +1,27 @@
+{
+  "name": "catre-ipitinga",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de inscrições para eventos CATRE Ipitinga com frontend Vue 3 e backend Express/Prisma.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm-run-all --parallel dev:*",
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "build": "npm-run-all build:*",
+    "build:backend": "npm --workspace backend run build",
+    "build:frontend": "npm --workspace frontend run build",
+    "lint": "npm-run-all lint:*",
+    "lint:backend": "npm --workspace backend run lint",
+    "lint:frontend": "npm --workspace frontend run lint",
+    "test": "npm-run-all test:*",
+    "test:backend": "npm --workspace backend run test",
+    "test:frontend": "npm --workspace frontend run test"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  }
+}

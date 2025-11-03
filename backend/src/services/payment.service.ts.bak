@@ -1,0 +1,111 @@
+import {
+  MercadoPagoConfig,
+  Preference,
+  Payment,
+  Refund
+} from "mercadopago";
+
+import { env } from "../config/env";
+import { prisma } from "../lib/prisma";
+import { ConflictError, NotFoundError } from "../utils/errors";
+import { logger } from "../utils/logger";
+
+type PreferenceItem = {
+  title: string;
+  quantity: number;
+  unit_price: number;
+};
+
+class PaymentService {
+  private client = new MercadoPagoConfig({
+    accessToken: env.MP_ACCESS_TOKEN,
+    options: env.MP_INTEGRATOR_ID ? { integratorId: env.MP_INTEGRATOR_ID } : undefined
+  });
+
+  private preference = new Preference(this.client);
+  private payment = new Payment(this.client);
+  private refund = new Refund(this.client);
+
+  async createPreference(orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { registrations: true, event: true }
+    });
+    if (!order) {
+      throw new NotFoundError("Pedido não encontrado");
+    }
+
+    const items: PreferenceItem[] = order.registrations.map((registration) => ({
+      title: `${order.event.title} - ${registration.fullName}`,
+      quantity: 1,
+      unit_price: order.event.priceCents / 100
+    }));
+
+    const preference = await this.preference.create({
+      body: {
+        external_reference: order.id,
+        items,
+        payer: {
+          identification: {
+            type: "CPF",
+            number: order.buyerCpf
+          }
+        },
+        back_urls: {
+          success: `${env.APP_URL}/payments/success?orderId=${order.id}`,
+          failure: `${env.APP_URL}/payments/failure?orderId=${order.id}`,
+          pending: `${env.APP_URL}/payments/pending?orderId=${order.id}`
+        },
+        payment_methods: {
+          excluded_payment_types: [],
+          installments: 6
+        },
+        auto_return: "approved",
+        metadata: {
+          orderId: order.id,
+          registrationIds: order.registrations.map((r) => r.id),
+          buyerCpf: order.buyerCpf
+        },
+        notification_url: `${env.API_URL}/webhooks/mercadopago`
+      }
+    });
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        mpPreferenceId: preference.id ?? preference.init_point ?? undefined,
+        expiresAt: new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000)
+      }
+    });
+
+    return {
+      preferenceId: preference.id,
+      initPoint: preference.init_point,
+      sandboxInitPoint: preference.sandbox_init_point,
+      pointOfInteraction: preference.point_of_interaction,
+      pixQrData: preference.point_of_interaction?.transaction_data
+    };
+  }
+
+  async fetchPayment(paymentId: string) {
+    return this.payment.get({ id: paymentId });
+  }
+
+  async refundRegistration(orderId: string, registrationId: string, amountCents: number) {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order?.mpPaymentId) {
+      throw new ConflictError("Pedido não possui pagamento confirmado");
+    }
+
+    const response = await this.refund.create({
+      payment_id: order.mpPaymentId,
+      amount: amountCents / 100
+    });
+
+    logger.info({ orderId, registrationId, refundId: response.id }, "Estorno solicitado ao Mercado Pago");
+
+    return response;
+  }
+}
+
+export const paymentService = new PaymentService();

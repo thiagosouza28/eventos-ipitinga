@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recibo de Inscricao</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: "Inter", Arial, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 8mm 6mm;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .card {
+        height: 100%;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      header h1 {
+        font-size: 16px;
+        margin: 0 0 4px 0;
+        line-height: 1.2;
+      }
+      header p {
+        margin: 0;
+        font-size: 11px;
+        color: #475569;
+      }
+      .badge {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb);
+        color: #ffffff;
+        padding: 6px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .participant {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+      .photo {
+        width: 90px;
+        aspect-ratio: 3 / 4;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #e2e8f0;
+        border: 1px solid #cbd5f5;
+      }
+      .photo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .info {
+        padding: 10px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+      }
+      .info span {
+        display: block;
+        font-size: 9px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+      .info strong {
+        font-size: 12px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .section-title {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #2563eb;
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .footer {
+        margin-top: auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .qr-box {
+        text-align: center;
+      }
+      .qr-box img {
+        width: 90px;
+        height: 90px;
+      }
+      .qr-box small {
+        display: block;
+        margin-top: 6px;
+        font-size: 10px;
+        color: #64748b;
+      }
+      .meta {
+        font-size: 9px;
+        color: #475569;
+        line-height: 1.5;
+      }
+      .meta strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 10px;
+        color: #1e293b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <header>
+        <div>
+          <h1>{{eventTitle}}</h1>
+          <p>{{eventLocation}} - {{eventPeriod}}</p>
+        </div>
+        <span class="badge">{{status}}</span>
+      </header>
+
+      <div class="participant">
+        <div class="photo">
+          <img src="{{photoUrl}}" alt="Foto do participante" />
+        </div>
+        <div class="info-grid">
+          <div class="info">
+            <span>Nome completo</span>
+            <strong>{{fullName}}</strong>
+          </div>
+          <div class="info">
+            <span>CPF</span>
+            <strong>{{cpf}}</strong>
+          </div>
+          <div class="info">
+            <span>Data de nascimento</span>
+            <strong>{{birthDate}}</strong>
+          </div>
+          <div class="info">
+            <span>Idade</span>
+            <strong>{{ageYears}} anos</strong>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="section-title">Dados da inscricao</p>
+        <div class="info-grid">
+          <div class="info">
+            <span>ID da inscricao</span>
+            <strong>{{registrationId}}</strong>
+          </div>
+          <div class="info">
+            <span>Forma de pagamento</span>
+            <strong>{{paymentMethod}}</strong>
+          </div>
+          <div class="info">
+            <span>Data da inscricao</span>
+            <strong>{{registrationDate}}</strong>
+          </div>
+          <div class="info">
+            <span>Data do pagamento</span>
+            <strong>{{paymentDate}}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="section-title">Igreja & Distrito</p>
+        <div class="two-col">
+          <div class="info">
+            <span>Distrito</span>
+            <strong>{{districtName}}</strong>
+          </div>
+          <div class="info">
+            <span>Igreja</span>
+            <strong>{{churchName}}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="qr-box">
+          <img src="{{qrDataUrl}}" alt="QR Code de validacao" />
+          <small>Apresente no check-in</small>
+        </div>
+        <div class="meta">
+          <strong>Autenticacao</strong>
+          <div>Verifique em {{validationUrl}}</div>
+          <div>Recibo gerado em {{generatedAt}}</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+
+

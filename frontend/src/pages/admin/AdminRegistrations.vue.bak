@@ -1,0 +1,433 @@
+<template>
+  <div class="space-y-6">
+    <ErrorDialog
+      :model-value="errorDialog.open"
+      :title="errorDialog.title"
+      :message="errorDialog.message"
+      :details="errorDialog.details"
+      @update:modelValue="errorDialog.open = $event"
+    />
+    <BaseCard>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
+            Inscricoes
+          </h1>
+          <p class="text-sm text-neutral-500">
+            Filtre e gerencie inscricoes por evento, distrito, igreja ou status.
+          </p>
+        </div>
+        <RouterLink
+          to="/admin/dashboard"
+          class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+        >
+          <- Dashboard
+        </RouterLink>
+      </div>
+    </BaseCard>
+
+    <BaseCard>
+      <form @submit.prevent="applyFilters" class="grid gap-4 md:grid-cols-5">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-neutral-500">
+            Evento
+          </label>
+          <select v-model="filters.eventId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <option value="">Todos</option>
+            <option v-for="event in admin.events" :key="event.id" :value="event.id">
+              {{ event.title }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-neutral-500">
+            Distrito
+          </label>
+          <select v-model="filters.districtId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <option value="">Todos</option>
+            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+              {{ district.name }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-neutral-500">
+            Igreja
+          </label>
+          <select v-model="filters.churchId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <option value="">Todas</option>
+            <option
+              v-for="church in churchesByDistrict(filters.districtId)"
+              :key="church.id"
+              :value="church.id"
+            >
+              {{ church.name }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-neutral-500">
+            Status
+          </label>
+          <select v-model="filters.status" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <option value="">Todos</option>
+            <option v-for="status in registrationStatuses" :key="status" :value="status">
+              {{ status }}
+            </option>
+          </select>
+        </div>
+        <div class="flex items-end justify-end gap-2">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="resetFilters"
+          >
+            Limpar
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+          >
+            Aplicar
+          </button>
+        </div>
+      </form>
+    </BaseCard>
+
+    <BaseCard>
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
+        {{ admin.registrations.length }} inscricoes encontradas
+        </h2>
+        <p class="text-xs text-neutral-500">
+        Clique nos icones de acao para editar, cancelar ou estornar.
+        </p>
+      </div>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full table-auto text-left text-sm">
+          <thead class="text-xs uppercase tracking-wide text-neutral-500">
+            <tr>
+              <th class="pb-2">Participante</th>
+              <th class="pb-2">CPF</th>
+              <th class="pb-2">Evento</th>
+              <th class="pb-2">Status</th>
+          <th class="pb-2 text-right">Acoes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+            <tr v-for="registration in admin.registrations" :key="registration.id">
+              <td class="py-3">
+                <div class="font-medium text-neutral-800 dark:text-neutral-100">
+                  {{ registration.fullName }}
+                </div>
+                <div class="text-xs text-neutral-500">
+                  {{ findEventTitle(registration.eventId) }}
+                </div>
+              </td>
+              <td class="py-3 text-sm text-neutral-500">
+                {{ maskCpf(registration.cpf) }}
+              </td>
+              <td class="py-3 text-sm">{{ registration.status }}</td>
+              <td class="py-3 text-right">
+                <div class="inline-flex gap-2 text-xs">
+                  <button class="text-blue-500 hover:underline" @click="openEdit(registration)">
+                    Editar
+                  </button>
+                  <button
+                    class="text-amber-500 hover:underline"
+                    @click="openConfirm('cancel', registration)"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    v-if="registration.status === 'PAID'"
+                    class="text-orange-500 hover:underline"
+                    @click="openConfirm('refund', registration)"
+                  >
+                    Estornar
+                  </button>
+                  <button
+                    v-if="registration.status !== 'PAID'"
+                    class="text-red-600 hover:underline"
+                    @click="openConfirm('delete', registration)"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </BaseCard>
+
+    <BaseCard v-if="selected">
+      <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
+        Editar inscricao
+      </h2>
+      <form @submit.prevent="saveRegistration" class="mt-4 grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-neutral-500">
+            Distrito
+          </label>
+          <select v-model="selected.districtId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+              {{ district.name }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase text-neutral-500">
+            Igreja
+          </label>
+          <select v-model="selected.churchId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <option
+              v-for="church in churchesByDistrict(selected.districtId)"
+              :key="church.id"
+              :value="church.id"
+            >
+              {{ church.name }}
+            </option>
+          </select>
+        </div>
+        <div class="md:col-span-2 flex justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="selected = null"
+          >
+            Fechar
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+          >
+            Salvar alteracoes
+          </button>
+        </div>
+      </form>
+    </BaseCard>
+
+    <ConfirmDialog
+      :model-value="confirmState.open"
+      :title="confirmState.title"
+      :description="confirmState.description"
+      :confirm-label="confirmState.confirmLabel"
+      :cancel-label="confirmState.cancelLabel"
+      :type="confirmState.type"
+      @update:modelValue="handleDialogVisibility"
+      @confirm="executeConfirmAction"
+      @cancel="resetConfirmState"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { reactive, ref, onMounted } from "vue";
+import { RouterLink } from "vue-router";
+
+import BaseCard from "../../components/ui/BaseCard.vue";
+import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
+import ErrorDialog from "../../components/ui/ErrorDialog.vue";
+import { useAdminStore } from "../../stores/admin";
+import { useCatalogStore } from "../../stores/catalog";
+import type { Church, Registration } from "../../types/api";
+import { maskCpf } from "../../utils/format";
+
+const admin = useAdminStore();
+const catalog = useCatalogStore();
+
+const filters = reactive({
+  eventId: "",
+  districtId: "",
+  churchId: "",
+  status: ""
+});
+
+const registrationStatuses = [
+  "PENDING_PAYMENT",
+  "PAID",
+  "CANCELED",
+  "REFUNDED",
+  "CHECKED_IN"
+];
+
+const selected = ref<Registration | null>(null);
+
+const errorDialog = reactive({
+  open: false,
+  title: "Ocorreu um erro",
+  message: "",
+  details: ""
+});
+
+const extractErrorInfo = (error: unknown) => {
+  const anyError = error as {
+    response?: { data?: { message?: string; details?: unknown } };
+    message?: string;
+  };
+  const responseData = anyError?.response?.data ?? {};
+  const message =
+    (typeof responseData.message === "string" && responseData.message) ||
+    anyError?.message ||
+    "Ocorreu um erro inesperado.";
+  let details = "";
+  const rawDetails = responseData?.details;
+  if (rawDetails) {
+    details =
+      typeof rawDetails === "string" ? rawDetails : JSON.stringify(rawDetails, null, 2);
+  }
+  return { message, details };
+};
+
+const showError = (title: string, error: unknown) => {
+  const { message, details } = extractErrorInfo(error);
+  errorDialog.title = title;
+  errorDialog.message = message;
+  errorDialog.details = details;
+  errorDialog.open = true;
+};
+
+type ConfirmAction = "cancel" | "refund" | "delete";
+
+const confirmState = reactive({
+  open: false,
+  action: null as ConfirmAction | null,
+  registration: null as Registration | null,
+  title: "",
+  description: "",
+  confirmLabel: "Confirmar",
+  cancelLabel: "Cancelar",
+  type: "default" as "default" | "danger"
+});
+
+const buildFilterParams = () => ({
+  eventId: filters.eventId || undefined,
+  districtId: filters.districtId || undefined,
+  churchId: filters.churchId || undefined,
+  status: filters.status || undefined
+});
+
+const applyFilters = async () => {
+  try {
+    await admin.loadRegistrations(buildFilterParams());
+  } catch (error) {
+    showError("Falha ao carregar inscricoes", error);
+  }
+};
+
+const resetFilters = async () => {
+  Object.assign(filters, {
+    eventId: "",
+    districtId: "",
+    churchId: "",
+    status: ""
+  });
+  await applyFilters();
+};
+
+onMounted(async () => {
+  try {
+    await Promise.all([admin.loadEvents(), catalog.loadDistricts(), catalog.loadChurches()]);
+  } catch (error) {
+    showError("Falha ao carregar dados iniciais", error);
+  }
+  await applyFilters();
+});
+
+const churchesByDistrict = (districtId: string): Church[] => {
+  if (!districtId) return catalog.churches;
+  return catalog.churches.filter((church) => church.districtId === districtId);
+};
+
+const findEventTitle = (eventId: string) =>
+  admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
+
+const openEdit = (registration: Registration) => {
+  selected.value = { ...registration };
+};
+
+const saveRegistration = async () => {
+  if (!selected.value) return;
+  try {
+    await admin.updateRegistration(selected.value.id, {
+      districtId: selected.value.districtId,
+      churchId: selected.value.churchId
+    });
+    selected.value = null;
+  } catch (error) {
+    showError("Falha ao atualizar inscricao", error);
+  }
+};
+
+const resetConfirmState = () => {
+  confirmState.open = false;
+  confirmState.action = null;
+  confirmState.registration = null;
+  confirmState.title = "";
+  confirmState.description = "";
+  confirmState.confirmLabel = "Confirmar";
+  confirmState.cancelLabel = "Cancelar";
+  confirmState.type = "default";
+};
+
+const handleDialogVisibility = (value: boolean) => {
+  if (value) {
+    confirmState.open = true;
+    return;
+  }
+  resetConfirmState();
+};
+
+const openConfirm = (action: ConfirmAction, registration: Registration) => {
+  confirmState.action = action;
+  confirmState.registration = registration;
+  confirmState.open = true;
+  confirmState.cancelLabel = "Voltar";
+
+  if (action === "cancel") {
+    confirmState.title = "Cancelar inscricao";
+    confirmState.description = `Cancelar a inscricao de ${registration.fullName}? Esta acao nao pode ser desfeita.`;
+    confirmState.confirmLabel = "Cancelar";
+    confirmState.type = "danger";
+  } else if (action === "refund") {
+    confirmState.title = "Estornar inscricao";
+    confirmState.description = `Confirmar estorno da inscricao de ${registration.fullName}? O Mercado Pago sera acionado.`;
+    confirmState.confirmLabel = "Confirmar estorno";
+    confirmState.type = "default";
+  } else {
+    confirmState.title = "Excluir inscricao";
+    confirmState.description = `Excluir a inscricao de ${registration.fullName}? O registro sera removido permanentemente.`;
+    confirmState.confirmLabel = "Excluir";
+    confirmState.type = "danger";
+  }
+};
+
+const executeConfirmAction = async () => {
+  if (!confirmState.registration || !confirmState.action) {
+    resetConfirmState();
+    return;
+  }
+
+  const registration = confirmState.registration;
+  const action = confirmState.action;
+  resetConfirmState();
+
+  try {
+    if (action === "cancel") {
+      await admin.cancelRegistration(registration.id);
+    } else if (action === "refund") {
+      await admin.refundRegistration(registration.id, {});
+    } else if (action === "delete") {
+      await admin.deleteRegistration(registration.id);
+    }
+  } catch (error) {
+    const titles: Record<ConfirmAction, string> = {
+      cancel: "Falha ao cancelar inscricao",
+      refund: "Falha ao estornar inscricao",
+      delete: "Falha ao excluir inscricao"
+    };
+    showError(titles[action], error);
+  }
+};
+</script>

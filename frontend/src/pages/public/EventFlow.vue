@@ -1,0 +1,1202 @@
+<template>
+  <div v-if="eventStore.loading">
+    <LoadingSpinner />
+  </div>
+  <div v-else-if="!eventStore.event">
+    <BaseCard>
+      <p class="text-neutral-500">Evento nao encontrado.</p>
+    </BaseCard>
+  </div>
+  <div v-else class="space-y-6">
+    <BaseCard>
+      <div class="space-y-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
+              {{ eventStore.event.title }}
+            </h1>
+            <p class="text-neutral-500 dark:text-neutral-400">
+              {{ eventStore.event.description }}
+            </p>
+          </div>
+          <div class="text-left sm:text-right">
+            <p class="text-sm text-neutral-500">
+              {{ isFreeEvent ? "Evento gratuito" : "Valor por inscricao" }}
+            </p>
+            <p class="text-xl font-semibold text-primary-600 dark:text-primary-400">
+              {{ priceLabel }}
+            </p>
+            <p
+              v-if="currentLotName"
+              class="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+            >
+              Lote vigente: {{ currentLotName }}
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
+          <span>Local: {{ eventStore.event.location }}</span>
+          <span>|</span>
+          <span>
+            {{ formatDate(eventStore.event.startDate) }} - {{ formatDate(eventStore.event.endDate) }}
+          </span>
+          <span v-if="eventStore.event.minAgeYears">
+            Idade minima: {{ eventStore.event.minAgeYears }}+ anos
+          </span>
+        </div>
+      </div>
+    </BaseCard>
+
+    <div v-if="registrationOpen" class="space-y-6">
+      <StepWizard :steps="steps" :current-step="currentStep" />
+
+      <BaseCard v-if="currentStep === 0">
+        <InscricaoForm
+          ref="inscricaoFormRef"
+          v-model="buyerCpf"
+          :submit-error="errorMessage"
+          :loading="checkingCpf"
+          @submit="handleCpfSubmit"
+        />
+      </BaseCard>
+
+      <BaseCard v-if="currentStep === 1">
+        <div
+          v-if="pendingOrder"
+          class="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
+        >
+          <p class="font-semibold">Pagamento pendente encontrado.</p>
+          <p>Voce pode abrir o pagamento existente ou seguir com uma nova inscricao.</p>
+          <RouterLink
+            :to="{ name: 'payment', params: { slug: props.slug, orderId: pendingOrder.orderId } }"
+            class="mt-2 inline-flex items-center rounded-md border border-amber-500 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200"
+          >
+            Abrir pagamento pendente
+          </RouterLink>
+        </div>
+        <form @submit.prevent="handleGeneralStep" class="space-y-6">
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Distrito
+              </label>
+              <select
+                v-model="selectedDistrictId"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                :aria-invalid="generalErrors.district ? 'true' : 'false'"
+                aria-describedby="district-error"
+                required
+              >
+                <option value="" disabled>Selecione</option>
+                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                  {{ district.name }}
+                </option>
+              </select>
+              <p
+                v-if="generalErrors.district"
+                id="district-error"
+                role="alert"
+                class="mt-2 text-sm text-red-600 dark:text-red-400"
+              >
+                {{ generalErrors.district }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Igreja
+              </label>
+              <select
+                v-model="selectedChurchId"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                :aria-invalid="generalErrors.church ? 'true' : 'false'"
+                aria-describedby="church-error"
+                :disabled="!selectedDistrictId"
+                required
+              >
+                <option value="" disabled>Selecione</option>
+                <option v-for="church in churchOptions" :key="church.id" :value="church.id">
+                  {{ church.name }}
+                </option>
+              </select>
+              <p
+                v-if="generalErrors.church"
+                id="church-error"
+                role="alert"
+                class="mt-2 text-sm text-red-600 dark:text-red-400"
+              >
+                {{ generalErrors.church }}
+              </p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+              Quantidade de participantes
+            </label>
+            <input
+              v-model.number="quantity"
+              type="number"
+              min="1"
+              max="10"
+              class="mt-1 w-32 rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800"
+              :aria-invalid="generalErrors.quantity ? 'true' : 'false'"
+              aria-describedby="quantity-error"
+              required
+            />
+            <p
+              v-if="generalErrors.quantity"
+              id="quantity-error"
+              role="alert"
+              class="mt-2 text-sm text-red-600 dark:text-red-400"
+            >
+              {{ generalErrors.quantity }}
+            </p>
+          </div>
+          <div class="flex justify-between">
+            <button
+              type="button"
+              class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              @click="currentStep--"
+            >
+              Voltar
+            </button>
+            <button
+              type="submit"
+              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            >
+              Avancar
+            </button>
+          </div>
+        </form>
+      </BaseCard>
+
+      <div v-if="currentStep === 2" class="space-y-6">
+        <BaseCard>
+          <div class="grid gap-2 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2">
+            <p>
+              <span class="font-semibold text-neutral-700 dark:text-neutral-100">CPF responsavel:</span>
+              {{ buyerCpf }}
+            </p>
+            <p>
+              <span class="font-semibold text-neutral-700 dark:text-neutral-100">Distrito:</span>
+              {{ selectedDistrict?.name ?? "Nao selecionado" }}
+            </p>
+            <p>
+              <span class="font-semibold text-neutral-700 dark:text-neutral-100">Igreja:</span>
+              {{ selectedChurch?.name ?? "Nao selecionada" }}
+            </p>
+            <p>
+              <span class="font-semibold text-neutral-700 dark:text-neutral-100">Participantes:</span>
+              {{ people.length }}
+            </p>
+          </div>
+        </BaseCard>
+
+        <BaseCard v-for="(person, index) in people" :key="index">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
+              Participante {{ index + 1 }}
+            </h2>
+            <span class="text-sm text-neutral-400">Preencha todos os campos obrigatorios</span>
+          </div>
+          <div class="mt-4 grid gap-4 lg:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Nome completo
+              </label>
+              <input
+                v-model="person.fullName"
+                type="text"
+                required
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                CPF
+              </label>
+              <input
+                :ref="(el) => setParticipantCpfRef(el, index)"
+                v-model="person.cpf"
+                type="text"
+                placeholder="000.000.000-00"
+                inputmode="numeric"
+                autocomplete="off"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                :aria-invalid="participantCpfErrors[index] ? 'true' : 'false'"
+                :aria-describedby="`participant-cpf-error-${index}`"
+                required
+                @input="onParticipantCpfInput(index, $event)"
+                @blur="onParticipantCpfBlur(index)"
+              />
+              <p
+                v-if="participantCpfErrors[index]"
+                :id="`participant-cpf-error-${index}`"
+                role="alert"
+                class="mt-1 text-sm text-red-600 dark:text-red-400"
+              >
+                {{ participantCpfErrors[index] }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Data de nascimento
+              </label>
+              <div class="mt-1 flex items-center gap-3">
+                <input
+                  v-model="person.birthDate"
+                  type="date"
+                  required
+                  class="w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                />
+                <span
+                  v-if="calculateAgeYears(person.birthDate) !== null"
+                  class="text-xs text-neutral-500 dark:text-neutral-400"
+                >
+                  {{ calculateAgeYears(person.birthDate) }} anos
+                </span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Genero
+              </label>
+              <select
+                v-model="person.gender"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                required
+              >
+                <option value="" disabled>Selecione</option>
+                <option v-for="option in genderOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Distrito
+              </label>
+              <select
+                v-model="person.districtId"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                @change="onPersonDistrictChange(index)"
+              >
+                <option value="" disabled>Selecione</option>
+                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                  {{ district.name }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Igreja
+              </label>
+              <select
+                v-model="person.churchId"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              >
+                <option value="" disabled>Selecione</option>
+                <option
+                  v-for="church in getPersonChurchOptions(person.districtId)"
+                  :key="church.id"
+                  :value="church.id"
+                >
+                  {{ church.name }}
+                </option>
+              </select>
+            </div>
+            <div class="lg:col-span-2">
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Foto (opcional)
+              </label>
+              <div class="mt-1 flex flex-wrap items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100"
+                  @change="handlePhotoUpload($event, index)"
+                />
+                <img
+                  :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
+                  alt="Pre-visualizacao"
+                  class="h-24 w-24 rounded-lg object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </BaseCard>
+
+        <div class="flex justify-between">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="currentStep--"
+          >
+            Voltar
+          </button>
+          <button
+            type="button"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            @click="goToReview"
+          >
+            Revisar inscricoes
+          </button>
+        </div>
+        <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
+      </div>
+
+      <BaseCard v-if="currentStep === 3">
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">
+              Revisao dos dados
+            </h2>
+            <p class="text-sm text-neutral-500">
+              {{
+                isFreeEvent
+                  ? "Confira as informacoes antes de confirmar as inscricoes."
+                  : "Confira as informacoes antes de prosseguir com o pagamento."
+              }}
+            </p>
+          </div>
+          <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60">
+            <p>CPF responsavel: {{ buyerCpf }}</p>
+            <p>Distrito: {{ selectedDistrict?.name ?? "Nao selecionado" }}</p>
+            <p>Igreja: {{ selectedChurch?.name ?? "Nao selecionada" }}</p>
+          </div>
+          <div
+            v-if="!isFreeEvent"
+            class="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60"
+          >
+            <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+              Forma de pagamento
+            </label>
+            <div class="grid gap-2 sm:grid-cols-2">
+              <label
+                v-for="option in paymentOptions"
+                :key="option.value"
+                class="flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900"
+              >
+                <input
+                  v-model="selectedPaymentMethod"
+                  type="radio"
+                  :value="option.value"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                />
+                <span class="flex flex-col">
+                  <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
+                  <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</span>
+                </span>
+              </label>
+            </div>
+            <p class="text-xs text-neutral-400 dark:text-neutral-500">
+              Pagamento selecionado: {{ selectedPaymentLabel }}.
+            </p>
+            <p
+              v-if="isManualPaymentSelected"
+              class="text-xs text-amber-600 dark:text-amber-300"
+            >
+              Pagamentos manuais serao confirmados pela tesouraria. Guarde o comprovante para quitar a pendencia.
+            </p>
+          </div>
+          <div class="grid gap-4">
+            <div
+              v-for="(person, index) in people"
+              :key="index"
+              class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <img
+                    :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
+                    alt="Foto do participante"
+                    class="h-12 w-12 rounded-lg object-cover"
+                  />
+                  <div>
+                    <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+                      {{ person.fullName }}
+                    </p>
+                    <p class="text-xs text-neutral-500">
+                      CPF: {{ person.cpf }}
+                    </p>
+                  </div>
+                </div>
+                <button class="text-sm text-primary-600 hover:underline" @click="currentStep = 2">
+                  Editar
+                </button>
+              </div>
+              <div class="mt-3 grid gap-1 text-sm text-neutral-500 sm:grid-cols-2">
+                <p>
+                  Nascimento: {{ formatDate(person.birthDate) }}
+                  <span v-if="calculateAgeYears(person.birthDate) !== null">
+                    ({{ calculateAgeYears(person.birthDate) }} anos)
+                  </span>
+                </p>
+                <p>Genero: {{ getGenderLabel(person.gender) }}</p>
+                <p>Distrito: {{ getDistrictName(person.districtId) }}</p>
+                <p>Igreja: {{ getChurchName(person.churchId) }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 text-right">
+            <p v-if="!isFreeEvent" class="text-sm text-neutral-500">
+              Forma de pagamento: {{ selectedPaymentLabel }}
+            </p>
+            <p class="text-sm text-neutral-500">Total</p>
+            <p class="text-2xl font-semibold text-primary-600 dark:text-primary-400">
+              {{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents * people.length) }}
+            </p>
+          </div>
+          <div class="flex justify-between">
+            <button
+              type="button"
+              class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              @click="currentStep--"
+            >
+              Voltar
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+              :disabled="submitting"
+              @click="submitBatch"
+            >
+              <span v-if="submitting" class="flex items-center gap-2">
+                <span
+                  class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
+                ></span>
+                Processando...
+              </span>
+              <span v-else>{{ isFreeEvent ? "Confirmar inscricoes" : "Ir para pagamento" }}</span>
+            </button>
+          </div>
+          <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
+        </div>
+      </BaseCard>
+    </div>
+
+    <BaseCard v-else>
+      <p class="text-neutral-500">
+        As inscricoes ainda nao estao abertas. Aguarde o inicio do proximo lote.
+      </p>
+    </BaseCard>
+  </div>
+</template>
+<script setup lang="ts">
+  import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+  import { useRouter } from "vue-router";
+
+  import InscricaoForm from "../../components/forms/InscricaoForm.vue";
+  import BaseCard from "../../components/ui/BaseCard.vue";
+  import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
+  import StepWizard from "../../components/ui/StepWizard.vue";
+  import { useCatalogStore } from "../../stores/catalog";
+  import { useEventStore } from "../../stores/event";
+  import { useApi } from "../../composables/useApi";
+  import type { Church, RegistrationProfile } from "../../types/api";
+  import { formatCurrency, formatDate } from "../../utils/format";
+  import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
+  import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS } from "../../config/paymentMethods";
+  import type { PaymentMethod } from "../../config/paymentMethods";
+  import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
+
+  type PendingOrder = {
+    orderId: string;
+    expiresAt: string;
+    payment: {
+      status?: string;
+      paymentMethod?: string;
+      initPoint?: string;
+    } | null;
+  };
+
+  type PersonForm = {
+    fullName: string;
+    cpf: string;
+    birthDate: string;
+    gender: string;
+    districtId: string;
+    churchId: string;
+    photoUrl: string | null;
+  };
+
+  const props = defineProps<{ slug: string }>();
+  const router = useRouter();
+  const eventStore = useEventStore();
+  const catalog = useCatalogStore();
+  const { api } = useApi();
+
+  const isFreeEvent = computed(() => Boolean(eventStore.event?.isFree));
+  const ticketPriceCents = computed(
+    () => (isFreeEvent.value ? 0 : eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0)
+  );
+  const priceLabel = computed(() =>
+    isFreeEvent.value ? "Gratuito" : formatCurrency(ticketPriceCents.value)
+  );
+  const currentLotName = computed(() =>
+    isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null
+  );
+  const registrationOpen = computed(() => {
+    if (!eventStore.event) return false;
+    if (isFreeEvent.value) return true;
+    return Boolean(eventStore.event.currentLot);
+  });
+
+  const currentStep = ref(0);
+  const buyerCpf = ref("");
+  const quantity = ref(1);
+  const selectedDistrictId = ref("");
+  const selectedChurchId = ref("");
+  const selectedPaymentMethod = ref<PaymentMethod>("PIX_MP");
+  const pendingOrder = ref<PendingOrder | null>(null);
+  const people = reactive<PersonForm[]>([]);
+  const participantCpfErrors = reactive<string[]>([]);
+  const participantCpfRefs = ref<(HTMLInputElement | null)[]>([]);
+  const submitting = ref(false);
+  const checkingCpf = ref(false);
+  const errorMessage = ref("");
+  const inscricaoFormRef = ref<{ focusCpf: () => void } | null>(null);
+  type CpfCheckResult = { existsInEvent: boolean; profile: RegistrationProfile | null };
+  const cpfAvailabilityCache = new Map<string, CpfCheckResult>();
+
+  const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
+  const REGISTERED_ERROR = "CPF ja possui inscricao confirmada para este evento";
+  const DUPLICATE_GLOBAL_ERROR =
+    "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
+  const REGISTERED_GLOBAL_ERROR =
+    "Um ou mais CPFs ja possuem inscricao confirmada neste evento.";
+  const REMOTE_ERROR_MESSAGE = "Nao foi possivel verificar CPF agora. Tente novamente.";
+  const CPF_GLOBAL_MESSAGES = [
+    DUPLICATE_GLOBAL_ERROR,
+    REGISTERED_GLOBAL_ERROR,
+    REMOTE_ERROR_MESSAGE
+  ];
+
+  const generalErrors = reactive({
+    district: "",
+    church: "",
+    quantity: ""
+  });
+
+  const steps = computed(() => {
+    const base = [
+      { title: "CPF", description: "Verifique pedidos pendentes" },
+      { title: "Unidade", description: "Escolha distrito e igreja" },
+      { title: "Participantes", description: "Dados individuais" },
+      { title: "Revisao", description: "Confirme e pague" }
+    ];
+    if (isFreeEvent.value) {
+      base[3] = { ...base[3], description: "Revise os dados e confirme" };
+    }
+    return base;
+  });
+  const genderOptions = [
+    { value: "MALE", label: "Masculino" },
+    { value: "FEMALE", label: "Feminino" },
+    { value: "OTHER", label: "Outro" }
+  ];
+  const paymentOptions = computed(() => {
+    const allowed =
+      eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
+        ? eventStore.event.paymentMethods
+        : PAYMENT_METHODS.map((option) => option.value);
+    return PAYMENT_METHODS.filter((option) => allowed.includes(option.value));
+  });
+  const isManualPaymentSelected = computed(() =>
+    MANUAL_PAYMENT_METHODS.includes(selectedPaymentMethod.value)
+  );
+  const selectedPaymentLabel = computed(() => paymentMethodLabel(selectedPaymentMethod.value));
+
+  const selectedDistrict = computed(() =>
+    catalog.districts.find((district) => district.id === selectedDistrictId.value)
+  );
+  const churchOptions = computed<Church[]>(() =>
+    catalog.churches.filter((church) =>
+      selectedDistrictId.value ? church.districtId === selectedDistrictId.value : true
+    )
+  );
+  const selectedChurch = computed(() =>
+    churchOptions.value.find((church) => church.id === selectedChurchId.value)
+  );
+  const churchesByDistrict = computed(() => {
+    const map = new Map<string, Church[]>();
+    catalog.churches.forEach((church) => {
+      const list = map.get(church.districtId) ?? [];
+      list.push(church);
+      map.set(church.districtId, list);
+    });
+    return map;
+  });
+  const getPersonChurchOptions = (districtId: string) =>
+    churchesByDistrict.value.get(districtId) ?? [];
+  const getDistrictName = (id: string) =>
+    catalog.districts.find((district) => district.id === id)?.name ?? "Nao informado";
+  const getChurchName = (id: string) =>
+    catalog.churches.find((church) => church.id === id)?.name ?? "Nao informado";
+  const getGenderLabel = (value: string) =>
+    genderOptions.find((option) => option.value === value)?.label ?? value;
+
+  const calculateAgeYears = (birthDate: string): number | null => {
+    if (!birthDate) return null;
+    const parts = birthDate.split("-");
+    if (parts.length !== 3) return null;
+    const [yearStr, monthStr, dayStr] = parts;
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+    const date = new Date(year, month - 1, day);
+    if (Number.isNaN(date.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age -= 1;
+    }
+    return age >= 0 ? age : null;
+  };
+
+  const createEmptyPerson = (): PersonForm => ({
+    fullName: "",
+    cpf: "",
+    birthDate: "",
+    gender: "",
+    districtId: selectedDistrictId.value || "",
+    churchId: selectedChurchId.value || "",
+    photoUrl: null
+  });
+
+  const ensurePersonChurch = (index: number) => {
+    const person = people[index];
+    if (!person) return;
+
+    if (!person.districtId && selectedDistrictId.value) {
+      person.districtId = selectedDistrictId.value;
+    }
+
+    if (!person.districtId) {
+      person.churchId = "";
+      return;
+    }
+
+    const availableChurches = getPersonChurchOptions(person.districtId);
+    if (!availableChurches.length) {
+      person.churchId = "";
+      return;
+    }
+
+    if (person.churchId && availableChurches.some((church) => church.id === person.churchId)) {
+      return;
+    }
+
+    const preferredChurch =
+      selectedChurchId.value &&
+      availableChurches.some((church) => church.id === selectedChurchId.value)
+        ? selectedChurchId.value
+        : availableChurches[0].id;
+
+    person.churchId = preferredChurch;
+  };
+
+  const applyProfileToPerson = (index: number, profile: RegistrationProfile) => {
+    const person = people[index];
+    if (!person) return;
+
+    person.fullName = profile.fullName;
+    person.birthDate = profile.birthDate;
+    if (profile.gender && genderOptions.some((option) => option.value === profile.gender)) {
+      person.gender = profile.gender;
+    }
+    if (
+      profile.districtId &&
+      catalog.districts.some((district) => district.id === profile.districtId)
+    ) {
+      person.districtId = profile.districtId;
+    }
+    if (
+      profile.churchId &&
+      catalog.churches.some((church) => church.id === profile.churchId)
+    ) {
+      person.churchId = profile.churchId;
+    }
+    if (profile.photoUrl) {
+      person.photoUrl = profile.photoUrl;
+    }
+
+    ensurePersonChurch(index);
+  };
+
+  const applyCpfCheckResult = (index: number, result: CpfCheckResult) => {
+    if (result.existsInEvent) {
+      participantCpfErrors[index] = REGISTERED_ERROR;
+    } else if (
+      participantCpfErrors[index] === REGISTERED_ERROR ||
+      participantCpfErrors[index] === REMOTE_ERROR_MESSAGE
+    ) {
+      participantCpfErrors[index] = "";
+    }
+
+    if (!result.existsInEvent && result.profile) {
+      applyProfileToPerson(index, result.profile);
+    }
+
+    updateParticipantGlobalError();
+  };
+
+  const getCpfError = (value: string) => {
+    const digits = normalizeCPF(value);
+    if (!digits.length) return "";
+    return validateCPF(value) ? "" : "CPF invalido";
+  };
+
+  const updateParticipantGlobalError = () => {
+    if (currentStep.value !== 2) return;
+
+    let nextMessage: string | null = null;
+
+    if (participantCpfErrors.some((error) => error === DUPLICATE_ERROR)) {
+      nextMessage = DUPLICATE_GLOBAL_ERROR;
+    } else if (participantCpfErrors.some((error) => error === REGISTERED_ERROR)) {
+      nextMessage = REGISTERED_GLOBAL_ERROR;
+    } else if (participantCpfErrors.some((error) => error === REMOTE_ERROR_MESSAGE)) {
+      nextMessage = REMOTE_ERROR_MESSAGE;
+    }
+
+    if (nextMessage) {
+      if (!errorMessage.value || CPF_GLOBAL_MESSAGES.includes(errorMessage.value)) {
+        errorMessage.value = nextMessage;
+      }
+      return;
+    }
+
+    if (CPF_GLOBAL_MESSAGES.includes(errorMessage.value)) {
+      errorMessage.value = "";
+    }
+  };
+
+  const updateDuplicateErrors = () => {
+    const duplicates = new Set<number>();
+    const occurrences = new Map<string, number[]>();
+
+    people.forEach((person, index) => {
+      const digits = normalizeCPF(person.cpf);
+      if (digits.length === 11) {
+        const list = occurrences.get(digits) ?? [];
+        list.push(index);
+        occurrences.set(digits, list);
+      }
+    });
+
+    occurrences.forEach((indexes) => {
+      if (indexes.length > 1) {
+        indexes.forEach((index) => duplicates.add(index));
+      }
+    });
+
+    for (let index = 0; index < participantCpfErrors.length; index += 1) {
+      if (duplicates.has(index)) {
+        participantCpfErrors[index] = DUPLICATE_ERROR;
+      } else if (participantCpfErrors[index] === DUPLICATE_ERROR) {
+        participantCpfErrors[index] = "";
+      }
+    }
+
+    updateParticipantGlobalError();
+    return duplicates;
+  };
+
+  const setParticipantCpfRef = (element: HTMLInputElement | null, index: number) => {
+    participantCpfRefs.value[index] = element;
+  };
+
+  const onPersonDistrictChange = (index: number) => {
+    ensurePersonChurch(index);
+  };
+
+  const checkParticipantCpfRemote = async (index: number) => {
+    if (!eventStore.event) return;
+    const digits = normalizeCPF(people[index].cpf);
+    if (digits.length !== 11) return;
+
+    const cacheKey = `${eventStore.event.id}:${digits}`;
+    const cached = cpfAvailabilityCache.get(cacheKey);
+
+    if (cached) {
+      applyCpfCheckResult(index, cached);
+      return;
+    }
+
+    try {
+      const response = await api.post("/inscriptions/check", {
+        eventId: eventStore.event.id,
+        cpf: digits
+      });
+      const result: CpfCheckResult = {
+        existsInEvent: Boolean(response.data.existsInEvent ?? response.data.exists),
+        profile: response.data.profile ?? null
+      };
+      cpfAvailabilityCache.set(cacheKey, result);
+      applyCpfCheckResult(index, result);
+    } catch (error) {
+      console.error("Falha ao verificar CPF remoto", error);
+      participantCpfErrors[index] = REMOTE_ERROR_MESSAGE;
+      updateParticipantGlobalError();
+    }
+  };
+
+  const handleConflictError = async (message: string) => {
+    currentStep.value = 2;
+    const digitsInMessage = message.replace(/\D/g, "");
+    if (digitsInMessage.length < 11) return;
+    const targetDigits = digitsInMessage.slice(-11);
+
+    if (eventStore.event) {
+      cpfAvailabilityCache.set(`${eventStore.event.id}:${targetDigits}`, {
+        existsInEvent: true,
+        profile: null
+      });
+    }
+
+    const index = people.findIndex((person) => normalizeCPF(person.cpf) === targetDigits);
+    if (index >= 0) {
+      participantCpfErrors[index] = REGISTERED_ERROR;
+      await nextTick();
+      participantCpfRefs.value[index]?.focus();
+    }
+
+    updateDuplicateErrors();
+  };
+
+  const onParticipantCpfInput = (index: number, event: Event) => {
+    const input = event.target as HTMLInputElement | null;
+    if (!input) return;
+    const previousDigits = normalizeCPF(people[index].cpf);
+    const formatted = formatCPF(input.value);
+    people[index].cpf = formatted;
+    const digits = normalizeCPF(formatted);
+
+    if (eventStore.event) {
+      if (previousDigits.length === 11) {
+        cpfAvailabilityCache.delete(`${eventStore.event.id}:${previousDigits}`);
+      }
+      if (digits.length === 11) {
+        cpfAvailabilityCache.delete(`${eventStore.event.id}:${digits}`);
+      }
+    }
+
+    participantCpfErrors[index] = getCpfError(formatted);
+    updateDuplicateErrors();
+  };
+
+  const onParticipantCpfBlur = async (index: number) => {
+    participantCpfErrors[index] = getCpfError(people[index].cpf);
+    if (participantCpfErrors[index]) return;
+    const duplicates = updateDuplicateErrors();
+    if (duplicates.has(index)) return;
+    await checkParticipantCpfRemote(index);
+  };
+
+  const resetParticipantCpfState = (count: number) => {
+    participantCpfErrors.splice(0, participantCpfErrors.length);
+    for (let index = 0; index < count; index += 1) {
+      participantCpfErrors.push("");
+    }
+    participantCpfRefs.value = new Array(count).fill(null);
+  };
+
+  const ensureParticipantCpfsValid = async () => {
+    let firstInvalidIndex = -1;
+
+    people.forEach((person, index) => {
+      const error = getCpfError(person.cpf);
+      participantCpfErrors[index] = error;
+      if (error && firstInvalidIndex === -1) {
+        firstInvalidIndex = index;
+      }
+    });
+
+    const duplicates = updateDuplicateErrors();
+    if (duplicates.size > 0 && firstInvalidIndex === -1) {
+      firstInvalidIndex = duplicates.values().next().value ?? -1;
+    }
+
+    if (firstInvalidIndex === -1) {
+      for (let index = 0; index < people.length; index += 1) {
+        if (duplicates.has(index)) continue;
+        await checkParticipantCpfRemote(index);
+        if (
+          [REGISTERED_ERROR, REMOTE_ERROR_MESSAGE].includes(participantCpfErrors[index]) &&
+          firstInvalidIndex === -1
+        ) {
+          firstInvalidIndex = index;
+        }
+      }
+    }
+
+    if (firstInvalidIndex === -1) {
+      return true;
+    }
+
+    currentStep.value = 2;
+    await nextTick();
+    participantCpfRefs.value[firstInvalidIndex]?.focus();
+    return false;
+  };
+
+  onMounted(async () => {
+    await eventStore.fetchEvent(props.slug);
+    await catalog.loadDistricts();
+    await catalog.loadChurches();
+  });
+
+  watch(currentStep, (step) => {
+    if (
+      step !== 2 &&
+      CPF_GLOBAL_MESSAGES.includes(errorMessage.value)
+    ) {
+      errorMessage.value = "";
+    }
+  });
+
+  watch(buyerCpf, () => {
+    if (currentStep.value === 0 && errorMessage.value) {
+      errorMessage.value = "";
+    }
+  });
+
+  watch(selectedDistrictId, (districtId) => {
+    generalErrors.district = "";
+    if (
+      selectedChurchId.value &&
+      !catalog.churches.some(
+        (church) => church.id === selectedChurchId.value && church.districtId === districtId
+      )
+    ) {
+      selectedChurchId.value = "";
+    }
+    if (currentStep.value >= 2) {
+      people.forEach((person, index) => {
+        if (!person.districtId && districtId) {
+          person.districtId = districtId;
+        }
+        ensurePersonChurch(index);
+      });
+    }
+  });
+
+  watch(selectedChurchId, (churchId) => {
+    generalErrors.church = "";
+    if (!churchId || currentStep.value < 2) return;
+    people.forEach((person, index) => {
+      if (
+        !person.churchId &&
+        person.districtId &&
+        catalog.churches.some(
+          (church) => church.id === churchId && church.districtId === person.districtId
+        )
+      ) {
+        person.churchId = churchId;
+      }
+      ensurePersonChurch(index);
+    });
+  });
+
+  watch(quantity, () => {
+    generalErrors.quantity = "";
+  });
+
+  watch(
+    () => eventStore.event?.paymentMethods,
+    (methods) => {
+      if (methods && methods.length > 0) {
+        selectedPaymentMethod.value = methods[0];
+      } else {
+        selectedPaymentMethod.value = "PIX_MP";
+      }
+    },
+    { immediate: true }
+  );
+
+  watch(
+    paymentOptions,
+    (options) => {
+      if (!options.length) return;
+      if (!options.some((option) => option.value === selectedPaymentMethod.value)) {
+        selectedPaymentMethod.value = options[0].value;
+      }
+    },
+    { immediate: true }
+  );
+
+  const handleCpfSubmit = async (cpfDigits: string) => {
+    checkingCpf.value = true;
+    errorMessage.value = "";
+
+    try {
+      const pending = await eventStore.checkPendingOrder(cpfDigits);
+      pendingOrder.value = pending ?? null;
+      currentStep.value = 1;
+    } catch (error: any) {
+      errorMessage.value = error.response?.data?.message ?? "Nao foi possivel verificar.";
+    } finally {
+      checkingCpf.value = false;
+    }
+  };
+
+  const handleGeneralStep = () => {
+    generalErrors.district = selectedDistrictId.value ? "" : "Selecione um distrito.";
+    generalErrors.church = selectedChurchId.value ? "" : "Selecione uma igreja.";
+    generalErrors.quantity =
+      quantity.value && quantity.value > 0 ? "" : "Informe ao menos um participante.";
+
+    if (generalErrors.district || generalErrors.church || generalErrors.quantity) {
+      return;
+    }
+
+    const size = Math.min(Math.max(Math.floor(quantity.value), 1), 10);
+    quantity.value = size;
+
+    people.splice(0, people.length);
+    for (let index = 0; index < size; index += 1) {
+      people.push(createEmptyPerson());
+      ensurePersonChurch(index);
+    }
+    resetParticipantCpfState(size);
+    errorMessage.value = "";
+    currentStep.value = 2;
+  };
+
+  const handlePhotoUpload = (event: Event, index: number) => {
+    const input = event.target as HTMLInputElement | null;
+    if (!input?.files?.length) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (loadEvent) => {
+      people[index].photoUrl = String(loadEvent.target?.result ?? "");
+    };
+    reader.readAsDataURL(file);
+  };
+  const goToReview = async () => {
+    errorMessage.value = "";
+    const cpfsValid = await ensureParticipantCpfsValid();
+    if (!cpfsValid) return;
+
+    people.forEach((person, index) => {
+      if (!person.districtId && selectedDistrictId.value) {
+        person.districtId = selectedDistrictId.value;
+      }
+      if (!person.churchId && selectedChurchId.value) {
+        person.churchId = selectedChurchId.value;
+      }
+      ensurePersonChurch(index);
+    });
+
+    const hasMissing = people.some(
+      (person) =>
+        !person.fullName.trim() ||
+        !person.birthDate ||
+        !person.gender ||
+        !person.districtId ||
+        !person.churchId
+    );
+    if (hasMissing) {
+      errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+      return;
+    }
+
+    currentStep.value = 3;
+  };
+  const submitBatch = async () => {
+    errorMessage.value = "";
+
+    if (!validateCPF(buyerCpf.value)) {
+      currentStep.value = 0;
+      await nextTick();
+      inscricaoFormRef.value?.focusCpf();
+      return;
+    }
+
+    if (!selectedDistrictId.value || !selectedChurchId.value) {
+      currentStep.value = 1;
+      generalErrors.district = selectedDistrictId.value ? "" : "Selecione um distrito.";
+      generalErrors.church = selectedChurchId.value ? "" : "Selecione uma igreja.";
+      return;
+    }
+
+    const cpfsValid = await ensureParticipantCpfsValid();
+    if (!cpfsValid) return;
+
+    people.forEach((person, index) => {
+      if (!person.districtId && selectedDistrictId.value) {
+        person.districtId = selectedDistrictId.value;
+      }
+      if (!person.churchId && selectedChurchId.value) {
+        person.churchId = selectedChurchId.value;
+      }
+      ensurePersonChurch(index);
+    });
+
+    const hasMissing = people.some(
+      (person) =>
+        !person.fullName.trim() ||
+        !person.birthDate ||
+        !person.gender ||
+        !person.districtId ||
+        !person.churchId
+    );
+    if (hasMissing) {
+      errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+      currentStep.value = 2;
+      return;
+    }
+
+    try {
+      submitting.value = true;
+      const payload = people.map((person) => ({
+        fullName: person.fullName,
+        cpf: normalizeCPF(person.cpf),
+        birthDate: person.birthDate,
+        gender: person.gender,
+        districtId: person.districtId,
+        churchId: person.churchId,
+        photoUrl: person.photoUrl
+      }));
+      const response = await eventStore.createBatchOrder(
+        normalizeCPF(buyerCpf.value),
+        selectedPaymentMethod.value,
+        payload
+      );
+      router.push({
+        name: "payment",
+        params: { slug: props.slug, orderId: response.orderId },
+        query: { fresh: "1" }
+      });
+    } catch (error: any) {
+      const message = error.response?.data?.message ?? "Erro ao criar inscricoes.";
+      errorMessage.value = message;
+      if (error.response?.status === 409) {
+        await handleConflictError(message);
+      }
+    } finally {
+      submitting.value = false;
+    }
+  };
+
+
+
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

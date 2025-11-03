@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model District {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  churches  Church[]
+  users     User[]    @relation("DistrictUsers")
+  registrations Registration[]
+}
+
+model Church {
+  id         String        @id @default(cuid())
+  name       String
+  districtId String
+  createdAt  DateTime      @default(now())
+  district   District      @relation(fields: [districtId], references: [id])
+  users      User[]        @relation("ChurchUsers")
+  registrations Registration[]
+
+  @@index([districtId])
+  @@unique([name, districtId])
+}
+
+model Event {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+  location    String
+  priceCents  Int          @default(0)
+  minAgeYears Int?
+  isFree      Boolean      @default(false)
+  isActive    Boolean      @default(true)
+  slug        String       @unique
+  paymentMethods String    @default("PIX_MP")
+  createdAt   DateTime     @default(now())
+  orders      Order[]
+  registrations Registration[]
+  lots        EventLot[]
+}
+
+model Order {
+  id               String          @id @default(cuid())
+  eventId          String
+  buyerCpf         String
+  totalCents       Int
+  status           String          @default("PENDING")
+  paymentMethod    String          @default("PIX_MP")
+  mpPaymentId      String?
+  mpPreferenceId   String?
+  preferenceVersion Int            @default(0)
+  pricingLotId     String?
+  externalReference String        @unique
+  expiresAt        DateTime
+  paidAt           DateTime?
+  manualPaymentReference String?
+  createdAt        DateTime        @default(now())
+  event            Event           @relation(fields: [eventId], references: [id])
+  pricingLot       EventLot?       @relation(fields: [pricingLotId], references: [id])
+  registrations    Registration[]
+  refunds          Refund[]
+  webhookEvents    WebhookEvent[]
+
+  @@index([eventId])
+  @@index([buyerCpf])
+  @@index([status])
+}
+
+model Registration {
+  id             String             @id @default(cuid())
+  orderId        String
+  eventId        String
+  fullName       String
+  cpf            String
+  birthDate      DateTime
+  ageYears       Int
+  priceCents     Int               @default(0)
+  districtId     String
+  churchId       String
+  photoUrl       String?
+  gender         String?
+  paymentMethod  String?
+  status         String             @default("DRAFT")
+  receiptPdfUrl  String?
+  checkinAt      DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime           @default(now())
+  order          Order              @relation(fields: [orderId], references: [id])
+  event          Event              @relation(fields: [eventId], references: [id])
+  district       District           @relation(fields: [districtId], references: [id])
+  church         Church             @relation(fields: [churchId], references: [id])
+  refunds        Refund[]
+
+  @@index([orderId])
+  @@index([eventId])
+  @@index([cpf])
+  @@index([status])
+  @@unique([eventId, cpf])
+}
+
+model Refund {
+  id            String       @id @default(cuid())
+  orderId       String
+  registrationId String
+  amountCents   Int
+  mpRefundId    String
+  reason        String?
+  createdAt     DateTime     @default(now())
+  order         Order        @relation(fields: [orderId], references: [id])
+  registration  Registration @relation(fields: [registrationId], references: [id])
+}
+
+model WebhookEvent {
+  id             String     @id @default(cuid())
+  provider       String
+  eventType      String
+  payloadJson    String
+  idempotencyKey String     @unique
+  processedAt    DateTime?
+  createdAt      DateTime   @default(now())
+  orderId        String?
+  order          Order?     @relation(fields: [orderId], references: [id])
+}
+
+model AuditLog {
+  id           String    @id @default(cuid())
+  actorUserId  String?
+  action       String
+  entity       String
+  entityId     String
+  metadataJson String?
+  createdAt    DateTime  @default(now())
+  actor        User?     @relation(fields: [actorUserId], references: [id])
+}
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  passwordHash    String
+  role            String
+  districtScopeId String?
+  churchScopeId   String?
+  createdAt       DateTime  @default(now())
+  districtScope   District? @relation("DistrictUsers", fields: [districtScopeId], references: [id])
+  churchScope     Church?   @relation("ChurchUsers", fields: [churchScopeId], references: [id])
+  auditLogs       AuditLog[]
+}
+
+model EventLot {
+  id         String   @id @default(cuid())
+  eventId    String
+  name       String
+  priceCents Int
+  startsAt   DateTime
+  endsAt     DateTime?
+  createdAt  DateTime @default(now())
+  event      Event    @relation(fields: [eventId], references: [id])
+  orders     Order[]
+
+  @@index([eventId])
+  @@unique([eventId, name])
+}

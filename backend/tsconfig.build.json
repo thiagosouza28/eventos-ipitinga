@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "sourceMap": false,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "exclude": ["test", "**/*.spec.ts", "**/*.test.ts", "scripts", "prisma/seed.ts"]
+}
