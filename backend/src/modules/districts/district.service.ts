@@ -336,6 +336,44 @@ export class DistrictService {
       createdAt: district.createdAt
     };
   }
+
+  async delete(id: string, actorId?: string) {
+    const district = await prisma.district.findUnique({
+      where: { id },
+      include: {
+        churches: {
+          select: {
+            id: true
+          }
+        }
+      }
+    });
+
+    if (!district) {
+      throw new NotFoundError("Distrito nao encontrado");
+    }
+
+    // Verificar se há igrejas vinculadas
+    if (district.churches.length > 0) {
+      throw new Error("Nao e possivel excluir distrito com igrejas vinculadas");
+    }
+
+    await prisma.district.delete({
+      where: { id }
+    });
+
+    await auditService.log({
+      action: "DISTRICT_DELETED",
+      entity: "district",
+      entityId: id,
+      actorId,
+      metadata: {
+        name: district.name
+      }
+    });
+
+    return { success: true };
+  }
 }
 
 export const districtService = new DistrictService();

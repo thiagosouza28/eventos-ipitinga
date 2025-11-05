@@ -7,6 +7,16 @@
       :details="errorDialog.details"
       @update:modelValue="errorDialog.open = $event"
     />
+    <ConfirmDialog
+      :model-value="confirmDelete.open"
+      :title="confirmDelete.title"
+      :description="confirmDelete.description"
+      type="danger"
+      confirm-label="Excluir"
+      cancel-label="Cancelar"
+      @confirm="handleConfirmDelete"
+      @cancel="confirmDelete.open = false"
+    />
     <BaseCard>
       <div class="flex items-center justify-between">
         <div>
@@ -27,62 +37,25 @@
     </BaseCard>
 
     <BaseCard>
-      <div class="grid gap-6 md:grid-cols-2">
-        <section class="space-y-4">
-          <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-            Cadastro de distritos
-          </h2>
-          <form @submit.prevent="submitDistrict" class="space-y-3">
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Nome do distrito <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="districtForm.name"
-                type="text"
-                required
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-              />
-              <p v-if="districtError" class="mt-1 text-xs text-red-600 dark:text-red-400">
-                {{ districtError }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Nome do Pastor Distrital <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="districtForm.pastorName"
-                type="text"
-                required
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                placeholder="Nome completo do pastor distrital"
-              />
-            </div>
-            <div class="flex gap-3">
-              <button
-                type="submit"
-                class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-              >
-                {{ editingDistrictId ? "Salvar" : "Adicionar" }}
-              </button>
-              <button
-                v-if="editingDistrictId"
-                type="button"
-                class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-                @click="resetDistrictForm"
-              >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
-
-        <section>
-          <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-            Distritos cadastrados
-          </h2>
-          <div class="mt-3 overflow-x-auto">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
+              Distritos cadastrados
+            </h2>
+            <p class="text-sm text-neutral-500">
+              Gerencie os distritos do sistema.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            @click="openNewDistrictForm"
+          >
+            + Novo Distrito
+          </button>
+        </div>
+        <div class="overflow-x-auto">
             <table class="w-full table-auto text-left text-sm">
               <thead class="text-xs uppercase tracking-wide text-neutral-500">
                 <tr>
@@ -98,12 +71,20 @@
                     {{ district.pastorName || "—" }}
                   </td>
                   <td class="py-2 text-right">
-                    <button
-                      class="text-sm text-primary-600 hover:underline"
-                      @click="startDistrictEdit(district)"
-                    >
-                      Editar
-                    </button>
+                    <div class="flex items-center justify-end gap-3">
+                      <button
+                        class="text-sm text-primary-600 hover:underline"
+                        @click="startDistrictEdit(district)"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        class="text-sm text-red-600 hover:underline"
+                        @click="confirmDeleteDistrict(district)"
+                      >
+                        Excluir
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="!catalog.districts.length">
@@ -113,8 +94,7 @@
                 </tr>
               </tbody>
             </table>
-          </div>
-        </section>
+        </div>
       </div>
     </BaseCard>
 
@@ -130,7 +110,6 @@
             </p>
           </div>
           <button
-            v-if="!showChurchForm"
             type="button"
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
             @click="openNewChurchForm"
@@ -139,165 +118,28 @@
           </button>
         </div>
 
-        <div v-if="showChurchForm" class="space-y-4">
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Distrito (filtro)
-              </label>
-              <select
-                v-model="selectedDistrictId"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-              >
-                <option value="">Todos os distritos</option>
-                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
-                  {{ district.name }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Nome da igreja <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="churchForm.name"
-                type="text"
-                required
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                placeholder="Nome completo"
-              />
-            </div>
-          </div>
-
+        <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Distrito vinculado <span class="text-red-500">*</span>
+              Distrito (filtro)
             </label>
             <select
-              v-model="churchForm.districtId"
-              required
+              v-model="selectedDistrictId"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
             >
-              <option value="">Selecione</option>
+              <option value="">Todos os distritos</option>
               <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
                 {{ district.name }}
               </option>
             </select>
           </div>
-
-          <div class="border-t border-neutral-200 pt-4 dark:border-neutral-700">
-            <h3 class="text-sm font-semibold text-neutral-700 dark:text-neutral-100 mb-3">
-              Dados do Diretor Jovem
-            </h3>
-            <div class="grid gap-4 md:grid-cols-2">
-              <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                  Nome do Diretor Jovem <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="churchForm.directorName"
-                  type="text"
-                  required
-                  class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                  placeholder="Nome completo"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                  CPF <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="churchForm.directorCpf"
-                  type="text"
-                  required
-                  maxlength="14"
-                  class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                  placeholder="000.000.000-00"
-                  @input="formatDirectorCpf"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                  Data de nascimento <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="churchForm.directorBirthDate"
-                  type="date"
-                  required
-                  class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                  E-mail <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="churchForm.directorEmail"
-                  type="email"
-                  required
-                  class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                  WhatsApp <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="churchForm.directorWhatsapp"
-                  type="text"
-                  required
-                  class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                  placeholder="(00) 00000-0000"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                  Foto de perfil 3x4
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  @change="handleDirectorPhotoUpload"
-                  class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-                />
-                <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-                  Formato recomendado: 3x4 (retrato)
-                </p>
-                <div v-if="churchForm.directorPhotoUrl" class="mt-2">
-                  <img
-                    :src="churchForm.directorPhotoUrl"
-                    alt="Foto do diretor"
-                    class="h-24 w-18 rounded object-cover border border-neutral-300 dark:border-neutral-700"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <button
-              type="button"
-              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-              @click="submitChurch"
-            >
-              {{ editingChurchId ? "Salvar igreja" : "Adicionar igreja" }}
-            </button>
-            <button
-              type="button"
-              class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-              @click="resetChurchForm"
-            >
-              Cancelar
-            </button>
-          </div>
-
-          <p v-if="churchError" class="text-xs text-red-600 dark:text-red-400">
-            {{ churchError }}
-          </p>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="mt-6">
+          <h3 class="mb-3 text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+            Igrejas cadastradas
+          </h3>
+          <div class="overflow-x-auto">
           <table class="w-full table-auto text-left text-sm">
             <thead class="text-xs uppercase tracking-wide text-neutral-500">
               <tr>
@@ -317,12 +159,20 @@
                   {{ findDistrictPastorName(church.districtId) || "—" }}
                 </td>
                 <td class="py-2 text-right">
-                  <button
-                    class="text-sm text-primary-600 hover:underline"
-                    @click="startChurchEdit(church)"
-                  >
-                    Editar
-                  </button>
+                  <div class="flex items-center justify-end gap-3">
+                    <button
+                      class="text-sm text-primary-600 hover:underline"
+                      @click="startChurchEdit(church)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="text-sm text-red-600 hover:underline"
+                      @click="confirmDeleteChurch(church)"
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </td>
               </tr>
               <tr v-if="!filteredChurches.length">
@@ -332,9 +182,209 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </BaseCard>
+
+    <!-- Modal de Distrito -->
+    <Modal
+      :model-value="showDistrictModal"
+      :title="editingDistrictId ? 'Editar Distrito' : 'Novo Distrito'"
+      @update:modelValue="showDistrictModal = $event"
+    >
+      <form @submit.prevent="submitDistrict" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Nome do distrito <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="districtForm.name"
+            type="text"
+            required
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            placeholder="Nome do distrito"
+          />
+          <p v-if="districtError" class="mt-1 text-xs text-red-600 dark:text-red-400">
+            {{ districtError }}
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Nome do Pastor Distrital <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="districtForm.pastorName"
+            type="text"
+            required
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            placeholder="Nome completo do pastor distrital"
+          />
+        </div>
+        <div class="flex justify-end gap-3 pt-4">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="resetDistrictForm"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+          >
+            {{ editingDistrictId ? "Salvar" : "Adicionar" }}
+          </button>
+        </div>
+      </form>
+    </Modal>
+
+    <!-- Modal de Igreja -->
+    <Modal
+      :model-value="showChurchModal"
+      :title="editingChurchId ? 'Editar Igreja' : 'Nova Igreja'"
+      @update:modelValue="showChurchModal = $event"
+    >
+      <form @submit.prevent="submitChurch" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Nome da igreja <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="churchForm.name"
+            type="text"
+            required
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            placeholder="Nome completo"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Distrito vinculado <span class="text-red-500">*</span>
+          </label>
+          <select
+            v-model="churchForm.districtId"
+            required
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">Selecione</option>
+            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+              {{ district.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="border-t border-neutral-200 pt-4 dark:border-neutral-700">
+          <h3 class="mb-3 text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+            Dados do Diretor Jovem
+          </h3>
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Nome do Diretor Jovem <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="churchForm.directorName"
+                type="text"
+                required
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                placeholder="Nome completo"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                CPF <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="churchForm.directorCpf"
+                type="text"
+                required
+                maxlength="14"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                placeholder="000.000.000-00"
+                @input="formatDirectorCpf"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Data de nascimento <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="churchForm.directorBirthDate"
+                type="date"
+                required
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                E-mail <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="churchForm.directorEmail"
+                type="email"
+                required
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                placeholder="email@exemplo.com"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                WhatsApp <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="churchForm.directorWhatsapp"
+                type="text"
+                required
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Foto de perfil 3x4
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                @change="handleDirectorPhotoUpload"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              />
+              <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                Formato recomendado: 3x4 (retrato)
+              </p>
+              <div v-if="churchForm.directorPhotoUrl" class="mt-2">
+                <img
+                  :src="churchForm.directorPhotoUrl"
+                  alt="Foto do diretor"
+                  class="h-24 w-18 rounded object-cover border border-neutral-300 dark:border-neutral-700"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p v-if="churchError" class="text-xs text-red-600 dark:text-red-400">
+          {{ churchError }}
+        </p>
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="resetChurchForm"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+          >
+            {{ editingChurchId ? "Salvar igreja" : "Adicionar igreja" }}
+          </button>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>
 
@@ -344,6 +394,8 @@ import { RouterLink } from "vue-router";
 
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
+import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
+import Modal from "../../components/ui/Modal.vue";
 import { useCatalogStore } from "../../stores/catalog";
 import type { Church, District } from "../../types/api";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
@@ -351,11 +403,12 @@ import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
 const catalog = useCatalogStore();
 
 const editingDistrictId = ref<string | null>(null);
+const showDistrictModal = ref(false);
 const districtForm = reactive({ name: "", pastorName: "" });
 const districtError = ref("");
 
 const editingChurchId = ref<string | null>(null);
-const showChurchForm = ref(false);
+const showChurchModal = ref(false);
 const churchForm = reactive({
   name: "",
   districtId: "",
@@ -374,6 +427,14 @@ const errorDialog = reactive({
   title: "Ocorreu um erro",
   message: "",
   details: ""
+});
+
+const confirmDelete = reactive({
+  open: false,
+  title: "",
+  description: "",
+  type: "" as "district" | "church",
+  id: "" as string | null
 });
 
 const extractErrorInfo = (error: unknown) => {
@@ -416,11 +477,20 @@ const findDistrictPastorName = (districtId: string) => {
   return catalog.districts.find((district) => district.id === districtId)?.pastorName ?? null;
 };
 
+const openNewDistrictForm = () => {
+  editingDistrictId.value = null;
+  districtForm.name = "";
+  districtForm.pastorName = "";
+  districtError.value = "";
+  showDistrictModal.value = true;
+};
+
 const resetDistrictForm = () => {
   editingDistrictId.value = null;
   districtForm.name = "";
   districtForm.pastorName = "";
   districtError.value = "";
+  showDistrictModal.value = false;
 };
 
 const submitDistrict = async () => {
@@ -477,6 +547,7 @@ const startDistrictEdit = (district: District) => {
   districtForm.name = String(district.name || "");
   districtForm.pastorName = String(district.pastorName || "");
   districtError.value = "";
+  showDistrictModal.value = true;
 };
 
 const formatDirectorCpf = (event: Event) => {
@@ -497,6 +568,20 @@ const handleDirectorPhotoUpload = (event: Event) => {
   reader.readAsDataURL(file);
 };
 
+const openNewChurchForm = () => {
+  editingChurchId.value = null;
+  churchForm.name = "";
+  churchForm.districtId = selectedDistrictId.value || "";
+  churchForm.directorName = "";
+  churchForm.directorCpf = "";
+  churchForm.directorBirthDate = "";
+  churchForm.directorEmail = "";
+  churchForm.directorWhatsapp = "";
+  churchForm.directorPhotoUrl = "";
+  churchError.value = "";
+  showChurchModal.value = true;
+};
+
 const resetChurchForm = () => {
   editingChurchId.value = null;
   churchForm.name = "";
@@ -508,6 +593,7 @@ const resetChurchForm = () => {
   churchForm.directorWhatsapp = "";
   churchForm.directorPhotoUrl = "";
   churchError.value = "";
+  showChurchModal.value = false;
 };
 
 const submitChurch = async () => {
@@ -570,7 +656,17 @@ const submitChurch = async () => {
       await catalog.createChurch(payload);
     }
     await catalog.loadChurches(selectedDistrictId.value || undefined);
-    resetChurchForm();
+    editingChurchId.value = null;
+    churchForm.name = "";
+    churchForm.districtId = selectedDistrictId.value || "";
+    churchForm.directorName = "";
+    churchForm.directorCpf = "";
+    churchForm.directorBirthDate = "";
+    churchForm.directorEmail = "";
+    churchForm.directorWhatsapp = "";
+    churchForm.directorPhotoUrl = "";
+    churchError.value = "";
+    showChurchModal.value = false;
   } catch (error) {
     showError(
       editingChurchId.value ? "Falha ao atualizar igreja" : "Falha ao criar igreja",
@@ -593,6 +689,44 @@ const startChurchEdit = (church: Church) => {
   churchForm.directorPhotoUrl = String((church as any).directorPhotoUrl || "");
   selectedDistrictId.value = String(church.districtId || "");
   churchError.value = "";
+  showChurchModal.value = true;
+};
+
+const confirmDeleteDistrict = (district: District) => {
+  confirmDelete.open = true;
+  confirmDelete.title = "Excluir Distrito";
+  confirmDelete.description = `Tem certeza que deseja excluir o distrito "${district.name}"? Esta ação não pode ser desfeita.`;
+  confirmDelete.type = "district";
+  confirmDelete.id = district.id;
+};
+
+const confirmDeleteChurch = (church: Church) => {
+  confirmDelete.open = true;
+  confirmDelete.title = "Excluir Igreja";
+  confirmDelete.description = `Tem certeza que deseja excluir a igreja "${church.name}"? Esta ação não pode ser desfeita.`;
+  confirmDelete.type = "church";
+  confirmDelete.id = church.id;
+};
+
+const handleConfirmDelete = async () => {
+  if (!confirmDelete.id) return;
+
+  try {
+    if (confirmDelete.type === "district") {
+      await catalog.deleteDistrict(confirmDelete.id);
+    } else if (confirmDelete.type === "church") {
+      await catalog.deleteChurch(confirmDelete.id);
+    }
+    confirmDelete.open = false;
+    confirmDelete.id = null;
+  } catch (error: any) {
+    const errorMessage = error?.response?.data?.message || error?.message || "Erro ao excluir";
+    showError(
+      confirmDelete.type === "district" ? "Falha ao excluir distrito" : "Falha ao excluir igreja",
+      error
+    );
+    confirmDelete.open = false;
+  }
 };
 
 watch(selectedDistrictId, () => {

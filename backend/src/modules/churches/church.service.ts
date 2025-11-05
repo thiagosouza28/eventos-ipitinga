@@ -446,6 +446,45 @@ export class ChurchService {
       } : null
     };
   }
+
+  async delete(id: string, actorId?: string) {
+    const church = await prisma.church.findUnique({
+      where: { id },
+      include: {
+        registrations: {
+          select: {
+            id: true
+          }
+        }
+      }
+    });
+
+    if (!church) {
+      throw new NotFoundError("Igreja nao encontrada");
+    }
+
+    // Verificar se há registros vinculados
+    if (church.registrations.length > 0) {
+      throw new Error("Nao e possivel excluir igreja com registros vinculados");
+    }
+
+    await prisma.church.delete({
+      where: { id }
+    });
+
+    await auditService.log({
+      action: "CHURCH_DELETED",
+      entity: "church",
+      entityId: id,
+      actorId,
+      metadata: {
+        name: church.name,
+        districtId: church.districtId
+      }
+    });
+
+    return { success: true };
+  }
 }
 
 export const churchService = new ChurchService();

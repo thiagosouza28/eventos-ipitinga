@@ -113,3 +113,8 @@ export const updateChurchHandler = async (request: Request, response: Response) 
   const church = await churchService.update(request.params.id, payload, request.user?.id);
   return response.json(church);
 };
+
+export const deleteChurchHandler = async (request: Request, response: Response) => {
+  await churchService.delete(request.params.id, request.user?.id);
+  return response.status(204).send();
+};

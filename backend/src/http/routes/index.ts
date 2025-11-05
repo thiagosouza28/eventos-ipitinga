@@ -6,12 +6,14 @@ import { loginHandler } from "../../modules/auth/auth.controller";
 import {
   createChurchHandler,
   listChurchesHandler,
-  updateChurchHandler
+  updateChurchHandler,
+  deleteChurchHandler
 } from "../../modules/churches/church.controller";
 import {
   createDistrictHandler,
   listDistrictsHandler,
-  updateDistrictHandler
+  updateDistrictHandler,
+  deleteDistrictHandler
 } from "../../modules/districts/district.controller";
 import {
   createEventHandler,
@@ -108,10 +110,12 @@ router.get(
 );
 router.post("/admin/districts", authorize("AdminGeral"), createDistrictHandler);
 router.patch("/admin/districts/:id", authorize("AdminGeral"), updateDistrictHandler);
+router.delete("/admin/districts/:id", authorize("AdminGeral"), deleteDistrictHandler);
 
 router.get("/admin/churches", authorize("AdminGeral", "AdminDistrital"), listChurchesHandler);
 router.post("/admin/churches", authorize("AdminGeral", "AdminDistrital"), createChurchHandler);
 router.patch("/admin/churches/:id", authorize("AdminGeral", "AdminDistrital"), updateChurchHandler);
+router.delete("/admin/churches/:id", authorize("AdminGeral", "AdminDistrital"), deleteChurchHandler);
 
 router.get("/admin/events", authorize("AdminGeral", "AdminDistrital"), listEventsAdminHandler);
 router.post("/admin/events", authorize("AdminGeral"), createEventHandler);

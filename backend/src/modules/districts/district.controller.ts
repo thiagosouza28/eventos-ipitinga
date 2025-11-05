@@ -118,3 +118,8 @@ export const updateDistrictHandler = async (request: Request, response: Response
   const district = await districtService.update(request.params.id, payload, request.user?.id);
   return response.json(district);
 };
+
+export const deleteDistrictHandler = async (request: Request, response: Response) => {
+  await districtService.delete(request.params.id, request.user?.id);
+  return response.status(204).send();
+};

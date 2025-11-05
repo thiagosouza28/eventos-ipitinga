@@ -157,6 +157,16 @@ export const useCatalogStore = defineStore("catalog", () => {
     }
   };
 
+  const deleteDistrict = async (id: string) => {
+    await api.delete(`/admin/districts/${id}`);
+    await loadDistricts();
+  };
+
+  const deleteChurch = async (id: string) => {
+    await api.delete(`/admin/churches/${id}`);
+    await refreshChurches();
+  };
+
   return {
     districts,
     churches,
@@ -164,7 +174,9 @@ export const useCatalogStore = defineStore("catalog", () => {
     loadChurches,
     createDistrict,
     updateDistrict,
+    deleteDistrict,
     createChurch,
-    updateChurch
+    updateChurch,
+    deleteChurch
   };
 });

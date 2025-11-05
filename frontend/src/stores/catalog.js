@@ -46,6 +46,14 @@ export const useCatalogStore = defineStore("catalog", () => {
             await refreshChurches();
         }
     };
+    const deleteDistrict = async (id) => {
+        await api.delete(`/admin/districts/${id}`);
+        await loadDistricts();
+    };
+    const deleteChurch = async (id) => {
+        await api.delete(`/admin/churches/${id}`);
+        await refreshChurches();
+    };
     return {
         districts,
         churches,
@@ -53,8 +61,10 @@ export const useCatalogStore = defineStore("catalog", () => {
         loadChurches,
         createDistrict,
         updateDistrict,
+        deleteDistrict,
         createChurch,
-        updateChurch
+        updateChurch,
+        deleteChurch
     };
 });
 //# sourceMappingURL=catalog.js.map

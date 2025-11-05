@@ -400,14 +400,62 @@ export class OrderService {
   }
 
   async list(filters: { eventId?: string; status?: OrderStatusValue }) {
+    // Verificar se as colunas existem antes de usar
+    const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("Order")`);
+    const columnNames = columns.map(col => col.name);
+    const hasFeeCents = columnNames.includes("feeCents");
+    const hasNetAmountCents = columnNames.includes("netAmountCents");
+
+    // Usar select para evitar problemas com colunas que podem não existir
     return prisma.order.findMany({
       where: {
         eventId: filters.eventId,
         status: filters.status
       },
-      include: {
-        registrations: true,
-        refunds: true
+      select: {
+        id: true,
+        eventId: true,
+        buyerName: true,
+        buyerCpf: true,
+        buyerEmail: true,
+        buyerPhone: true,
+        totalCents: true,
+        status: true,
+        paymentMethod: true,
+        mpPreferenceId: true,
+        mpPaymentId: true,
+        expiresAt: true,
+        createdAt: true,
+        updatedAt: true,
+        ...(hasFeeCents && { feeCents: true }),
+        ...(hasNetAmountCents && { netAmountCents: true }),
+        registrations: {
+          select: {
+            id: true,
+            eventId: true,
+            orderId: true,
+            name: true,
+            cpf: true,
+            birthDate: true,
+            email: true,
+            phone: true,
+            districtId: true,
+            churchId: true,
+            priceCents: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        },
+        refunds: {
+          select: {
+            id: true,
+            orderId: true,
+            amountCents: true,
+            reason: true,
+            createdAt: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     });
