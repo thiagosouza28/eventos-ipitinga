@@ -2,7 +2,7 @@
   <div :class="{ dark: isDark }">
     <div class="min-h-screen bg-neutral-100 text-neutral-900 transition-colors dark:bg-neutral-950 dark:text-neutral-100">
       <header class="border-b border-neutral-200 bg-white/80 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/80">
-        <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:flex-nowrap sm:gap-4 sm:px-6">
+        <div class="mx-auto flex w-full max-w-[95%] xl:max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:flex-nowrap sm:gap-4 sm:px-6">
           <RouterLink to="/" class="flex items-center gap-2 text-lg font-semibold">
             <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white">
               CI
@@ -36,7 +36,7 @@
         </div>
       </header>
 
-      <div class="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-6xl flex-col px-4 py-10 sm:px-6">
+      <div class="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[95%] xl:max-w-[1600px] flex-col px-4 py-10 sm:px-6">
         <main class="flex-1 pb-10">
           <RouterView />
         </main>
