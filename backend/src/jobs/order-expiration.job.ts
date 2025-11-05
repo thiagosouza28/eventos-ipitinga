@@ -22,7 +22,10 @@ export const cancelExpiredOrders = async () => {
         }
       ]
     },
-    include: { registrations: true }
+    select: {
+      id: true,
+      registrations: true
+    }
   });
 
   if (!expiredOrders.length) return;

@@ -50,9 +50,17 @@ const bulkMarkPaidSchema = z.object({
 });
 
 export const listRegistrationsHandler = async (request: Request, response: Response) => {
-  const filters = listSchema.parse(request.query);
-  const registrations = await registrationService.list(filters);
-  return response.json(registrations);
+  try {
+    const filters = listSchema.parse(request.query);
+    const registrations = await registrationService.list(filters);
+    return response.json(registrations);
+  } catch (error: any) {
+    console.error("Erro ao listar inscrições:", error);
+    return response.status(500).json({
+      message: "Erro ao listar inscrições",
+      error: error.message
+    });
+  }
 };
 
 export const registrationsReportHandler = async (request: Request, response: Response) => {
@@ -90,7 +98,7 @@ export const refundRegistrationHandler = async (request: Request, response: Resp
   const payload = refundSchema.parse(request.body);
   const registration = await registrationService.findById(request.params.id);
   if (!registration?.order) {
-    throw new NotFoundError("Inscricao nao encontrada");
+    throw new NotFoundError("Inscrição não encontrada");
   }
   const amountCents = payload.amountCents ?? registration.priceCents ?? registration.event.priceCents;
 

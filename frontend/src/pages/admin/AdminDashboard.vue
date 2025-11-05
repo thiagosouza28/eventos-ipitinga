@@ -30,6 +30,12 @@
             Ver inscricoes
           </RouterLink>
           <RouterLink
+            to="/admin/financial"
+            class="inline-flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-500 sm:w-auto"
+          >
+            Dashboard Financeiro
+          </RouterLink>
+          <RouterLink
             v-if="checkinTarget"
             :to="`/admin/checkin/${checkinTarget}`"
             class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 sm:w-auto"
@@ -109,7 +115,7 @@
                     target="_blank"
                     class="text-sm text-primary-600 hover:text-primary-500"
                   >
-                    Ver publico
+                    Ver público
                   </RouterLink>
                   <RouterLink
                     :to="`/admin/checkin/${event.id}`"

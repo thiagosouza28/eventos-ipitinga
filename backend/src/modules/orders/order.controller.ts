@@ -3,8 +3,10 @@ import { z } from "zod";
 
 import { orderService } from "./order.service";
 import { registrationService } from "../registrations/registration.service";
+import { paymentService } from "../../services/payment.service";
 import { PaymentMethod } from "../../config/payment-methods";
 import { Gender } from "../../config/gender";
+import { BulkPaymentDto } from "./dtos/bulk-payment.dto";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 
@@ -54,21 +56,32 @@ const participantCheckSchema = z.object({
 
 export const startInscriptionHandler = async (request: Request, response: Response) => {
   const payload = startSchema.parse(request.body);
-  const pending = await orderService.findPendingOrder(payload.eventId, payload.buyerCpf);
+  const pendingOrders = await orderService.findPendingOrder(payload.eventId, payload.buyerCpf);
+  
+  const pendingDetails = await Promise.all(
+    pendingOrders.map(async (order) => ({
+      orderId: order.id,
+      expiresAt: order.expiresAt,
+      totalCents: order.totalCents,
+      registrations: order.registrations.map(reg => ({
+        id: reg.id,
+        fullName: reg.fullName,
+        cpf: reg.cpf
+      })),
+      payment: await orderService.getPayment(order.id)
+    }))
+  );
+
   return response.json({
-    orderPending: pending
-      ? {
-          orderId: pending.id,
-          expiresAt: pending.expiresAt,
-          payment: await orderService.getPayment(pending.id)
-        }
-      : null
+    pendingOrders: pendingDetails
   });
 };
 
 export const createBatchInscriptionHandler = async (request: Request, response: Response) => {
   const payload = batchSchema.parse(request.body);
-  const result = await orderService.createBatch(payload);
+  const actorId = request.user?.id;
+  const actorRole = request.user?.role;
+  const result = await orderService.createBatch(payload, actorId, actorRole);
   return response.status(201).json(result);
 };
 
@@ -76,6 +89,19 @@ export const getOrderPaymentHandler = async (request: Request, response: Respons
   const { orderId } = request.params;
   const payment = await orderService.getPayment(orderId);
   return response.json(payment);
+};
+
+export const getPaymentByPreferenceIdHandler = async (request: Request, response: Response) => {
+  const { preferenceId } = request.params;
+  
+  try {
+    const preference = await paymentService.getPreference(preferenceId);
+    return response.json(preference);
+  } catch (error: any) {
+    return response.status(error.statusCode || 500).json({
+      message: error.message || "Erro ao buscar pagamento"
+    });
+  }
 };
 
 export const markOrderPaidHandler = async (request: Request, response: Response) => {
@@ -101,6 +127,17 @@ export const listOrdersHandler = async (request: Request, response: Response) =>
   return response.json(orders);
 };
 
+export const listPendingOrdersHandler = async (request: Request, response: Response) => {
+  const schema = z.object({
+    cpf: z.string()
+      .min(11)
+      .transform((value) => value.replace(/\D/g, ""))
+  });
+  const query = schema.parse(request.query);
+  const orders = await orderService.findAllPendingOrders(query.cpf);
+  return response.json({ orders });
+};
+
 export const checkParticipantCpfHandler = async (request: Request, response: Response) => {
   const payload = participantCheckSchema.parse(request.body);
   const [existsInEvent, profile] = await Promise.all([
@@ -111,5 +148,30 @@ export const checkParticipantCpfHandler = async (request: Request, response: Res
     existsInEvent,
     profile
   });
+};
+
+export const bulkPaymentHandler = async (request: Request, response: Response) => {
+  const payload = BulkPaymentDto.parse(request.body);
+  
+  if (!payload.orderIds || payload.orderIds.length === 0) {
+    return response.status(400).json({ message: "Nenhum pedido informado" });
+  }
+
+  try {
+    const payment = await paymentService.createBulkPreference(payload.orderIds);
+    
+    return response.json({
+      paymentId: payment.preferenceId,
+      orderCount: payment.orderCount,
+      totalCents: payment.totalCents,
+      eventNames: payment.eventNames,
+      initPoint: payment.initPoint,
+      pixQrData: payment.pixQrData
+    });
+  } catch (error: any) {
+    return response.status(error.statusCode || 500).json({
+      message: error.message || "Erro ao processar pagamento em lote"
+    });
+  }
 };
 

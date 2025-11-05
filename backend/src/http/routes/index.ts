@@ -29,11 +29,14 @@ import {
 } from "../../modules/events/event-lot.controller";
 import {
   getOrderPaymentHandler,
+  getPaymentByPreferenceIdHandler,
   listOrdersHandler,
   startInscriptionHandler,
   createBatchInscriptionHandler,
   checkParticipantCpfHandler,
-  markOrderPaidHandler
+  markOrderPaidHandler,
+  listPendingOrdersHandler,
+  bulkPaymentHandler
 } from "../../modules/orders/order.controller";
 import {
   cancelRegistrationHandler,
@@ -58,6 +61,19 @@ import {
   validateCheckinLinkHandler,
   confirmCheckinLinkHandler
 } from "../../modules/checkin/checkin.controller";
+import {
+  createExpenseHandler,
+  updateExpenseHandler,
+  deleteExpenseHandler,
+  listExpensesByEventHandler,
+  getExpenseHandler
+} from "../../modules/expenses/expense.controller";
+import {
+  getEventSummaryHandler,
+  getDistrictSummaryHandler,
+  getChurchSummaryHandler,
+  getGeneralSummaryHandler
+} from "../../modules/financial/financial.controller";
 
 export const router = Router();
 
@@ -66,8 +82,11 @@ router.get("/events", listPublicEventsHandler);
 router.get("/events/:slug", getEventBySlugHandler);
 router.post("/inscriptions/start", startInscriptionHandler);
 router.post("/inscriptions/check", checkParticipantCpfHandler);
+router.get("/orders/pending", listPendingOrdersHandler);
+router.post("/orders/bulk-payment", bulkPaymentHandler);
 router.post("/inscriptions/batch", createBatchInscriptionHandler);
 router.get("/payments/order/:orderId", getOrderPaymentHandler);
+router.get("/payments/preference/:preferenceId", getPaymentByPreferenceIdHandler);
 router.post("/receipts/lookup", lookupReceiptsHandler);
 router.get("/receipts/:registrationId.pdf", downloadReceiptHandler);
 router.get("/checkin/validate", validateCheckinLinkHandler);
@@ -183,3 +202,16 @@ router.post(
   authorize("AdminGeral", "AdminDistrital", "DiretorLocal"),
   confirmAdminCheckinHandler
 );
+
+// Expenses
+router.get("/admin/events/:eventId/expenses", authorize("AdminGeral", "AdminDistrital"), listExpensesByEventHandler);
+router.post("/admin/events/:eventId/expenses", authorize("AdminGeral", "AdminDistrital"), createExpenseHandler);
+router.get("/admin/expenses/:id", authorize("AdminGeral", "AdminDistrital"), getExpenseHandler);
+router.patch("/admin/expenses/:id", authorize("AdminGeral", "AdminDistrital"), updateExpenseHandler);
+router.delete("/admin/expenses/:id", authorize("AdminGeral"), deleteExpenseHandler);
+
+// Financial Dashboard
+router.get("/admin/financial/summary", authorize("AdminGeral", "AdminDistrital"), getGeneralSummaryHandler);
+router.get("/admin/financial/events/:eventId", authorize("AdminGeral", "AdminDistrital"), getEventSummaryHandler);
+router.get("/admin/financial/events/:eventId/districts/:districtId", authorize("AdminGeral", "AdminDistrital"), getDistrictSummaryHandler);
+router.get("/admin/financial/events/:eventId/churches/:churchId", authorize("AdminGeral", "AdminDistrital"), getChurchSummaryHandler);

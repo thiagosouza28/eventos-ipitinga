@@ -191,7 +191,7 @@ const search = async () => {
   clearResults();
 
   if (digits.length !== 11) {
-    errorMessage.value = "Informe um CPF valido com 11 digitos.";
+    errorMessage.value = "Informe um CPF válido com 11 dígitos.";
     return;
   }
   if (!birthDate.value) {
@@ -214,7 +214,7 @@ const search = async () => {
       emptyMessage.value = "Nenhum comprovante encontrado para os dados informados.";
     }
   } catch (error: any) {
-    errorMessage.value = error.response?.data?.message ?? "Nao foi possivel consultar.";
+    errorMessage.value = error.response?.data?.message ?? "Não foi possível consultar.";
   } finally {
     loading.value = false;
   }

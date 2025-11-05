@@ -241,11 +241,11 @@ export class CheckinService {
   }) {
     const configuredPassword = env.CHECKIN_CONFIRM_PASSWORD?.trim();
     if (!configuredPassword) {
-      throw new AppError("Senha de confirmacao nao configurada. Contate a administracao.", 500);
+      throw new AppError("Senha de confirmação não configurada. Contate a administração.", 500);
     }
 
     if (configuredPassword !== password.trim()) {
-      throw new AppError("Senha de confirmacao invalida.", 401);
+      throw new AppError("Senha de confirmação inválida.", 401);
     }
 
     const registration = await prisma.registration.findUnique({

@@ -6,8 +6,8 @@
         <p class="text-neutral-500 dark:text-neutral-400">
           {{
             isFreeEvent
-              ? "Este evento e gratuito. As inscricoes foram confirmadas automaticamente e nenhum pagamento e necessario."
-              : "Conclua o pagamento para garantir as inscricoes. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente."
+              ? "Este evento é gratuito. As inscrições foram confirmadas automaticamente e nenhum pagamento é necessário."
+              : "Conclua o pagamento para garantir as inscrições. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente."
           }}
         </p>
       </div>
@@ -42,7 +42,7 @@
               <span>{{ eventStore.event?.title ?? "Carregando..." }}</span>
             </div>
               <div>
-                <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscricao</span>
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscrição</span>
                 <span>{{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents) }}</span>
               </div>
               <div>
@@ -101,7 +101,7 @@
               {{ manualInstructions }}
             </p>
             <p class="text-xs text-neutral-400 dark:text-neutral-500">
-              Apos a confirmacao pela tesouraria, este painel sera atualizado automaticamente.
+              Após a confirmação pela tesouraria, este painel será atualizado automaticamente.
             </p>
             <RouterLink
               :to="{ name: 'event', params: { slug: props.slug } }"
@@ -142,7 +142,7 @@
                   :value="payment.pixQrData.qr_code"
                 />
                 <p v-else class="text-sm text-neutral-400">
-                  O QR Code sera exibido assim que a preferencia de pagamento for criada.
+                  O QR Code será exibido assim que a preferência de pagamento for criada.
                 </p>
               </div>
             </section>
@@ -150,19 +150,18 @@
             <section class="space-y-3">
               <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                Prefere cartao? Abra o checkout seguro do Mercado Pago em uma nova aba.
+                Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.
               </p>
-              <a
+              <button
                 v-if="payment.initPoint"
-                :href="payment.initPoint"
-                target="_blank"
-                rel="noopener"
+                type="button"
+                @click="handleOpenCheckout"
                 class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
               >
                 Abrir checkout
-              </a>
+              </button>
               <p v-if="!isPaid" class="text-xs text-neutral-400">
-                Assim que o pagamento for aprovado, o status muda automaticamente. Se ja pagou, clique abaixo para verificar manualmente.
+                Assim que o pagamento for aprovado, o status muda automaticamente. Se já pagou, clique abaixo para verificar manualmente.
               </p>
               <button
                 v-if="!isPaid"
@@ -181,7 +180,7 @@
           <section class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300">
             <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Nenhuma acao necessaria</h2>
             <p class="mt-2">
-              Suas inscricoes estao confirmadas. Os recibos serao gerados automaticamente e voce podera consulta-los na area de comprovantes.
+              Suas inscrições estão confirmadas. Os recibos serão gerados automaticamente e você poderá consultá-los na área de comprovantes.
             </p>
           </section>
         </div>
@@ -197,7 +196,7 @@
           {{
             isFreeEvent
               ? "Os recibos estao disponiveis para consulta com o CPF e a data de nascimento dos participantes."
-              : "Os recibos sao gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes."
+              : "Os recibos são gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes."
           }}
         </p>
         <RouterLink
@@ -285,7 +284,7 @@ const manualInstructions = computed(() => {
     case "CASH":
       return "Dirija-se ao caixa indicado e informe o CPF utilizado na inscricao para concluir o pagamento.";
     case "CARD_FULL":
-      return "O pagamento sera efetuado presencialmente via maquina de cartao. Lembre-se de levar um documento com foto.";
+      return "O pagamento será efetuado presencialmente via máquina de cartão. Lembre-se de levar um documento com foto.";
     case "CARD_INSTALLMENTS":
       return "O parcelamento e realizado presencialmente e as taxas sao repassadas ao participante.";
     default:
@@ -297,11 +296,11 @@ const statusTitle = computed(() => {
   if (isFreeEvent.value) return "Inscricoes confirmadas";
   if (isManualPayment.value) {
     if (payment.value?.status === "PAID") return "Pagamento registrado";
-    return "Pagamento pendente de confirmacao";
+    return "Pagamento pendente de confirmação";
   }
   if (payment.value?.status === "PAID") return "Pagamento aprovado";
   if (payment.value?.status === "CANCELED") return "Pagamento cancelado";
-  return "Aguardando confirmacao";
+  return "Aguardando confirmação";
 });
 
 const statusMessage = computed(() => {
@@ -389,14 +388,36 @@ const copyPixCode = async () => {
   alert("Codigo Pix copiado!");
 };
 
+// Função para abrir checkout - garante que apenas este pedido seja processado
+const handleOpenCheckout = () => {
+  // Garantir que temos o initPoint para APENAS este pedido específico
+  if (!payment.value?.initPoint) {
+    console.error("initPoint não disponível para o pedido", props.orderId);
+    return;
+  }
+  
+  // Usar APENAS o initPoint do pagamento atual, que foi gerado para props.orderId
+  // Não usar nenhum estado compartilhado ou seleção de outros pedidos
+  const singleOrderInitPoint = payment.value.initPoint;
+  
+  // Abrir em nova aba o checkout para APENAS este pedido
+  window.open(singleOrderInitPoint, "_blank", "noopener,noreferrer");
+};
+
 const startPolling = () => {
   stopPolling();
   pollHandle.value = window.setInterval(async () => {
     await loadPayment();
     if (payment.value?.status === "PAID" || payment.value?.status === "CANCELED") {
       stopPolling();
+      // Se foi pago, recarregar a página após 2 segundos para mostrar confirmação
+      if (payment.value?.status === "PAID") {
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
     }
-  }, 10000);
+  }, 5000); // Verificar a cada 5 segundos (mais frequente)
 };
 
 const stopPolling = () => {

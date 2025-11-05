@@ -12,6 +12,7 @@ const createSchema = z.object({
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
   location: z.string().min(3),
+  bannerUrl: z.string().url().optional(),
   isFree: z.boolean(),
   priceCents: z.number().int().min(0).optional(),
   minAgeYears: z.number().int().min(0).optional(),

@@ -102,7 +102,7 @@
       >
         <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
           <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-            Tipo de relatorio
+            Tipo de relatório
           </label>
           <select
             v-model="reportType"
@@ -118,7 +118,7 @@
           :disabled="generatingReport"
           @click="generateReport"
         >
-          {{ generatingReport ? "Gerando..." : "Gerar relatorio" }}
+          {{ generatingReport ? "Gerando..." : "Gerar relatório" }}
         </button>
       </div>
     </BaseCard>
@@ -417,7 +417,7 @@ const generateReport = async () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   } catch (error) {
-    showError("Falha ao gerar relatorio", error);
+    showError("Falha ao gerar relatório", error);
   } finally {
     generatingReport.value = false;
   }
@@ -587,12 +587,12 @@ const copyPaymentLink = async (registration: Registration) => {
     return;
   }
   if (!registration.orderId) {
-    showError("Nao foi possivel gerar link", new Error("Inscricao sem pedido associado."));
+    showError("Não foi possível gerar link", new Error("Inscrição sem pedido associado."));
     return;
   }
   const slug = findEventSlug(registration.eventId);
   if (!slug) {
-    showError("Nao foi possivel gerar link", new Error("Evento sem slug disponivel."));
+    showError("Não foi possível gerar link", new Error("Evento sem slug disponível."));
     return;
   }
   const link = `${window.location.origin}/evento/${slug}/pagamento/${registration.orderId}`;
@@ -676,7 +676,7 @@ const openConfirm = (action: ConfirmAction, registration: Registration) => {
     confirmState.type = "default";
   } else {
     confirmState.title = "Excluir inscricao";
-    confirmState.description = `Excluir a inscricao de ${registration.fullName}? O registro sera removido permanentemente.`;
+    confirmState.description = `Excluir a inscrição de ${registration.fullName}? O registro será removido permanentemente.`;
     confirmState.confirmLabel = "Excluir";
     confirmState.type = "danger";
   }

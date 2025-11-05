@@ -198,7 +198,7 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import { useAdminStore } from "../../stores/admin";
 
 const route = useRoute();
-const admin = useAdminStore();
+const admin = useAdminStore() as any;
 
 type CheckinRegistration = {
   id: string;
@@ -417,7 +417,7 @@ const onInit = async (promise: Promise<MediaStream>) => {
   } catch (error) {
     cameraReady.value = false;
     cameraError.value =
-      "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+      "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
   }
 };
 
@@ -450,7 +450,7 @@ const manualLookup = async () => {
     }
   } catch (error: any) {
     showFeedback(
-      error.response?.data?.message ?? "Nao foi possivel localizar a inscricao.",
+      error.response?.data?.message ?? "Não foi possível localizar a inscrição.",
       "error"
     );
     cancelPending();
@@ -493,7 +493,7 @@ const confirmPending = async () => {
     lastScanned.value = null;
   } catch (error: any) {
     showFeedback(
-      error.response?.data?.message ?? "Nao foi possivel confirmar o check-in.",
+      error.response?.data?.message ?? "Não foi possível confirmar o check-in.",
       "error"
     );
   } finally {

@@ -74,7 +74,7 @@ const loading = computed(() => Boolean(props.loading));
 const getCpfError = (value: string) => {
   const digits = normalizeCPF(value);
   if (!digits.length) return "";
-  return validateCPF(value) ? "" : "CPF invalido";
+  return validateCPF(value) ? "" : "CPF inválido";
 };
 
 watch(

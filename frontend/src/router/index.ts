@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/auth";
 const EventLanding = () => import("../pages/public/EventLanding.vue");
 const EventFlow = () => import("../pages/public/EventFlow.vue");
 const PaymentPage = () => import("../pages/public/PaymentPage.vue");
+const PendingOrders = () => import("../pages/public/PendingOrders.vue");
 const ReceiptLookup = () => import("../pages/public/ReceiptLookup.vue");
 const CheckinValidate = () => import("../pages/public/CheckinValidate.vue");
 
@@ -14,6 +15,7 @@ const AdminRegistrations = () => import("../pages/admin/AdminRegistrations.vue")
 const AdminOrders = () => import("../pages/admin/AdminOrders.vue");
 const AdminCheckin = () => import("../pages/admin/AdminCheckin.vue");
 const AdminCatalog = () => import("../pages/admin/AdminCatalog.vue");
+const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -21,6 +23,14 @@ export const router = createRouter({
     { path: "/", name: "home", component: EventLanding },
     { path: "/evento/:slug", name: "event", component: EventFlow, props: true },
     { path: "/evento/:slug/pagamento/:orderId", name: "payment", component: PaymentPage, props: true },
+    { 
+      path: "/pendencias/:cpf?",
+      name: "pending-orders",
+      component: PendingOrders,
+      props: (route) => ({
+        cpf: route.params.cpf || route.query.cpf
+      })
+    },
     { path: "/comprovante", name: "receipt", component: ReceiptLookup },
     { path: "/checkin/validate", name: "checkin-validate", component: CheckinValidate },
     { path: "/admin", name: "admin-login", component: AdminLogin },
@@ -55,11 +65,22 @@ export const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: "/admin/financial",
+      name: "admin-financial",
+      component: AdminFinancial,
+      meta: { requiresAuth: true }
+    },
+    {
       path: "/admin/checkin/:eventId",
       name: "admin-checkin",
       component: AdminCheckin,
       props: true,
       meta: { requiresAuth: true }
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "not-found",
+      redirect: "/"
     }
   ]
 });

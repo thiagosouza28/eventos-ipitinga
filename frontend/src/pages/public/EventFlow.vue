@@ -51,28 +51,53 @@
       <StepWizard :steps="steps" :current-step="currentStep" />
 
       <BaseCard v-if="currentStep === 0">
-        <InscricaoForm
+        <ResponsibleCpfForm
           ref="inscricaoFormRef"
-          v-model="buyerCpf"
-          :submit-error="errorMessage"
+          v-model="responsibleProfile"
           :loading="checkingCpf"
+          :error="errorMessage"
+          @update:cpf="buyerCpf = $event"
           @submit="handleCpfSubmit"
         />
       </BaseCard>
 
       <BaseCard v-if="currentStep === 1">
         <div
-          v-if="pendingOrder"
+          v-if="pendingOrders.length > 0"
           class="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
         >
-          <p class="font-semibold">Pagamento pendente encontrado.</p>
-          <p>Voce pode abrir o pagamento existente ou seguir com uma nova inscricao.</p>
-          <RouterLink
-            :to="{ name: 'payment', params: { slug: props.slug, orderId: pendingOrder.orderId } }"
-            class="mt-2 inline-flex items-center rounded-md border border-amber-500 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200"
-          >
-            Abrir pagamento pendente
-          </RouterLink>
+          <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
+          <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
+          <div class="mt-3 space-y-2">
+            <div
+              v-for="order in pendingOrders"
+              :key="order.orderId"
+              class="rounded-md bg-amber-100/50 p-2 dark:bg-amber-500/5"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1">
+                  <p class="font-medium">{{ formatCurrency(order.totalCents) }}</p>
+                  <p class="text-xs">
+                    {{ order.registrations.length }} participante(s):
+                    {{ order.registrations.map(r => r.fullName).join(", ") }}
+                  </p>
+                </div>
+                <RouterLink
+                  :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
+                  class="shrink-0 rounded-md border border-amber-500 px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200"
+                >
+                  Pagar
+                </RouterLink>
+              </div>
+            </div>
+            <RouterLink
+              :to="{ name: 'pending-orders', params: { cpf: buyerCpf } }"
+              class="inline-flex items-center text-xs font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+            >
+              Ver todas as pendências
+              <IconArrowRight class="ml-1 h-3 w-3" />
+            </RouterLink>
+          </div>
         </div>
         <form @submit.prevent="handleGeneralStep" class="space-y-6">
           <div class="grid gap-4 md:grid-cols-2">
@@ -215,7 +240,7 @@
                 CPF
               </label>
               <input
-                :ref="(el) => setParticipantCpfRef(el, index)"
+                :ref="(el) => setParticipantCpfRef(el as HTMLInputElement | null, index)"
                 v-model="person.cpf"
                 type="text"
                 placeholder="000.000.000-00"
@@ -397,6 +422,12 @@
             >
               Pagamentos manuais serao confirmados pela tesouraria. Guarde o comprovante para quitar a pendencia.
             </p>
+            <p
+              v-if="isFreePaymentSelected"
+              class="text-xs text-green-600 dark:text-green-300"
+            >
+              ✓ Esta inscrição será marcada como paga automaticamente, sem gerar cobrança.
+            </p>
           </div>
           <div class="grid gap-4">
             <div
@@ -485,23 +516,33 @@
   import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
   import { useRouter } from "vue-router";
 
-  import InscricaoForm from "../../components/forms/InscricaoForm.vue";
+  import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
   import BaseCard from "../../components/ui/BaseCard.vue";
   import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
   import StepWizard from "../../components/ui/StepWizard.vue";
+  import IconArrowRight from "../../components/ui/IconArrowRight.vue";
   import { useCatalogStore } from "../../stores/catalog";
   import { useEventStore } from "../../stores/event";
   import { useApi } from "../../composables/useApi";
   import type { Church, RegistrationProfile } from "../../types/api";
   import { formatCurrency, formatDate } from "../../utils/format";
   import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
-  import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS } from "../../config/paymentMethods";
-  import type { PaymentMethod } from "../../config/paymentMethods";
+import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS, FREE_PAYMENT_METHODS } from "../../config/paymentMethods";
+import type { PaymentMethod } from "../../config/paymentMethods";
+import { useAuthStore } from "../../stores/auth";
   import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
+
+  type PendingRegistration = {
+    id: string;
+    fullName: string;
+    cpf: string;
+  };
 
   type PendingOrder = {
     orderId: string;
     expiresAt: string;
+    totalCents: number;
+    registrations: PendingRegistration[];
     payment: {
       status?: string;
       paymentMethod?: string;
@@ -524,6 +565,7 @@
   const eventStore = useEventStore();
   const catalog = useCatalogStore();
   const { api } = useApi();
+  const auth = useAuthStore();
 
   const isFreeEvent = computed(() => Boolean(eventStore.event?.isFree));
   const ticketPriceCents = computed(
@@ -543,7 +585,9 @@
 
   const currentStep = ref(0);
   const buyerCpf = ref("");
+  const responsibleProfile = ref<RegistrationProfile | null>(null);
   const quantity = ref(1);
+  const pendingOrders = ref<PendingOrder[]>([]);
   const selectedDistrictId = ref("");
   const selectedChurchId = ref("");
   const selectedPaymentMethod = ref<PaymentMethod>("PIX_MP");
@@ -599,10 +643,22 @@
       eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    return PAYMENT_METHODS.filter((option) => allowed.includes(option.value));
+    // Filtrar métodos exclusivos de admin se não for admin
+    const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
+    return PAYMENT_METHODS.filter((option) => {
+      if (!allowed.includes(option.value)) return false;
+      // Se for método exclusivo de admin e usuário não for admin, não mostrar
+      if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
+        return false;
+      }
+      return true;
+    });
   });
   const isManualPaymentSelected = computed(() =>
     MANUAL_PAYMENT_METHODS.includes(selectedPaymentMethod.value)
+  );
+  const isFreePaymentSelected = computed(() =>
+    FREE_PAYMENT_METHODS.includes(selectedPaymentMethod.value)
   );
   const selectedPaymentLabel = computed(() => paymentMethodLabel(selectedPaymentMethod.value));
 
@@ -1031,12 +1087,18 @@
     checkingCpf.value = true;
     errorMessage.value = "";
 
+    if (!cpfDigits || !validateCPF(cpfDigits)) {
+      errorMessage.value = "CPF inválido";
+      checkingCpf.value = false;
+      return;
+    }
+
     try {
-      const pending = await eventStore.checkPendingOrder(cpfDigits);
-      pendingOrder.value = pending ?? null;
+      const response = await eventStore.checkPendingOrder(cpfDigits);
+      pendingOrders.value = response?.pendingOrders ?? [];
       currentStep.value = 1;
     } catch (error: any) {
-      errorMessage.value = error.response?.data?.message ?? "Nao foi possivel verificar.";
+      errorMessage.value = error.response?.data?.message ?? "Não foi possível verificar.";
     } finally {
       checkingCpf.value = false;
     }
@@ -1122,31 +1184,40 @@
       return;
     }
 
-    const cpfsValid = await ensureParticipantCpfsValid();
-    if (!cpfsValid) return;
+    try {
+      const cpfsValid = await ensureParticipantCpfsValid();
+      if (!cpfsValid) return;
 
-    people.forEach((person, index) => {
-      if (!person.districtId && selectedDistrictId.value) {
-        person.districtId = selectedDistrictId.value;
-      }
-      if (!person.churchId && selectedChurchId.value) {
-        person.churchId = selectedChurchId.value;
-      }
-      ensurePersonChurch(index);
-    });
+      people.forEach((person, index) => {
+        if (!person.districtId && selectedDistrictId.value) {
+          person.districtId = selectedDistrictId.value;
+        }
+        if (!person.churchId && selectedChurchId.value) {
+          person.churchId = selectedChurchId.value;
+        }
+        ensurePersonChurch(index);
+      });
 
-    const hasMissing = people.some(
-      (person) =>
-        !person.fullName.trim() ||
-        !person.birthDate ||
-        !person.gender ||
-        !person.districtId ||
-        !person.churchId
-    );
-    if (hasMissing) {
-      errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
-      currentStep.value = 2;
-      return;
+      const hasMissing = people.some(
+        (person) =>
+          !person.fullName.trim() ||
+          !person.birthDate ||
+          !person.gender ||
+          !person.districtId ||
+          !person.churchId
+      );
+      if (hasMissing) {
+        errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+        currentStep.value = 2;
+        return;
+      }
+    } catch (error: any) {
+      if (error?.response?.data?.message?.includes("CPF já registrado")) {
+        errorMessage.value = "CPF ja possui inscricao confirmada para este evento";
+        currentStep.value = 2;
+        return;
+      }
+      throw error;
     }
 
     try {
@@ -1165,11 +1236,22 @@
         selectedPaymentMethod.value,
         payload
       );
-      router.push({
-        name: "payment",
-        params: { slug: props.slug, orderId: response.orderId },
-        query: { fresh: "1" }
-      });
+      
+      // Se for método gratuito, não redirecionar para página de pagamento
+      if (isFreePaymentSelected.value && response.payment?.isFree) {
+        // Redirecionar para página de evento com mensagem de sucesso
+        router.push({
+          name: "event",
+          params: { slug: props.slug },
+          query: { success: "1", orderId: response.orderId }
+        });
+      } else {
+        router.push({
+          name: "payment",
+          params: { slug: props.slug, orderId: response.orderId },
+          query: { fresh: "1" }
+        });
+      }
     } catch (error: any) {
       const message = error.response?.data?.message ?? "Erro ao criar inscricoes.";
       errorMessage.value = message;

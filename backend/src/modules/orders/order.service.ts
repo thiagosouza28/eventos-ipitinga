@@ -14,10 +14,13 @@ import { logger } from "../../utils/logger";
 import {
   DEFAULT_PAYMENT_METHODS,
   ManualPaymentMethods,
+  AdminOnlyPaymentMethods,
+  FreePaymentMethods,
   PaymentMethod,
   parsePaymentMethods
 } from "../../config/payment-methods";
 import { Gender, parseGender } from "../../config/gender";
+import { calculateMercadoPagoFees } from "../../utils/mercado-pago-fees";
 
 type GenderInput = Gender | "MASCULINO" | "FEMININO" | "OUTRO";
 
@@ -34,15 +37,41 @@ type BatchPerson = {
 const isManualPayment = (paymentId: string) => paymentId.startsWith("MANUAL-");
 
 export class OrderService {
+  async findAllPendingOrders(cpf: string) {
+    const orders = await prisma.order.findMany({
+      where: {
+        buyerCpf: sanitizeCpf(cpf),
+        status: "PENDING",
+        expiresAt: {
+          gt: new Date() // Only non-expired orders
+        }
+      },
+      include: {
+        registrations: true,
+        event: {
+          select: {
+            id: true,
+            title: true
+          }
+        }
+      }
+    });
+    return orders;
+  }
+
   async findPendingOrder(eventId: string, buyerCpf: string) {
-    const order = await prisma.order.findFirst({
-      where: { eventId, buyerCpf: sanitizeCpf(buyerCpf), status: "PENDING" },
+    const orders = await prisma.order.findMany({
+      where: { 
+        eventId,
+        buyerCpf: sanitizeCpf(buyerCpf),
+        status: "PENDING"
+      },
       include: {
         registrations: true,
         event: true
       }
     });
-    return order;
+    return orders;
   }
 
   async createBatch(payload: {
@@ -50,7 +79,7 @@ export class OrderService {
     buyerCpf: string;
     people: BatchPerson[];
     paymentMethod?: PaymentMethod;
-  }) {
+  }, actorId?: string, actorRole?: string) {
     if (!payload.people.length) {
       throw new AppError("Informe ao menos uma inscricao", 400);
     }
@@ -69,20 +98,38 @@ export class OrderService {
         ? requestedMethod
         : fallbackMethod;
 
+    // Verificar se método é exclusivo de admin
+    if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
+      if (!actorId || !actorRole) {
+        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+      }
+      // Verificar se o usuário é admin (AdminGeral ou AdminDistrital)
+      const isAdmin = actorRole === "AdminGeral" || actorRole === "AdminDistrital";
+      if (!isAdmin) {
+        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+      }
+    }
+
     const isFreeEvent = Boolean((event as any).isFree);
-    if (isFreeEvent) {
+    const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
+    
+    // Se for método gratuito, não usar PIX_MP mesmo para eventos gratuitos
+    if (isFreePaymentMethod) {
+      // Método gratuito já está definido
+    } else if (isFreeEvent) {
       resolvedMethod = PaymentMethod.PIX_MP;
     }
 
     const isManualMethod = ManualPaymentMethods.includes(resolvedMethod);
 
     const now = new Date();
-    const activeLot = isFreeEvent ? null : await eventService.findActiveLot(payload.eventId, now);
-    if (!isFreeEvent && !activeLot) {
+    const activeLot = (isFreeEvent || isFreePaymentMethod) ? null : await eventService.findActiveLot(payload.eventId, now);
+    if (!isFreeEvent && !isFreePaymentMethod && !activeLot) {
       throw new AppError("Nenhum lote disponivel para inscricao no momento", 400);
     }
 
-    const unitPriceCents = isFreeEvent
+    // Se for método de pagamento gratuito, o valor é sempre 0
+    const unitPriceCents = (isFreeEvent || isFreePaymentMethod)
       ? 0
       : Math.max(activeLot?.priceCents ?? 0, 0);
 
@@ -114,8 +161,9 @@ export class OrderService {
     const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
 
     const registrations = await prisma.$transaction(async (tx) => {
-      const orderStatus = isFreeEvent ? OrderStatus.PAID : OrderStatus.PENDING;
-      const paidAtValue = isFreeEvent ? new Date() : null;
+      // Se for método gratuito, marcar como pago automaticamente
+      const orderStatus = (isFreeEvent || isFreePaymentMethod) ? OrderStatus.PAID : OrderStatus.PENDING;
+      const paidAtValue = (isFreeEvent || isFreePaymentMethod) ? new Date() : null;
       const order = await tx.order.create({
         data: {
           id: orderId,
@@ -127,7 +175,7 @@ export class OrderService {
           externalReference: orderId,
           expiresAt,
           pricingLotId: activeLot?.id ?? null,
-          mpPaymentId: isFreeEvent ? `MANUAL-FREE-${Date.now()}` : null,
+          mpPaymentId: (isFreeEvent || isFreePaymentMethod) ? `MANUAL-FREE-${Date.now()}` : null,
           paidAt: paidAtValue
         }
       });
@@ -152,7 +200,7 @@ export class OrderService {
             photoUrl: person.storedPhoto,
             gender: person.gender,
             paymentMethod: resolvedMethod,
-            status: isFreeEvent
+            status: (isFreeEvent || isFreePaymentMethod)
               ? RegistrationStatus.PAID
               : RegistrationStatus.PENDING_PAYMENT,
             priceCents: unitPriceCents,
@@ -177,7 +225,7 @@ export class OrderService {
       }
     });
 
-    if (isFreeEvent) {
+    if (isFreeEvent || isFreePaymentMethod) {
       await registrationService.generateReceiptsForOrder(registrations.order.id);
       return {
         orderId: registrations.order.id,
@@ -419,17 +467,52 @@ export class OrderService {
     const manualReference =
       options?.manualReference ?? (isManualPayment(paymentId) ? paymentId : null);
 
+    // Calcular taxas do Mercado Pago se for pagamento via MP
+    let feeCents = 0;
+    let netAmountCents = order.totalCents;
+    
+    if (paymentMethod === PaymentMethod.PIX_MP && !isManualPayment(paymentId)) {
+      try {
+        const payment = await paymentService.fetchPayment(paymentId);
+        const fees = calculateMercadoPagoFees(payment, order.totalCents);
+        feeCents = fees.feeCents;
+        netAmountCents = fees.netAmountCents;
+      } catch (error) {
+        logger.warn(
+          { orderId, paymentId, error },
+          "Falha ao calcular taxas do Mercado Pago. Usando valores padrão."
+        );
+        // Em caso de erro, não aplicar taxas (assumir 0)
+      }
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
+      // Verificar se as colunas existem antes de tentar atualizar
+      const orderColumns = await tx.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("Order")`);
+      const hasFeeCents = orderColumns.some(col => col.name === "feeCents");
+      const hasNetAmountCents = orderColumns.some(col => col.name === "netAmountCents");
+
+      const updateData: any = {
+        status: OrderStatus.PAID,
+        mpPaymentId: paymentId,
+        paymentMethod,
+        paidAt,
+        manualPaymentReference: manualReference
+      };
+
+      // Adicionar campos financeiros apenas se existirem
+      if (hasFeeCents) {
+        updateData.feeCents = feeCents;
+      }
+      if (hasNetAmountCents) {
+        updateData.netAmountCents = netAmountCents;
+      }
+
       const updatedOrder = await tx.order.update({
         where: { id: orderId },
-        data: {
-          status: OrderStatus.PAID,
-          mpPaymentId: paymentId,
-          paymentMethod,
-          paidAt,
-          manualPaymentReference: manualReference
-        }
+        data: updateData
       });
+
       await tx.registration.updateMany({
         where: { orderId },
         data: {

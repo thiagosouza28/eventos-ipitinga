@@ -153,6 +153,7 @@ export class EventService {
     startDate: string;
     endDate: string;
     location: string;
+    bannerUrl?: string;
     isFree: boolean;
     priceCents?: number;
     minAgeYears?: number | null;
@@ -199,6 +200,7 @@ export class EventService {
       startDate: string;
       endDate: string;
       location: string;
+      bannerUrl?: string;
       priceCents: number;
       minAgeYears?: number | null;
       isFree?: boolean;

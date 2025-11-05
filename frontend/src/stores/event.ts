@@ -18,12 +18,27 @@ export const useEventStore = defineStore("event", () => {
   const { api } = useApi();
   const event = ref<Event | null>(null);
   const loading = ref(false);
-  const orderPending = ref<{
+  type PendingRegistration = {
+    id: string;
+    fullName: string;
+    cpf: string;
+  };
+
+  type PendingOrder = {
     orderId: string;
     expiresAt: string;
-    payment: Record<string, unknown>;
-  } | null>(null);
+    totalCents: number;
+    registrations: PendingRegistration[];
+    payment: {
+      status?: string;
+      paymentMethod?: string;
+      initPoint?: string;
+    } | null;
+  };
+
+  const pendingOrders = ref<PendingOrder[]>([]);
   const lastOrder = ref<{ orderId: string; registrationIds: string[] } | null>(null);
+  const orderPending = ref<{ status?: string; paymentMethod?: string; initPoint?: string } | null>(null);
 
   const fetchEvent = async (slug: string) => {
     loading.value = true;
@@ -36,13 +51,21 @@ export const useEventStore = defineStore("event", () => {
   };
 
   const checkPendingOrder = async (buyerCpf: string) => {
-    if (!event.value) return;
+    if (!event.value) {
+      throw new Error("Evento não carregado");
+    }
+    
+    // Validação adicional para garantir que o CPF seja válido
+    if (!buyerCpf || typeof buyerCpf !== "string" || buyerCpf.trim().length === 0) {
+      throw new Error("CPF é obrigatório");
+    }
+    
     const response = await api.post("/inscriptions/start", {
       eventId: event.value.id,
-      buyerCpf
+      buyerCpf: buyerCpf.trim()
     });
-    orderPending.value = response.data.orderPending;
-    return orderPending.value;
+    pendingOrders.value = response.data.pendingOrders ?? [];
+    return { pendingOrders: pendingOrders.value };
   };
 
   const createBatchOrder = async (

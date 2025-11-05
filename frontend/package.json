@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx,vue}\"",
-    "test": "vitest"
+    "test": "vitest",
+    "type-check": "vue-tsc --noEmit",
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@headlessui/vue": "^1.7.23",

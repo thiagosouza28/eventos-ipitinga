@@ -36,7 +36,7 @@ const brDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
 });
 
 const formatDateBr = (date: Date | null | undefined) =>
-  date ? brDateFormatter.format(date) : "Nao informado";
+  date ? brDateFormatter.format(date) : "Não informado";
 
 const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => {
   let baseUrl: URL;
@@ -118,7 +118,7 @@ export class RegistrationService {
       where: { eventId, cpf: sanitizedCpf, status: { notIn: ["REFUNDED", "CANCELED"] } }
     });
     if (exists) {
-      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} ja possui inscricao confirmada para este evento`);
+      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} já possui inscrição para este evento. Não é possível fazer mais de uma inscrição com o mesmo CPF no mesmo evento.`);
     }
   }
 
@@ -157,11 +157,62 @@ export class RegistrationService {
   async list(filters: RegistrationFilters) {
     return prisma.registration.findMany({
       where: buildRegistrationWhere(filters),
-      include: {
-        event: true,
-        order: true,
-        district: true,
-        church: true
+      select: {
+        id: true,
+        orderId: true,
+        eventId: true,
+        fullName: true,
+        cpf: true,
+        birthDate: true,
+        ageYears: true,
+        priceCents: true,
+        districtId: true,
+        churchId: true,
+        photoUrl: true,
+        gender: true,
+        paymentMethod: true,
+        status: true,
+        receiptPdfUrl: true,
+        checkinAt: true,
+        paidAt: true,
+        createdAt: true,
+        event: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            startDate: true,
+            endDate: true,
+            location: true,
+            priceCents: true,
+            isFree: true
+          }
+        },
+        order: {
+          select: {
+            id: true,
+            totalCents: true,
+            status: true,
+            paymentMethod: true,
+            mpPaymentId: true,
+            paidAt: true,
+            createdAt: true,
+            expiresAt: true,
+            buyerCpf: true
+          }
+        },
+        district: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        church: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     });
@@ -201,10 +252,10 @@ export class RegistrationService {
           const period =
             event && event.startDate && event.endDate
               ? `${formatDateBr(event.startDate)} - ${formatDateBr(event.endDate)}`
-              : "Nao informado";
+              : "Não informado";
           resultMap.set(idKey, {
             id: key,
-            name: event?.title ?? "Nao informado",
+            name: event?.title ?? "Não informado",
             period,
             totals: REGISTRATION_STATUSES.reduce(
               (acc, status) => Object.assign(acc, { [status]: 0 }),
@@ -257,8 +308,8 @@ export class RegistrationService {
         const church = key ? churchMap.get(key) : null;
         resultMap.set(idKey, {
           id: key,
-          name: church?.name ?? "Nao informado",
-          districtName: church?.district?.name ?? "Nao informado",
+          name: church?.name ?? "Não informado",
+          districtName: church?.district?.name ?? "Não informado",
           totals: REGISTRATION_STATUSES.reduce(
             (acc, status) => Object.assign(acc, { [status]: 0 }),
             { total: 0 } as Record<typeof REGISTRATION_STATUSES[number] | "total", number>
@@ -300,10 +351,10 @@ export class RegistrationService {
       payload.fullName = data.fullName;
     }
     if (data.districtId) {
-      payload.districtId = data.districtId;
+      payload.district = { connect: { id: data.districtId } };
     }
     if (data.churchId) {
-      payload.churchId = data.churchId;
+      payload.church = { connect: { id: data.churchId } };
     }
     if (data.birthDate) {
       const ageYears = this.computeAge(data.birthDate);
@@ -343,7 +394,7 @@ export class RegistrationService {
     });
     if (!registration) throw new NotFoundError("Inscricao nao encontrada");
     if (registration.status === "PAID") {
-      throw new AppError("Nao e possivel cancelar inscricao paga (solicite estorno)", 400);
+      throw new AppError("Não é possível cancelar inscrição paga (solicite estorno)", 400);
     }
     await prisma.registration.update({
       where: { id },

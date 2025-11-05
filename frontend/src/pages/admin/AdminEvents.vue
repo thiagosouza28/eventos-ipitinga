@@ -14,7 +14,7 @@
             Eventos
           </h1>
           <p class="text-sm text-neutral-500">
-            Cadastre novos eventos, edite os existentes e controle o status publico.
+            Cadastre novos eventos, edite os existentes e controle o status público.
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
@@ -48,7 +48,7 @@
         <table class="w-full table-auto text-left text-sm">
           <thead class="text-xs uppercase tracking-wide text-neutral-500">
             <tr>
-              <th class="pb-2">Titulo</th>
+              <th class="pb-2">Título</th>
               <th class="pb-2">Periodo</th>
               <th class="pb-2">Valor vigente</th>
               <th class="pb-2">Lote atual</th>
@@ -150,6 +150,28 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Imagem do banner (URL)
+          </label>
+          <input
+            v-model="createForm.bannerUrl"
+            type="url"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            placeholder="https://exemplo.com/banner.jpg"
+          />
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            URL da imagem retangular (banner) do evento
+          </p>
+          <div v-if="createForm.bannerUrl" class="mt-2">
+            <img
+              :src="createForm.bannerUrl"
+              alt="Preview do banner"
+              class="max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700"
+              @error="createForm.bannerUrl = ''"
+            />
+          </div>
+        </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Inicio
@@ -219,7 +241,7 @@
             v-else
             class="rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200"
           >
-            Eventos gratuitos nao geram pagamentos e nao permitem cadastro de lotes. As inscricoes sao confirmadas automaticamente.
+            Eventos gratuitos não geram pagamentos e não permitem cadastro de lotes. As inscrições são confirmadas automaticamente.
           </div>
         </div>
         <div class="md:col-span-2">
@@ -299,6 +321,28 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Imagem do banner (URL)
+          </label>
+          <input
+            v-model="editForm.bannerUrl"
+            type="url"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            placeholder="https://exemplo.com/banner.jpg"
+          />
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            URL da imagem retangular (banner) do evento
+          </p>
+          <div v-if="editForm.bannerUrl" class="mt-2">
+            <img
+              :src="editForm.bannerUrl"
+              alt="Preview do banner"
+              class="max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700"
+              @error="editForm.bannerUrl = ''"
+            />
+          </div>
+        </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Inicio
@@ -368,7 +412,7 @@
             v-else
             class="rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200"
           >
-            Eventos gratuitos nao geram pagamentos e nao permitem cadastro de lotes. Qualquer inscricao sera confirmada automaticamente.
+            Eventos gratuitos não geram pagamentos e não permitem cadastro de lotes. Qualquer inscrição será confirmada automaticamente.
           </div>
         </div>
         <div class="md:col-span-2">
@@ -493,7 +537,7 @@
               <dd>{{ details.event?.minAgeYears ?? "Nao informada" }}</dd>
             </div>
             <div>
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Descricao</dt>
+              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Descrição</dt>
               <dd class="mt-1 whitespace-pre-line">
                 {{ details.event?.description }}
               </dd>
@@ -550,16 +594,27 @@
                       >
                         Lote vigente
                       </span>
-                      <button
-                        type="button"
-                        class="text-xs font-semibold uppercase tracking-wide text-red-600 transition hover:text-red-500 disabled:cursor-not-allowed disabled:text-neutral-400"
-                        :disabled="lotDeletingId === lot.id || isLotActive(lot)"
-                        @click="deleteLot(lot)"
-                      >
-                        <span v-if="lotDeletingId === lot.id">Removendo...</span>
-                        <span v-else-if="isLotActive(lot)">Lote ativo</span>
-                        <span v-else>Remover</span>
-                      </button>
+                      <div class="flex gap-2">
+                        <button
+                          type="button"
+                          class="text-xs font-semibold uppercase tracking-wide text-primary-600 transition hover:text-primary-500 disabled:cursor-not-allowed disabled:text-neutral-400"
+                          :disabled="lotDeletingId === lot.id || editingLotId === lot.id"
+                          @click="startLotEdit(lot)"
+                        >
+                          <span v-if="editingLotId === lot.id">Editando...</span>
+                          <span v-else>Editar</span>
+                        </button>
+                        <button
+                          type="button"
+                          class="text-xs font-semibold uppercase tracking-wide text-red-600 transition hover:text-red-500 disabled:cursor-not-allowed disabled:text-neutral-400"
+                          :disabled="lotDeletingId === lot.id || isLotActive(lot)"
+                          @click="deleteLot(lot)"
+                        >
+                          <span v-if="lotDeletingId === lot.id">Removendo...</span>
+                          <span v-else-if="isLotActive(lot)">Lote ativo</span>
+                          <span v-else>Remover</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </li>
@@ -574,8 +629,17 @@
               @submit.prevent="submitLot"
             >
               <h4 class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-                Criar novo lote
+                {{ editingLotId ? "Editar lote" : "Criar novo lote" }}
               </h4>
+              <div v-if="editingLotId" class="flex justify-end">
+                <button
+                  type="button"
+                  class="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  @click="cancelLotEdit"
+                >
+                  Cancelar edição
+                </button>
+              </div>
               <div class="grid gap-3 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                   <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
@@ -623,6 +687,15 @@
               </div>
               <div class="flex items-center justify-end gap-3">
                 <button
+                  v-if="editingLotId"
+                  type="button"
+                  class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  @click="cancelLotEdit"
+                  :disabled="lotSaving"
+                >
+                  Cancelar
+                </button>
+                <button
                   type="button"
                   class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
                   @click="resetLotForm"
@@ -635,13 +708,13 @@
                   class="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
                   :disabled="lotSaving"
                 >
-                  {{ lotSaving ? "Salvando..." : "Adicionar lote" }}
+                  {{ lotSaving ? "Salvando..." : editingLotId ? "Salvar alterações" : "Adicionar lote" }}
                 </button>
               </div>
             </form>
           </div>
           <div v-else class="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-            Este evento e gratuito. Nao ha lotes cadastrados e todas as inscricoes sao confirmadas automaticamente.
+            Este evento é gratuito. Não há lotes cadastrados e todas as inscrições são confirmadas automaticamente.
           </div>
 
           <div class="mt-6 flex flex-wrap justify-end gap-3 text-sm">
@@ -652,7 +725,7 @@
               rel="noopener"
               class="rounded-lg border border-primary-500 px-4 py-2 text-primary-600 transition hover:bg-primary-50 dark:border-primary-400 dark:text-primary-200 dark:hover:bg-primary-500/20"
             >
-              Ver pagina publica
+              Ver página pública
             </RouterLink>
             <button
               type="button"
@@ -708,6 +781,7 @@ const createForm = reactive({
   startDate: "",
   endDate: "",
   location: "",
+  bannerUrl: "",
   isFree: false,
   minAgeYears: "",
   paymentMethods: defaultPaymentMethodValues()
@@ -719,6 +793,7 @@ const editForm = reactive({
   startDate: "",
   endDate: "",
   location: "",
+  bannerUrl: "",
   isFree: false,
   minAgeYears: "",
   paymentMethods: defaultPaymentMethodValues()
@@ -756,6 +831,7 @@ const lotForm = reactive({
 });
 const lotSaving = ref(false);
 const lotDeletingId = ref<string | null>(null);
+const editingLotId = ref<string | null>(null);
 const loadingLots = ref(false);
 
 const lotsForDetails = computed<EventLot[]>(() => {
@@ -833,7 +909,7 @@ const showError = (title: string, error: unknown) => {
   const message =
     (typeof responseData.message === "string" && responseData.message) ||
     anyError?.message ||
-    "Nao foi possivel completar a operacao.";
+    "Não foi possível completar a operação.";
   const detailsValue =
     typeof responseData.details === "string"
       ? responseData.details
@@ -870,12 +946,25 @@ const resetLotForm = () => {
   const defaultPriceCents = details.event
     ? details.event.currentPriceCents ?? details.event.priceCents
     : 0;
+  editingLotId.value = null;
   lotForm.name = "";
   lotForm.price = formatPriceDisplay(defaultPriceCents);
   const referenceStart =
     details.event?.currentLot?.startsAt ?? details.event?.startDate ?? new Date().toISOString();
   lotForm.startsAt = toLocalInputSafe(referenceStart);
   lotForm.endsAt = "";
+};
+
+const startLotEdit = (lot: EventLot) => {
+  editingLotId.value = lot.id;
+  lotForm.name = lot.name;
+  lotForm.price = formatPriceDisplay(lot.priceCents);
+  lotForm.startsAt = toLocalInput(lot.startsAt);
+  lotForm.endsAt = lot.endsAt ? toLocalInput(lot.endsAt) : "";
+};
+
+const cancelLotEdit = () => {
+  resetLotForm();
 };
 
 const refreshDetailsEvent = () => {
@@ -893,6 +982,7 @@ const resetCreateForm = () => {
   createForm.startDate = "";
   createForm.endDate = "";
   createForm.location = "";
+  createForm.bannerUrl = "";
   createForm.isFree = false;
   createForm.minAgeYears = "";
   createForm.paymentMethods = defaultPaymentMethodValues();
@@ -904,6 +994,7 @@ const resetEditForm = () => {
   editForm.startDate = "";
   editForm.endDate = "";
   editForm.location = "";
+  editForm.bannerUrl = "";
   editForm.isFree = false;
   editForm.minAgeYears = "";
   editForm.paymentMethods = defaultPaymentMethodValues();
@@ -943,12 +1034,23 @@ const submitLot = async () => {
 
   lotSaving.value = true;
   try {
-    await admin.createEventLot(details.event.id, {
-      name: lotForm.name.trim(),
-      priceCents,
-      startsAt: startDate.toISOString(),
-      endsAt: endsAtIso
-    });
+    if (editingLotId.value) {
+      // Editar lote existente
+      await admin.updateEventLot(details.event.id, editingLotId.value, {
+        name: lotForm.name.trim(),
+        priceCents,
+        startsAt: startDate.toISOString(),
+        endsAt: endsAtIso
+      });
+    } else {
+      // Criar novo lote
+      await admin.createEventLot(details.event.id, {
+        name: lotForm.name.trim(),
+        priceCents,
+        startsAt: startDate.toISOString(),
+        endsAt: endsAtIso
+      });
+    }
     refreshDetailsEvent();
     resetLotForm();
   } catch (error) {
@@ -1005,6 +1107,7 @@ const submitCreate = async () => {
       startDate: new Date(createForm.startDate).toISOString(),
       endDate: new Date(createForm.endDate).toISOString(),
       location: createForm.location.trim(),
+      bannerUrl: createForm.bannerUrl.trim() || undefined,
       isFree: createForm.isFree,
       priceCents: 0,
       paymentMethods: [...createForm.paymentMethods],
@@ -1035,6 +1138,7 @@ const submitEdit = async () => {
       startDate: new Date(editForm.startDate).toISOString(),
       endDate: new Date(editForm.endDate).toISOString(),
       location: editForm.location.trim(),
+      bannerUrl: editForm.bannerUrl.trim() || undefined,
       isFree: editForm.isFree,
       minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
       priceCents: 0,
@@ -1055,6 +1159,7 @@ const startEdit = (event: Event) => {
   editForm.startDate = toLocalInput(event.startDate);
   editForm.endDate = toLocalInput(event.endDate);
   editForm.location = event.location;
+  editForm.bannerUrl = (event as any).bannerUrl || "";
   editForm.isFree = event.isFree;
   editForm.minAgeYears = event.minAgeYears != null ? String(event.minAgeYears) : "";
   editForm.paymentMethods =
@@ -1107,7 +1212,7 @@ const handleDelete = async () => {
     await admin.deleteEvent(confirmDelete.target.id);
     closeDeleteDialog();
   } catch (error) {
-    showError("Nao foi possivel excluir o evento", error);
+    showError("Não foi possível excluir o evento", error);
   }
 };
 

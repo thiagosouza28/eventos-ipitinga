@@ -56,7 +56,7 @@ class PaymentService {
     } catch (error: any) {
       logger.error({ preferenceId, error }, "Falha ao recuperar preferencia Mercado Pago");
       const message =
-        error?.message ?? error?.cause?.[0]?.description ?? "Erro ao recuperar preferencia existente";
+        error?.message ?? error?.cause?.[0]?.description ?? "Erro ao recuperar preferência existente";
       throw new AppError(message, Number(error?.status) || 502);
     }
   }
@@ -67,7 +67,7 @@ class PaymentService {
       include: { registrations: true, event: true }
     });
     if (!order) {
-      throw new NotFoundError("Pedido nao encontrado");
+      throw new NotFoundError("Pedido não encontrado");
     }
 
     const nextVersion = (order.preferenceVersion ?? 0) + 1;
@@ -94,12 +94,12 @@ class PaymentService {
 
     const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
     if (!appUrl) {
-      throw new AppError("APP_URL nao configurado. Defina a URL publica do frontend.", 500);
+      throw new AppError("APP_URL não configurado. Defina a URL pública do frontend.", 500);
     }
 
     const apiUrl = env.API_URL?.trim().replace(/\/$/, "");
     if (!apiUrl) {
-      throw new AppError("API_URL nao configurado. Defina a URL publica da API.", 500);
+      throw new AppError("API_URL não configurado. Defina a URL pública da API.", 500);
     }
 
     const backUrls = {
@@ -109,7 +109,7 @@ class PaymentService {
     };
 
     if (!backUrls.success) {
-      throw new AppError("URL de sucesso para retorno automatico nao configurada.", 500);
+      throw new AppError("URL de sucesso para retorno automático não configurada.", 500);
     }
 
     const preferencePayload: PreferenceCreateData["body"] = {
@@ -177,6 +177,157 @@ class PaymentService {
       pointOfInteraction,
       pixQrData: pointOfInteraction?.transaction_data,
       status: "PENDING"
+    };
+  }
+
+  async createBulkPreference(orderIds: string[]) {
+    if (!orderIds || orderIds.length === 0) {
+      throw new AppError("Nenhum pedido informado", 400);
+    }
+
+    // Buscar todos os pedidos
+    const orders = await prisma.order.findMany({
+      where: {
+        id: { in: orderIds },
+        status: "PENDING"
+      },
+      include: {
+        registrations: true,
+        event: true
+      }
+    });
+
+    if (orders.length === 0) {
+      throw new NotFoundError("Nenhum pedido pendente encontrado");
+    }
+
+    if (orders.length !== orderIds.length) {
+      throw new AppError("Alguns pedidos não foram encontrados ou não estão pendentes", 400);
+    }
+
+    // Verificar se todos os pedidos pertencem ao mesmo CPF
+    const buyerCpfs = [...new Set(orders.map((o) => o.buyerCpf))];
+    if (buyerCpfs.length > 1) {
+      throw new AppError("Todos os pedidos devem pertencer ao mesmo comprador", 400);
+    }
+
+    const buyerCpf = buyerCpfs[0];
+
+    // Criar items combinando todos os registros de todos os pedidos
+    const items: PreferenceItem[] = [];
+    let totalCents = 0;
+    const registrationIds: string[] = [];
+    const eventNames: string[] = [];
+
+    for (const order of orders) {
+      const eventName = order.event.title;
+      if (!eventNames.includes(eventName)) {
+        eventNames.push(eventName);
+      }
+
+      for (const registration of order.registrations) {
+        const priceCents =
+          registration.priceCents && registration.priceCents > 0
+            ? registration.priceCents
+            : order.event.priceCents;
+        
+        items.push({
+          id: registration.id,
+          title: `${eventName} - ${registration.fullName}`,
+          quantity: 1,
+          unit_price: priceCents / 100
+        });
+        
+        totalCents += priceCents;
+        registrationIds.push(registration.id);
+      }
+    }
+
+    const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
+    if (!appUrl) {
+      throw new AppError("APP_URL não configurado. Defina a URL pública do frontend.", 500);
+    }
+
+    const apiUrl = env.API_URL?.trim().replace(/\/$/, "");
+    if (!apiUrl) {
+      throw new AppError("API_URL não configurado. Defina a URL pública da API.", 500);
+    }
+
+    // Usar formato especial para referência em lote
+    const externalReference = `BULK:${orderIds.join(",")}`;
+
+    const backUrls = {
+      success: `${appUrl}/pendencias?cpf=${buyerCpf}`,
+      failure: `${appUrl}/pendencias?cpf=${buyerCpf}`,
+      pending: `${appUrl}/pendencias?cpf=${buyerCpf}`
+    };
+
+    const preferencePayload: PreferenceCreateData["body"] = {
+      external_reference: externalReference,
+      items,
+      payer: {
+        identification: {
+          type: "CPF",
+          number: buyerCpf
+        }
+      },
+      back_urls: backUrls,
+      payment_methods: {
+        excluded_payment_types: [],
+        installments: 6
+      },
+      metadata: {
+        orderIds: orderIds.join(","),
+        registrationIds: registrationIds.join(","),
+        buyerCpf,
+        isBulk: true,
+        preferenceVersion: 1
+      },
+      notification_url: `${apiUrl}/webhooks/mercadopago`
+    };
+
+    const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");
+    if (successUrlIsHttps) {
+      preferencePayload.auto_return = "approved";
+    }
+
+    let preference;
+    try {
+      preference = await this.preference.create({
+        body: preferencePayload
+      });
+    } catch (error: any) {
+      logger.error({ orderIds, error }, "Falha ao criar preferencia em lote Mercado Pago");
+      const message =
+        error?.message ?? error?.cause?.[0]?.description ?? "Erro ao gerar pagamento em lote com Mercado Pago";
+      throw new AppError(message, Number(error?.status) || 502);
+    }
+
+    // Atualizar todos os pedidos com a mesma preferência
+    const preferenceId = preference.id ?? preference.init_point ?? undefined;
+    const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+
+    await prisma.order.updateMany({
+      where: { id: { in: orderIds } },
+      data: {
+        mpPreferenceId: preferenceId,
+        expiresAt,
+        preferenceVersion: 1
+      }
+    });
+
+    const pointOfInteraction = (preference as any).point_of_interaction;
+
+    return {
+      preferenceId: preference.id,
+      initPoint: preference.init_point,
+      sandboxInitPoint: preference.sandbox_init_point,
+      pointOfInteraction,
+      pixQrData: pointOfInteraction?.transaction_data,
+      status: "PENDING",
+      orderCount: orders.length,
+      totalCents,
+      eventNames
     };
   }
 
