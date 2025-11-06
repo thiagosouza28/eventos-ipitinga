@@ -67,7 +67,7 @@
           class="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
         >
           <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
-          <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
+          <p>VocÃª pode ver e pagar as pendÃªncias existentes ou seguir com uma nova inscriÃ§Ã£o.</p>
           <div class="mt-3 space-y-2">
             <div
               v-for="order in pendingOrders"
@@ -94,7 +94,7 @@
               :to="{ name: 'pending-orders', params: { cpf: buyerCpf } }"
               class="inline-flex items-center text-xs font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
             >
-              Ver todas as pendências
+              Ver todas as pendÃªncias
               <IconArrowRight class="ml-1 h-3 w-3" />
             </RouterLink>
           </div>
@@ -226,17 +226,6 @@
           <div class="mt-4 grid gap-4 lg:grid-cols-2">
             <div>
               <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Nome completo
-              </label>
-              <input
-                v-model="person.fullName"
-                type="text"
-                required
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
                 CPF
               </label>
               <input
@@ -264,6 +253,18 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                Nome completo
+              </label>
+              <input
+                v-model="person.fullName"
+                type="text"
+                required
+                :disabled="isPersonLocked(index)"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
                 Data de nascimento
               </label>
               <div class="mt-1 flex items-center gap-3">
@@ -271,7 +272,8 @@
                   v-model="person.birthDate"
                   type="date"
                   required
-                  class="w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                  :disabled="isPersonLocked(index)"
+                  class="w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
                 />
                 <span
                   v-if="calculateAgeYears(person.birthDate) !== null"
@@ -287,7 +289,8 @@
               </label>
               <select
                 v-model="person.gender"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                :disabled="isPersonLocked(index)"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
                 required
               >
                 <option value="" disabled>Selecione</option>
@@ -302,7 +305,8 @@
               </label>
               <select
                 v-model="person.districtId"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                :disabled="isPersonLocked(index)"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
                 @change="onPersonDistrictChange(index)"
               >
                 <option value="" disabled>Selecione</option>
@@ -317,7 +321,8 @@
               </label>
               <select
                 v-model="person.churchId"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                :disabled="isPersonLocked(index)"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
               >
                 <option value="" disabled>Selecione</option>
                 <option
@@ -337,7 +342,8 @@
                 <input
                   type="file"
                   accept="image/*"
-                  class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100"
+                  :disabled="isPersonLocked(index)"
+                  class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 disabled:opacity-60"
                   @change="handlePhotoUpload($event, index)"
                 />
                 <img
@@ -426,7 +432,7 @@
               v-if="isFreePaymentSelected"
               class="text-xs text-green-600 dark:text-green-300"
             >
-              ✓ Esta inscrição será marcada como paga automaticamente, sem gerar cobrança.
+              âœ“ Esta inscriÃ§Ã£o serÃ¡ marcada como paga automaticamente, sem gerar cobranÃ§a.
             </p>
           </div>
           <div class="grid gap-4">
@@ -497,10 +503,117 @@
                 ></span>
                 Processando...
               </span>
-              <span v-else>{{ isFreeEvent ? "Confirmar inscricoes" : "Ir para pagamento" }}</span>
+              <span v-else>{{ isFreeEvent ? "Confirmar inscricoes" : "Gerar pagamento" }}</span>
             </button>
           </div>
           <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
+        </div>
+      </BaseCard>
+      <!-- Etapa 4: Pagamento inline com Pix (QR + copia e cola) -->
+      <BaseCard v-if="currentStep === 4 && inlinePayment">
+        <div class="flex flex-col gap-6 md:flex-row md:items-start">
+          <div class="flex-1 space-y-4">
+            <div class="flex items-start gap-3 rounded-xl border px-4 py-3" :class="inlineStatusStyles.container">
+              <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full text-white" :class="inlineStatusStyles.badge">
+                {{ inlineStatusIcon }}
+              </span>
+              <div>
+                <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">{{ inlineStatusTitle }}</h2>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                  {{ inlineStatusMessage }}
+                </p>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60">
+              <div class="flex items-center justify-between gap-3 text-sm text-neutral-600 dark:text-neutral-300">
+                <span>ID do pedido</span>
+                <code class="rounded bg-neutral-100 px-2 py-1 text-xs dark:bg-neutral-800">{{ createdOrderId }}</code>
+              </div>
+              <div class="mt-4 grid gap-3 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2">
+                <div>
+                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Evento</span>
+                  <span>{{ eventStore.event?.title ?? "Carregando..." }}</span>
+                </div>
+                <div>
+                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscrição</span>
+                  <span>{{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents) }}</span>
+                </div>
+                <div>
+                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Total</span>
+                  <span>{{ formatCurrency(ticketPriceCents * (inlinePayment?.participantCount ?? people.length)) }}</span>
+                </div>
+                <div v-if="currentLotName">
+                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Lote vigente</span>
+                  <span>{{ currentLotName }}</span>
+                </div>
+                <div>
+                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Forma de pagamento</span>
+                  <span>{{ paymentMethodLabel(inlinePayment?.paymentMethod ?? selectedPaymentMethod) }}</span>
+                </div>
+                <div v-if="inlinePayment?.paidAt">
+                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Pagamento registrado em</span>
+                  <span>{{ formatDate(inlinePayment?.paidAt as any) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 space-y-6">
+            <section class="space-y-3">
+              <header class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Pague com Pix</h2>
+                <button
+                  type="button"
+                  class="text-sm text-primary-600 hover:text-primary-500 disabled:text-neutral-400"
+                  :disabled="!inlinePayment?.pixQrData"
+                  @click="copyInlinePixCode"
+                >
+                  Copiar código
+                </button>
+              </header>
+
+              <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900/80">
+                <img
+                  v-if="inlinePayment?.pixQrData?.qr_code_base64"
+                  :src="`data:image/png;base64,${inlinePayment.pixQrData.qr_code_base64}`"
+                  alt="QR Code Pix"
+                  class="h-48 w-48 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700"
+                />
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                  Escaneie com o aplicativo do seu banco ou cole o código Pix abaixo.
+                </p>
+                <textarea
+                  v-if="inlinePayment?.pixQrData?.qr_code"
+                  class="w-full rounded-lg border border-neutral-300 bg-white p-3 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+                  rows="3"
+                  readonly
+                  :value="inlinePayment.pixQrData.qr_code"
+                />
+                <p v-else class="text-sm text-neutral-400">
+                  O QR Code será exibido assim que a preferência de pagamento for criada.
+                </p>
+              </div>
+            </section>
+
+            <section v-if="!inlineIsPixMethod" class="space-y-3">
+              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
+              <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.
+              </p>
+              <button
+                v-if="inlinePayment?.initPoint"
+                type="button"
+                @click="handleInlineOpenCheckout"
+                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+              >
+                Abrir checkout
+              </button>
+              <p v-if="inlinePayment?.status !== 'PAID'" class="text-xs text-neutral-400">
+                Assim que o pagamento for aprovado, o status muda automaticamente. Se já pagou, aguarde alguns segundos.
+              </p>
+            </section>
+          </div>
         </div>
       </BaseCard>
     </div>
@@ -626,10 +739,10 @@ import { useAuthStore } from "../../stores/auth";
       { title: "CPF", description: "Verifique pedidos pendentes" },
       { title: "Unidade", description: "Escolha distrito e igreja" },
       { title: "Participantes", description: "Dados individuais" },
-      { title: "Revisao", description: "Confirme e pague" }
+      { title: "Revisao", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
     ];
-    if (isFreeEvent.value) {
-      base[3] = { ...base[3], description: "Revise os dados e confirme" };
+    if (!isFreeEvent.value) {
+      base.push({ title: "Pagamento", description: "Pix com QR Code" });
     }
     return base;
   });
@@ -643,11 +756,11 @@ import { useAuthStore } from "../../stores/auth";
       eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    // Filtrar métodos exclusivos de admin se não for admin
+    // Filtrar mÃ©todos exclusivos de admin se nÃ£o for admin
     const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
     return PAYMENT_METHODS.filter((option) => {
       if (!allowed.includes(option.value)) return false;
-      // Se for método exclusivo de admin e usuário não for admin, não mostrar
+      // Se for mÃ©todo exclusivo de admin e usuÃ¡rio nÃ£o for admin, nÃ£o mostrar
       if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
         return false;
       }
@@ -783,7 +896,12 @@ import { useAuthStore } from "../../stores/auth";
 
   const applyCpfCheckResult = (index: number, result: CpfCheckResult) => {
     if (result.existsInEvent) {
-      participantCpfErrors[index] = REGISTERED_ERROR;
+      // Se já existe inscrição, exibir o nome do cadastro quando disponível
+      if (result.profile?.fullName) {
+        participantCpfErrors[index] = `${REGISTERED_ERROR} (${result.profile.fullName})`;
+      } else {
+        participantCpfErrors[index] = REGISTERED_ERROR;
+      }
     } else if (
       participantCpfErrors[index] === REGISTERED_ERROR ||
       participantCpfErrors[index] === REMOTE_ERROR_MESSAGE
@@ -998,6 +1116,15 @@ import { useAuthStore } from "../../stores/auth";
     return false;
   };
 
+  // Bloqueia edição dos campos até CPF estar válido e disponível
+  const isPersonLocked = (index: number) => {
+    const cpf = people[index]?.cpf ?? "";
+    const digits = normalizeCPF(cpf);
+    if (digits.length < 11) return true;
+    // Se houver erro (inválido/duplicado/registrado/erro remoto), mantém bloqueado
+    return Boolean(participantCpfErrors[index]);
+  };
+
   onMounted(async () => {
     await eventStore.fetchEvent(props.slug);
     await catalog.loadDistricts();
@@ -1088,7 +1215,7 @@ import { useAuthStore } from "../../stores/auth";
     errorMessage.value = "";
 
     if (!cpfDigits || !validateCPF(cpfDigits)) {
-      errorMessage.value = "CPF inválido";
+      errorMessage.value = "CPF invÃ¡lido";
       checkingCpf.value = false;
       return;
     }
@@ -1098,7 +1225,7 @@ import { useAuthStore } from "../../stores/auth";
       pendingOrders.value = response?.pendingOrders ?? [];
       currentStep.value = 1;
     } catch (error: any) {
-      errorMessage.value = error.response?.data?.message ?? "Não foi possível verificar.";
+      errorMessage.value = error.response?.data?.message ?? "NÃ£o foi possÃ­vel verificar.";
     } finally {
       checkingCpf.value = false;
     }
@@ -1212,7 +1339,7 @@ import { useAuthStore } from "../../stores/auth";
         return;
       }
     } catch (error: any) {
-      if (error?.response?.data?.message?.includes("CPF já registrado")) {
+      if (error?.response?.data?.message?.includes("CPF jÃ¡ registrado")) {
         errorMessage.value = "CPF ja possui inscricao confirmada para este evento";
         currentStep.value = 2;
         return;
@@ -1237,20 +1364,19 @@ import { useAuthStore } from "../../stores/auth";
         payload
       );
       
-      // Se for método gratuito, não redirecionar para página de pagamento
+      // Se for mÃ©todo gratuito, nÃ£o redirecionar para pÃ¡gina de pagamento
       if (isFreePaymentSelected.value && response.payment?.isFree) {
-        // Redirecionar para página de evento com mensagem de sucesso
+        // Redirecionar para pÃ¡gina de evento com mensagem de sucesso
         router.push({
           name: "event",
           params: { slug: props.slug },
           query: { success: "1", orderId: response.orderId }
         });
       } else {
-        router.push({
-          name: "payment",
-          params: { slug: props.slug, orderId: response.orderId },
-          query: { fresh: "1" }
-        });
+        createdOrderId.value = response.orderId;
+        inlinePayment.value = response.payment ?? null;
+        currentStep.value = 4;
+        startInlinePolling();
       }
     } catch (error: any) {
       const message = error.response?.data?.message ?? "Erro ao criar inscricoes.";
@@ -1267,7 +1393,101 @@ import { useAuthStore } from "../../stores/auth";
 
 
 
-</script>
+
+  // Pagamento inline (etapa 4)
+  type InlinePayment = {
+    preferenceId?: string;
+    initPoint?: string;
+    pixQrData?: { qr_code: string; qr_code_base64: string };
+    status?: string;
+    statusDetail?: string;
+    participantCount?: number;
+    totalCents?: number;
+    paymentMethod?: string;
+    paidAt?: string | null;
+    isManual?: boolean;
+  } | null;
+  const createdOrderId = ref<string>("");
+  const inlinePayment = ref<InlinePayment>(null);
+  const inlinePollHandle = ref<number | null>(null);
+
+  const inlineIsPixMethod = computed(() => (inlinePayment.value?.paymentMethod ?? selectedPaymentMethod.value) === "PIX_MP");
+  const inlineIsPaid = computed(() => inlinePayment.value?.status === "PAID");
+  const inlineIsManual = computed(() => Boolean(inlinePayment.value?.isManual));
+  const inlineStatusTitle = computed(() => {
+    if (inlineIsManual.value) return inlinePayment.value?.status === "PAID" ? "Pagamento registrado" : "Pagamento pendente de confirmação";
+    if (inlineIsPaid.value) return "Pagamento aprovado";
+    if (inlinePayment.value?.status === "CANCELED") return "Pagamento cancelado";
+    return "Aguardando confirmação";
+  });
+  const inlineStatusMessage = computed(() => {
+    if (inlineIsManual.value) {
+      return inlinePayment.value?.status === "PAID"
+        ? "Pagamento registrado pela tesouraria. As inscrições estão confirmadas."
+        : "Apresente este comprovante na tesouraria para concluir o pagamento.";
+    }
+    if (inlineIsPaid.value) return "Tudo certo! Vamos liberar os recibos em instantes.";
+    if (inlinePayment.value?.status === "CANCELED") return "Pagamento cancelado. Gere um novo checkout para tentar novamente.";
+    return "Estamos monitorando o Mercado Pago. Assim que o pagamento for aprovado, atualizamos automaticamente.";
+  });
+  const inlineStatusIcon = computed(() => {
+    if (inlineIsPaid.value) return "OK";
+    if (inlineIsManual.value) return "..";
+    if (inlinePayment.value?.status === "CANCELED") return "X";
+    return "..";
+  });
+  const inlineStatusStyles = computed(() => {
+    if (inlineIsPaid.value) {
+      return { container: "border-green-300 bg-green-50 dark:border-green-500/40 dark:bg-green-500/10", badge: "bg-green-500" };
+    }
+    if (inlineIsManual.value) {
+      return { container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10", badge: "bg-amber-500" };
+    }
+    if (inlinePayment.value?.status === "CANCELED") {
+      return { container: "border-red-300 bg-red-50 dark:border-red-500/40 dark:bg-red-500/10", badge: "bg-red-500" };
+    }
+    return { container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10", badge: "bg-amber-500" };
+  });
+
+  const copyInlinePixCode = async () => {
+    const code = inlinePayment.value?.pixQrData?.qr_code;
+    if (!code) return;
+    await navigator.clipboard.writeText(code);
+    alert("Código Pix copiado!");
+  };
+
+  const handleInlineOpenCheckout = () => {
+    const link = inlinePayment.value?.initPoint;
+    if (!link) return;
+    window.open(link, "_blank", "noopener,noreferrer");
+  };
+
+  const startInlinePolling = () => {
+    if (inlinePollHandle.value) { clearInterval(inlinePollHandle.value); inlinePollHandle.value = null; }
+    inlinePollHandle.value = window.setInterval(async () => {
+      if (!createdOrderId.value) return;
+      try {
+        const data = await eventStore.getPaymentData(createdOrderId.value);
+        inlinePayment.value = data;
+        if (data?.status === "PAID" || data?.status === "CANCELED") {
+          clearInterval(inlinePollHandle.value!);
+          inlinePollHandle.value = null;
+        }
+      } catch {}
+    }, 5000);
+  };
+
+  const stopInlinePolling = () => {
+    if (inlinePollHandle.value) { clearInterval(inlinePollHandle.value); inlinePollHandle.value = null; }
+  };</script>
+
+
+
+
+
+
+
+
 
 
 

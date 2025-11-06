@@ -15,6 +15,7 @@ export type PaymentMethod = "PIX_MP" | "CASH" | "CARD_FULL" | "CARD_INSTALLMENTS
 export interface District {
   id: string;
   name: string;
+  pastorName?: string | null;
 }
 
 export interface Church {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -71,8 +71,12 @@
           </label>
           <select v-model="filters.status" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
             <option value="">Todos</option>
-            <option v-for="status in registrationStatuses" :key="status" :value="status">
-              {{ status }}
+            <option
+              v-for="option in registrationStatusOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
             </option>
           </select>
         </div>
@@ -86,13 +90,87 @@
           </button>
           <button
             type="submit"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
+            :disabled="isApplying"
           >
-            Aplicar
+            {{ isApplying ? "Aplicando..." : "Aplicar" }}
+          </button>
+          <button
+            type="button"
+            class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
+            v-if="canCreateFree" @click="openAdd()"\n          >\n            + Nova inscrição (Gratuita)
           </button>
         </div>
       </form>
+      <div
+        class="mt-4 flex flex-col gap-3 border-t border-neutral-200 pt-4 text-sm dark:border-neutral-700 md:flex-row md:items-center md:justify-between"
+      >
+        <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+          <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+            Tipo de relatório
+          </label>
+          <select
+            v-model="reportType"
+            class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto"
+          >
+            <option value="event">Por evento</option>
+            <option value="church">Por igreja</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70"
+          :disabled="generatingReport"
+          @click="generateReport"
+        >
+          {{ generatingReport ? "Gerando..." : "Gerar relatório" }}
+        </button>
+      </div>
     </BaseCard>
+
+    <!-- Modal Nova Inscrição (Gratuita / Ano anterior) -->
+    <div v-if="addDialog.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+      <div class="w-full max-w-2xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900">
+        <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Adicionar inscrição (gratuita)</h3>
+        <p class="mt-1 text-xs text-neutral-500">Use para vencedores do ano anterior (método de pagamento gratuito).</p>
+        <form @submit.prevent="saveNewRegistration" class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Evento</label>
+            <select v-model="addForm.eventId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" required>
+              <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Nome</label>
+            <input v-model="addForm.fullName" type="text" required minlength="3" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Nascimento</label>
+            <input v-model="addForm.birthDate" type="date" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">CPF</label>
+            <input :value="addForm.cpf" @input="onAddCpfInput" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Distrito</label>
+            <select v-model="addForm.districtId" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Igreja</label>
+            <select v-model="addForm.churchId" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option v-for="church in churchesByDistrict(addForm.districtId)" :key="church.id" :value="church.id">{{ church.name }}</option>
+            </select>
+          </div>
+          <div class="md:col-span-2 flex justify-end gap-3">
+            <button type="button" class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="closeAdd">Fechar</button>
+            <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <BaseCard>
       <div class="flex items-center justify-between">
@@ -100,7 +178,7 @@
         {{ admin.registrations.length }} inscricoes encontradas
         </h2>
         <p class="text-xs text-neutral-500">
-        Clique nos icones de acao para editar, cancelar ou estornar.
+          Clique nos icones de acao para editar, cancelar ou estornar.
         </p>
       </div>
       <div class="mt-4 overflow-x-auto">
@@ -109,9 +187,14 @@
             <tr>
               <th class="pb-2">Participante</th>
               <th class="pb-2">CPF</th>
+              <th class="pb-2 text-center">Idade</th>
+              <th class="pb-2 text-center">Nascimento</th>
+              <th class="pb-2 text-right">Valor</th>
               <th class="pb-2">Evento</th>
-              <th class="pb-2">Status</th>
-          <th class="pb-2 text-right">Acoes</th>
+              <th class="pb-2 text-center">Distrito</th>
+              <th class="pb-2 text-center">Igreja</th>
+              <th class="pb-2 text-center">Status</th>
+              <th class="pb-2 text-right">Acoes</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -120,35 +203,77 @@
                 <div class="font-medium text-neutral-800 dark:text-neutral-100">
                   {{ registration.fullName }}
                 </div>
-                <div class="text-xs text-neutral-500">
-                  {{ findEventTitle(registration.eventId) }}
-                </div>
               </td>
               <td class="py-3 text-sm text-neutral-500">
                 {{ maskCpf(registration.cpf) }}
               </td>
-              <td class="py-3 text-sm">{{ registration.status }}</td>
+              <td class="py-3 text-center text-sm text-neutral-600 dark:text-neutral-300">
+                {{ registration.ageYears ?? "-" }}
+              </td>
+              <td class="py-3 text-center text-sm text-neutral-600 dark:text-neutral-300">
+                {{ formatBirthDate(registration.birthDate) }}
+              </td>
+              <td class="py-3 text-right text-sm text-neutral-600 dark:text-neutral-300">
+                {{ formatCurrency(registration.priceCents ?? findEventPriceCents(registration.eventId)) }}
+              </td>
+              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">
+                {{ findEventTitle(registration.eventId) }}
+              </td>
+              <td class="py-3 text-center text-sm text-neutral-600 dark:text-neutral-300">
+                {{ findDistrictName(registration.districtId) }}
+              </td>
+              <td class="py-3 text-center text-sm text-neutral-600 dark:text-neutral-300">
+                {{ findChurchName(registration.churchId) }}
+              </td>
+              <td class="py-3 text-center">
+                <span
+                  :class="[
+                    'inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide',
+                    statusBadgeClass(registration.status)
+                  ]"
+                >
+                  {{ translateStatus(registration.status) }}
+                </span>
+              </td>
               <td class="py-3 text-right">
-                <div class="inline-flex gap-2 text-xs">
-                  <button class="text-blue-500 hover:underline" @click="openEdit(registration)">
+                <div class="flex flex-wrap justify-end gap-3 text-xs font-semibold uppercase tracking-wide">
+                  <button
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openEdit(registration)"
+                  >
                     Editar
                   </button>
                   <button
-                    class="text-amber-500 hover:underline"
+                    v-if="isPaymentLinkVisible(registration)"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="copyPaymentLink(registration)"
+                  >
+                    Link pagamento
+                  </button>
+                  <button
+                    v-if="canCancelRegistration(registration.status)"
+                    class="text-amber-600 hover:text-amber-500"
                     @click="openConfirm('cancel', registration)"
                   >
                     Cancelar
                   </button>
                   <button
                     v-if="registration.status === 'PAID'"
-                    class="text-orange-500 hover:underline"
+                    class="text-blue-600 hover:text-blue-500"
                     @click="openConfirm('refund', registration)"
                   >
                     Estornar
                   </button>
                   <button
-                    v-if="registration.status !== 'PAID'"
-                    class="text-red-600 hover:underline"
+                    v-else-if="registration.status === 'REFUNDED'"
+                    class="cursor-not-allowed text-neutral-400"
+                    disabled
+                  >
+                    Estornada
+                  </button>
+                  <button
+                    v-if="canDeleteRegistration(registration.status)"
+                    class="text-red-600 hover:text-red-500"
                     @click="openConfirm('delete', registration)"
                   >
                     Excluir
@@ -161,52 +286,70 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="selected">
-      <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-        Editar inscricao
-      </h2>
-      <form @submit.prevent="saveRegistration" class="mt-4 grid gap-4 md:grid-cols-2">
-        <div>
-          <label class="block text-xs font-semibold uppercase text-neutral-500">
-            Distrito
-          </label>
-          <select v-model="selected.districtId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
-              {{ district.name }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase text-neutral-500">
-            Igreja
-          </label>
-          <select v-model="selected.churchId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <option
-              v-for="church in churchesByDistrict(selected.districtId)"
-              :key="church.id"
-              :value="church.id"
-            >
-              {{ church.name }}
-            </option>
-          </select>
-        </div>
-        <div class="md:col-span-2 flex justify-end gap-3">
-          <button
-            type="button"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-            @click="selected = null"
-          >
-            Fechar
-          </button>
-          <button
-            type="submit"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-          >
-            Salvar alteracoes
-          </button>
-        </div>
-      </form>
-    </BaseCard>
+    <!-- Modal de edição -->
+    <div v-if="editDialog.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+      <div class="w-full max-w-2xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900">
+        <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Editar inscricao</h3>
+        <form @submit.prevent="saveRegistration" class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Nome</label>
+            <input
+              v-model="editForm.fullName"
+              type="text"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              required
+              minlength="3"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Nascimento</label>
+            <input
+              v-model="editForm.birthDate"
+              type="date"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">CPF</label>
+            <input
+              :value="editForm.cpf"
+              @input="onCpfInput"
+              inputmode="numeric"
+              autocomplete="off"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              placeholder="000.000.000-00"
+              required
+              maxlength="14"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Distrito</label>
+            <select v-model="editForm.districtId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                {{ district.name }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500">Igreja</label>
+            <select v-model="editForm.churchId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option v-for="church in churchesByDistrict(editForm.districtId)" :key="church.id" :value="church.id">
+                {{ church.name }}
+              </option>
+            </select>
+          </div>
+          <div class="md:col-span-2 flex justify-end gap-3">
+            <button type="button" class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="closeEdit">
+              Fechar
+            </button>
+            <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">
+              Salvar alteracoes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <ConfirmDialog
       :model-value="confirmState.open"
@@ -223,7 +366,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, watch, computed } from "vue";
 import { RouterLink } from "vue-router";
 
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -232,9 +375,10 @@ import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
 import type { Church, Registration } from "../../types/api";
-import { maskCpf } from "../../utils/format";
+import { maskCpf, formatCurrency } from "../../utils/format";
+import { validateCPF, normalizeCPF, formatCPF } from "../../utils/cpf";
 
-const admin = useAdminStore();
+const admin = useAdminStore();\nconst auth = useAuthStore();
 const catalog = useCatalogStore();
 
 const filters = reactive({
@@ -244,15 +388,47 @@ const filters = reactive({
   status: ""
 });
 
-const registrationStatuses = [
-  "PENDING_PAYMENT",
-  "PAID",
-  "CANCELED",
-  "REFUNDED",
-  "CHECKED_IN"
-];
+const statusLabels: Record<string, string> = {
+  DRAFT: "Rascunho",
+  PENDING_PAYMENT: "Pendente",
+  PAID: "Pago",
+  CANCELED: "Cancelada",
+  REFUNDED: "Estornada",
+  CHECKED_IN: "Check-in realizado"
+};
+
+const registrationStatusOptions = [
+  { value: "DRAFT", label: statusLabels.DRAFT },
+  { value: "PENDING_PAYMENT", label: statusLabels.PENDING_PAYMENT },
+  { value: "PAID", label: statusLabels.PAID },
+  { value: "CHECKED_IN", label: statusLabels.CHECKED_IN },
+  { value: "CANCELED", label: statusLabels.CANCELED },
+  { value: "REFUNDED", label: statusLabels.REFUNDED }
+];\n\nconst canCreateFree = computed(() => {\n  const role = auth.user?.role;\n  return role === "AdminGeral" || role === "AdminDistrital";\n});
 
 const selected = ref<Registration | null>(null);
+const editDialog = reactive({ open: false, original: null as Registration | null });
+const editForm = reactive({
+  fullName: "",
+  birthDate: "",
+  cpf: "",
+  districtId: "",
+  churchId: ""
+});
+
+const addDialog = reactive({ open: false });
+const addForm = reactive({
+  eventId: "",
+  fullName: "",
+  birthDate: "",
+  cpf: "",
+  districtId: "",
+  churchId: ""
+});
+const filtersReady = ref(false);
+const isApplying = ref(false);
+let applyDebounce: number | null = null;
+const pendingApply = ref(false);
 
 const errorDialog = reactive({
   open: false,
@@ -308,23 +484,119 @@ const buildFilterParams = () => ({
   status: filters.status || undefined
 });
 
+const reportType = ref<"event" | "church">("event");
+const generatingReport = ref(false);
+
+const generateReport = async () => {
+  if (generatingReport.value) return;
+  generatingReport.value = true;
+  try {
+    const response = await admin.downloadRegistrationReport(buildFilterParams(), reportType.value);
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const timestamp = new Date().toISOString().replace(/[:T]/g, "-").split(".")[0];
+    link.href = url;
+    link.download = `relatorio-inscricoes-${reportType.value}-${timestamp}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    showError("Falha ao gerar relatório", error);
+  } finally {
+    generatingReport.value = false;
+  }
+};
+
 const applyFilters = async () => {
+  if (isApplying.value) {
+    pendingApply.value = true;
+    return;
+  }
+  if (applyDebounce) {
+    window.clearTimeout(applyDebounce);
+    applyDebounce = null;
+  }
+  isApplying.value = true;
   try {
     await admin.loadRegistrations(buildFilterParams());
   } catch (error) {
     showError("Falha ao carregar inscricoes", error);
+  } finally {
+    isApplying.value = false;
+    if (pendingApply.value) {
+      pendingApply.value = false;
+      scheduleApply(true);
+    }
   }
 };
 
-const resetFilters = async () => {
+const scheduleApply = (immediate = false) => {
+  if (immediate) {
+    applyFilters();
+    return;
+  }
+  if (!filtersReady.value) return;
+  if (applyDebounce) {
+    window.clearTimeout(applyDebounce);
+  }
+  applyDebounce = window.setTimeout(() => {
+    applyFilters();
+  }, 300);
+};
+
+const resetFilters = () => {
   Object.assign(filters, {
     eventId: "",
     districtId: "",
     churchId: "",
     status: ""
   });
-  await applyFilters();
 };
+
+watch(
+  () => filters.districtId,
+  async (value, oldValue) => {
+    if (!filtersReady.value) return;
+    try {
+      await catalog.loadChurches(value || undefined);
+    } catch (error) {
+      showError("Falha ao carregar igrejas", error);
+    }
+    if (filters.churchId) {
+      const exists = catalog.churches.some((church) => church.id === filters.churchId);
+      if (!exists) {
+        filters.churchId = "";
+      }
+    }
+    scheduleApply();
+  }
+);
+
+watch(
+  () => filters.eventId,
+  () => {
+    if (!filtersReady.value) return;
+    scheduleApply();
+  }
+);
+
+watch(
+  () => filters.churchId,
+  () => {
+    if (!filtersReady.value) return;
+    scheduleApply();
+  }
+);
+
+watch(
+  () => filters.status,
+  () => {
+    if (!filtersReady.value) return;
+    scheduleApply();
+  }
+);
 
 onMounted(async () => {
   try {
@@ -333,6 +605,7 @@ onMounted(async () => {
     showError("Falha ao carregar dados iniciais", error);
   }
   await applyFilters();
+  filtersReady.value = true;
 });
 
 const churchesByDistrict = (districtId: string): Church[] => {
@@ -343,18 +616,204 @@ const churchesByDistrict = (districtId: string): Church[] => {
 const findEventTitle = (eventId: string) =>
   admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
 
+const findEventSlug = (eventId: string) =>
+  admin.events.find((event) => event.id === eventId)?.slug ?? "";
+
+const findEventPriceCents = (eventId: string) => {
+  const event = admin.events.find((item) => item.id === eventId);
+  return event?.currentPriceCents ?? event?.priceCents ?? 0;
+};
+
+const findDistrictName = (districtId: string) =>
+  catalog.districts.find((district) => district.id === districtId)?.name ?? "Nao informado";
+
+const findChurchName = (churchId: string) =>
+  catalog.churches.find((church) => church.id === churchId)?.name ?? "Nao informado";
+
+const deletableStatuses = new Set<Registration["status"]>([
+  "PENDING_PAYMENT",
+  "PAID",
+  "CHECKED_IN",
+  "CANCELED",
+  "REFUNDED"
+]);
+const cancellableStatuses = new Set<Registration["status"]>(["PENDING_PAYMENT", "PAID"]);
+
+const isPaymentLinkVisible = (registration: Registration) =>
+  registration.status === "PENDING_PAYMENT" && Boolean(registration.orderId);
+const canCancelRegistration = (status: Registration["status"]) => cancellableStatuses.has(status);
+const canDeleteRegistration = (status: Registration["status"]) => deletableStatuses.has(status);
+
+const brDateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric"
+});
+
+const formatBirthDate = (value: string | Date | null | undefined) => {
+  if (!value) return "Nao informado";
+  const sourceDate = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(sourceDate.getTime())) return "Nao informado";
+
+  const target = new Date(
+    sourceDate.getUTCFullYear(),
+    sourceDate.getUTCMonth(),
+    sourceDate.getUTCDate()
+  );
+  return brDateFormatter.format(target);
+};
+
+const translateStatus = (status: string) => statusLabels[status] ?? status;
+
+
+
+const copyPaymentLink = async (registration: Registration) => {
+  if (!isPaymentLinkVisible(registration)) {
+    return;
+  }
+  if (!registration.orderId) {
+    showError("Não foi possível gerar link", new Error("Inscrição sem pedido associado."));
+    return;
+  }
+  const slug = findEventSlug(registration.eventId);
+  if (!slug) {
+    showError("Não foi possível gerar link", new Error("Evento sem slug disponível."));
+    return;
+  }
+  const link = `${window.location.origin}/evento/${slug}/pagamento/${registration.orderId}`;
+  try {
+    await navigator.clipboard.writeText(link);
+    alert("Link de pagamento copiado!");
+  } catch (error) {
+    showError("Falha ao copiar link", error);
+  }
+};
+const statusBadgeClass = (status: string) => {
+  switch (status) {
+    case "PENDING_PAYMENT":
+      return "bg-amber-100 text-amber-700";
+    case "PAID":
+      return "bg-emerald-100 text-emerald-700";
+    case "CHECKED_IN":
+      return "bg-blue-100 text-blue-700";
+    case "REFUNDED":
+      return "bg-sky-100 text-sky-700";
+    case "CANCELED":
+      return "bg-red-100 text-red-700";
+    case "DRAFT":
+      return "bg-neutral-200 text-neutral-600";
+    default:
+      return "bg-neutral-200 text-neutral-600";
+  }
+};
+
+const sanitizeCpf = (v: string) => v.replace(/\D/g, "").slice(0, 11);
+const onCpfInput = (e: Event) => {
+  const el = e.target as HTMLInputElement;
+  // aplicar máscara simples
+  const digits = el.value.replace(/\D/g, "").slice(0, 11);
+  let masked = digits;
+  if (digits.length > 9) masked = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (m, a,b,c,d) => `${a}.${b}.${c}${d?'-'+d:''}`);
+  else if (digits.length > 6) masked = digits.replace(/(\d{3})(\d{3})(\d{0,3})/, (m, a,b,c) => `${a}.${b}.${c}`);
+  else if (digits.length > 3) masked = digits.replace(/(\d{3})(\d{0,3})/, (m, a,b) => `${a}.${b}`);
+  editForm.cpf = masked;
+};
+
+const onAddCpfInput = (e: Event) => {
+  const el = e.target as HTMLInputElement;
+  const digits = el.value.replace(/\D/g, "").slice(0, 11);
+  let masked = digits;
+  if (digits.length > 9) masked = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (m, a,b,c,d) => `${a}.${b}.${c}${d?'-'+d:''}`);
+  else if (digits.length > 6) masked = digits.replace(/(\d{3})(\d{3})(\d{0,3})/, (m, a,b,c) => `${a}.${b}.${c}`);
+  else if (digits.length > 3) masked = digits.replace(/(\d{3})(\d{0,3})/, (m, a,b) => `${a}.${b}`);
+  addForm.cpf = masked;
+};
+
 const openEdit = (registration: Registration) => {
-  selected.value = { ...registration };
+  editDialog.original = { ...registration };
+  editForm.fullName = registration.fullName;
+  editForm.birthDate = new Date(registration.birthDate).toISOString().slice(0, 10);
+  editForm.cpf = formatCPF(registration.cpf);
+  editForm.districtId = registration.districtId;
+  editForm.churchId = registration.churchId;
+  editDialog.open = true;
+};
+
+const closeEdit = () => {
+  editDialog.open = false;
+  editDialog.original = null;
+};
+
+const openAdd = () => {
+  addForm.eventId = filters.eventId || (admin.events[0]?.id ?? "");
+  addForm.fullName = "";
+  addForm.birthDate = "";
+  addForm.cpf = "";
+  addForm.districtId = filters.districtId || (catalog.districts[0]?.id ?? "");
+  addForm.churchId = filters.churchId || (churchesByDistrict(addForm.districtId)[0]?.id ?? "");
+  addDialog.open = true;
+};
+
+const closeAdd = () => {
+  addDialog.open = false;
+};
+
+const saveNewRegistration = async () => {
+  try {
+    if (!addForm.eventId) { showError("Evento obrigatório", new Error("Selecione o evento")); return; }
+    if (!addForm.fullName || addForm.fullName.trim().length < 3) { showError("Nome inválido", new Error("Informe o nome completo")); return; }
+    if (!addForm.birthDate) { showError("Nascimento inválido", new Error("Informe a data")); return; }
+    if (!validateCPF(addForm.cpf)) { showError("CPF inválido", new Error("Informe um CPF válido")); return; }
+    if (!addForm.districtId || !addForm.churchId) { showError("Local inválido", new Error("Selecione distrito e igreja")); return; }
+
+    await admin.createFreeRegistration({
+      eventId: addForm.eventId,
+      buyerCpf: normalizeCPF(addForm.cpf),
+      person: {
+        fullName: addForm.fullName.trim(),
+        cpf: normalizeCPF(addForm.cpf),
+        birthDate: addForm.birthDate,
+        gender: 'OTHER',
+        districtId: addForm.districtId,
+        churchId: addForm.churchId,
+        photoUrl: null
+      }
+    });
+    closeAdd();
+  } catch (error) {
+    showError("Falha ao criar inscrição", error);
+  }
 };
 
 const saveRegistration = async () => {
-  if (!selected.value) return;
+  if (!editDialog.original) return;
+  const original = editDialog.original;
+  const payload: Record<string, unknown> = {};
   try {
-    await admin.updateRegistration(selected.value.id, {
-      districtId: selected.value.districtId,
-      churchId: selected.value.churchId
-    });
-    selected.value = null;
+    if (!validateCPF(editForm.cpf)) {
+      showError("CPF invalido", new Error("Informe um CPF valido"));
+      return;
+    }
+    if (editForm.fullName.trim() && editForm.fullName.trim() !== original.fullName) {
+      payload.fullName = editForm.fullName.trim();
+    }
+    const currentBirth = new Date(original.birthDate).toISOString().slice(0,10);
+    if (editForm.birthDate && editForm.birthDate !== currentBirth) {
+      payload.birthDate = editForm.birthDate;
+    }
+    const sanitized = normalizeCPF(editForm.cpf);
+    if (sanitized && sanitized !== original.cpf) {
+      payload.cpf = sanitized;
+    }
+    if (editForm.districtId && editForm.districtId !== original.districtId) {
+      payload.districtId = editForm.districtId;
+    }
+    if (editForm.churchId && editForm.churchId !== original.churchId) {
+      payload.churchId = editForm.churchId;
+    }
+    await admin.updateRegistration(original.id, payload);
+    closeEdit();
   } catch (error) {
     showError("Falha ao atualizar inscricao", error);
   }
@@ -397,7 +856,7 @@ const openConfirm = (action: ConfirmAction, registration: Registration) => {
     confirmState.type = "default";
   } else {
     confirmState.title = "Excluir inscricao";
-    confirmState.description = `Excluir a inscricao de ${registration.fullName}? O registro sera removido permanentemente.`;
+    confirmState.description = `Excluir a inscrição de ${registration.fullName}? O registro será removido permanentemente.`;
     confirmState.confirmLabel = "Excluir";
     confirmState.type = "danger";
   }
@@ -431,3 +890,4 @@ const executeConfirmAction = async () => {
   }
 };
 </script>
+

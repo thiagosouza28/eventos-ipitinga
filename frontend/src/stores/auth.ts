@@ -16,6 +16,7 @@ type AuthUser = {
 };
 
 const STORAGE_KEY = "catre-auth";
+const ROLE_KEY = "catre-role";
 
 export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(null);
@@ -29,14 +30,25 @@ export const useAuthStore = defineStore("auth", () => {
       const parsed = JSON.parse(stored);
       token.value = parsed.token;
       user.value = parsed.user;
+      if (parsed?.user?.role) {
+        try {
+          localStorage.setItem(ROLE_KEY, parsed.user.role);
+        } catch {}
+      }
     }
   };
 
   const persist = () => {
     if (token.value && user.value) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: token.value, user: user.value }));
+      try {
+        localStorage.setItem(ROLE_KEY, user.value.role);
+      } catch {}
     } else {
       localStorage.removeItem(STORAGE_KEY);
+      try {
+        localStorage.removeItem(ROLE_KEY);
+      } catch {}
     }
   };
 
@@ -58,10 +70,19 @@ export const useAuthStore = defineStore("auth", () => {
 
   loadFromStorage();
 
+  const role = computed(() => user.value?.role ?? null);
+  const isAdminGeral = computed(() => role.value === "AdminGeral");
+  const isAdminDistrital = computed(() => role.value === "AdminDistrital");
+  const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
+
   return {
     token,
     user,
     isAuthenticated,
+    role,
+    isAdminGeral,
+    isAdminDistrital,
+    canCreateFree,
     signIn,
     signOut
   };

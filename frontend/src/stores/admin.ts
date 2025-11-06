@@ -131,9 +131,71 @@ export const useAdminStore = defineStore("admin", () => {
     await loadRegistrations(registrationFilters.value);
   };
 
-  const confirmOrderPayment = async (orderId: string, payload?: { paymentId?: string }) => {
+  const createAdminRegistration = async (payload: {
+    eventId: string;
+    buyerCpf: string;
+    paymentMethod: 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR';
+    person: {
+      fullName: string;
+      cpf: string;
+      birthDate: string; // YYYY-MM-DD
+      gender?: string;
+      districtId: string;
+      churchId: string;
+      photoUrl?: string | null;
+    };
+  }) => {
+    const resp = await api.post(`/admin/inscriptions/batch`, {
+      eventId: payload.eventId,
+      buyerCpf: payload.buyerCpf,
+      paymentMethod: payload.paymentMethod,
+      people: [
+        {
+          fullName: payload.person.fullName,
+          cpf: payload.person.cpf,
+          birthDate: payload.person.birthDate,
+          gender: payload.person.gender ?? 'OTHER',
+          districtId: payload.person.districtId,
+          churchId: payload.person.churchId,
+          photoUrl: payload.person.photoUrl ?? null
+        }
+      ]
+    });
+    // Se foi em dinheiro, marcar pago imediatamente
+    if (payload.paymentMethod === 'CASH') {
+      const orderId = resp.data?.orderId;
+      if (orderId) {
+        await api.post(`/admin/orders/${orderId}/mark-paid`, {
+          manualReference: 'CASH-ADMIN',
+          paidAt: new Date().toISOString()
+        });
+      }
+    }
+    await loadRegistrations(registrationFilters.value);
+    return resp.data;
+  };
+
+  const confirmOrderPayment = async (
+    orderId: string,
+    payload?: { paymentId?: string; manualReference?: string; paidAt?: string }
+  ) => {
     await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
     await loadRegistrations(registrationFilters.value);
+  };
+
+  // Consulta status do pagamento de um pedido (PIX/Manual)
+  const getOrderPayment = async (orderId: string) => {
+    const response = await api.get(`/payments/order/${orderId}`);
+    return response.data as {
+      status: string;
+      paymentId?: string | null;
+      paymentMethod: string;
+      participantCount: number;
+      totalCents: number;
+      paidAt?: string | null;
+      isFree?: boolean;
+      isManual?: boolean;
+    };
   };
 
   const loadOrders = async (filters: Record<string, unknown>) => {
@@ -179,8 +241,10 @@ export const useAdminStore = defineStore("admin", () => {
     updateRegistration,
     cancelRegistration,
     deleteRegistration,
+    createAdminRegistration,
     refundRegistration,
     markRegistrationsPaid,
+    getOrderPayment,
     loadOrders,
     loadDashboard,
     checkinScan,

@@ -147,8 +147,7 @@
               </div>
             </section>
 
-            <section class="space-y-3">
-              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
+            <section v-if="!isPixPayment && !isManualPayment" class="space-y-3">`n              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">
                 Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.
               </p>
@@ -322,6 +321,8 @@ const statusMessage = computed(() => {
   return "Estamos monitorando o Mercado Pago. Assim que o pagamento for aprovado, atualizaremos automaticamente.";
 });
 
+const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
+
 const statusIcon = computed(() => {
   if (isFreeEvent.value || payment.value?.status === "PAID") return "OK";
   if (isManualPayment.value) return "..";
@@ -444,4 +445,7 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+
+
+
 
