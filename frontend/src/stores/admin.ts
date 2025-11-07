@@ -198,6 +198,20 @@ export const useAdminStore = defineStore("admin", () => {
     };
   };
 
+  const regenerateRegistrationPaymentLink = async (registrationId: string) => {
+    const response = await api.post(`/admin/registrations/${registrationId}/payment-link`);
+    return response.data as { orderId: string };
+  };
+
+  const getRegistrationHistory = async (registrationId: string) => {
+    const response = await api.get(`/admin/registrations/${registrationId}/history`);
+    return response.data as {
+      registration: any;
+      orderId?: string | null;
+      events: Array<{ type: string; at: string; actor?: { id: string; name?: string | null } | null; details?: any }>;
+    };
+  };
+
   const loadOrders = async (filters: Record<string, unknown>) => {
     const response = await api.get("/admin/orders", { params: filters });
     orders.value = response.data;
@@ -244,7 +258,10 @@ export const useAdminStore = defineStore("admin", () => {
     createAdminRegistration,
     refundRegistration,
     markRegistrationsPaid,
+    confirmOrderPayment,
     getOrderPayment,
+    regenerateRegistrationPaymentLink,
+    getRegistrationHistory,
     loadOrders,
     loadDashboard,
     checkinScan,

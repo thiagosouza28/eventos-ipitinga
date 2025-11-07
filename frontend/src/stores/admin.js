@@ -147,6 +147,10 @@ export const useAdminStore = defineStore("admin", () => {
         const response = await api.get(`/payments/order/${orderId}`);
         return response.data;
     };
+    const regenerateRegistrationPaymentLink = async (registrationId) => {
+        const response = await api.post(`/admin/registrations/${registrationId}/payment-link`);
+        return response.data;
+    };
     const loadOrders = async (filters) => {
         const response = await api.get("/admin/orders", { params: filters });
         orders.value = response.data;
@@ -190,10 +194,12 @@ export const useAdminStore = defineStore("admin", () => {
         refundRegistration,
         markRegistrationsPaid,
         getOrderPayment,
+        regenerateRegistrationPaymentLink,
         loadOrders,
         loadDashboard,
         checkinScan,
         checkinManualLookup,
+        confirmOrderPayment,
         confirmCheckin
     };
 });

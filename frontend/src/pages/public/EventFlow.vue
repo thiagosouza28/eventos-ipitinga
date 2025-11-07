@@ -560,7 +560,7 @@
           </div>
 
           <div class="flex-1 space-y-6">
-            <section class="space-y-3">
+            <section v-if="inlineIsPixMethod" class="space-y-3">
               <header class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Pague com Pix</h2>
                 <button
@@ -580,6 +580,10 @@
                   alt="QR Code Pix"
                   class="h-48 w-48 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700"
                 />
+                <div v-else class="flex flex-col items-center justify-center gap-2 py-8 text-neutral-500">
+                  <svg class="h-6 w-6 animate-spin text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                  <span class="text-sm">Gerando QR Code do Pix...</span>
+                </div>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400">
                   Escaneie com o aplicativo do seu banco ou cole o código Pix abaixo.
                 </p>
@@ -596,7 +600,7 @@
               </div>
             </section>
 
-            <section v-if="!inlineIsPixMethod" class="space-y-3">
+            <section v-if="!inlineIsPixMethod && !inlineIsManual" class="space-y-3">
               <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">
                 Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.

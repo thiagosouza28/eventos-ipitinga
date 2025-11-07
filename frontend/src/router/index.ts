@@ -16,6 +16,7 @@ const AdminOrders = () => import("../pages/admin/AdminOrders.vue");
 const AdminCheckin = () => import("../pages/admin/AdminCheckin.vue");
 const AdminCatalog = () => import("../pages/admin/AdminCatalog.vue");
 const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
+const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -68,6 +69,13 @@ export const router = createRouter({
       path: "/admin/financial",
       name: "admin-financial",
       component: AdminFinancial,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: "/admin/events/:eventId/financial",
+      name: "admin-event-financial",
+      component: AdminEventFinancial,
+      props: true,
       meta: { requiresAuth: true }
     },
     {

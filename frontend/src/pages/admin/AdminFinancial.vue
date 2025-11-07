@@ -36,7 +36,7 @@
       <h2 class="mb-4 text-lg font-semibold text-neutral-700 dark:text-neutral-100">
         Resumo Geral
       </h2>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
           <p class="text-xs font-medium uppercase text-neutral-500">Receita Bruta</p>
           <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
@@ -46,7 +46,7 @@
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
           <p class="text-xs font-medium uppercase text-neutral-500">Taxas MP</p>
           <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency(generalSummary.totals.feesCents) }}
+            -{{ formatCurrency((generalSummary.totals.pix?.feesCents || (generalSummary.totals.grossCents - generalSummary.totals.netCents) || generalSummary.totals.feesCents) || 0) }}
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
@@ -61,10 +61,34 @@
             -{{ formatCurrency(generalSummary.totals.expensesCents) }}
           </p>
         </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">Recebido em Dinheiro</p>
+          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
+            {{ formatCurrency(generalSummary.totals.cashCents || 0) }}
+          </p>
+        </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">PIX Líquido</p>
+          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
+            {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
+          </p>
+        </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">Taxas PIX</p>
+          <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
+            -{{ formatCurrency(generalSummary.totals.pix?.feesCents || 0) }}
+          </p>
+        </div>
         <div class="rounded-lg border-2 border-primary-500 bg-primary-50 p-4 dark:bg-primary-900/20">
           <p class="text-xs font-medium uppercase text-primary-600 dark:text-primary-400">Saldo do Caixa</p>
           <p class="mt-1 text-2xl font-bold text-primary-600 dark:text-primary-400">
             {{ formatCurrency(generalSummary.totals.cashBalanceCents) }}
+          </p>
+        </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (Líquido)</p>
+          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
+            {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
           </p>
         </div>
       </div>
@@ -113,7 +137,7 @@
           Ver Detalhes
         </button>
       </div>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
           <p class="text-xs font-medium uppercase text-neutral-500">Receita Bruta</p>
           <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
@@ -123,7 +147,7 @@
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
           <p class="text-xs font-medium uppercase text-neutral-500">Taxas MP</p>
           <p class="mt-1 text-xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency(eventSummary.totals.feesCents) }}
+            -{{ formatCurrency((eventSummary.totals.pix?.feesCents || (eventSummary.totals.grossCents - eventSummary.totals.netCents) || eventSummary.totals.feesCents) || 0) }}
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
@@ -138,10 +162,28 @@
             -{{ formatCurrency(eventSummary.totals.expensesCents) }}
           </p>
         </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">Recebido em Dinheiro</p>
+          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
+            {{ formatCurrency(eventSummary.totals.cashCents || 0) }}
+          </p>
+        </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">PIX Líquido</p>
+          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
+            {{ formatCurrency(eventSummary.totals.pix?.netCents || 0) }}
+          </p>
+        </div>
         <div class="rounded-lg border-2 border-primary-500 bg-primary-50 p-4 dark:bg-primary-900/20">
           <p class="text-xs font-medium uppercase text-primary-600 dark:text-primary-400">Saldo</p>
           <p class="mt-1 text-xl font-bold text-primary-600 dark:text-primary-400">
             {{ formatCurrency(eventSummary.totals.cashBalanceCents) }}
+          </p>
+        </div>
+        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
+          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (Líquido)</p>
+          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
+            {{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}
           </p>
         </div>
       </div>

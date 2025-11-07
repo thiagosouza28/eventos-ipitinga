@@ -486,7 +486,7 @@
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
         @click.self="closeDetails"
       >
-        <div class="w-full max-w-lg rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="w-full max-w-3xl rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
           <header class="flex items-start justify-between gap-4">
             <div>
               <h2 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">
@@ -496,13 +496,22 @@
                 Slug: {{ details.event?.slug }}
               </p>
             </div>
-            <button
-              type="button"
-              class="rounded-md border border-neutral-200 px-3 py-1 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-              @click="closeDetails"
-            >
-              Fechar
-            </button>
+            <div class="flex items-center gap-2">
+              <RouterLink
+                v-if="details.event?.id"
+                :to="{ name: 'admin-event-financial', params: { eventId: details.event.id } }"
+                class="rounded-md border border-primary-200 bg-primary-50 px-3 py-1 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-400"
+              >
+                Financeiro
+              </RouterLink>
+              <button
+                type="button"
+                class="rounded-md border border-neutral-200 px-3 py-1 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                @click="closeDetails"
+              >
+                Fechar
+              </button>
+            </div>
           </header>
 
           <dl class="mt-4 space-y-3 text-sm text-neutral-600 dark:text-neutral-300">
@@ -549,9 +558,18 @@
               <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-100">
                 Lotes de inscricao
               </h3>
-              <div class="text-xs text-neutral-500 dark:text-neutral-400">
-                Valor vigente: <span class="font-semibold text-neutral-700 dark:text-neutral-100">{{ currentPriceDisplay }}</span>
-                <span class="ml-1">(base: {{ basePriceDisplay }})</span>
+              <div class="flex items-center gap-3">
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  Valor vigente: <span class="font-semibold text-neutral-700 dark:text-neutral-100">{{ currentPriceDisplay }}</span>
+                  <span class="ml-1">(base: {{ basePriceDisplay }})</span>
+                </div>
+                <button
+                  type="button"
+                  class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500"
+                  @click="openLotCreateModal"
+                >
+                  Novo lote
+                </button>
               </div>
             </div>
 
@@ -624,7 +642,7 @@
               </p>
             </div>
 
-            <form
+            <form v-if="false"
               class="space-y-3 rounded-lg border border-dashed border-neutral-300 p-4 text-sm dark:border-neutral-700"
               @submit.prevent="submitLot"
             >
@@ -738,6 +756,85 @@
         </div>
       </div>
     </teleport>
+    <!-- Modal para criar/editar lote -->
+    <Modal
+      :model-value="lotModalOpen"
+      :title="editingLotId ? 'Editar lote' : 'Criar novo lote'"
+      @update:modelValue="(v) => { lotModalOpen = v; if (!v) cancelLotEdit(); }"
+    >
+      <form class="space-y-3 text-sm" @submit.prevent="submitLot">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+              Nome do lote
+            </label>
+            <input
+              v-model="lotForm.name"
+              type="text"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+              Valor
+            </label>
+            <input
+              v-model="lotForm.price"
+              type="text"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              placeholder="0,00"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+              Inicio
+            </label>
+            <input
+              v-model="lotForm.startsAt"
+              type="datetime-local"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+              Fim (opcional)
+            </label>
+            <input
+              v-model="lotForm.endsAt"
+              type="datetime-local"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            @click="cancelLotEdit"
+            :disabled="lotSaving"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+            @click="resetLotForm"
+            :disabled="lotSaving"
+          >
+            Limpar
+          </button>
+          <button
+            type="submit"
+            class="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
+            :disabled="lotSaving"
+          >
+            {{ lotSaving ? 'Salvando...' : editingLotId ? 'Salvar alterações' : 'Adicionar lote' }}
+          </button>
+        </div>
+      </form>
+    </Modal>
   </div>
 </template>
 
@@ -748,6 +845,7 @@ import { RouterLink } from "vue-router";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
+import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
 import type { Event, EventLot, PaymentMethod } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
@@ -833,6 +931,7 @@ const lotSaving = ref(false);
 const lotDeletingId = ref<string | null>(null);
 const editingLotId = ref<string | null>(null);
 const loadingLots = ref(false);
+const lotModalOpen = ref(false);
 
 const lotsForDetails = computed<EventLot[]>(() => {
   if (!details.event) return [];
@@ -961,10 +1060,17 @@ const startLotEdit = (lot: EventLot) => {
   lotForm.price = formatPriceDisplay(lot.priceCents);
   lotForm.startsAt = toLocalInput(lot.startsAt);
   lotForm.endsAt = lot.endsAt ? toLocalInput(lot.endsAt) : "";
+  lotModalOpen.value = true;
 };
 
 const cancelLotEdit = () => {
   resetLotForm();
+  lotModalOpen.value = false;
+};
+
+const openLotCreateModal = () => {
+  resetLotForm();
+  lotModalOpen.value = true;
 };
 
 const refreshDetailsEvent = () => {
@@ -1053,6 +1159,7 @@ const submitLot = async () => {
     }
     refreshDetailsEvent();
     resetLotForm();
+    lotModalOpen.value = false;
   } catch (error) {
     showError("Falha ao salvar lote", error);
   } finally {
