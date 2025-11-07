@@ -1,10 +1,12 @@
 <template>
-  <div>
-    <ol class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+  <div class="overflow-x-auto pb-2">
+    <ol
+      class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+    >
       <li
         v-for="(step, index) in steps"
         :key="step.title"
-        class="flex flex-1 items-center gap-3"
+        class="flex flex-1 min-w-[220px] items-center gap-3 sm:min-w-0"
       >
         <div
           :class="[
@@ -26,7 +28,7 @@
         </div>
         <div
           v-if="index < steps.length - 1"
-          class="hidden flex-1 border-t border-dashed border-neutral-300 md:block dark:border-neutral-700"
+          class="hidden flex-1 border-t border-dashed border-neutral-300 sm:block dark:border-neutral-700"
         />
       </li>
     </ol>

@@ -1,9 +1,9 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
+import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
@@ -32,6 +32,7 @@ const createForm = reactive({
     startDate: "",
     endDate: "",
     location: "",
+    bannerUrl: "",
     isFree: false,
     minAgeYears: "",
     paymentMethods: defaultPaymentMethodValues()
@@ -42,6 +43,7 @@ const editForm = reactive({
     startDate: "",
     endDate: "",
     location: "",
+    bannerUrl: "",
     isFree: false,
     minAgeYears: "",
     paymentMethods: defaultPaymentMethodValues()
@@ -74,7 +76,9 @@ const lotForm = reactive({
 });
 const lotSaving = ref(false);
 const lotDeletingId = ref(null);
+const editingLotId = ref(null);
 const loadingLots = ref(false);
+const lotModalOpen = ref(false);
 const lotsForDetails = computed(() => {
     if (!details.event)
         return [];
@@ -172,11 +176,28 @@ const resetLotForm = () => {
     const defaultPriceCents = details.event
         ? details.event.currentPriceCents ?? details.event.priceCents
         : 0;
+    editingLotId.value = null;
     lotForm.name = "";
     lotForm.price = formatPriceDisplay(defaultPriceCents);
     const referenceStart = details.event?.currentLot?.startsAt ?? details.event?.startDate ?? new Date().toISOString();
     lotForm.startsAt = toLocalInputSafe(referenceStart);
     lotForm.endsAt = "";
+};
+const startLotEdit = (lot) => {
+    editingLotId.value = lot.id;
+    lotForm.name = lot.name;
+    lotForm.price = formatPriceDisplay(lot.priceCents);
+    lotForm.startsAt = toLocalInput(lot.startsAt);
+    lotForm.endsAt = lot.endsAt ? toLocalInput(lot.endsAt) : "";
+    lotModalOpen.value = true;
+};
+const cancelLotEdit = () => {
+    resetLotForm();
+    lotModalOpen.value = false;
+};
+const openLotCreateModal = () => {
+    resetLotForm();
+    lotModalOpen.value = true;
 };
 const refreshDetailsEvent = () => {
     if (!details.event)
@@ -193,6 +214,7 @@ const resetCreateForm = () => {
     createForm.startDate = "";
     createForm.endDate = "";
     createForm.location = "";
+    createForm.bannerUrl = "";
     createForm.isFree = false;
     createForm.minAgeYears = "";
     createForm.paymentMethods = defaultPaymentMethodValues();
@@ -203,6 +225,7 @@ const resetEditForm = () => {
     editForm.startDate = "";
     editForm.endDate = "";
     editForm.location = "";
+    editForm.bannerUrl = "";
     editForm.isFree = false;
     editForm.minAgeYears = "";
     editForm.paymentMethods = defaultPaymentMethodValues();
@@ -239,14 +262,27 @@ const submitLot = async () => {
     }
     lotSaving.value = true;
     try {
-        await admin.createEventLot(details.event.id, {
-            name: lotForm.name.trim(),
-            priceCents,
-            startsAt: startDate.toISOString(),
-            endsAt: endsAtIso
-        });
+        if (editingLotId.value) {
+            // Editar lote existente
+            await admin.updateEventLot(details.event.id, editingLotId.value, {
+                name: lotForm.name.trim(),
+                priceCents,
+                startsAt: startDate.toISOString(),
+                endsAt: endsAtIso
+            });
+        }
+        else {
+            // Criar novo lote
+            await admin.createEventLot(details.event.id, {
+                name: lotForm.name.trim(),
+                priceCents,
+                startsAt: startDate.toISOString(),
+                endsAt: endsAtIso
+            });
+        }
         refreshDetailsEvent();
         resetLotForm();
+        lotModalOpen.value = false;
     }
     catch (error) {
         showError("Falha ao salvar lote", error);
@@ -296,6 +332,7 @@ const submitCreate = async () => {
             startDate: new Date(createForm.startDate).toISOString(),
             endDate: new Date(createForm.endDate).toISOString(),
             location: createForm.location.trim(),
+            bannerUrl: createForm.bannerUrl.trim() || undefined,
             isFree: createForm.isFree,
             priceCents: 0,
             paymentMethods: [...createForm.paymentMethods],
@@ -328,6 +365,7 @@ const submitEdit = async () => {
             startDate: new Date(editForm.startDate).toISOString(),
             endDate: new Date(editForm.endDate).toISOString(),
             location: editForm.location.trim(),
+            bannerUrl: editForm.bannerUrl.trim() || undefined,
             isFree: editForm.isFree,
             minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
             priceCents: 0,
@@ -349,6 +387,7 @@ const startEdit = (event) => {
     editForm.startDate = toLocalInput(event.startDate);
     editForm.endDate = toLocalInput(event.endDate);
     editForm.location = event.location;
+    editForm.bannerUrl = event.bannerUrl || "";
     editForm.isFree = event.isFree;
     editForm.minAgeYears = event.minAgeYears != null ? String(event.minAgeYears) : "";
     editForm.paymentMethods =
@@ -667,6 +706,38 @@ if (__VLS_ctx.showCreateForm) {
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "url",
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+        placeholder: "https://exemplo.com/banner.jpg",
+    });
+    (__VLS_ctx.createForm.bannerUrl);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    if (__VLS_ctx.createForm.bannerUrl) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+            ...{ onError: (...[$event]) => {
+                    if (!(__VLS_ctx.showCreateForm))
+                        return;
+                    if (!(__VLS_ctx.createForm.bannerUrl))
+                        return;
+                    __VLS_ctx.createForm.bannerUrl = '';
+                } },
+            src: (__VLS_ctx.createForm.bannerUrl),
+            alt: "Preview do banner",
+            ...{ class: "max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700" },
+        });
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
@@ -831,6 +902,38 @@ if (__VLS_ctx.editingEventId) {
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "url",
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+        placeholder: "https://exemplo.com/banner.jpg",
+    });
+    (__VLS_ctx.editForm.bannerUrl);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    if (__VLS_ctx.editForm.bannerUrl) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+            ...{ onError: (...[$event]) => {
+                    if (!(__VLS_ctx.editingEventId))
+                        return;
+                    if (!(__VLS_ctx.editForm.bannerUrl))
+                        return;
+                    __VLS_ctx.editForm.bannerUrl = '';
+                } },
+            src: (__VLS_ctx.editForm.bannerUrl),
+            alt: "Preview do banner",
+            ...{ class: "max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700" },
+        });
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
@@ -1014,7 +1117,7 @@ if (__VLS_ctx.details.open) {
         ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "w-full max-w-lg rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900" },
+        ...{ class: "w-full max-w-3xl rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.header, __VLS_intrinsicElements.header)({
         ...{ class: "flex items-start justify-between gap-4" },
@@ -1028,6 +1131,24 @@ if (__VLS_ctx.details.open) {
         ...{ class: "text-xs text-neutral-500" },
     });
     (__VLS_ctx.details.event?.slug);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center gap-2" },
+    });
+    if (__VLS_ctx.details.event?.id) {
+        const __VLS_36 = {}.RouterLink;
+        /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+        // @ts-ignore
+        const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
+            to: ({ name: 'admin-event-financial', params: { eventId: __VLS_ctx.details.event.id } }),
+            ...{ class: "rounded-md border border-primary-200 bg-primary-50 px-3 py-1 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-400" },
+        }));
+        const __VLS_38 = __VLS_37({
+            to: ({ name: 'admin-event-financial', params: { eventId: __VLS_ctx.details.event.id } }),
+            ...{ class: "rounded-md border border-primary-200 bg-primary-50 px-3 py-1 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-400" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_37));
+        __VLS_39.slots.default;
+        var __VLS_39;
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.closeDetails) },
         type: "button",
@@ -1111,6 +1232,9 @@ if (__VLS_ctx.details.open) {
             ...{ class: "text-base font-semibold text-neutral-700 dark:text-neutral-100" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center gap-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
@@ -1121,6 +1245,11 @@ if (__VLS_ctx.details.open) {
             ...{ class: "ml-1" },
         });
         (__VLS_ctx.basePriceDisplay);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.openLotCreateModal) },
+            type: "button",
+            ...{ class: "rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500" },
+        });
         if (__VLS_ctx.loadingLots) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300" },
@@ -1169,6 +1298,31 @@ if (__VLS_ctx.details.open) {
                             ...{ class: "text-[10px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300" },
                         });
                     }
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "flex gap-2" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.details.open))
+                                    return;
+                                if (!(!__VLS_ctx.details.event?.isFree))
+                                    return;
+                                if (!!(__VLS_ctx.loadingLots))
+                                    return;
+                                if (!(__VLS_ctx.lotsForDetails.length))
+                                    return;
+                                __VLS_ctx.startLotEdit(lot);
+                            } },
+                        type: "button",
+                        ...{ class: "text-xs font-semibold uppercase tracking-wide text-primary-600 transition hover:text-primary-500 disabled:cursor-not-allowed disabled:text-neutral-400" },
+                        disabled: (__VLS_ctx.lotDeletingId === lot.id || __VLS_ctx.editingLotId === lot.id),
+                    });
+                    if (__VLS_ctx.editingLotId === lot.id) {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    }
+                    else {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    }
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                         ...{ onClick: (...[$event]) => {
                                 if (!(__VLS_ctx.details.open))
@@ -1202,72 +1356,93 @@ if (__VLS_ctx.details.open) {
                 });
             }
         }
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-            ...{ onSubmit: (__VLS_ctx.submitLot) },
-            ...{ class: "space-y-3 rounded-lg border border-dashed border-neutral-300 p-4 text-sm dark:border-neutral-700" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({
-            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "grid gap-3 sm:grid-cols-2" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "sm:col-span-2" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            value: (__VLS_ctx.lotForm.name),
-            type: "text",
-            required: true,
-            ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            value: (__VLS_ctx.lotForm.price),
-            type: "text",
-            ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-            placeholder: "0,00",
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            type: "datetime-local",
-            required: true,
-            ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-        });
-        (__VLS_ctx.lotForm.startsAt);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            type: "datetime-local",
-            ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-        });
-        (__VLS_ctx.lotForm.endsAt);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex items-center justify-end gap-3" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.resetLotForm) },
-            type: "button",
-            ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800" },
-            disabled: (__VLS_ctx.lotSaving),
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            type: "submit",
-            ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" },
-            disabled: (__VLS_ctx.lotSaving),
-        });
-        (__VLS_ctx.lotSaving ? "Salvando..." : "Adicionar lote");
+        if (false) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+                ...{ onSubmit: (__VLS_ctx.submitLot) },
+                ...{ class: "space-y-3 rounded-lg border border-dashed border-neutral-300 p-4 text-sm dark:border-neutral-700" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h4, __VLS_intrinsicElements.h4)({
+                ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+            });
+            (__VLS_ctx.editingLotId ? "Editar lote" : "Criar novo lote");
+            if (__VLS_ctx.editingLotId) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex justify-end" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (__VLS_ctx.cancelLotEdit) },
+                    type: "button",
+                    ...{ class: "text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200" },
+                });
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "grid gap-3 sm:grid-cols-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "sm:col-span-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                value: (__VLS_ctx.lotForm.name),
+                type: "text",
+                required: true,
+                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                value: (__VLS_ctx.lotForm.price),
+                type: "text",
+                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+                placeholder: "0,00",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                type: "datetime-local",
+                required: true,
+                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+            });
+            (__VLS_ctx.lotForm.startsAt);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                type: "datetime-local",
+                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+            });
+            (__VLS_ctx.lotForm.endsAt);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-end gap-3" },
+            });
+            if (__VLS_ctx.editingLotId) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (__VLS_ctx.cancelLotEdit) },
+                    type: "button",
+                    ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800" },
+                    disabled: (__VLS_ctx.lotSaving),
+                });
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.resetLotForm) },
+                type: "button",
+                ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800" },
+                disabled: (__VLS_ctx.lotSaving),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                type: "submit",
+                ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" },
+                disabled: (__VLS_ctx.lotSaving),
+            });
+            (__VLS_ctx.lotSaving ? "Salvando..." : __VLS_ctx.editingLotId ? "Salvar alterações" : "Adicionar lote");
+        }
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1278,23 +1453,23 @@ if (__VLS_ctx.details.open) {
         ...{ class: "mt-6 flex flex-wrap justify-end gap-3 text-sm" },
     });
     if (__VLS_ctx.details.event) {
-        const __VLS_36 = {}.RouterLink;
+        const __VLS_40 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_37 = __VLS_asFunctionalComponent(__VLS_36, new __VLS_36({
+        const __VLS_41 = __VLS_asFunctionalComponent(__VLS_40, new __VLS_40({
             to: (`/evento/${__VLS_ctx.details.event.slug}`),
             target: "_blank",
             rel: "noopener",
             ...{ class: "rounded-lg border border-primary-500 px-4 py-2 text-primary-600 transition hover:bg-primary-50 dark:border-primary-400 dark:text-primary-200 dark:hover:bg-primary-500/20" },
         }));
-        const __VLS_38 = __VLS_37({
+        const __VLS_42 = __VLS_41({
             to: (`/evento/${__VLS_ctx.details.event.slug}`),
             target: "_blank",
             rel: "noopener",
             ...{ class: "rounded-lg border border-primary-500 px-4 py-2 text-primary-600 transition hover:bg-primary-50 dark:border-primary-400 dark:text-primary-200 dark:hover:bg-primary-500/20" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_37));
-        __VLS_39.slots.default;
-        var __VLS_39;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_41));
+        __VLS_43.slots.default;
+        var __VLS_43;
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.closeDetails) },
@@ -1303,6 +1478,96 @@ if (__VLS_ctx.details.open) {
     });
 }
 var __VLS_35;
+/** @type {[typeof Modal, typeof Modal, ]} */ ;
+// @ts-ignore
+const __VLS_44 = __VLS_asFunctionalComponent(Modal, new Modal({
+    ...{ 'onUpdate:modelValue': {} },
+    modelValue: (__VLS_ctx.lotModalOpen),
+    title: (__VLS_ctx.editingLotId ? 'Editar lote' : 'Criar novo lote'),
+}));
+const __VLS_45 = __VLS_44({
+    ...{ 'onUpdate:modelValue': {} },
+    modelValue: (__VLS_ctx.lotModalOpen),
+    title: (__VLS_ctx.editingLotId ? 'Editar lote' : 'Criar novo lote'),
+}, ...__VLS_functionalComponentArgsRest(__VLS_44));
+let __VLS_47;
+let __VLS_48;
+let __VLS_49;
+const __VLS_50 = {
+    'onUpdate:modelValue': ((v) => { __VLS_ctx.lotModalOpen = v; if (!v)
+        __VLS_ctx.cancelLotEdit(); })
+};
+__VLS_46.slots.default;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+    ...{ onSubmit: (__VLS_ctx.submitLot) },
+    ...{ class: "space-y-3 text-sm" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "grid gap-3 sm:grid-cols-2" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "sm:col-span-2" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+    ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    value: (__VLS_ctx.lotForm.name),
+    type: "text",
+    required: true,
+    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+    ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    value: (__VLS_ctx.lotForm.price),
+    type: "text",
+    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    placeholder: "0,00",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+    ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    type: "datetime-local",
+    required: true,
+    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+});
+(__VLS_ctx.lotForm.startsAt);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+    ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    type: "datetime-local",
+    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+});
+(__VLS_ctx.lotForm.endsAt);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "flex items-center justify-end gap-3" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    ...{ onClick: (__VLS_ctx.cancelLotEdit) },
+    type: "button",
+    ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800" },
+    disabled: (__VLS_ctx.lotSaving),
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    ...{ onClick: (__VLS_ctx.resetLotForm) },
+    type: "button",
+    ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800" },
+    disabled: (__VLS_ctx.lotSaving),
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    type: "submit",
+    ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" },
+    disabled: (__VLS_ctx.lotSaving),
+});
+(__VLS_ctx.lotSaving ? 'Salvando...' : __VLS_ctx.editingLotId ? 'Salvar alterações' : 'Adicionar lote');
+var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
@@ -1440,6 +1705,33 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-h-32']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
@@ -1641,6 +1933,33 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-h-32']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
@@ -1824,7 +2143,7 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['bg-black/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-w-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-3xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -1843,6 +2162,23 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-900/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -1912,6 +2248,9 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
@@ -1919,6 +2258,17 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['ml-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -1967,6 +2317,17 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
@@ -1991,6 +2352,13 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-end']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
@@ -2079,6 +2447,21 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
@@ -2128,6 +2511,123 @@ var __VLS_35;
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-end']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
@@ -2136,6 +2636,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             ConfirmDialog: ConfirmDialog,
             BaseCard: BaseCard,
             ErrorDialog: ErrorDialog,
+            Modal: Modal,
             formatCurrency: formatCurrency,
             formatDate: formatDate,
             admin: admin,
@@ -2154,7 +2655,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             lotForm: lotForm,
             lotSaving: lotSaving,
             lotDeletingId: lotDeletingId,
+            editingLotId: editingLotId,
             loadingLots: loadingLots,
+            lotModalOpen: lotModalOpen,
             lotsForDetails: lotsForDetails,
             formatDateTimeBr: formatDateTimeBr,
             isLotActive: isLotActive,
@@ -2165,6 +2668,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             basePriceDisplay: basePriceDisplay,
             errorDialog: errorDialog,
             resetLotForm: resetLotForm,
+            startLotEdit: startLotEdit,
+            cancelLotEdit: cancelLotEdit,
+            openLotCreateModal: openLotCreateModal,
             submitLot: submitLot,
             deleteLot: deleteLot,
             submitCreate: submitCreate,

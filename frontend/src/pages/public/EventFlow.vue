@@ -36,7 +36,7 @@
         </div>
         <div class="flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
           <span>Local: {{ eventStore.event.location }}</span>
-          <span>|</span>
+          <span class="hidden sm:inline">|</span>
           <span>
             {{ formatDate(eventStore.event.startDate) }} - {{ formatDate(eventStore.event.endDate) }}
           </span>
@@ -74,7 +74,7 @@
               :key="order.orderId"
               class="rounded-md bg-amber-100/50 p-2 dark:bg-amber-500/5"
             >
-              <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex-1">
                   <p class="font-medium">{{ formatCurrency(order.totalCents) }}</p>
                   <p class="text-xs">
@@ -84,7 +84,7 @@
                 </div>
                 <RouterLink
                   :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
-                  class="shrink-0 rounded-md border border-amber-500 px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200"
+                  class="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-500 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200"
                 >
                   Pagar
                 </RouterLink>
@@ -162,7 +162,7 @@
               type="number"
               min="1"
               max="10"
-              class="mt-1 w-32 rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800 sm:w-32"
               :aria-invalid="generalErrors.quantity ? 'true' : 'false'"
               aria-describedby="quantity-error"
               required
@@ -176,19 +176,19 @@
               {{ generalErrors.quantity }}
             </p>
           </div>
-          <div class="flex justify-between">
+          <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
             <button
               type="button"
-              class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              class="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
               @click="currentStep--"
             >
               Voltar
             </button>
             <button
               type="submit"
-              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+              class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto"
             >
-              Avancar
+              Avançar
             </button>
           </div>
         </form>
@@ -217,7 +217,7 @@
         </BaseCard>
 
         <BaseCard v-for="(person, index) in people" :key="index">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
               Participante {{ index + 1 }}
             </h2>
@@ -267,7 +267,7 @@
               <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
                 Data de nascimento
               </label>
-              <div class="mt-1 flex items-center gap-3">
+              <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <input
                   v-model="person.birthDate"
                   type="date"
@@ -356,20 +356,20 @@
           </div>
         </BaseCard>
 
-        <div class="flex justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
           <button
             type="button"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
             @click="currentStep--"
           >
             Voltar
           </button>
           <button
             type="button"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto"
             @click="goToReview"
           >
-            Revisar inscricoes
+            Revisar inscrições
           </button>
         </div>
         <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
@@ -441,7 +441,7 @@
               :key="index"
               class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60"
             >
-              <div class="flex items-start justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex items-center gap-3">
                   <img
                     :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
@@ -474,7 +474,7 @@
               </div>
             </div>
           </div>
-          <div class="flex flex-col gap-2 text-right">
+          <div class="flex flex-col gap-2 text-left sm:text-right">
             <p v-if="!isFreeEvent" class="text-sm text-neutral-500">
               Forma de pagamento: {{ selectedPaymentLabel }}
             </p>
@@ -483,27 +483,27 @@
               {{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents * people.length) }}
             </p>
           </div>
-          <div class="flex justify-between">
+          <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
             <button
               type="button"
-              class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              class="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
               @click="currentStep--"
             >
               Voltar
             </button>
             <button
               type="button"
-              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+              class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
               :disabled="submitting"
               @click="submitBatch"
             >
-              <span v-if="submitting" class="flex items-center gap-2">
+              <span v-if="submitting" class="flex items-center justify-center gap-2">
                 <span
                   class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
                 ></span>
                 Processando...
               </span>
-              <span v-else>{{ isFreeEvent ? "Confirmar inscricoes" : "Gerar pagamento" }}</span>
+              <span v-else>{{ isFreeEvent ? "Confirmar inscrições" : "Gerar pagamento" }}</span>
             </button>
           </div>
           <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
@@ -526,7 +526,7 @@
             </div>
 
             <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60">
-              <div class="flex items-center justify-between gap-3 text-sm text-neutral-600 dark:text-neutral-300">
+              <div class="flex flex-col gap-2 text-sm text-neutral-600 dark:text-neutral-300 sm:flex-row sm:items-center sm:justify-between">
                 <span>ID do pedido</span>
                 <code class="rounded bg-neutral-100 px-2 py-1 text-xs dark:bg-neutral-800">{{ createdOrderId }}</code>
               </div>
@@ -561,7 +561,7 @@
 
           <div class="flex-1 space-y-6">
             <section v-if="inlineIsPixMethod" class="space-y-3">
-              <header class="flex items-center justify-between">
+              <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Pague com Pix</h2>
                 <button
                   type="button"

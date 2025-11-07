@@ -69,8 +69,8 @@ export const useAdminStore = defineStore("admin", () => {
         const response = await api.get("/admin/registrations", { params });
         registrations.value = response.data;
     };
-    const downloadRegistrationReport = async (filters, groupBy) => {
-        const params = normalizeFilters({ ...filters, groupBy });
+    const downloadRegistrationReport = async (filters, groupBy, template = "standard") => {
+        const params = normalizeFilters({ ...filters, groupBy, template });
         return api.get("/admin/registrations/report.pdf", {
             params,
             responseType: "arraybuffer"
@@ -99,7 +99,6 @@ export const useAdminStore = defineStore("admin", () => {
         await api.delete(`/admin/registrations/${id}`);
         await loadRegistrations(registrationFilters.value);
     };
-    // Novo: criação com método de pagamento escolhido
     const createAdminRegistration = async (payload) => {
         const resp = await api.post(`/admin/inscriptions/batch`, {
             eventId: payload.eventId,
@@ -110,16 +109,16 @@ export const useAdminStore = defineStore("admin", () => {
                     fullName: payload.person.fullName,
                     cpf: payload.person.cpf,
                     birthDate: payload.person.birthDate,
-                    gender: (payload.person.gender ?? 'OTHER'),
+                    gender: payload.person.gender ?? 'OTHER',
                     districtId: payload.person.districtId,
                     churchId: payload.person.churchId,
-                    photoUrl: (payload.person.photoUrl ?? null)
+                    photoUrl: payload.person.photoUrl ?? null
                 }
             ]
         });
-        // Se dinheiro, marcar como pago manualmente
+        // Se foi em dinheiro, marcar pago imediatamente
         if (payload.paymentMethod === 'CASH') {
-            const orderId = resp?.data?.orderId;
+            const orderId = resp.data?.orderId;
             if (orderId) {
                 await api.post(`/admin/orders/${orderId}/mark-paid`, {
                     manualReference: 'CASH-ADMIN',
@@ -128,27 +127,23 @@ export const useAdminStore = defineStore("admin", () => {
             }
         }
         await loadRegistrations(registrationFilters.value);
-        return resp?.data;
-    };
-    // Compatibilidade antiga
-    const createFreeRegistration = async (payload) => {
-        return createAdminRegistration({
-            eventId: payload.eventId,
-            buyerCpf: payload.buyerCpf,
-            paymentMethod: 'FREE_PREVIOUS_YEAR',
-            person: payload.person
-        });
+        return resp.data;
     };
     const confirmOrderPayment = async (orderId, payload) => {
         await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
         await loadRegistrations(registrationFilters.value);
     };
+    // Consulta status do pagamento de um pedido (PIX/Manual)
     const getOrderPayment = async (orderId) => {
         const response = await api.get(`/payments/order/${orderId}`);
         return response.data;
     };
     const regenerateRegistrationPaymentLink = async (registrationId) => {
         const response = await api.post(`/admin/registrations/${registrationId}/payment-link`);
+        return response.data;
+    };
+    const getRegistrationHistory = async (registrationId) => {
+        const response = await api.get(`/admin/registrations/${registrationId}/history`);
         return response.data;
     };
     const loadOrders = async (filters) => {
@@ -190,16 +185,16 @@ export const useAdminStore = defineStore("admin", () => {
         cancelRegistration,
         deleteRegistration,
         createAdminRegistration,
-        createFreeRegistration,
         refundRegistration,
         markRegistrationsPaid,
+        confirmOrderPayment,
         getOrderPayment,
         regenerateRegistrationPaymentLink,
+        getRegistrationHistory,
         loadOrders,
         loadDashboard,
         checkinScan,
         checkinManualLookup,
-        confirmOrderPayment,
         confirmCheckin
     };
 });

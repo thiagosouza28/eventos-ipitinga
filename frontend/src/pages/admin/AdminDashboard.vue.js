@@ -79,20 +79,33 @@ const __VLS_13 = __VLS_12({
 }, ...__VLS_functionalComponentArgsRest(__VLS_12));
 __VLS_14.slots.default;
 var __VLS_14;
+const __VLS_15 = {}.RouterLink;
+/** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+// @ts-ignore
+const __VLS_16 = __VLS_asFunctionalComponent(__VLS_15, new __VLS_15({
+    to: "/admin/financial",
+    ...{ class: "inline-flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-500 sm:w-auto" },
+}));
+const __VLS_17 = __VLS_16({
+    to: "/admin/financial",
+    ...{ class: "inline-flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-500 sm:w-auto" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_16));
+__VLS_18.slots.default;
+var __VLS_18;
 if (__VLS_ctx.checkinTarget) {
-    const __VLS_15 = {}.RouterLink;
+    const __VLS_19 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_16 = __VLS_asFunctionalComponent(__VLS_15, new __VLS_15({
+    const __VLS_20 = __VLS_asFunctionalComponent(__VLS_19, new __VLS_19({
         to: (`/admin/checkin/${__VLS_ctx.checkinTarget}`),
         ...{ class: "inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 sm:w-auto" },
     }));
-    const __VLS_17 = __VLS_16({
+    const __VLS_21 = __VLS_20({
         to: (`/admin/checkin/${__VLS_ctx.checkinTarget}`),
         ...{ class: "inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 sm:w-auto" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_16));
-    __VLS_18.slots.default;
-    var __VLS_18;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_20));
+    __VLS_22.slots.default;
+    var __VLS_22;
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
@@ -105,13 +118,13 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_19 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+const __VLS_23 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
     ...{ class: "space-y-2" },
 }));
-const __VLS_20 = __VLS_19({
+const __VLS_24 = __VLS_23({
     ...{ class: "space-y-2" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_19));
-__VLS_21.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_23));
+__VLS_25.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
     ...{ class: "text-sm text-neutral-500" },
 });
@@ -119,16 +132,16 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
     ...{ class: "text-3xl font-semibold text-neutral-800 dark:text-neutral-50" },
 });
 (__VLS_ctx.activeEvents);
-var __VLS_21;
+var __VLS_25;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+const __VLS_26 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
     ...{ class: "space-y-2" },
 }));
-const __VLS_23 = __VLS_22({
+const __VLS_27 = __VLS_26({
     ...{ class: "space-y-2" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_22));
-__VLS_24.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_26));
+__VLS_28.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
     ...{ class: "text-sm text-neutral-500" },
 });
@@ -136,16 +149,16 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
     ...{ class: "text-3xl font-semibold text-neutral-800 dark:text-neutral-50" },
 });
 (__VLS_ctx.admin.orders.length);
-var __VLS_24;
+var __VLS_28;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+const __VLS_29 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
     ...{ class: "space-y-2" },
 }));
-const __VLS_26 = __VLS_25({
+const __VLS_30 = __VLS_29({
     ...{ class: "space-y-2" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_25));
-__VLS_27.slots.default;
+}, ...__VLS_functionalComponentArgsRest(__VLS_29));
+__VLS_31.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
     ...{ class: "text-sm text-neutral-500" },
 });
@@ -153,12 +166,12 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
     ...{ class: "text-3xl font-semibold text-neutral-800 dark:text-neutral-50" },
 });
 (__VLS_ctx.admin.registrations.length);
-var __VLS_27;
+var __VLS_31;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_28 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-const __VLS_29 = __VLS_28({}, ...__VLS_functionalComponentArgsRest(__VLS_28));
-__VLS_30.slots.default;
+const __VLS_32 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+const __VLS_33 = __VLS_32({}, ...__VLS_functionalComponentArgsRest(__VLS_32));
+__VLS_34.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
     ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
 });
@@ -223,34 +236,34 @@ for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex items-center justify-end gap-3" },
     });
-    const __VLS_31 = {}.RouterLink;
-    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-    // @ts-ignore
-    const __VLS_32 = __VLS_asFunctionalComponent(__VLS_31, new __VLS_31({
-        to: (`/evento/${event.slug}`),
-        target: "_blank",
-        ...{ class: "text-sm text-primary-600 hover:text-primary-500" },
-    }));
-    const __VLS_33 = __VLS_32({
-        to: (`/evento/${event.slug}`),
-        target: "_blank",
-        ...{ class: "text-sm text-primary-600 hover:text-primary-500" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_32));
-    __VLS_34.slots.default;
-    var __VLS_34;
     const __VLS_35 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
     const __VLS_36 = __VLS_asFunctionalComponent(__VLS_35, new __VLS_35({
-        to: (`/admin/checkin/${event.id}`),
-        ...{ class: "text-sm text-emerald-600 hover:text-emerald-500" },
+        to: (`/evento/${event.slug}`),
+        target: "_blank",
+        ...{ class: "text-sm text-primary-600 hover:text-primary-500" },
     }));
     const __VLS_37 = __VLS_36({
-        to: (`/admin/checkin/${event.id}`),
-        ...{ class: "text-sm text-emerald-600 hover:text-emerald-500" },
+        to: (`/evento/${event.slug}`),
+        target: "_blank",
+        ...{ class: "text-sm text-primary-600 hover:text-primary-500" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_36));
     __VLS_38.slots.default;
     var __VLS_38;
+    const __VLS_39 = {}.RouterLink;
+    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+    // @ts-ignore
+    const __VLS_40 = __VLS_asFunctionalComponent(__VLS_39, new __VLS_39({
+        to: (`/admin/checkin/${event.id}`),
+        ...{ class: "text-sm text-emerald-600 hover:text-emerald-500" },
+    }));
+    const __VLS_41 = __VLS_40({
+        to: (`/admin/checkin/${event.id}`),
+        ...{ class: "text-sm text-emerald-600 hover:text-emerald-500" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_40));
+    __VLS_42.slots.default;
+    var __VLS_42;
 }
 if (!__VLS_ctx.admin.events.length) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
@@ -259,7 +272,7 @@ if (!__VLS_ctx.admin.events.length) {
         colspan: "4",
     });
 }
-var __VLS_30;
+var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
@@ -322,6 +335,20 @@ var __VLS_30;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-green-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-green-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;

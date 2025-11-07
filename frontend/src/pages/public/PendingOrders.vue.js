@@ -1,16 +1,28 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { ref, computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
+import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency } from "../../utils/format";
-import { formatCPF } from "../../utils/cpf";
+import { formatCPF, validateCPF, normalizeCPF } from "../../utils/cpf";
+const props = defineProps();
 const router = useRouter();
+const route = useRoute();
 const { api } = useApi();
 const loading = ref(true);
 const error = ref("");
 const processing = ref(false);
 const pendingOrders = ref([]);
 const selectedOrders = ref([]);
+const pollHandle = ref(null);
+// Estado do formulário de CPF
+const cpfInput = ref("");
+const cpfInputRef = ref(null);
+const cpfError = ref("");
+const showCpfForm = ref(false);
+const isCpfInputValid = computed(() => {
+    const digits = normalizeCPF(cpfInput.value);
+    // Habilita o botão quando tem 11 dígitos (validação completa será feita no submit)
+    return digits.length === 11;
+});
 const selectedTotal = computed(() => {
     return pendingOrders.value
         .filter((order) => selectedOrders.value.includes(order.orderId))
@@ -25,45 +37,359 @@ const toggleOrder = (orderId) => {
         selectedOrders.value.splice(index, 1);
     }
 };
+// Função para pagamento individual - processa APENAS o pedido específico
+// NÃO usa selectedOrders, processa diretamente o orderId passado
+const handleIndividualPayment = async (orderId, eventSlug, event) => {
+    // Prevenir qualquer propagação de evento que possa interferir
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    // IMPORTANTE: Limpar TODA seleção ANTES de fazer qualquer coisa
+    // Isso garante que nenhum outro pedido seja processado
+    selectedOrders.value = [];
+    // Usar apenas o orderId passado como parâmetro
+    // NÃO usar selectedOrders.value de forma alguma
+    const singleOrderId = String(orderId); // Garantir que usamos apenas este ID como string
+    // Aguardar nextTick para garantir que a limpeza de selectedOrders seja processada
+    // antes de redirecionar
+    await nextTick();
+    // Redirecionar usando APENAS o orderId passado, ignorando completamente selectedOrders
+    router.push({
+        name: "payment",
+        params: {
+            slug: eventSlug,
+            orderId: singleOrderId // Apenas este pedido específico, NUNCA selectedOrders
+        }
+    });
+};
+// Função para pagamento em lote - processa apenas os pedidos selecionados
+// Esta função é chamada APENAS pelo botão "Pagar selecionados" na parte inferior
 const handlePayment = async () => {
     if (selectedOrders.value.length === 0)
         return;
     processing.value = true;
+    error.value = "";
     try {
+        // Se houver apenas um pedido selecionado, redirecionar para pagamento individual
+        // Mas limpar a seleção ANTES para garantir que não haja conflito
+        if (selectedOrders.value.length === 1) {
+            const orderIdToProcess = selectedOrders.value[0]; // Pegar o ID antes de limpar
+            const order = pendingOrders.value.find(o => o.orderId === orderIdToProcess);
+            // LIMPAR seleção ANTES de processar
+            selectedOrders.value = [];
+            if (order && order.event?.slug) {
+                router.push({
+                    name: "payment",
+                    params: {
+                        slug: order.event.slug,
+                        orderId: orderIdToProcess // Usar o ID já capturado, não selectedOrders
+                    }
+                });
+                return;
+            }
+            else if (order && !order.event?.slug) {
+                error.value = "Não foi possível carregar as informações do evento. Tente novamente.";
+                return;
+            }
+        }
+        // Para múltiplos pedidos, criar pagamento em lote
+        // Capturar os IDs ANTES de limpar a seleção
+        const orderIdsToProcess = [...selectedOrders.value]; // Criar cópia para garantir
+        // LIMPAR seleção ANTES de processar para evitar conflitos
+        selectedOrders.value = [];
         const response = await api.post("/orders/bulk-payment", {
-            orderIds: selectedOrders.value,
+            orderIds: orderIdsToProcess, // Usar apenas os IDs capturados antes de limpar
             paymentMethod: "MERCADO_PAGO"
         });
-        router.push({
-            name: "payment",
-            query: {
-                paymentId: response.data.paymentId,
-                bulkOrderCount: String(response.data.orderCount),
-                eventNames: response.data.eventNames.join(",")
+        // Seleção já foi limpa acima, não precisa limpar novamente
+        // Redirecionar diretamente para o Mercado Pago se houver initPoint
+        if (response.data.initPoint) {
+            window.location.href = response.data.initPoint;
+        }
+        else if (response.data.pixQrData?.qr_code) {
+            // Se houver QR code PIX, mostrar na mesma página
+            // Por enquanto, redirecionar para initPoint mesmo que seja sandbox
+            if (response.data.sandboxInitPoint) {
+                window.location.href = response.data.sandboxInitPoint;
             }
-        });
+            else {
+                error.value = "Erro ao redirecionar para pagamento. Tente novamente.";
+            }
+        }
+        else {
+            error.value = "Erro ao processar pagamento. Tente novamente.";
+        }
     }
     catch (err) {
-        error.value =
-            err.response?.data?.message ?? "Não foi possível processar o pagamento. Tente novamente.";
+        const errorMessage = err.response?.data?.message;
+        error.value = errorMessage ?? "Não foi possível processar o pagamento. Tente novamente.";
+        showCpfForm.value = false; // Manter a lista visível para o usuário tentar novamente
     }
     finally {
         processing.value = false;
     }
 };
-// Carregar pendências ao montar o componente
-onMounted(async () => {
+const loadPendingOrders = async (cpf) => {
+    loading.value = true;
+    error.value = "";
+    cpfError.value = "";
     try {
-        const response = await api.get("/orders/pending");
-        pendingOrders.value = response.data.orders;
+        const response = await api.get("/orders/pending", {
+            params: { cpf: cpf.trim() }
+        });
+        // Mapear os dados retornados para o formato esperado
+        const orders = response.data.orders ?? [];
+        // Buscar todos os eventos públicos para mapear IDs para slugs
+        let eventsMap = {};
+        try {
+            const eventsResponse = await api.get("/events");
+            eventsResponse.data.forEach((event) => {
+                eventsMap[event.id] = event.slug;
+            });
+        }
+        catch (err) {
+            console.error("Erro ao buscar eventos:", err);
+        }
+        pendingOrders.value = orders.map((order) => ({
+            orderId: order.id,
+            event: order.event ? {
+                id: order.event.id,
+                title: order.event.title,
+                slug: eventsMap[order.event.id] || ""
+            } : undefined,
+            buyerCpf: order.buyerCpf,
+            totalCents: order.totalCents,
+            expiresAt: order.expiresAt,
+            registrations: (order.registrations || []).map((reg) => ({
+                id: reg.id,
+                fullName: reg.fullName,
+                cpf: reg.cpf,
+                churchName: reg.church?.name || reg.churchName || "",
+                districtName: reg.district?.name || reg.districtName || ""
+            })),
+            payment: order.payment ? {
+                status: order.payment.status,
+                paymentMethod: order.payment.paymentMethod,
+                initPoint: order.payment.initPoint,
+                paidAt: order.payment.paidAt || null
+            } : null
+        }));
+        // Esconder o formulário quando os dados são carregados com sucesso
+        // para mostrar a lista de pendências
+        showCpfForm.value = false;
+        // Iniciar polling para detectar pagamentos automaticamente
+        // Usando o mesmo método da PaymentPage (inicia polling se não está pago)
+        if (pendingOrders.value.length > 0) {
+            // Verificar se algum pedido já está pago antes de iniciar polling
+            const hasUnpaidOrders = pendingOrders.value.some(order => order.payment?.status !== "PAID");
+            if (hasUnpaidOrders) {
+                startPolling();
+            }
+        }
     }
     catch (err) {
-        error.value =
-            err.response?.data?.message ?? "Não foi possível carregar as pendências. Tente novamente.";
+        const errorMessage = err.response?.data?.message;
+        if (errorMessage && errorMessage.includes("Dados inválidos")) {
+            error.value = "CPF inválido. Por favor, verifique o CPF informado.";
+            showCpfForm.value = true; // Mostrar formulário em caso de erro
+        }
+        else {
+            error.value = errorMessage ?? "Não foi possível carregar as pendências. Tente novamente.";
+            showCpfForm.value = true; // Mostrar formulário em caso de erro
+        }
     }
     finally {
         loading.value = false;
     }
+};
+const handleCpfInput = (event) => {
+    const input = event.target;
+    const rawValue = input.value.replace(/\D/g, "");
+    const formattedValue = formatCPF(rawValue);
+    // Atualizar o valor reativo
+    cpfInput.value = formattedValue;
+    cpfError.value = "";
+};
+const handleCpfSubmit = async () => {
+    cpfError.value = "";
+    error.value = "";
+    const digits = normalizeCPF(cpfInput.value);
+    if (digits.length !== 11 || !validateCPF(digits)) {
+        cpfError.value = "CPF inválido. Por favor, informe um CPF válido.";
+        return;
+    }
+    // Carregar as pendências diretamente
+    await loadPendingOrders(digits);
+};
+// Carregar pendências ao montar o componente se CPF foi fornecido
+onMounted(async () => {
+    if (props.cpf && typeof props.cpf === "string" && props.cpf.trim().length > 0) {
+        // Sempre pré-preencher o campo de CPF formatado quando vier da primeira tela
+        const normalizedCpf = normalizeCPF(props.cpf);
+        if (normalizedCpf.length === 11) {
+            // CPF completo - formatar, mostrar no campo e carregar dados
+            cpfInput.value = formatCPF(normalizedCpf);
+            showCpfForm.value = true; // Mostrar o formulário para o usuário ver o CPF pré-preenchido
+            await loadPendingOrders(props.cpf);
+            // Se voltou do Mercado Pago (há query params como status, payment_id, etc), 
+            // verificar pagamentos imediatamente usando o mesmo método da PaymentPage
+            if (route.query.status || route.query.payment_id || route.query.preference_id) {
+                // Aguardar 2 segundos para o webhook processar (igual à PaymentPage)
+                setTimeout(async () => {
+                    // Verificar todos os pedidos usando o mesmo método da PaymentPage
+                    const ordersToRemove = [];
+                    for (const order of pendingOrders.value) {
+                        const paymentData = await checkOrderPayment(order.orderId);
+                        if (paymentData && (paymentData.status === "PAID" || paymentData.status === "CANCELED")) {
+                            ordersToRemove.push(order.orderId);
+                        }
+                    }
+                    // Remover pedidos pagos (dar baixa simultaneamente para pagamentos em lote)
+                    if (ordersToRemove.length > 0) {
+                        pendingOrders.value = pendingOrders.value.filter(order => !ordersToRemove.includes(order.orderId));
+                        selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
+                        // Se ainda há pedidos pendentes, recarregar a lista completa
+                        if (pendingOrders.value.length > 0) {
+                            await loadPendingOrders(props.cpf);
+                        }
+                    }
+                    else {
+                        // Se não encontrou pagamentos, recarregar a lista para garantir
+                        await loadPendingOrders(props.cpf);
+                    }
+                }, 2000); // Aguardar 2 segundos (igual à PaymentPage)
+                // Verificar novamente após mais tempo (igual à PaymentPage com query.fresh)
+                setTimeout(async () => {
+                    const ordersToRemove = [];
+                    for (const order of pendingOrders.value) {
+                        const paymentData = await checkOrderPayment(order.orderId);
+                        if (paymentData && (paymentData.status === "PAID" || paymentData.status === "CANCELED")) {
+                            ordersToRemove.push(order.orderId);
+                        }
+                    }
+                    if (ordersToRemove.length > 0) {
+                        pendingOrders.value = pendingOrders.value.filter(order => !ordersToRemove.includes(order.orderId));
+                        selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
+                        if (pendingOrders.value.length > 0) {
+                            await loadPendingOrders(props.cpf);
+                        }
+                    }
+                }, 5000); // Aguardar 5 segundos para garantir
+            }
+        }
+        else if (normalizedCpf.length > 0) {
+            // CPF parcial - apenas formatar e mostrar formulário
+            cpfInput.value = formatCPF(props.cpf);
+            showCpfForm.value = true;
+            loading.value = false;
+        }
+        else {
+            // CPF vazio ou inválido
+            loading.value = false;
+            showCpfForm.value = true;
+        }
+    }
+    else {
+        loading.value = false;
+        showCpfForm.value = true;
+    }
+});
+// Observar mudanças na prop cpf (quando navega com CPF)
+watch(() => props.cpf, async (newCpf, oldCpf) => {
+    // Só atualizar se o CPF realmente mudou
+    if (newCpf && typeof newCpf === "string" && newCpf.trim().length > 0 && newCpf !== oldCpf) {
+        // Atualizar o campo de input quando o CPF mudar
+        const normalizedCpf = normalizeCPF(newCpf);
+        if (normalizedCpf.length === 11) {
+            cpfInput.value = formatCPF(normalizedCpf);
+            showCpfForm.value = false;
+            await loadPendingOrders(newCpf);
+        }
+        else if (normalizedCpf.length > 0) {
+            // CPF parcial - apenas formatar
+            cpfInput.value = formatCPF(newCpf);
+            showCpfForm.value = true;
+        }
+    }
+}, { immediate: false });
+// Função para verificar pagamento de um pedido - usando EXATAMENTE o mesmo método da PaymentPage
+const checkOrderPayment = async (orderId) => {
+    try {
+        // Usar exatamente o mesmo endpoint e método da PaymentPage
+        const response = await api.get(`/payments/order/${orderId}`);
+        return response.data;
+    }
+    catch (error) {
+        console.error(`Erro ao verificar pagamento do pedido ${orderId}:`, error);
+        return null;
+    }
+};
+// Polling para detectar pagamentos automaticamente - usando EXATAMENTE o mesmo método da PaymentPage
+const startPolling = () => {
+    stopPolling();
+    // Só fazer polling se houver pedidos pendentes
+    if (pendingOrders.value.length === 0) {
+        return;
+    }
+    pollHandle.value = window.setInterval(async () => {
+        // Verificar cada pedido individualmente usando o mesmo método da PaymentPage
+        const ordersToRemove = [];
+        // Verificar todos os pedidos pendentes
+        for (const order of pendingOrders.value) {
+            // Usar exatamente o mesmo método da PaymentPage (loadPayment)
+            const paymentData = await checkOrderPayment(order.orderId);
+            if (paymentData) {
+                // Se o pagamento foi aprovado, marcar para remover da lista
+                if (paymentData.status === "PAID" || paymentData.status === "CANCELED") {
+                    ordersToRemove.push(order.orderId);
+                }
+                else if (paymentData.status !== order.payment?.status) {
+                    // Atualizar o status do pedido se mudou
+                    const orderIndex = pendingOrders.value.findIndex(o => o.orderId === order.orderId);
+                    if (orderIndex !== -1) {
+                        pendingOrders.value[orderIndex].payment = {
+                            ...pendingOrders.value[orderIndex].payment,
+                            status: paymentData.status,
+                            paymentMethod: paymentData.paymentMethod,
+                            paidAt: paymentData.paidAt || null
+                        };
+                    }
+                }
+            }
+        }
+        // Remover pedidos pagos da lista (dar baixa simultaneamente para pagamentos em lote)
+        if (ordersToRemove.length > 0) {
+            pendingOrders.value = pendingOrders.value.filter(order => !ordersToRemove.includes(order.orderId));
+            // Limpar seleção de pedidos removidos
+            selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
+            // Se não há mais pedidos pendentes, parar o polling
+            if (pendingOrders.value.length === 0) {
+                stopPolling();
+            }
+        }
+    }, 5000); // Verificar a cada 5 segundos (igual à PaymentPage)
+};
+const stopPolling = () => {
+    if (pollHandle.value) {
+        clearInterval(pollHandle.value);
+        pollHandle.value = null;
+    }
+};
+// Observar mudanças na lista de pedidos para iniciar/parar polling
+watch(() => pendingOrders.value.length, (newLength, oldLength) => {
+    if (newLength > 0 && oldLength === 0) {
+        // Pedidos foram carregados, iniciar polling
+        startPolling();
+    }
+    else if (newLength === 0 && oldLength > 0) {
+        // Não há mais pedidos, parar polling
+        stopPolling();
+    }
+});
+// Limpar polling ao desmontar componente
+onUnmounted(() => {
+    stopPolling();
 });
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
@@ -93,13 +419,68 @@ if (__VLS_ctx.loading) {
         ...{ class: "animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent" },
     });
 }
-else if (__VLS_ctx.error) {
+if (__VLS_ctx.showCpfForm && !__VLS_ctx.loading) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "p-6 bg-white dark:bg-neutral-800 rounded-lg shadow-sm" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+        ...{ class: "text-lg font-medium text-neutral-800 dark:text-neutral-100 mb-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+        ...{ onSubmit: (__VLS_ctx.handleCpfSubmit) },
+        ...{ class: "space-y-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        for: "cpf-input",
+        ...{ class: "block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onInput: (__VLS_ctx.handleCpfInput) },
+        id: "cpf-input",
+        ref: "cpfInputRef",
+        value: (__VLS_ctx.cpfInput),
+        type: "text",
+        placeholder: "000.000.000-00",
+        ...{ class: "block w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+        ...{ class: ({ 'border-red-500': __VLS_ctx.cpfError }) },
+    });
+    /** @type {typeof __VLS_ctx.cpfInputRef} */ ;
+    if (__VLS_ctx.cpfError) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "mt-1 text-sm text-red-600 dark:text-red-400" },
+        });
+        (__VLS_ctx.cpfError);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        type: "submit",
+        ...{ class: "px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50" },
+        disabled: (!__VLS_ctx.isCpfInputValid),
+    });
+    const __VLS_0 = {}.RouterLink;
+    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+    // @ts-ignore
+    const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
+        to: "/",
+        ...{ class: "px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-md" },
+    }));
+    const __VLS_2 = __VLS_1({
+        to: "/",
+        ...{ class: "px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-md" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_1));
+    __VLS_3.slots.default;
+    var __VLS_3;
+}
+if (__VLS_ctx.error && !__VLS_ctx.loading && !__VLS_ctx.showCpfForm) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg" },
     });
     (__VLS_ctx.error);
 }
-else if (__VLS_ctx.pendingOrders.length === 0) {
+if (!__VLS_ctx.showCpfForm && !__VLS_ctx.loading && !__VLS_ctx.error && __VLS_ctx.pendingOrders.length === 0) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "p-4 text-center" },
     });
@@ -107,17 +488,13 @@ else if (__VLS_ctx.pendingOrders.length === 0) {
         ...{ class: "text-neutral-600 dark:text-neutral-400" },
     });
 }
-else {
+if (!__VLS_ctx.showCpfForm && !__VLS_ctx.loading && __VLS_ctx.pendingOrders.length > 0) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex justify-between items-center" },
+        ...{ class: "mb-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-sm text-neutral-600 dark:text-neutral-400" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "text-sm font-medium" },
-    });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.selectedTotal));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "space-y-4" },
     });
@@ -128,11 +505,7 @@ else {
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
             ...{ onChange: (...[$event]) => {
-                    if (!!(__VLS_ctx.loading))
-                        return;
-                    if (!!(__VLS_ctx.error))
-                        return;
-                    if (!!(__VLS_ctx.pendingOrders.length === 0))
+                    if (!(!__VLS_ctx.showCpfForm && !__VLS_ctx.loading && __VLS_ctx.pendingOrders.length > 0))
                         return;
                     __VLS_ctx.toggleOrder(order.orderId);
                 } },
@@ -185,40 +558,56 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mt-4" },
         });
-        const __VLS_0 = {}.RouterLink;
-        /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-        // @ts-ignore
-        const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
-            to: ({ name: 'payment', params: { orderId: order.orderId } }),
-            ...{ class: "text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300" },
-        }));
-        const __VLS_2 = __VLS_1({
-            to: ({ name: 'payment', params: { orderId: order.orderId } }),
-            ...{ class: "text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-        __VLS_3.slots.default;
-        var __VLS_3;
+        if (order.event?.slug) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(!__VLS_ctx.showCpfForm && !__VLS_ctx.loading && __VLS_ctx.pendingOrders.length > 0))
+                            return;
+                        if (!(order.event?.slug))
+                            return;
+                        __VLS_ctx.handleIndividualPayment(order.orderId, order.event.slug, $event);
+                    } },
+                type: "button",
+                ...{ class: "text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+            });
+        }
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex justify-end" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.handlePayment) },
-        type: "button",
-        ...{ class: "px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50" },
-        disabled: (__VLS_ctx.selectedOrders.length === 0 || __VLS_ctx.processing),
-    });
-    if (__VLS_ctx.processing) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "flex items-center gap-2" },
+    if (__VLS_ctx.selectedOrders.length > 0) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex justify-between items-center mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800" },
         });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" },
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm font-medium text-primary-900 dark:text-primary-100" },
         });
-    }
-    else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        (__VLS_ctx.selectedOrders.length);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs text-primary-700 dark:text-primary-300" },
+        });
         (__VLS_ctx.formatCurrency(__VLS_ctx.selectedTotal));
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.handlePayment) },
+            type: "button",
+            ...{ class: "px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition" },
+            disabled: (__VLS_ctx.selectedOrders.length === 0 || __VLS_ctx.processing),
+        });
+        if (__VLS_ctx.processing) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "flex items-center gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                ...{ class: "h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.selectedOrders.length === 1 ? "Pagar pedido" : "Pagar selecionados");
+        }
     }
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
@@ -248,6 +637,58 @@ else {
 /** @type {__VLS_StyleScopedClasses['border-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-t-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['mb-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mb-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-red-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-red-900/20']} */ ;
@@ -258,14 +699,10 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['mb-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-start']} */ ;
@@ -305,9 +742,28 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-end']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-900/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
@@ -316,6 +772,8 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -330,6 +788,7 @@ var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            RouterLink: RouterLink,
             formatCurrency: formatCurrency,
             formatCPF: formatCPF,
             loading: loading,
@@ -337,16 +796,26 @@ const __VLS_self = (await import('vue')).defineComponent({
             processing: processing,
             pendingOrders: pendingOrders,
             selectedOrders: selectedOrders,
+            cpfInput: cpfInput,
+            cpfInputRef: cpfInputRef,
+            cpfError: cpfError,
+            showCpfForm: showCpfForm,
+            isCpfInputValid: isCpfInputValid,
             selectedTotal: selectedTotal,
             toggleOrder: toggleOrder,
+            handleIndividualPayment: handleIndividualPayment,
             handlePayment: handlePayment,
+            handleCpfInput: handleCpfInput,
+            handleCpfSubmit: handleCpfSubmit,
         };
     },
+    __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
+    __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */
 //# sourceMappingURL=PendingOrders.vue.js.map

@@ -92,8 +92,12 @@ export const useAdminStore = defineStore("admin", () => {
     registrations.value = response.data;
   };
 
-  const downloadRegistrationReport = async (filters: Record<string, unknown>, groupBy: "event" | "church") => {
-    const params = normalizeFilters({ ...filters, groupBy });
+  const downloadRegistrationReport = async (
+    filters: Record<string, unknown>,
+    groupBy: "event" | "church",
+    template: "standard" | "event" = "standard"
+  ) => {
+    const params = normalizeFilters({ ...filters, groupBy, template });
     return api.get<ArrayBuffer>("/admin/registrations/report.pdf", {
       params,
       responseType: "arraybuffer"

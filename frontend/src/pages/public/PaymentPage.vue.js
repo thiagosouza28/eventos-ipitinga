@@ -73,6 +73,7 @@ const statusMessage = computed(() => {
     }
     return "Estamos monitorando o Mercado Pago. Assim que o pagamento for aprovado, atualizaremos automaticamente.";
 });
+const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
 const statusIcon = computed(() => {
     if (isFreeEvent.value || payment.value?.status === "PAID")
         return "OK";
@@ -140,14 +141,33 @@ const copyPixCode = async () => {
     await navigator.clipboard.writeText(payment.value.pixQrData.qr_code);
     alert("Codigo Pix copiado!");
 };
+// Função para abrir checkout - garante que apenas este pedido seja processado
+const handleOpenCheckout = () => {
+    // Garantir que temos o initPoint para APENAS este pedido específico
+    if (!payment.value?.initPoint) {
+        console.error("initPoint não disponível para o pedido", props.orderId);
+        return;
+    }
+    // Usar APENAS o initPoint do pagamento atual, que foi gerado para props.orderId
+    // Não usar nenhum estado compartilhado ou seleção de outros pedidos
+    const singleOrderInitPoint = payment.value.initPoint;
+    // Abrir em nova aba o checkout para APENAS este pedido
+    window.open(singleOrderInitPoint, "_blank", "noopener,noreferrer");
+};
 const startPolling = () => {
     stopPolling();
     pollHandle.value = window.setInterval(async () => {
         await loadPayment();
         if (payment.value?.status === "PAID" || payment.value?.status === "CANCELED") {
             stopPolling();
+            // Se foi pago, recarregar a página após 2 segundos para mostrar confirmação
+            if (payment.value?.status === "PAID") {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
         }
-    }, 10000);
+    }, 5000); // Verificar a cada 5 segundos (mais frequente)
 };
 const stopPolling = () => {
     if (pollHandle.value) {
@@ -373,6 +393,33 @@ if (__VLS_ctx.payment) {
                     ...{ class: "h-48 w-48 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700" },
                 });
             }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex flex-col items-center justify-center gap-2 py-8 text-neutral-500" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                    ...{ class: "h-6 w-6 animate-spin text-primary-600" },
+                    xmlns: "http://www.w3.org/2000/svg",
+                    fill: "none",
+                    viewBox: "0 0 24 24",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.circle, __VLS_intrinsicElements.circle)({
+                    ...{ class: "opacity-25" },
+                    cx: "12",
+                    cy: "12",
+                    r: "10",
+                    stroke: "currentColor",
+                    'stroke-width': "4",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.path, __VLS_intrinsicElements.path)({
+                    ...{ class: "opacity-75" },
+                    fill: "currentColor",
+                    d: "M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "text-sm" },
+                });
+            }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
             });
@@ -389,52 +436,55 @@ if (__VLS_ctx.payment) {
                     ...{ class: "text-sm text-neutral-400" },
                 });
             }
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
-                ...{ class: "space-y-3" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-                ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
-            });
-            if (__VLS_ctx.payment.initPoint) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.a, __VLS_intrinsicElements.a)({
-                    href: (__VLS_ctx.payment.initPoint),
-                    target: "_blank",
-                    rel: "noopener",
-                    ...{ class: "inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
+            if (!__VLS_ctx.isPixPayment && !__VLS_ctx.isManualPayment) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
+                    ...{ class: "space-y-3" },
                 });
-            }
-            if (!__VLS_ctx.isPaid) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+                    ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
+                });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                    ...{ class: "text-xs text-neutral-400" },
+                    ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
                 });
-            }
-            if (!__VLS_ctx.isPaid) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.payment))
-                                return;
-                            if (!(!__VLS_ctx.isFreeEvent))
-                                return;
-                            if (!!(__VLS_ctx.isManualPayment))
-                                return;
-                            if (!(!__VLS_ctx.isPaid))
-                                return;
-                            __VLS_ctx.loadPayment(true);
-                        } },
-                    type: "button",
-                    ...{ class: "inline-flex items-center gap-2 text-sm text-primary-600 hover:text-primary-500 disabled:text-neutral-400" },
-                    disabled: (__VLS_ctx.loadingStatus),
-                });
-                if (__VLS_ctx.loadingStatus) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-                        ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-current border-b-transparent" },
+                if (__VLS_ctx.payment.initPoint) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (__VLS_ctx.handleOpenCheckout) },
+                        type: "button",
+                        ...{ class: "inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
                     });
                 }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                (__VLS_ctx.loadingStatus ? "Atualizando..." : "Ja paguei, verificar status");
+                if (!__VLS_ctx.isPaid) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                        ...{ class: "text-xs text-neutral-400" },
+                    });
+                }
+                if (!__VLS_ctx.isPaid) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.payment))
+                                    return;
+                                if (!(!__VLS_ctx.isFreeEvent))
+                                    return;
+                                if (!!(__VLS_ctx.isManualPayment))
+                                    return;
+                                if (!(!__VLS_ctx.isPixPayment && !__VLS_ctx.isManualPayment))
+                                    return;
+                                if (!(!__VLS_ctx.isPaid))
+                                    return;
+                                __VLS_ctx.loadPayment(true);
+                            } },
+                        type: "button",
+                        ...{ class: "inline-flex items-center gap-2 text-sm text-primary-600 hover:text-primary-500 disabled:text-neutral-400" },
+                        disabled: (__VLS_ctx.loadingStatus),
+                    });
+                    if (__VLS_ctx.loadingStatus) {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                            ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-current border-b-transparent" },
+                        });
+                    }
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    (__VLS_ctx.loadingStatus ? "Atualizando..." : "Ja paguei, verificar status");
+                }
             }
         }
     }
@@ -696,6 +746,20 @@ if (__VLS_ctx.isPaid) {
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['opacity-25']} */ ;
+/** @type {__VLS_StyleScopedClasses['opacity-75']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
@@ -809,11 +873,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             manualInstructions: manualInstructions,
             statusTitle: statusTitle,
             statusMessage: statusMessage,
+            isPixPayment: isPixPayment,
             statusIcon: statusIcon,
             statusStyles: statusStyles,
             totalFormatted: totalFormatted,
             loadPayment: loadPayment,
             copyPixCode: copyPixCode,
+            handleOpenCheckout: handleOpenCheckout,
         };
     },
     __typeProps: {},

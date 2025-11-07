@@ -100,6 +100,27 @@
               <option value="church">Por igreja</option>
             </select>
           </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Modelo</label>
+            <select v-model="reportTemplate" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+              <option value="standard">Gerencial (detalhado)</option>
+              <option value="event">Para evento (assinatura)</option>
+            </select>
+          </div>
+          <div v-if="reportTemplate === 'event'" class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Densidade</label>
+            <select v-model="reportLayout" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+              <option value="single">1 por página</option>
+              <option value="two">2 por página</option>
+            </select>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Modelo</label>
+            <select v-model="reportTemplate" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+              <option value="standard">Gerencial (detalhado)</option>
+              <option value="event">Para evento (assinatura)</option>
+            </select>
+          </div>
           <div v-if="reportType === 'event'" class="flex flex-col gap-2">
             <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Evento</label>
             <select v-model="reportFilters.eventId" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
@@ -470,6 +491,8 @@ watch(() => filters.status, () => { if (filtersReady.value) scheduleApply() })
 
 // Relatório PDF
 const reportType = ref<'event' | 'church'>('event')
+const reportTemplate = ref<'standard' | 'event'>('standard')
+const reportLayout = ref<'single' | 'two'>('single')
 const reportFilters = reactive({ eventId: '', districtId: '', churchId: '' })
 const canDownloadReport = computed(() => {
   if (reportType.value === 'event') return !!reportFilters.eventId
@@ -492,7 +515,7 @@ const downloadReportPdf = async () => {
       params.districtId = reportFilters.districtId
       params.churchId = reportFilters.churchId
     }
-    const resp = await admin.downloadRegistrationReport(params, reportType.value)
+    const resp = await admin.downloadRegistrationReport({ ...params, layout: reportLayout.value }, reportType.value, reportTemplate.value)
     const blob = new Blob([resp.data], { type: 'application/pdf' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -672,7 +695,8 @@ const refundedAt = computed(() => {
   return events.length ? events[events.length - 1].at : null
 })
 
-const humanEvent = (e: {type: string; details?: any}) => {
+const humanEvent = (e: {type: string; label?: string; details?: any}) => {
+  if (e && typeof e.label === 'string' && e.label) return e.label
   const map: Record<string,string> = {
     REGISTRATION_CREATED: 'Inscrição criada',
     PAYMENT_METHOD_SELECTED: `Forma de pagamento escolhida (${paymentMethodShort(e.details?.paymentMethod)})`,

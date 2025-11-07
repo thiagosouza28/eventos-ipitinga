@@ -26,7 +26,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.header, __VLS_intrinsicElement
     ...{ class: "border-b border-neutral-200 bg-white/80 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/80" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:flex-nowrap sm:gap-4 sm:px-6" },
+    ...{ class: "mx-auto flex w-full max-w-[95%] xl:max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:flex-nowrap sm:gap-4 sm:px-6" },
 });
 const __VLS_0 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
@@ -81,7 +81,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-6xl flex-col px-4 py-10 sm:px-6" },
+    ...{ class: "mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[95%] xl:max-w-[1600px] flex-col px-4 py-10 sm:px-6" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
     ...{ class: "flex-1 pb-10" },
@@ -109,7 +109,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.footer, __VLS_intrinsicElement
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['mx-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-w-6xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-[95%]']} */ ;
+/** @type {__VLS_StyleScopedClasses['xl:max-w-[1600px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
@@ -177,7 +179,8 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.footer, __VLS_intrinsicElement
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['min-h-[calc(100vh-72px)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-w-6xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-[95%]']} */ ;
+/** @type {__VLS_StyleScopedClasses['xl:max-w-[1600px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-10']} */ ;

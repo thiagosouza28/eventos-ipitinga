@@ -19,11 +19,16 @@ export const useEventStore = defineStore("event", () => {
         }
     };
     const checkPendingOrder = async (buyerCpf) => {
-        if (!event.value)
-            return;
+        if (!event.value) {
+            throw new Error("Evento não carregado");
+        }
+        // Validação adicional para garantir que o CPF seja válido
+        if (!buyerCpf || typeof buyerCpf !== "string" || buyerCpf.trim().length === 0) {
+            throw new Error("CPF é obrigatório");
+        }
         const response = await api.post("/inscriptions/start", {
             eventId: event.value.id,
-            buyerCpf
+            buyerCpf: buyerCpf.trim()
         });
         pendingOrders.value = response.data.pendingOrders ?? [];
         return { pendingOrders: pendingOrders.value };

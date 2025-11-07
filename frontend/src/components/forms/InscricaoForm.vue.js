@@ -1,3 +1,4 @@
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
