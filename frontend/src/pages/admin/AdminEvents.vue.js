@@ -1,3 +1,4 @@
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
@@ -243,8 +244,8 @@ const handleBannerUpload = async (mode, file) => {
         bannerUploading[mode] = false;
     }
 };
-const onBannerFileChange = async (mode, event) => {
-    const input = event.target;
+const onBannerFileChange = async (mode, domEvent) => {
+    const input = domEvent.target;
     const file = input?.files?.[0];
     if (!file)
         return;

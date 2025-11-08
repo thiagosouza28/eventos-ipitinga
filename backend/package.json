@@ -1,5 +1,5 @@
 {
-  "name": "@catre-ipitinga/backend",
+  "name": "backend",
   "version": "1.0.0",
   "description": "Backend do sistema de inscriÃ§Ãµes CATRE Ipitinga com Express, Prisma e Mercado Pago.",
   "main": "dist/main.js",

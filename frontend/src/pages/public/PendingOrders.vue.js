@@ -1,3 +1,4 @@
+/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useApi } from "../../composables/useApi";
@@ -39,11 +40,11 @@ const toggleOrder = (orderId) => {
 };
 // Função para pagamento individual - processa APENAS o pedido específico
 // NÃO usa selectedOrders, processa diretamente o orderId passado
-const handleIndividualPayment = async (orderId, eventSlug, event) => {
+const handleIndividualPayment = async (orderId, eventSlug, domEvent) => {
     // Prevenir qualquer propagação de evento que possa interferir
-    if (event) {
-        event.stopPropagation();
-        event.preventDefault();
+    if (domEvent) {
+        domEvent.stopPropagation();
+        domEvent.preventDefault();
     }
     // IMPORTANTE: Limpar TODA seleção ANTES de fazer qualquer coisa
     // Isso garante que nenhum outro pedido seja processado
@@ -55,6 +56,10 @@ const handleIndividualPayment = async (orderId, eventSlug, event) => {
     // antes de redirecionar
     await nextTick();
     // Redirecionar usando APENAS o orderId passado, ignorando completamente selectedOrders
+    if (!eventSlug) {
+        error.value = "O evento não está disponível no momento.";
+        return;
+    }
     router.push({
         name: "payment",
         params: {
@@ -224,14 +229,15 @@ const handleCpfSubmit = async () => {
 };
 // Carregar pendências ao montar o componente se CPF foi fornecido
 onMounted(async () => {
-    if (props.cpf && typeof props.cpf === "string" && props.cpf.trim().length > 0) {
+    const providedCpf = props.cpf?.trim();
+    if (providedCpf && providedCpf.length > 0) {
         // Sempre pré-preencher o campo de CPF formatado quando vier da primeira tela
-        const normalizedCpf = normalizeCPF(props.cpf);
+        const normalizedCpf = normalizeCPF(providedCpf);
         if (normalizedCpf.length === 11) {
             // CPF completo - formatar, mostrar no campo e carregar dados
             cpfInput.value = formatCPF(normalizedCpf);
             showCpfForm.value = true; // Mostrar o formulário para o usuário ver o CPF pré-preenchido
-            await loadPendingOrders(props.cpf);
+            await loadPendingOrders(providedCpf);
             // Se voltou do Mercado Pago (há query params como status, payment_id, etc), 
             // verificar pagamentos imediatamente usando o mesmo método da PaymentPage
             if (route.query.status || route.query.payment_id || route.query.preference_id) {
@@ -251,12 +257,12 @@ onMounted(async () => {
                         selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
                         // Se ainda há pedidos pendentes, recarregar a lista completa
                         if (pendingOrders.value.length > 0) {
-                            await loadPendingOrders(props.cpf);
+                            await loadPendingOrders(providedCpf);
                         }
                     }
                     else {
                         // Se não encontrou pagamentos, recarregar a lista para garantir
-                        await loadPendingOrders(props.cpf);
+                        await loadPendingOrders(providedCpf);
                     }
                 }, 2000); // Aguardar 2 segundos (igual à PaymentPage)
                 // Verificar novamente após mais tempo (igual à PaymentPage com query.fresh)
@@ -272,7 +278,7 @@ onMounted(async () => {
                         pendingOrders.value = pendingOrders.value.filter(order => !ordersToRemove.includes(order.orderId));
                         selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
                         if (pendingOrders.value.length > 0) {
-                            await loadPendingOrders(props.cpf);
+                            await loadPendingOrders(providedCpf);
                         }
                     }
                 }, 5000); // Aguardar 5 segundos para garantir
@@ -280,7 +286,7 @@ onMounted(async () => {
         }
         else if (normalizedCpf.length > 0) {
             // CPF parcial - apenas formatar e mostrar formulário
-            cpfInput.value = formatCPF(props.cpf);
+            cpfInput.value = formatCPF(providedCpf);
             showCpfForm.value = true;
             loading.value = false;
         }
