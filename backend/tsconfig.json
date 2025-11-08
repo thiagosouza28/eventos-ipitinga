@@ -6,11 +6,24 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": ".",
+    "baseUrl": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "paths": {
+      "express": ["node_modules/express", "../node_modules/express"],
+      "express/*": ["node_modules/express/*", "../node_modules/express/*"],
+      "express-serve-static-core": [
+        "node_modules/express-serve-static-core",
+        "../node_modules/express-serve-static-core"
+      ],
+      "express-serve-static-core/*": [
+        "node_modules/express-serve-static-core/*",
+        "../node_modules/express-serve-static-core/*"
+      ]
+    }
   },
   "include": ["src", "prisma", "scripts", "test"],
   "exclude": ["node_modules", "dist"]

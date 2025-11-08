@@ -1,0 +1,567 @@
+﻿{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CATRE Ipitinga API",
+    "version": "1.0.0",
+    "description": "API para gestÃ£o de inscriÃ§Ãµes CATRE Ipitinga com pagamentos Mercado Pago, recibos e check-in."
+  },
+  "servers": [
+    { "url": "http://localhost:3001/api", "description": "Desenvolvimento" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Event": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "startDate": { "type": "string", "format": "date-time" },
+          "endDate": { "type": "string", "format": "date-time" },
+          "location": { "type": "string" },
+          "priceCents": { "type": "integer", "minimum": 0 },
+          "minAgeYears": { "type": "integer", "nullable": true },
+          "isActive": { "type": "boolean" },
+          "slug": { "type": "string" }
+        }
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": ["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"]
+      },
+      "RegistrationStatus": {
+        "type": "string",
+        "enum": ["DRAFT", "PENDING_PAYMENT", "PAID", "CANCELED", "REFUNDED", "CHECKED_IN"]
+      }
+    }
+  },
+  "paths": {
+    "/events": {
+      "get": {
+        "tags": ["PÃºblico"],
+        "summary": "Lista eventos pÃºblicos ativos",
+        "responses": {
+          "200": {
+            "description": "Lista de eventos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Event" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/{slug}": {
+      "get": {
+        "tags": ["PÃºblico"],
+        "summary": "Detalhes pÃºblicos do evento",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Evento retornado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } } },
+          "404": { "description": "Evento nÃ£o encontrado" }
+        }
+      }
+    },
+    "/inscriptions/start": {
+      "post": {
+        "tags": ["PÃºblico"],
+        "summary": "Verifica pendÃªncia de pedido",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventId": { "type": "string", "format": "uuid" },
+                  "buyerCpf": { "type": "string" }
+                },
+                "required": ["eventId", "buyerCpf"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pedido pendente ou null" }
+        }
+      }
+    },
+    "/inscriptions/batch": {
+      "post": {
+        "tags": ["PÃºblico"],
+        "summary": "Cria pedido e inscriÃ§Ãµes em lote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventId": { "type": "string", "format": "uuid" },
+                  "buyerCpf": { "type": "string" },
+                  "people": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "fullName": { "type": "string" },
+                        "cpf": { "type": "string" },
+                        "birthDate": { "type": "string", "format": "date" },
+                        "districtId": { "type": "string", "format": "uuid" },
+                        "churchId": { "type": "string", "format": "uuid" },
+                        "photoUrl": { "type": "string", "nullable": true }
+                      },
+                      "required": ["fullName", "cpf", "birthDate", "districtId", "churchId"]
+                    }
+                  }
+                },
+                "required": ["eventId", "buyerCpf", "people"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pedido criado com sucesso" }
+        }
+      }
+    },
+    "/payments/order/{orderId}": {
+      "get": {
+        "tags": ["Público"],
+        "summary": "Recupera dados de pagamento de um pedido",
+        "parameters": [
+          { "name": "orderId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Informações de pagamento e participantes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "paymentId": { "type": "string", "nullable": true },
+                    "participantCount": { "type": "integer" },
+                    "participants": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "fullName": { "type": "string" },
+                          "status": { "$ref": "#/components/schemas/RegistrationStatus" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Pedido não encontrado" }
+        }
+      }
+    },
+    "/webhooks/mercadopago": {
+      "post": {
+        "tags": ["Pagamentos"],
+        "summary": "Webhook Mercado Pago",
+        "responses": { "200": { "description": "Webhook processado" } }
+      }
+    },
+    "/receipts/lookup": {
+      "post": {
+        "tags": ["Publico"],
+        "summary": "Consulta recibos por CPF e data de nascimento",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cpf": { "type": "string" },
+                  "birthDate": { "type": "string", "format": "date" }
+                },
+                "required": ["cpf", "birthDate"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Lista de recibos" } }
+      }
+    },
+    "/receipts/{registrationId}.pdf": {
+      "get": {
+        "tags": ["Publico"],
+        "summary": "Download de recibo PDF com token",
+        "parameters": [
+          { "name": "registrationId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "PDF stream" },
+          "403": { "description": "Token invalido" }
+        }
+      }
+    },
+    "/checkin/validate": {
+      "get": {
+        "tags": ["Check-in"],
+        "summary": "Valida link publico de check-in",
+        "parameters": [
+          { "name": "rid", "in": "query", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "sig", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da validacao",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "enum": ["READY", "ALREADY_CONFIRMED"] },
+                    "registration": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "fullName": { "type": "string" },
+                        "eventTitle": { "type": "string" },
+                        "eventLocation": { "type": "string" },
+                        "eventPeriod": { "type": "string" },
+                        "districtName": { "type": "string" },
+                        "churchName": { "type": "string" },
+                        "checkinAt": { "type": "string", "format": "date-time", "nullable": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Link invalido ou pagamento pendente" },
+          "404": { "description": "Inscricao nao encontrada" }
+        }
+      }
+    },
+    "/checkin/confirm": {
+      "post": {
+        "tags": ["Check-in"],
+        "summary": "Confirma presenca via link com senha",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rid": { "type": "string", "format": "uuid" },
+                  "sig": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["rid", "sig", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Check-in confirmado ou já processado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "enum": ["CONFIRMED", "ALREADY_CONFIRMED"] },
+                    "registration": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "fullName": { "type": "string" },
+                        "eventTitle": { "type": "string" },
+                        "eventLocation": { "type": "string" },
+                        "eventPeriod": { "type": "string" },
+                        "districtName": { "type": "string" },
+                        "churchName": { "type": "string" },
+                        "checkinAt": { "type": "string", "format": "date-time", "nullable": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Senha invalida ou pagamento pendente" },
+          "404": { "description": "Inscricao nao encontrada" }
+        }
+      }
+    },
+    "/admin/login": {
+      "post": {
+        "tags": ["Admin"],
+        "summary": "AutenticaÃ§Ã£o de usuÃ¡rio administrador",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Token JWT emitido" } }
+      }
+    },
+    "/admin/districts": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Lista distritos",
+        "responses": { "200": { "description": "Lista retornada" } }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Cria distrito",
+        "responses": { "201": { "description": "Distrito criado" } }
+      }
+    },
+    "/admin/districts/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Atualiza distrito",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Atualizado" } }
+      }
+    },
+    "/admin/churches": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Lista igrejas",
+        "responses": { "200": { "description": "Lista retornada" } }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Cria igreja",
+        "responses": { "201": { "description": "Igreja criada" } }
+      }
+    },
+    "/admin/churches/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Atualiza igreja",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Atualizado" } }
+      }
+    },
+    "/admin/events": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Lista eventos",
+        "responses": { "200": { "description": "Lista retornada" } }
+      },
+      "post": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Cria evento",
+        "responses": { "201": { "description": "Evento criado" } }
+      }
+    },
+    "/admin/events/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Atualiza evento",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Evento atualizado" } }
+      }
+    },
+    "/admin/orders": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Listagem de pedidos",
+        "responses": { "200": { "description": "Lista retornada" } }
+      }
+    },
+    "/admin/orders/{id}/mark-paid": {
+      "post": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Marca pedido como pago manualmente",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "paymentId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Pedido marcado como pago" } }
+      }
+    },
+    "/admin/registrations": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Listagem de inscri����es com filtros",
+        "parameters": [
+          { "name": "eventId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "districtId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "churchId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/RegistrationStatus" } }
+        ],
+        "responses": { "200": { "description": "Lista retornada" } }
+      }
+    },
+    "/admin/registrations/report": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Resumo agregado das inscri����es",
+        "parameters": [
+          { "name": "groupBy", "in": "query", "required": true, "schema": { "type": "string", "enum": ["event", "church"] } },
+          { "name": "eventId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "districtId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "churchId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/RegistrationStatus" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados agregados por evento ou igreja",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groupBy": { "type": "string", "enum": ["event", "church"] },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "nullable": true },
+                          "name": { "type": "string" },
+                          "period": { "type": "string", "nullable": true },
+                          "districtName": { "type": "string", "nullable": true },
+                          "totals": {
+                            "type": "object",
+                            "additionalProperties": { "type": "integer" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    
+    "/admin/registrations/report.pdf": {
+      "get": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Gera relatório detalhado em PDF com participantes",
+        "parameters": [
+          { "name": "groupBy", "in": "query", "required": true, "schema": { "type": "string", "enum": ["event", "church"] } },
+          { "name": "eventId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "districtId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "churchId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/RegistrationStatus" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF contendo inscritos detalhados",
+            "content": {
+              "application/pdf": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },"/admin/registrations/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Atualiza dados de uma inscriÃ§Ã£o",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "InscriÃ§Ã£o atualizada" } }
+      }
+    },
+    "/admin/registrations/{id}/cancel": {
+      "post": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Cancela inscriÃ§Ã£o",
+        "responses": { "200": { "description": "Cancelada" } }
+      }
+    },
+    "/admin/registrations/{id}/refund": {
+      "post": {
+        "tags": ["Admin"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Solicita estorno parcial",
+        "responses": { "200": { "description": "Estorno processado" } }
+      }
+    },
+    "/admin/checkin/{eventId}": {
+      "get": {
+        "tags": ["Check-in"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Dados para check-in do evento",
+        "parameters": [
+          { "name": "eventId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": { "200": { "description": "Dados retornados" } }
+      }
+    },
+    "/admin/checkin/scan": {
+      "post": {
+        "tags": ["Check-in"],
+        "security": [{ "bearerAuth": [] }],
+        "summary": "Marca presenÃ§a por QR ou busca manual",
+        "responses": { "200": { "description": "Check-in registrado" } }
+      }
+    }
+  }
+}
+
+
