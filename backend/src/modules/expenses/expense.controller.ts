@@ -30,7 +30,8 @@ export const createExpenseHandler = async (request: Request, response: Response)
   let receiptUrl: string | undefined;
   if (payload.receiptBase64) {
     try {
-      receiptUrl = await storageService.saveBase64Image(payload.receiptBase64);
+      const savedUrl = await storageService.saveBase64Image(payload.receiptBase64);
+      receiptUrl = savedUrl ?? undefined;
     } catch (error) {
       return response.status(400).json({
         message: "Erro ao processar imagem do comprovante"
@@ -58,7 +59,8 @@ export const updateExpenseHandler = async (request: Request, response: Response)
   let receiptUrl: string | undefined;
   if (payload.receiptBase64) {
     try {
-      receiptUrl = await storageService.saveBase64Image(payload.receiptBase64);
+      const savedUrl = await storageService.saveBase64Image(payload.receiptBase64);
+      receiptUrl = savedUrl ?? undefined;
     } catch (error) {
       return response.status(400).json({
         message: "Erro ao processar imagem do comprovante"

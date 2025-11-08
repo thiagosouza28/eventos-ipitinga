@@ -476,7 +476,7 @@ export class ChurchService {
       action: "CHURCH_DELETED",
       entity: "church",
       entityId: id,
-      actorId,
+      actorUserId: actorId,
       metadata: {
         name: church.name,
         districtId: church.districtId

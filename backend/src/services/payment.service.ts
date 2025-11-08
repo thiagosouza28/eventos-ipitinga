@@ -113,7 +113,8 @@ class PaymentService {
 
     const buyerName = (order as any).buyerName as string | null | undefined;
     const buyerEmail = (order as any).buyerEmail as string | null | undefined;
-    const [firstName, ...restNames] = (buyerName ?? "Participante").trim().split(/\s+/);
+    const buyerRawName = (buyerName ?? "Participante").trim();
+    const [firstName, ...restNames] = (buyerRawName.length ? buyerRawName : "Participante").split(/\s+/);
     const lastName = restNames.join(" ") || "CATRE";
     const emailFallback = buyerEmail && /.+@.+\..+/.test(buyerEmail)
       ? buyerEmail
@@ -127,9 +128,8 @@ class PaymentService {
       external_reference: order.id,
       payer: {
         email: emailFallback,
-        first_name: firstName,
-        last_name: lastName,
-        entity_type: "individual",
+        name: firstName || "Participante",
+        surname: lastName,
         identification: {
           type: "CPF",
           number: sanitizedCpf
@@ -204,7 +204,8 @@ class PaymentService {
     const prefCpf = prefCpfRaw.replace(/\D/g, "");
     const prefBuyerName = (order as any).buyerName as string | null | undefined;
     const prefBuyerEmail = (order as any).buyerEmail as string | null | undefined;
-    const [prefFirstName, ...prefRest] = (prefBuyerName ?? "Participante").trim().split(/\s+/);
+    const prefRawName = (prefBuyerName ?? "Participante").trim();
+    const [prefFirstName, ...prefRest] = (prefRawName.length ? prefRawName : "Participante").split(/\s+/);
     const prefLastName = prefRest.join(" ") || "CATRE";
     const prefEmail = prefBuyerEmail && /.+@.+\..+/.test(prefBuyerEmail)
       ? prefBuyerEmail
@@ -215,8 +216,8 @@ class PaymentService {
       items,
       payer: {
         email: prefEmail,
-        first_name: prefFirstName,
-        last_name: prefLastName,
+        name: prefFirstName || "Participante",
+        surname: prefLastName,
         identification: {
           type: "CPF",
           number: prefCpf
@@ -369,8 +370,8 @@ class PaymentService {
       items,
       payer: {
         email: bulkEmail,
-        first_name: "Participante",
-        last_name: "CATRE",
+        name: "Participante",
+        surname: "CATRE",
         identification: {
           type: "CPF",
           number: bulkCpf

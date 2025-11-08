@@ -1,4 +1,4 @@
-import { cuid } from "@paralleldrive/cuid2";
+import cuid2 from "@paralleldrive/cuid2";
 import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
@@ -23,7 +23,7 @@ export class ExpenseService {
 
     const expense = await prisma.expense.create({
       data: {
-        id: cuid(),
+        id: cuid2.createId(),
         eventId: payload.eventId,
         description: payload.description.trim(),
         date: payload.date,

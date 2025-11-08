@@ -15,8 +15,8 @@ export class DistrictService {
         // Se a coluna existe, buscar com ela
         const districts = await prisma.$queryRaw<Array<{
           id: string;
-          name: string;
-          pastorName: string | null;
+          name: unknown;
+          pastorName: unknown;
           createdAt: Date;
         }>>`
           SELECT id, name, pastorName, createdAt
@@ -76,7 +76,7 @@ export class DistrictService {
         // Se não existe, buscar sem ela e adicionar null
         const districts = await prisma.$queryRaw<Array<{
           id: string;
-          name: string;
+          name: unknown;
           createdAt: Date;
         }>>`
           SELECT id, name, createdAt
@@ -117,7 +117,7 @@ export class DistrictService {
       try {
         const districts = await prisma.$queryRaw<Array<{
           id: string;
-          name: string;
+          name: unknown;
           createdAt: Date;
         }>>`
           SELECT id, name, createdAt
@@ -153,16 +153,17 @@ export class DistrictService {
     console.log('[DEBUG] districtService.create - typeof data.name:', typeof data.name);
     
     // Garantir que name e pastorName sejam strings primitivas
+    const rawNameValue = data.name as unknown;
     let nameStr: string;
-    if (typeof data.name === "string") {
-      nameStr = data.name.trim();
-    } else if (data.name && typeof data.name === "object") {
-      console.log('[DEBUG] districtService.create - data.name é objeto:', data.name);
-      // Se for objeto, tentar extrair valor ou serializar
-      if ("value" in data.name && typeof data.name.value === "string") {
-        nameStr = data.name.value.trim();
+    if (typeof rawNameValue === "string") {
+      nameStr = rawNameValue.trim();
+    } else if (rawNameValue && typeof rawNameValue === "object") {
+      console.log("[DEBUG] districtService.create - data.name é objeto:", rawNameValue);
+      const nameObj = rawNameValue as Record<string, unknown>;
+      if ("value" in nameObj && typeof nameObj.value === "string") {
+        nameStr = nameObj.value.trim();
       } else {
-        nameStr = JSON.stringify(data.name).replace(/^"|"$/g, "").trim();
+        nameStr = JSON.stringify(nameObj).replace(/^"|"$/g, "").trim();
       }
     } else {
       nameStr = String(data.name || "").trim();
@@ -175,13 +176,15 @@ export class DistrictService {
     
     let pastorNameStr: string | undefined = undefined;
     if (data.pastorName !== undefined && data.pastorName !== null) {
-      if (typeof data.pastorName === "string") {
-        pastorNameStr = data.pastorName.trim() || undefined;
-      } else if (data.pastorName && typeof data.pastorName === "object") {
-        if ("value" in data.pastorName && typeof data.pastorName.value === "string") {
-          pastorNameStr = data.pastorName.value.trim() || undefined;
+      const rawPastorName = data.pastorName as unknown;
+      if (typeof rawPastorName === "string") {
+        pastorNameStr = rawPastorName.trim() || undefined;
+      } else if (rawPastorName && typeof rawPastorName === "object") {
+        const pastorObj = rawPastorName as Record<string, unknown>;
+        if ("value" in pastorObj && typeof pastorObj.value === "string") {
+          pastorNameStr = pastorObj.value.trim() || undefined;
         } else {
-          const str = JSON.stringify(data.pastorName).replace(/^"|"$/g, "").trim();
+          const str = JSON.stringify(pastorObj).replace(/^"|"$/g, "").trim();
           pastorNameStr = str || undefined;
         }
       } else {
@@ -399,7 +402,7 @@ export class DistrictService {
       action: "DISTRICT_DELETED",
       entity: "district",
       entityId: id,
-      actorId,
+      actorUserId: actorId,
       metadata: {
         name: district.name
       }

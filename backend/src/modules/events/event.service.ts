@@ -241,7 +241,18 @@ export class EventService {
   ) {
     const event = await prisma.event.findUnique({ where: { id } });
     if (!event) throw new NotFoundError("Evento nao encontrado");
-    const payload: Prisma.EventUpdateInput = { ...data };
+
+    const payload: Prisma.EventUpdateInput = {};
+
+    if (data.title !== undefined) payload.title = data.title;
+    if (data.description !== undefined) payload.description = data.description;
+    if (data.startDate !== undefined) payload.startDate = data.startDate;
+    if (data.endDate !== undefined) payload.endDate = data.endDate;
+    if (data.location !== undefined) payload.location = data.location;
+    if (data.bannerUrl !== undefined) payload.bannerUrl = data.bannerUrl;
+    if (data.minAgeYears !== undefined) payload.minAgeYears = data.minAgeYears;
+    if (data.isActive !== undefined) payload.isActive = data.isActive;
+    if (data.isFree !== undefined) payload.isFree = data.isFree;
 
     if (data.isFree === true) {
       payload.priceCents = 0;
@@ -249,17 +260,12 @@ export class EventService {
       payload.priceCents = data.priceCents;
     }
 
-    if (payload.priceCents === undefined) {
-      delete (payload as Record<string, unknown>).priceCents;
-    }
-
     if (data.paymentMethods !== undefined) {
-      payload.paymentMethods = serializePaymentMethods(
-        data.paymentMethods.length ? data.paymentMethods : DEFAULT_PAYMENT_METHODS
-      );
+      const methods = data.paymentMethods.length ? data.paymentMethods : DEFAULT_PAYMENT_METHODS;
+      payload.paymentMethods = serializePaymentMethods(methods);
     }
 
-    if (data.slug !== undefined) {
+   if (data.slug !== undefined) {
       const normalized = normalizeSlugInput(data.slug);
       if (!normalized) {
         throw new AppError("Slug inválido", 400);

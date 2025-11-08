@@ -456,7 +456,6 @@ export class OrderService {
         mpPaymentId: true,
         expiresAt: true,
         createdAt: true,
-        updatedAt: true,
         ...(hasFeeCents && { feeCents: true }),
         ...(hasNetAmountCents && { netAmountCents: true }),
         registrations: {
