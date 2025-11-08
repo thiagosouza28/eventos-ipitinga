@@ -937,7 +937,7 @@ import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
-import type { Event, EventLot, PaymentMethod } from "../../types/api";
+import type { Event as ApiEvent, EventLot, PaymentMethod } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
@@ -1030,7 +1030,7 @@ const editCardRef = ref<HTMLFormElement | null>(null);
 
 const confirmDelete = reactive({
   open: false,
-  target: null as Event | null
+  target: null as ApiEvent | null
 });
 
 const confirmDeleteDescription = computed(() => {
@@ -1042,7 +1042,7 @@ const confirmDeleteDescription = computed(() => {
 
 const details = reactive({
   open: false,
-  event: null as Event | null
+  event: null as ApiEvent | null
 });
 
 const lotForm = reactive({
@@ -1203,8 +1203,8 @@ const handleBannerUpload = async (mode: FormMode, file: File) => {
   }
 };
 
-const onBannerFileChange = async (mode: FormMode, event: Event) => {
-  const input = event.target as HTMLInputElement | null;
+const onBannerFileChange = async (mode: FormMode, domEvent: Event) => {
+  const input = domEvent.target as HTMLInputElement | null;
   const file = input?.files?.[0];
   if (!file) return;
   await handleBannerUpload(mode, file);
@@ -1416,7 +1416,7 @@ const submitCreate = async () => {
       paymentMethods: [...createForm.paymentMethods],
       minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
       isActive: true
-    } as Partial<Event>);
+    } as Partial<ApiEvent>);
     resetCreateForm();
     showCreateForm.value = false;
   } catch (error) {
@@ -1448,7 +1448,7 @@ const submitEdit = async () => {
       minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
       priceCents: 0,
       paymentMethods: [...editForm.paymentMethods]
-    } as Partial<Event>);
+    } as Partial<ApiEvent>);
     cancelEdit();
   } catch (error) {
     showError("Falha ao atualizar evento", error);
@@ -1457,7 +1457,7 @@ const submitEdit = async () => {
   }
 };
 
-const startEdit = (event: Event) => {
+const startEdit = (event: ApiEvent) => {
   editingEventId.value = event.id;
   editForm.title = event.title;
   editForm.slug = event.slug;
@@ -1491,7 +1491,7 @@ const toggleCreateForm = () => {
   }
 };
 
-const toggleActive = async (event: Event) => {
+const toggleActive = async (event: ApiEvent) => {
   try {
     await admin.saveEvent({
       id: event.id,
@@ -1502,7 +1502,7 @@ const toggleActive = async (event: Event) => {
   }
 };
 
-const openDelete = (event: Event) => {
+const openDelete = (event: ApiEvent) => {
   confirmDelete.target = event;
   confirmDelete.open = true;
 };
@@ -1522,7 +1522,7 @@ const handleDelete = async () => {
   }
 };
 
-const openDetails = async (event: Event) => {
+const openDetails = async (event: ApiEvent) => {
   details.event = event;
   details.open = true;
   resetLotForm();

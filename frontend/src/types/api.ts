@@ -10,7 +10,7 @@ export type RegistrationStatus =
   | "REFUNDED"
   | "CHECKED_IN";
 
-export type PaymentMethod = "PIX_MP" | "CASH" | "CARD_FULL" | "CARD_INSTALLMENTS";
+export type PaymentMethod = "PIX_MP" | "CASH" | "CARD_FULL" | "CARD_INSTALLMENTS" | "FREE_PREVIOUS_YEAR";
 
 export interface District {
   id: string;
