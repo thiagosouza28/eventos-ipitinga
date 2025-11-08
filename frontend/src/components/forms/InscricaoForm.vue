@@ -28,7 +28,10 @@
       </p>
     </div>
     <div class="flex justify-between">
-      <RouterLink to="/" class="text-sm text-neutral-500 transition hover:text-neutral-700">
+      <RouterLink
+        to="/"
+        class="text-sm font-medium text-primary-600 transition hover:text-primary-500 dark:text-primary-200 dark:hover:text-primary-100"
+      >
         Voltar
       </RouterLink>
       <button

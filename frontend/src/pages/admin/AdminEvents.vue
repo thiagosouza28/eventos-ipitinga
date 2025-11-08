@@ -77,7 +77,7 @@
                 <span
                   :class="[
                     'rounded-full px-3 py-1 text-xs font-semibold uppercase',
-                    event.isActive ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-600'
+                    event.isActive ? 'bg-primary-100 text-primary-700' : 'bg-neutral-200 text-neutral-600'
                   ]"
                 >
                   {{ event.isActive ? "Ativo" : "Inativo" }}
@@ -95,7 +95,7 @@
                     Editar
                   </button>
                   <button
-                    class="text-sm text-amber-600 hover:underline"
+                    class="text-sm text-primary-600 hover:underline"
                     @click="toggleActive(event)"
                   >
                     {{ event.isActive ? "Desativar" : "Ativar" }}
@@ -139,6 +139,29 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Slug (URL)
+          </label>
+          <div class="mt-1 flex gap-2">
+            <input
+              v-model="createForm.slug"
+              type="text"
+              class="w-full rounded-lg border border-neutral-300 px-4 py-2 lowercase dark:border-neutral-700 dark:bg-neutral-800"
+              placeholder="ex: encontro-2026"
+            />
+            <button
+              type="button"
+              class="shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              @click="applySlugSuggestion('create')"
+            >
+              Gerar
+            </button>
+          </div>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Este slug compõe o endereço do evento (ex.: /evento/{{ createForm.slug || 'meu-evento' }}).
+          </p>
+        </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Descricao
@@ -152,20 +175,43 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Imagem do banner (URL)
+            Imagem do banner (arquivo)
           </label>
           <input
             v-model="createForm.bannerUrl"
-            type="url"
+            type="text"
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-            placeholder="https://exemplo.com/banner.jpg"
+            placeholder="banner.jpg"
           />
+          <div class="mt-2 flex flex-wrap items-center gap-3">
+            <input
+              ref="createBannerInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onBannerFileChange('create', $event)"
+            />
+            <button
+              type="button"
+              class="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800"
+              @click="selectBannerFile('create')"
+              :disabled="bannerUploading.create"
+            >
+              {{ bannerUploading.create ? "Enviando..." : "Selecionar nos arquivos" }}
+            </button>
+            <span
+              v-if="createForm.bannerUrl"
+              class="text-xs text-neutral-500 dark:text-neutral-400"
+            >
+              {{ createForm.bannerUrl }}
+            </span>
+          </div>
           <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            URL da imagem retangular (banner) do evento
+            Use o botão para enviar uma nova imagem ou informe o nome de um arquivo já salvo (ex.: banner.jpg).
           </p>
-          <div v-if="createForm.bannerUrl" class="mt-2">
+          <div v-if="resolveBannerUrl(createForm.bannerUrl)" class="mt-2">
             <img
-              :src="createForm.bannerUrl"
+              :src="resolveBannerUrl(createForm.bannerUrl)"
               alt="Preview do banner"
               class="max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700"
               @error="createForm.bannerUrl = ''"
@@ -239,7 +285,7 @@
           </div>
           <div
             v-else
-            class="rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200"
+            class="rounded-lg border border-dashed border-primary-300 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-500/10 dark:text-primary-200"
           >
             Eventos gratuitos não geram pagamentos e não permitem cadastro de lotes. As inscrições são confirmadas automaticamente.
           </div>
@@ -310,6 +356,29 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Slug (URL)
+          </label>
+          <div class="mt-1 flex gap-2">
+            <input
+              v-model="editForm.slug"
+              type="text"
+              class="w-full rounded-lg border border-neutral-300 px-4 py-2 lowercase dark:border-neutral-700 dark:bg-neutral-800"
+              placeholder="ex: encontro-2026"
+            />
+            <button
+              type="button"
+              class="shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              @click="applySlugSuggestion('edit')"
+            >
+              Gerar
+            </button>
+          </div>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Atualize o identificador público do evento (acesso em /evento/{{ editForm.slug || 'meu-evento' }}).
+          </p>
+        </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Descricao
@@ -323,20 +392,40 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Imagem do banner (URL)
+            Imagem do banner (arquivo)
           </label>
           <input
             v-model="editForm.bannerUrl"
-            type="url"
+            type="text"
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-            placeholder="https://exemplo.com/banner.jpg"
+            placeholder="banner.jpg"
           />
+          <div class="mt-2 flex flex-wrap items-center gap-3">
+            <input
+              ref="editBannerInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+              @change="onBannerFileChange('edit', $event)"
+            />
+            <button
+              type="button"
+              class="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800"
+              @click="selectBannerFile('edit')"
+              :disabled="bannerUploading.edit"
+            >
+              {{ bannerUploading.edit ? "Enviando..." : "Selecionar nos arquivos" }}
+            </button>
+            <span v-if="editForm.bannerUrl" class="text-xs text-neutral-500 dark:text-neutral-400">
+              {{ editForm.bannerUrl }}
+            </span>
+          </div>
           <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            URL da imagem retangular (banner) do evento
+            Envie um novo arquivo ou aponte para um nome já existente na pasta de uploads do sistema.
           </p>
-          <div v-if="editForm.bannerUrl" class="mt-2">
+          <div v-if="resolveBannerUrl(editForm.bannerUrl)" class="mt-2">
             <img
-              :src="editForm.bannerUrl"
+              :src="resolveBannerUrl(editForm.bannerUrl)"
               alt="Preview do banner"
               class="max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700"
               @error="editForm.bannerUrl = ''"
@@ -410,7 +499,7 @@
           </div>
           <div
             v-else
-            class="rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200"
+            class="rounded-lg border border-dashed border-primary-300 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-500/10 dark:text-primary-200"
           >
             Eventos gratuitos não geram pagamentos e não permitem cadastro de lotes. Qualquer inscrição será confirmada automaticamente.
           </div>
@@ -847,11 +936,14 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useApi } from "../../composables/useApi";
 import type { Event, EventLot, PaymentMethod } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
+import { API_BASE_URL } from "../../config/api";
 
 const admin = useAdminStore();
+const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
 
 const defaultPaymentMethodValues = (): PaymentMethod[] =>
@@ -873,8 +965,39 @@ const formatPriceDisplay = (valueInCents: number) =>
     maximumFractionDigits: 2
   });
 
+type FormMode = "create" | "edit";
+
+const slugifyValue = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+
+const sanitizeSlugInput = (value: string) => slugifyValue(value ?? "");
+
+const suggestSlugFromForm = (form: typeof createForm | typeof editForm) => {
+  const titleSlug = slugifyValue(form.title);
+  if (!titleSlug) return "";
+  if (form.startDate) {
+    const year = new Date(form.startDate).getFullYear();
+    if (!Number.isNaN(year)) {
+      return slugifyValue(`${form.title}-${year}`);
+    }
+  }
+  return titleSlug;
+};
+
+const applySlugSuggestion = (mode: FormMode) => {
+  const form = mode === "create" ? createForm : editForm;
+  form.slug = suggestSlugFromForm(form);
+};
+
 const createForm = reactive({
   title: "",
+  slug: "",
   description: "",
   startDate: "",
   endDate: "",
@@ -887,6 +1010,7 @@ const createForm = reactive({
 
 const editForm = reactive({
   title: "",
+  slug: "",
   description: "",
   startDate: "",
   endDate: "",
@@ -976,9 +1100,9 @@ const lotStatusLabel = (lot: EventLot) => {
 };
 
 const lotBadgeClass = (lot: EventLot) => {
-  if (isLotActive(lot)) return "bg-emerald-100 text-emerald-700";
-  if (isLotFuture(lot)) return "bg-blue-100 text-blue-700";
-  return "bg-neutral-200 text-neutral-600";
+  if (isLotActive(lot)) return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
+  if (isLotFuture(lot)) return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+  return "bg-black/80 text-white dark:bg-neutral-900 dark:text-white";
 };
 
 const isCurrentLot = (lot: EventLot) => details.event?.currentLot?.id === lot.id;
@@ -1019,6 +1143,74 @@ const showError = (title: string, error: unknown) => {
   errorDialog.message = message;
   errorDialog.details = detailsValue;
   errorDialog.open = true;
+};
+
+const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
+const createBannerInput = ref<HTMLInputElement | null>(null);
+const editBannerInput = ref<HTMLInputElement | null>(null);
+const bannerUploading = reactive<Record<FormMode, boolean>>({
+  create: false,
+  edit: false
+});
+
+const resolveBannerUrl = (value: string) => {
+  if (!value) return "";
+  if (/^(https?:|data:|blob:)/i.test(value)) {
+    return value;
+  }
+  const sanitized = value.replace(/^\/+/, "");
+  if (!sanitized) return "";
+  if (sanitized.startsWith("uploads/")) {
+    return `${apiOrigin.replace(/\/$/, "")}/${sanitized}`;
+  }
+  return `${uploadsBaseUrl}/${sanitized}`;
+};
+
+const selectBannerFile = (mode: FormMode) => {
+  if (mode === "create") {
+    createBannerInput.value?.click();
+    return;
+  }
+  editBannerInput.value?.click();
+};
+
+const performUpload = async (file: File) => {
+  if (typeof admin.uploadAsset === "function") {
+    return admin.uploadAsset(file);
+  }
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await api.post("/admin/uploads", formData, {
+    headers: { "Content-Type": "multipart/form-data" }
+  });
+  return response.data as { fileName: string };
+};
+
+const handleBannerUpload = async (mode: FormMode, file: File) => {
+  bannerUploading[mode] = true;
+  try {
+    const { fileName } = await performUpload(file);
+    if (mode === "create") {
+      createForm.bannerUrl = fileName;
+    } else {
+      editForm.bannerUrl = fileName;
+    }
+  } catch (error) {
+    showError("Falha ao enviar imagem", error);
+  } finally {
+    bannerUploading[mode] = false;
+  }
+};
+
+const onBannerFileChange = async (mode: FormMode, event: Event) => {
+  const input = event.target as HTMLInputElement | null;
+  const file = input?.files?.[0];
+  if (!file) return;
+  await handleBannerUpload(mode, file);
+  if (input) {
+    input.value = "";
+  }
 };
 
 const toLocalInput = (value: string) => {
@@ -1084,6 +1276,7 @@ const refreshDetailsEvent = () => {
 
 const resetCreateForm = () => {
   createForm.title = "";
+  createForm.slug = "";
   createForm.description = "";
   createForm.startDate = "";
   createForm.endDate = "";
@@ -1096,6 +1289,7 @@ const resetCreateForm = () => {
 
 const resetEditForm = () => {
   editForm.title = "";
+  editForm.slug = "";
   editForm.description = "";
   editForm.startDate = "";
   editForm.endDate = "";
@@ -1206,6 +1400,7 @@ const submitCreate = async () => {
     showError("Falha ao criar evento", { message: "Selecione ao menos uma forma de pagamento." });
     return;
   }
+  const normalizedSlug = sanitizeSlugInput(createForm.slug);
   savingCreate.value = true;
   try {
     await admin.saveEvent({
@@ -1215,6 +1410,7 @@ const submitCreate = async () => {
       endDate: new Date(createForm.endDate).toISOString(),
       location: createForm.location.trim(),
       bannerUrl: createForm.bannerUrl.trim() || undefined,
+      slug: normalizedSlug || undefined,
       isFree: createForm.isFree,
       priceCents: 0,
       paymentMethods: [...createForm.paymentMethods],
@@ -1236,6 +1432,7 @@ const submitEdit = async () => {
     showError("Falha ao atualizar evento", { message: "Selecione ao menos uma forma de pagamento." });
     return;
   }
+  const normalizedSlug = sanitizeSlugInput(editForm.slug);
   savingEdit.value = true;
   try {
     await admin.saveEvent({
@@ -1246,6 +1443,7 @@ const submitEdit = async () => {
       endDate: new Date(editForm.endDate).toISOString(),
       location: editForm.location.trim(),
       bannerUrl: editForm.bannerUrl.trim() || undefined,
+      slug: normalizedSlug || undefined,
       isFree: editForm.isFree,
       minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
       priceCents: 0,
@@ -1262,6 +1460,7 @@ const submitEdit = async () => {
 const startEdit = (event: Event) => {
   editingEventId.value = event.id;
   editForm.title = event.title;
+  editForm.slug = event.slug;
   editForm.description = event.description;
   editForm.startDate = toLocalInput(event.startDate);
   editForm.endDate = toLocalInput(event.endDate);

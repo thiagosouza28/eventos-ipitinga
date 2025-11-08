@@ -209,13 +209,20 @@ const formatBirthDate = (value) => {
 const translateStatus = (s) => statusLabels[s] ?? s;
 const statusBadgeClass = (s) => {
     switch (s) {
-        case 'PENDING_PAYMENT': return 'bg-amber-100 text-amber-700';
-        case 'PAID': return 'bg-emerald-100 text-emerald-700';
-        case 'CHECKED_IN': return 'bg-blue-100 text-blue-700';
-        case 'REFUNDED': return 'bg-sky-100 text-sky-700';
-        case 'CANCELED': return 'bg-red-100 text-red-700';
-        case 'DRAFT': return 'bg-neutral-200 text-neutral-600';
-        default: return 'bg-neutral-200 text-neutral-600';
+        case "PENDING_PAYMENT":
+            return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+        case "PAID":
+            return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
+        case "CHECKED_IN":
+            return "bg-primary-200 text-primary-800 dark:bg-primary-500/30 dark:text-primary-50";
+        case "REFUNDED":
+            return "bg-neutral-200 text-neutral-900 dark:bg-neutral-700 dark:text-white";
+        case "CANCELED":
+            return "bg-black text-white dark:bg-neutral-900 dark:text-white";
+        case "DRAFT":
+            return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
+        default:
+            return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
     }
 };
 // Busca local por nome/CPF
@@ -358,6 +365,8 @@ const refundedAt = computed(() => {
     return events.length ? events[events.length - 1].at : null;
 });
 const humanEvent = (e) => {
+    if (e && typeof e.label === 'string' && e.label)
+        return e.label;
     const map = {
         REGISTRATION_CREATED: 'Inscrição criada',
         PAYMENT_METHOD_SELECTED: `Forma de pagamento escolhida (${paymentMethodShort(e.details?.paymentMethod)})`,
@@ -752,12 +761,12 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElement
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     ...{ onClick: (__VLS_ctx.openAddPaid) },
     type: "button",
-    ...{ class: "shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500" },
+    ...{ class: "shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     ...{ onClick: (__VLS_ctx.openAddFree) },
     type: "button",
-    ...{ class: "shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500" },
+    ...{ class: "shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
 });
 var __VLS_16;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
@@ -1080,7 +1089,7 @@ else {
                             return;
                         __VLS_ctx.openConfirm('refund', registration);
                     } },
-                ...{ class: "text-amber-600 hover:text-amber-500" },
+                ...{ class: "text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200" },
             });
         }
         if (__VLS_ctx.canDeleteRegistration(registration.status)) {
@@ -1157,7 +1166,7 @@ if (__VLS_ctx.addDialog.open) {
     }
     if (__VLS_ctx.addDialog.paymentMethod === 'PIX_MP') {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "md:col-span-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700" },
+            ...{ class: "md:col-span-2 rounded-md bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:bg-primary-500/10 dark:text-primary-200" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1239,7 +1248,7 @@ if (__VLS_ctx.addDialog.open) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         type: "submit",
-        ...{ class: "rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500" },
+        ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
     });
 }
 if (__VLS_ctx.editDialog.open) {
@@ -1657,24 +1666,24 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
 /** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-emerald-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-emerald-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -1921,8 +1930,11 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-amber-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-amber-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
@@ -1981,11 +1993,13 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
@@ -2077,14 +2091,14 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-emerald-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
 /** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['z-50']} */ ;

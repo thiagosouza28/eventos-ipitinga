@@ -90,11 +90,11 @@ const __VLS_0 = {}.RouterLink;
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     to: "/",
-    ...{ class: "text-sm text-neutral-500 transition hover:text-neutral-700" },
+    ...{ class: "text-sm font-medium text-primary-600 transition hover:text-primary-500 dark:text-primary-200 dark:hover:text-primary-100" },
 }));
 const __VLS_2 = __VLS_1({
     to: "/",
-    ...{ class: "text-sm text-neutral-500 transition hover:text-neutral-700" },
+    ...{ class: "text-sm font-medium text-primary-600 transition hover:text-primary-500 dark:text-primary-200 dark:hover:text-primary-100" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 __VLS_3.slots.default;
 var __VLS_3;
@@ -148,9 +148,12 @@ if (__VLS_ctx.submitError) {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;

@@ -4,20 +4,20 @@ const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rounded-2xl border border-neutral-200 bg-white p-5 shadow-lg shadow-neutral-200/40 transition dark:border-neutral-800 dark:bg-neutral-900/80 dark:shadow-black/30 sm:p-6" },
+    ...{ class: "rounded-2xl border border-white/60 bg-white/95 p-5 shadow-lg shadow-primary-100/40 transition dark:border-white/10 dark:bg-neutral-900/60 dark:shadow-black/40 sm:p-6" },
 });
 var __VLS_0 = {};
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/95']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-neutral-200/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-100/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/80']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:p-6']} */ ;
 // @ts-ignore
 var __VLS_1 = __VLS_0;

@@ -5,9 +5,12 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
+import { API_BASE_URL } from "../../config/api";
 const admin = useAdminStore();
+const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
 const defaultPaymentMethodValues = () => PAYMENT_METHODS.map((option) => option.value);
 const toPriceCents = (input) => {
@@ -26,8 +29,33 @@ const formatPriceDisplay = (valueInCents) => (valueInCents / 100).toLocaleString
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
 });
+const slugifyValue = (value) => value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+const sanitizeSlugInput = (value) => slugifyValue(value ?? "");
+const suggestSlugFromForm = (form) => {
+    const titleSlug = slugifyValue(form.title);
+    if (!titleSlug)
+        return "";
+    if (form.startDate) {
+        const year = new Date(form.startDate).getFullYear();
+        if (!Number.isNaN(year)) {
+            return slugifyValue(`${form.title}-${year}`);
+        }
+    }
+    return titleSlug;
+};
+const applySlugSuggestion = (mode) => {
+    const form = mode === "create" ? createForm : editForm;
+    form.slug = suggestSlugFromForm(form);
+};
 const createForm = reactive({
     title: "",
+    slug: "",
     description: "",
     startDate: "",
     endDate: "",
@@ -39,6 +67,7 @@ const createForm = reactive({
 });
 const editForm = reactive({
     title: "",
+    slug: "",
     description: "",
     startDate: "",
     endDate: "",
@@ -124,10 +153,10 @@ const lotStatusLabel = (lot) => {
 };
 const lotBadgeClass = (lot) => {
     if (isLotActive(lot))
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
     if (isLotFuture(lot))
-        return "bg-blue-100 text-blue-700";
-    return "bg-neutral-200 text-neutral-600";
+        return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+    return "bg-black/80 text-white dark:bg-neutral-900 dark:text-white";
 };
 const isCurrentLot = (lot) => details.event?.currentLot?.id === lot.id;
 const currentPriceDisplay = computed(() => details.event?.isFree
@@ -155,6 +184,74 @@ const showError = (title, error) => {
     errorDialog.message = message;
     errorDialog.details = detailsValue;
     errorDialog.open = true;
+};
+const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
+const createBannerInput = ref(null);
+const editBannerInput = ref(null);
+const bannerUploading = reactive({
+    create: false,
+    edit: false
+});
+const resolveBannerUrl = (value) => {
+    if (!value)
+        return "";
+    if (/^(https?:|data:|blob:)/i.test(value)) {
+        return value;
+    }
+    const sanitized = value.replace(/^\/+/, "");
+    if (!sanitized)
+        return "";
+    if (sanitized.startsWith("uploads/")) {
+        return `${apiOrigin.replace(/\/$/, "")}/${sanitized}`;
+    }
+    return `${uploadsBaseUrl}/${sanitized}`;
+};
+const selectBannerFile = (mode) => {
+    if (mode === "create") {
+        createBannerInput.value?.click();
+        return;
+    }
+    editBannerInput.value?.click();
+};
+const performUpload = async (file) => {
+    if (typeof admin.uploadAsset === "function") {
+        return admin.uploadAsset(file);
+    }
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post("/admin/uploads", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+    });
+    return response.data;
+};
+const handleBannerUpload = async (mode, file) => {
+    bannerUploading[mode] = true;
+    try {
+        const { fileName } = await performUpload(file);
+        if (mode === "create") {
+            createForm.bannerUrl = fileName;
+        }
+        else {
+            editForm.bannerUrl = fileName;
+        }
+    }
+    catch (error) {
+        showError("Falha ao enviar imagem", error);
+    }
+    finally {
+        bannerUploading[mode] = false;
+    }
+};
+const onBannerFileChange = async (mode, event) => {
+    const input = event.target;
+    const file = input?.files?.[0];
+    if (!file)
+        return;
+    await handleBannerUpload(mode, file);
+    if (input) {
+        input.value = "";
+    }
 };
 const toLocalInput = (value) => {
     const date = new Date(value);
@@ -210,6 +307,7 @@ const refreshDetailsEvent = () => {
 };
 const resetCreateForm = () => {
     createForm.title = "";
+    createForm.slug = "";
     createForm.description = "";
     createForm.startDate = "";
     createForm.endDate = "";
@@ -221,6 +319,7 @@ const resetCreateForm = () => {
 };
 const resetEditForm = () => {
     editForm.title = "";
+    editForm.slug = "";
     editForm.description = "";
     editForm.startDate = "";
     editForm.endDate = "";
@@ -324,6 +423,7 @@ const submitCreate = async () => {
         showError("Falha ao criar evento", { message: "Selecione ao menos uma forma de pagamento." });
         return;
     }
+    const normalizedSlug = sanitizeSlugInput(createForm.slug);
     savingCreate.value = true;
     try {
         await admin.saveEvent({
@@ -333,6 +433,7 @@ const submitCreate = async () => {
             endDate: new Date(createForm.endDate).toISOString(),
             location: createForm.location.trim(),
             bannerUrl: createForm.bannerUrl.trim() || undefined,
+            slug: normalizedSlug || undefined,
             isFree: createForm.isFree,
             priceCents: 0,
             paymentMethods: [...createForm.paymentMethods],
@@ -356,6 +457,7 @@ const submitEdit = async () => {
         showError("Falha ao atualizar evento", { message: "Selecione ao menos uma forma de pagamento." });
         return;
     }
+    const normalizedSlug = sanitizeSlugInput(editForm.slug);
     savingEdit.value = true;
     try {
         await admin.saveEvent({
@@ -366,6 +468,7 @@ const submitEdit = async () => {
             endDate: new Date(editForm.endDate).toISOString(),
             location: editForm.location.trim(),
             bannerUrl: editForm.bannerUrl.trim() || undefined,
+            slug: normalizedSlug || undefined,
             isFree: editForm.isFree,
             minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
             priceCents: 0,
@@ -383,6 +486,7 @@ const submitEdit = async () => {
 const startEdit = (event) => {
     editingEventId.value = event.id;
     editForm.title = event.title;
+    editForm.slug = event.slug;
     editForm.description = event.description;
     editForm.startDate = toLocalInput(event.startDate);
     editForm.endDate = toLocalInput(event.endDate);
@@ -623,7 +727,7 @@ for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: ([
                 'rounded-full px-3 py-1 text-xs font-semibold uppercase',
-                event.isActive ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-600'
+                event.isActive ? 'bg-primary-100 text-primary-700' : 'bg-neutral-200 text-neutral-600'
             ]) },
     });
     (event.isActive ? "Ativo" : "Inativo");
@@ -649,7 +753,7 @@ for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
         ...{ onClick: (...[$event]) => {
                 __VLS_ctx.toggleActive(event);
             } },
-        ...{ class: "text-sm text-amber-600 hover:underline" },
+        ...{ class: "text-sm text-primary-600 hover:underline" },
     });
     (event.isActive ? "Desativar" : "Ativar");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
@@ -694,6 +798,32 @@ if (__VLS_ctx.showCreateForm) {
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-1 flex gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        value: (__VLS_ctx.createForm.slug),
+        type: "text",
+        ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 lowercase dark:border-neutral-700 dark:bg-neutral-800" },
+        placeholder: "ex: encontro-2026",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showCreateForm))
+                    return;
+                __VLS_ctx.applySlugSuggestion('create');
+            } },
+        type: "button",
+        ...{ class: "shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    (__VLS_ctx.createForm.slug || 'meu-evento');
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -713,15 +843,47 @@ if (__VLS_ctx.showCreateForm) {
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        type: "url",
+        value: (__VLS_ctx.createForm.bannerUrl),
+        type: "text",
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-        placeholder: "https://exemplo.com/banner.jpg",
+        placeholder: "banner.jpg",
     });
-    (__VLS_ctx.createForm.bannerUrl);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-2 flex flex-wrap items-center gap-3" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onChange: (...[$event]) => {
+                if (!(__VLS_ctx.showCreateForm))
+                    return;
+                __VLS_ctx.onBannerFileChange('create', $event);
+            } },
+        ref: "createBannerInput",
+        type: "file",
+        accept: "image/*",
+        ...{ class: "hidden" },
+    });
+    /** @type {typeof __VLS_ctx.createBannerInput} */ ;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.showCreateForm))
+                    return;
+                __VLS_ctx.selectBannerFile('create');
+            } },
+        type: "button",
+        ...{ class: "rounded-lg border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800" },
+        disabled: (__VLS_ctx.bannerUploading.create),
+    });
+    (__VLS_ctx.bannerUploading.create ? "Enviando..." : "Selecionar nos arquivos");
+    if (__VLS_ctx.createForm.bannerUrl) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+        (__VLS_ctx.createForm.bannerUrl);
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
     });
-    if (__VLS_ctx.createForm.bannerUrl) {
+    if (__VLS_ctx.resolveBannerUrl(__VLS_ctx.createForm.bannerUrl)) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mt-2" },
         });
@@ -729,11 +891,11 @@ if (__VLS_ctx.showCreateForm) {
             ...{ onError: (...[$event]) => {
                     if (!(__VLS_ctx.showCreateForm))
                         return;
-                    if (!(__VLS_ctx.createForm.bannerUrl))
+                    if (!(__VLS_ctx.resolveBannerUrl(__VLS_ctx.createForm.bannerUrl)))
                         return;
                     __VLS_ctx.createForm.bannerUrl = '';
                 } },
-            src: (__VLS_ctx.createForm.bannerUrl),
+            src: (__VLS_ctx.resolveBannerUrl(__VLS_ctx.createForm.bannerUrl)),
             alt: "Preview do banner",
             ...{ class: "max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700" },
         });
@@ -807,7 +969,7 @@ if (__VLS_ctx.showCreateForm) {
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200" },
+            ...{ class: "rounded-lg border border-dashed border-primary-300 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-500/10 dark:text-primary-200" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -890,6 +1052,32 @@ if (__VLS_ctx.editingEventId) {
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-1 flex gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        value: (__VLS_ctx.editForm.slug),
+        type: "text",
+        ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 lowercase dark:border-neutral-700 dark:bg-neutral-800" },
+        placeholder: "ex: encontro-2026",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.editingEventId))
+                    return;
+                __VLS_ctx.applySlugSuggestion('edit');
+            } },
+        type: "button",
+        ...{ class: "shrink-0 rounded-lg border border-neutral-300 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-300 dark:hover:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    (__VLS_ctx.editForm.slug || 'meu-evento');
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -909,15 +1097,47 @@ if (__VLS_ctx.editingEventId) {
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        type: "url",
+        value: (__VLS_ctx.editForm.bannerUrl),
+        type: "text",
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-        placeholder: "https://exemplo.com/banner.jpg",
+        placeholder: "banner.jpg",
     });
-    (__VLS_ctx.editForm.bannerUrl);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-2 flex flex-wrap items-center gap-3" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onChange: (...[$event]) => {
+                if (!(__VLS_ctx.editingEventId))
+                    return;
+                __VLS_ctx.onBannerFileChange('edit', $event);
+            } },
+        ref: "editBannerInput",
+        type: "file",
+        accept: "image/*",
+        ...{ class: "hidden" },
+    });
+    /** @type {typeof __VLS_ctx.editBannerInput} */ ;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.editingEventId))
+                    return;
+                __VLS_ctx.selectBannerFile('edit');
+            } },
+        type: "button",
+        ...{ class: "rounded-lg border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 dark:border-neutral-600 dark:hover:bg-neutral-800" },
+        disabled: (__VLS_ctx.bannerUploading.edit),
+    });
+    (__VLS_ctx.bannerUploading.edit ? "Enviando..." : "Selecionar nos arquivos");
+    if (__VLS_ctx.editForm.bannerUrl) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+        (__VLS_ctx.editForm.bannerUrl);
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
     });
-    if (__VLS_ctx.editForm.bannerUrl) {
+    if (__VLS_ctx.resolveBannerUrl(__VLS_ctx.editForm.bannerUrl)) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mt-2" },
         });
@@ -925,11 +1145,11 @@ if (__VLS_ctx.editingEventId) {
             ...{ onError: (...[$event]) => {
                     if (!(__VLS_ctx.editingEventId))
                         return;
-                    if (!(__VLS_ctx.editForm.bannerUrl))
+                    if (!(__VLS_ctx.resolveBannerUrl(__VLS_ctx.editForm.bannerUrl)))
                         return;
                     __VLS_ctx.editForm.bannerUrl = '';
                 } },
-            src: (__VLS_ctx.editForm.bannerUrl),
+            src: (__VLS_ctx.resolveBannerUrl(__VLS_ctx.editForm.bannerUrl)),
             alt: "Preview do banner",
             ...{ class: "max-h-32 w-full rounded object-cover border border-neutral-300 dark:border-neutral-700" },
         });
@@ -1003,7 +1223,7 @@ if (__VLS_ctx.editingEventId) {
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "rounded-lg border border-dashed border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200" },
+            ...{ class: "rounded-lg border border-dashed border-primary-300 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-500/10 dark:text-primary-200" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1659,7 +1879,7 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:underline']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-amber-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:underline']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
@@ -1690,6 +1910,43 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['lowercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -1720,6 +1977,25 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
@@ -1820,15 +2096,15 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-emerald-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-emerald-500/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-emerald-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -1918,6 +2194,43 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['lowercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -1948,6 +2261,25 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
@@ -2048,15 +2380,15 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-emerald-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-emerald-500/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-emerald-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2641,6 +2973,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             formatDate: formatDate,
             admin: admin,
             paymentMethodOptions: paymentMethodOptions,
+            applySlugSuggestion: applySlugSuggestion,
             createForm: createForm,
             editForm: editForm,
             editingEventId: editingEventId,
@@ -2667,6 +3000,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             currentPriceDisplay: currentPriceDisplay,
             basePriceDisplay: basePriceDisplay,
             errorDialog: errorDialog,
+            createBannerInput: createBannerInput,
+            editBannerInput: editBannerInput,
+            bannerUploading: bannerUploading,
+            resolveBannerUrl: resolveBannerUrl,
+            selectBannerFile: selectBannerFile,
+            onBannerFileChange: onBannerFileChange,
             resetLotForm: resetLotForm,
             startLotEdit: startLotEdit,
             cancelLotEdit: cancelLotEdit,

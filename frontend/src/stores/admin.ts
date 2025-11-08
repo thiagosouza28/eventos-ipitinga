@@ -104,6 +104,12 @@ export const useAdminStore = defineStore("admin", () => {
     });
   };
 
+  const downloadFinancialReport = async (eventId: string) => {
+    return api.get<ArrayBuffer>(`/admin/financial/events/${eventId}/report.pdf`, {
+      responseType: "arraybuffer"
+    });
+  };
+
   const updateRegistration = async (id: string, payload: Record<string, unknown>) => {
     await api.patch(`/admin/registrations/${id}`, payload);
     await loadRegistrations(registrationFilters.value);
@@ -241,6 +247,15 @@ export const useAdminStore = defineStore("admin", () => {
     return response.data;
   };
 
+  const uploadAsset = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post("/admin/uploads", formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    });
+    return response.data as { fileName: string; url: string; size: number; mimeType: string };
+  };
+
   return {
     events,
     eventLots,
@@ -256,6 +271,7 @@ export const useAdminStore = defineStore("admin", () => {
     deleteEventLot,
     loadRegistrations,
     downloadRegistrationReport,
+    downloadFinancialReport,
     updateRegistration,
     cancelRegistration,
     deleteRegistration,
@@ -270,6 +286,7 @@ export const useAdminStore = defineStore("admin", () => {
     loadDashboard,
     checkinScan,
     checkinManualLookup,
-    confirmCheckin
+    confirmCheckin,
+    uploadAsset
   };
 });

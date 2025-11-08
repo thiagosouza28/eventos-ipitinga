@@ -18,6 +18,7 @@ const expenses = ref([]);
 const showExpenseForm = ref(false);
 const editingExpense = ref(null);
 const submitting = ref(false);
+const downloadingReport = ref(false);
 const expenseForm = ref({
     description: "",
     date: new Date().toISOString().split("T")[0],
@@ -71,8 +72,32 @@ const loadEventSummary = async () => {
     }
 };
 const loadEventDetails = () => {
-    // TODO: Implementar página de detalhes do evento
+    // TODO: Implementar pÃ¡gina de detalhes do evento
     console.log("Carregar detalhes do evento", selectedEventId.value);
+};
+const downloadEventReport = async () => {
+    if (!selectedEventId.value)
+        return;
+    try {
+        downloadingReport.value = true;
+        const response = await admin.downloadFinancialReport(selectedEventId.value);
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
+        link.href = url;
+        link.download = `relatorio-financeiro-${filenameBase}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    }
+    catch (error) {
+        showError("Erro ao gerar relatório financeiro", error);
+    }
+    finally {
+        downloadingReport.value = false;
+    }
 };
 const handleReceiptUpload = async (event) => {
     const file = event.target.files?.[0];
@@ -296,7 +321,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
         ...{ class: "text-xs font-medium uppercase text-neutral-500" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "mt-1 text-2xl font-bold text-green-600 dark:text-green-400" },
+        ...{ class: "mt-1 text-2xl font-bold text-primary-600 dark:text-primary-300" },
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.netCents));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -413,17 +438,27 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     const __VLS_24 = __VLS_23({}, ...__VLS_functionalComponentArgsRest(__VLS_23));
     __VLS_25.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "mb-4 flex items-center justify-between" },
+        ...{ class: "mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
         ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
     });
     (__VLS_ctx.eventSummary.event.title);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-wrap gap-2" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.loadEventDetails) },
         type: "button",
         ...{ class: "text-sm text-primary-600 hover:underline" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.downloadEventReport) },
+        type: "button",
+        ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-800" },
+        disabled: (__VLS_ctx.downloadingReport),
+    });
+    (__VLS_ctx.downloadingReport ? "Gerando PDF..." : "Baixar PDF");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "grid gap-4 md:grid-cols-2 lg:grid-cols-6" },
     });
@@ -454,7 +489,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
         ...{ class: "text-xs font-medium uppercase text-neutral-500" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "mt-1 text-xl font-bold text-green-600 dark:text-green-400" },
+        ...{ class: "mt-1 text-xl font-bold text-primary-600 dark:text-primary-300" },
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.netCents));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -574,7 +609,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.selectedEventId && __VLS_ctx.expenses.length
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-2 text-sm text-neutral-600 dark:text-neutral-400" },
         });
-        (expense.items || "—");
+        (expense.items || "â€”");
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-2 text-right font-medium text-red-600 dark:text-red-400" },
         });
@@ -845,8 +880,8 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-green-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-green-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -976,15 +1011,34 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mb-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:underline']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
@@ -1035,8 +1089,8 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-green-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-green-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -1326,11 +1380,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             showExpenseForm: showExpenseForm,
             editingExpense: editingExpense,
             submitting: submitting,
+            downloadingReport: downloadingReport,
             expenseForm: expenseForm,
             confirmDelete: confirmDelete,
             errorDialog: errorDialog,
             loadEventSummary: loadEventSummary,
             loadEventDetails: loadEventDetails,
+            downloadEventReport: downloadEventReport,
             handleReceiptUpload: handleReceiptUpload,
             submitExpense: submitExpense,
             startEditExpense: startEditExpense,

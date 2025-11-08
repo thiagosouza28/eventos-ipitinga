@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -22,7 +22,7 @@
           to="/admin/dashboard"
           class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
         >
-          ← Dashboard
+          â† Dashboard
         </RouterLink>
       </div>
     </BaseCard>
@@ -50,8 +50,8 @@
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Receita Líquida</p>
-          <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
+          <p class="text-xs font-medium uppercase text-neutral-500">Receita LÃ­quida</p>
+          <p class="mt-1 text-2xl font-bold text-primary-600 dark:text-primary-300">
             {{ formatCurrency(generalSummary.totals.netCents) }}
           </p>
         </div>
@@ -68,7 +68,7 @@
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">PIX Líquido</p>
+          <p class="text-xs font-medium uppercase text-neutral-500">PIX LÃ­quido</p>
           <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
             {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
           </p>
@@ -86,7 +86,7 @@
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (Líquido)</p>
+          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (LÃ­quido)</p>
           <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
             {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
           </p>
@@ -125,17 +125,27 @@
 
     <!-- Resumo do Evento Selecionado -->
     <BaseCard v-if="!loading && eventSummary && selectedEventId">
-      <div class="mb-4 flex items-center justify-between">
+      <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
           {{ eventSummary.event.title }}
         </h2>
-        <button
-          type="button"
-          class="text-sm text-primary-600 hover:underline"
-          @click="loadEventDetails"
-        >
-          Ver Detalhes
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="text-sm text-primary-600 hover:underline"
+            @click="loadEventDetails"
+          >
+            Ver detalhes
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-800"
+            :disabled="downloadingReport"
+            @click="downloadEventReport"
+          >
+            {{ downloadingReport ? "Gerando PDF..." : "Baixar PDF" }}
+          </button>
+        </div>
       </div>
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
@@ -151,8 +161,8 @@
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Receita Líquida</p>
-          <p class="mt-1 text-xl font-bold text-green-600 dark:text-green-400">
+          <p class="text-xs font-medium uppercase text-neutral-500">Receita LÃ­quida</p>
+          <p class="mt-1 text-xl font-bold text-primary-600 dark:text-primary-300">
             {{ formatCurrency(eventSummary.totals.netCents) }}
           </p>
         </div>
@@ -169,7 +179,7 @@
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">PIX Líquido</p>
+          <p class="text-xs font-medium uppercase text-neutral-500">PIX LÃ­quido</p>
           <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
             {{ formatCurrency(eventSummary.totals.pix?.netCents || 0) }}
           </p>
@@ -181,14 +191,14 @@
           </p>
         </div>
         <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (Líquido)</p>
+          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (LÃ­quido)</p>
           <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
             {{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}
           </p>
         </div>
       </div>
       <div class="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-        <p>{{ eventSummary.paidRegistrationsCount }} inscrições pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
+        <p>{{ eventSummary.paidRegistrationsCount }} inscriÃ§Ãµes pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
       </div>
     </BaseCard>
 
@@ -202,11 +212,11 @@
           <thead class="text-xs uppercase tracking-wide text-neutral-500">
             <tr>
               <th class="pb-2">Data</th>
-              <th class="pb-2">Descrição</th>
-              <th class="pb-2">Responsável</th>
+              <th class="pb-2">DescriÃ§Ã£o</th>
+              <th class="pb-2">ResponsÃ¡vel</th>
               <th class="pb-2">Itens</th>
               <th class="pb-2 text-right">Valor</th>
-              <th class="pb-2 text-right">Ações</th>
+              <th class="pb-2 text-right">AÃ§Ãµes</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -221,7 +231,7 @@
                 {{ expense.madeBy }}
               </td>
               <td class="py-2 text-sm text-neutral-600 dark:text-neutral-400">
-                {{ expense.items || "—" }}
+                {{ expense.items || "â€”" }}
               </td>
               <td class="py-2 text-right font-medium text-red-600 dark:text-red-400">
                 -{{ formatCurrency(expense.amountCents) }}
@@ -256,7 +266,7 @@
       </div>
     </BaseCard>
 
-    <!-- Formulário de Despesa -->
+    <!-- FormulÃ¡rio de Despesa -->
     <BaseCard v-if="!loading && showExpenseForm && selectedEventId">
       <h2 class="mb-4 text-lg font-semibold text-neutral-700 dark:text-neutral-100">
         {{ editingExpense ? "Editar Despesa" : "Nova Despesa" }}
@@ -265,7 +275,7 @@
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Descrição *
+              DescriÃ§Ã£o *
             </label>
             <input
               v-model="expenseForm.description"
@@ -287,7 +297,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Responsável *
+              ResponsÃ¡vel *
             </label>
             <input
               v-model="expenseForm.madeBy"
@@ -313,7 +323,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Itens (lista de produtos/serviços)
+            Itens (lista de produtos/serviÃ§os)
           </label>
           <textarea
             v-model="expenseForm.items"
@@ -366,10 +376,10 @@
       @cancel="confirmDelete.open = false"
     />
 
-    <!-- Mensagem de erro se não conseguir carregar -->
+    <!-- Mensagem de erro se nÃ£o conseguir carregar -->
     <BaseCard v-if="!loading && !generalSummary && !errorDialog.open">
       <p class="text-center text-neutral-500">
-        Não foi possível carregar os dados do dashboard financeiro. Verifique sua conexão e tente novamente.
+        NÃ£o foi possÃ­vel carregar os dados do dashboard financeiro. Verifique sua conexÃ£o e tente novamente.
       </p>
     </BaseCard>
   </div>
@@ -397,6 +407,7 @@ const expenses = ref<any[]>([]);
 const showExpenseForm = ref(false);
 const editingExpense = ref<any>(null);
 const submitting = ref(false);
+const downloadingReport = ref(false);
 
 const expenseForm = ref({
   description: "",
@@ -454,9 +465,32 @@ const loadEventSummary = async () => {
 };
 
 const loadEventDetails = () => {
-  // TODO: Implementar página de detalhes do evento
+  // TODO: Implementar pÃ¡gina de detalhes do evento
   console.log("Carregar detalhes do evento", selectedEventId.value);
 };
+
+const downloadEventReport = async () => {
+  if (!selectedEventId.value) return;
+  try {
+    downloadingReport.value = true;
+    const response = await admin.downloadFinancialReport(selectedEventId.value);
+    const blob = new Blob([response.data], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
+    link.href = url;
+    link.download = `relatorio-financeiro-${filenameBase}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error: any) {
+    showError("Erro ao gerar relatório financeiro", error);
+  } finally {
+    downloadingReport.value = false;
+  }
+};
+
 
 const handleReceiptUpload = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
@@ -466,7 +500,7 @@ const handleReceiptUpload = async (event: Event) => {
     const base64 = await fileToBase64(file);
     expenseForm.value.receiptBase64 = base64;
     expenseForm.value.receiptPreview = file.name;
-  } catch (error) {
+  } catch (error: any) {
     showError("Erro ao processar arquivo", error);
   }
 };
@@ -575,4 +609,12 @@ onMounted(async () => {
   }
 });
 </script>
+
+
+
+
+
+
+
+
 

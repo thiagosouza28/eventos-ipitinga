@@ -21,16 +21,21 @@
           </div>
           <div class="text-left sm:text-right">
             <p class="text-sm text-neutral-500">
-              {{ isFreeEvent ? "Evento gratuito" : "Valor por inscricao" }}
-            </p>
-            <p class="text-xl font-semibold text-primary-600 dark:text-primary-400">
-              {{ priceLabel }}
+              {{ priceInfo.title }}
             </p>
             <p
-              v-if="currentLotName"
+              :class="[
+                'text-xl font-semibold',
+                priceInfo.pending ? 'text-neutral-500 dark:text-neutral-400' : 'text-primary-600 dark:text-primary-400'
+              ]"
+            >
+              {{ priceInfo.value }}
+            </p>
+            <p
+              v-if="priceInfo.helper"
               class="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
             >
-              Lote vigente: {{ currentLotName }}
+              {{ priceInfo.helper }}
             </p>
           </div>
         </div>
@@ -64,7 +69,7 @@
       <BaseCard v-if="currentStep === 1">
         <div
           v-if="pendingOrders.length > 0"
-          class="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
+          class="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
         >
           <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
           <p>VocÃª pode ver e pagar as pendÃªncias existentes ou seguir com uma nova inscriÃ§Ã£o.</p>
@@ -72,7 +77,7 @@
             <div
               v-for="order in pendingOrders"
               :key="order.orderId"
-              class="rounded-md bg-amber-100/50 p-2 dark:bg-amber-500/5"
+              class="rounded-md border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40"
             >
               <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex-1">
@@ -84,7 +89,7 @@
                 </div>
                 <RouterLink
                   :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
-                  class="inline-flex shrink-0 items-center justify-center rounded-md border border-amber-500 px-3 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200"
+                  class="inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100"
                 >
                   Pagar
                 </RouterLink>
@@ -92,7 +97,7 @@
             </div>
             <RouterLink
               :to="{ name: 'pending-orders', params: { cpf: buyerCpf } }"
-              class="inline-flex items-center text-xs font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
+              class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50"
             >
               Ver todas as pendÃªncias
               <IconArrowRight class="ml-1 h-3 w-3" />
@@ -424,13 +429,13 @@
             </p>
             <p
               v-if="isManualPaymentSelected"
-              class="text-xs text-amber-600 dark:text-amber-300"
+              class="text-xs text-primary-600 dark:text-primary-200"
             >
               Pagamentos manuais serao confirmados pela tesouraria. Guarde o comprovante para quitar a pendencia.
             </p>
             <p
               v-if="isFreePaymentSelected"
-              class="text-xs text-green-600 dark:text-green-300"
+              class="text-xs text-primary-500 dark:text-primary-200"
             >
               âœ“ Esta inscriÃ§Ã£o serÃ¡ marcada como paga automaticamente, sem gerar cobranÃ§a.
             </p>
@@ -624,7 +629,14 @@
 
     <BaseCard v-else>
       <p class="text-neutral-500">
-        As inscricoes ainda nao estao abertas. Aguarde o inicio do proximo lote.
+        As inscricoes deste evento estao liberadas pelo sistema, mas dependem da abertura do proximo lote.
+        <span v-if="nextLotInfo">
+          O lote <strong>{{ nextLotInfo.name }}</strong> com valor de
+          <strong>{{ nextLotInfo.price }}</strong> inicia em {{ nextLotInfo.startsAt }}.
+        </span>
+        <span v-else>
+          Aguarde a liberacao do proximo lote para prosseguir.
+        </span>
       </p>
     </BaseCard>
   </div>
@@ -638,16 +650,22 @@
   import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
   import StepWizard from "../../components/ui/StepWizard.vue";
   import IconArrowRight from "../../components/ui/IconArrowRight.vue";
-  import { useCatalogStore } from "../../stores/catalog";
-  import { useEventStore } from "../../stores/event";
-  import { useApi } from "../../composables/useApi";
-  import type { Church, RegistrationProfile } from "../../types/api";
-  import { formatCurrency, formatDate } from "../../utils/format";
-  import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
-import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS, FREE_PAYMENT_METHODS } from "../../config/paymentMethods";
+import { useCatalogStore } from "../../stores/catalog";
+import { useEventStore } from "../../stores/event";
+import { useApi } from "../../composables/useApi";
+import type { Church, EventLot, RegistrationProfile } from "../../types/api";
+import { formatCurrency, formatDate } from "../../utils/format";
+import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
+import {
+  paymentMethodLabel,
+  PAYMENT_METHODS,
+  MANUAL_PAYMENT_METHODS,
+  ADMIN_ONLY_PAYMENT_METHODS,
+  FREE_PAYMENT_METHODS
+} from "../../config/paymentMethods";
 import type { PaymentMethod } from "../../config/paymentMethods";
 import { useAuthStore } from "../../stores/auth";
-  import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
+import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
 
   type PendingRegistration = {
     id: string;
@@ -685,15 +703,71 @@ import { useAuthStore } from "../../stores/auth";
   const auth = useAuthStore();
 
   const isFreeEvent = computed(() => Boolean(eventStore.event?.isFree));
-  const ticketPriceCents = computed(
-    () => (isFreeEvent.value ? 0 : eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0)
+const ticketPriceCents = computed(
+  () => (isFreeEvent.value ? 0 : eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0)
+);
+const formatDateTimeBr = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "--";
+  }
+  return date.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+};
+const nextLot = computed<EventLot | null>(() => {
+  if (isFreeEvent.value) return null;
+  const lots = eventStore.event?.lots ?? [];
+  const now = Date.now();
+  return (
+    lots
+      .filter((lot) => new Date(lot.startsAt).getTime() > now)
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0] ?? null
   );
-  const priceLabel = computed(() =>
-    isFreeEvent.value ? "Gratuito" : formatCurrency(ticketPriceCents.value)
-  );
-  const currentLotName = computed(() =>
-    isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null
-  );
+});
+const priceInfo = computed(() => {
+  if (isFreeEvent.value) {
+    return { title: "Evento gratuito", value: "Gratuito", helper: null, pending: false };
+  }
+  if (eventStore.event?.currentLot) {
+    const lot = eventStore.event.currentLot;
+    return {
+      title: "Valor por inscrição",
+      value: formatCurrency(lot.priceCents ?? ticketPriceCents.value),
+      helper: lot.name ? `Lote vigente: ${lot.name}` : null,
+      pending: false
+    };
+  }
+  if (nextLot.value) {
+    return {
+      title: "Próximo lote",
+      value: formatCurrency(nextLot.value.priceCents),
+      helper: `Inicia em ${formatDateTimeBr(nextLot.value.startsAt)}`,
+      pending: true
+    };
+  }
+  return {
+    title: "Valor por inscrição",
+    value: "Aguardando liberação do lote",
+    helper: null,
+    pending: true
+  };
+});
+const currentLotName = computed(() =>
+  isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null
+);
+const nextLotInfo = computed(() => {
+  if (!nextLot.value) return null;
+  return {
+    name: nextLot.value.name,
+    startsAt: formatDateTimeBr(nextLot.value.startsAt),
+    price: formatCurrency(nextLot.value.priceCents)
+  };
+});
   const registrationOpen = computed(() => {
     if (!eventStore.event) return false;
     if (isFreeEvent.value) return true;
@@ -1442,15 +1516,27 @@ import { useAuthStore } from "../../stores/auth";
   });
   const inlineStatusStyles = computed(() => {
     if (inlineIsPaid.value) {
-      return { container: "border-green-300 bg-green-50 dark:border-green-500/40 dark:bg-green-500/10", badge: "bg-green-500" };
+      return {
+        container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
+        badge: "bg-primary-600"
+      };
     }
     if (inlineIsManual.value) {
-      return { container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10", badge: "bg-amber-500" };
+      return {
+        container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
+        badge: "bg-neutral-900"
+      };
     }
     if (inlinePayment.value?.status === "CANCELED") {
-      return { container: "border-red-300 bg-red-50 dark:border-red-500/40 dark:bg-red-500/10", badge: "bg-red-500" };
+      return {
+        container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
+        badge: "bg-black"
+      };
     }
-    return { container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10", badge: "bg-amber-500" };
+    return {
+      container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
+      badge: "bg-primary-500"
+    };
   });
 
   const copyInlinePixCode = async () => {

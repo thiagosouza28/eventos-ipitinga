@@ -25,14 +25,14 @@ const findEventTitle = (eventId) => admin.events.find((event) => event.id === ev
 const statusBadge = (status) => {
     switch (status) {
         case "PAID":
-            return "bg-green-100 text-green-700";
+            return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
         case "PARTIALLY_REFUNDED":
-            return "bg-yellow-100 text-yellow-700";
+            return "bg-neutral-200 text-neutral-900 dark:bg-neutral-700 dark:text-white";
         case "CANCELED":
         case "EXPIRED":
-            return "bg-neutral-200 text-neutral-600";
+            return "bg-black text-white dark:bg-neutral-900 dark:text-white";
         default:
-            return "bg-blue-100 text-blue-700";
+            return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
     }
 };
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */

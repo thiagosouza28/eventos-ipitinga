@@ -4,14 +4,16 @@ debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "overflow-x-auto pb-2" },
+});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.ol, __VLS_intrinsicElements.ol)({
-    ...{ class: "flex flex-col gap-3 md:flex-row md:items-center md:justify-between" },
+    ...{ class: "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6" },
 });
 for (const [step, index] of __VLS_getVForSourceType((__VLS_ctx.steps))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.li, __VLS_intrinsicElements.li)({
         key: (step.title),
-        ...{ class: "flex flex-1 items-center gap-3" },
+        ...{ class: "flex flex-1 min-w-[220px] items-center gap-3 sm:min-w-0" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: ([
@@ -35,20 +37,25 @@ for (const [step, index] of __VLS_getVForSourceType((__VLS_ctx.steps))) {
     (step.description);
     if (index < __VLS_ctx.steps.length - 1) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div)({
-            ...{ class: "hidden flex-1 border-t border-dashed border-neutral-300 md:block dark:border-neutral-700" },
+            ...{ class: "hidden flex-1 border-t border-dashed border-neutral-300 sm:block dark:border-neutral-700" },
         });
     }
 }
+/** @type {__VLS_StyleScopedClasses['overflow-x-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['pb-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[220px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:min-w-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
@@ -60,7 +67,7 @@ for (const [step, index] of __VLS_getVForSourceType((__VLS_ctx.steps))) {
 /** @type {__VLS_StyleScopedClasses['border-t']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:block']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:block']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({

@@ -21,8 +21,66 @@ const { api } = useApi();
 const auth = useAuthStore();
 const isFreeEvent = computed(() => Boolean(eventStore.event?.isFree));
 const ticketPriceCents = computed(() => (isFreeEvent.value ? 0 : eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0));
-const priceLabel = computed(() => isFreeEvent.value ? "Gratuito" : formatCurrency(ticketPriceCents.value));
+const formatDateTimeBr = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return "--";
+    }
+    return date.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+};
+const nextLot = computed(() => {
+    if (isFreeEvent.value)
+        return null;
+    const lots = eventStore.event?.lots ?? [];
+    const now = Date.now();
+    return (lots
+        .filter((lot) => new Date(lot.startsAt).getTime() > now)
+        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0] ?? null);
+});
+const priceInfo = computed(() => {
+    if (isFreeEvent.value) {
+        return { title: "Evento gratuito", value: "Gratuito", helper: null, pending: false };
+    }
+    if (eventStore.event?.currentLot) {
+        const lot = eventStore.event.currentLot;
+        return {
+            title: "Valor por inscrição",
+            value: formatCurrency(lot.priceCents ?? ticketPriceCents.value),
+            helper: lot.name ? `Lote vigente: ${lot.name}` : null,
+            pending: false
+        };
+    }
+    if (nextLot.value) {
+        return {
+            title: "Próximo lote",
+            value: formatCurrency(nextLot.value.priceCents),
+            helper: `Inicia em ${formatDateTimeBr(nextLot.value.startsAt)}`,
+            pending: true
+        };
+    }
+    return {
+        title: "Valor por inscrição",
+        value: "Aguardando liberação do lote",
+        helper: null,
+        pending: true
+    };
+});
 const currentLotName = computed(() => isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null);
+const nextLotInfo = computed(() => {
+    if (!nextLot.value)
+        return null;
+    return {
+        name: nextLot.value.name,
+        startsAt: formatDateTimeBr(nextLot.value.startsAt),
+        price: formatCurrency(nextLot.value.priceCents)
+    };
+});
 const registrationOpen = computed(() => {
     if (!eventStore.event)
         return false;
@@ -660,15 +718,27 @@ const inlineStatusIcon = computed(() => {
 });
 const inlineStatusStyles = computed(() => {
     if (inlineIsPaid.value) {
-        return { container: "border-green-300 bg-green-50 dark:border-green-500/40 dark:bg-green-500/10", badge: "bg-green-500" };
+        return {
+            container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
+            badge: "bg-primary-600"
+        };
     }
     if (inlineIsManual.value) {
-        return { container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10", badge: "bg-amber-500" };
+        return {
+            container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
+            badge: "bg-neutral-900"
+        };
     }
     if (inlinePayment.value?.status === "CANCELED") {
-        return { container: "border-red-300 bg-red-50 dark:border-red-500/40 dark:bg-red-500/10", badge: "bg-red-500" };
+        return {
+            container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
+            badge: "bg-black"
+        };
     }
-    return { container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10", badge: "bg-amber-500" };
+    return {
+        container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
+        badge: "bg-primary-500"
+    };
 });
 const copyInlinePixCode = async () => {
     const code = inlinePayment.value?.pixQrData?.qr_code;
@@ -761,23 +831,28 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-sm text-neutral-500" },
     });
-    (__VLS_ctx.isFreeEvent ? "Evento gratuito" : "Valor por inscricao");
+    (__VLS_ctx.priceInfo.title);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-xl font-semibold text-primary-600 dark:text-primary-400" },
+        ...{ class: ([
+                'text-xl font-semibold',
+                __VLS_ctx.priceInfo.pending ? 'text-neutral-500 dark:text-neutral-400' : 'text-primary-600 dark:text-primary-400'
+            ]) },
     });
-    (__VLS_ctx.priceLabel);
-    if (__VLS_ctx.currentLotName) {
+    (__VLS_ctx.priceInfo.value);
+    if (__VLS_ctx.priceInfo.helper) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
         });
-        (__VLS_ctx.currentLotName);
+        (__VLS_ctx.priceInfo.helper);
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.eventStore.event.location);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "hidden sm:inline" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.formatDate(__VLS_ctx.eventStore.event.startDate));
     (__VLS_ctx.formatDate(__VLS_ctx.eventStore.event.endDate));
@@ -856,7 +931,7 @@ else {
             __VLS_27.slots.default;
             if (__VLS_ctx.pendingOrders.length > 0) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200" },
+                    ...{ class: "rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     ...{ class: "font-semibold" },
@@ -869,10 +944,10 @@ else {
                 for (const [order] of __VLS_getVForSourceType((__VLS_ctx.pendingOrders))) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         key: (order.orderId),
-                        ...{ class: "rounded-md bg-amber-100/50 p-2 dark:bg-amber-500/5" },
+                        ...{ class: "rounded-md border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40" },
                     });
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                        ...{ class: "flex items-start justify-between gap-2" },
+                        ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" },
                     });
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "flex-1" },
@@ -891,11 +966,11 @@ else {
                     // @ts-ignore
                     const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
                         to: ({ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }),
-                        ...{ class: "shrink-0 rounded-md border border-amber-500 px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200" },
+                        ...{ class: "inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100" },
                     }));
                     const __VLS_30 = __VLS_29({
                         to: ({ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }),
-                        ...{ class: "shrink-0 rounded-md border border-amber-500 px-2 py-1 text-xs font-medium text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-200" },
+                        ...{ class: "inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100" },
                     }, ...__VLS_functionalComponentArgsRest(__VLS_29));
                     __VLS_31.slots.default;
                     var __VLS_31;
@@ -905,11 +980,11 @@ else {
                 // @ts-ignore
                 const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
                     to: ({ name: 'pending-orders', params: { cpf: __VLS_ctx.buyerCpf } }),
-                    ...{ class: "inline-flex items-center text-xs font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200" },
+                    ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50" },
                 }));
                 const __VLS_34 = __VLS_33({
                     to: ({ name: 'pending-orders', params: { cpf: __VLS_ctx.buyerCpf } }),
-                    ...{ class: "inline-flex items-center text-xs font-medium text-amber-700 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200" },
+                    ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50" },
                 }, ...__VLS_functionalComponentArgsRest(__VLS_33));
                 __VLS_35.slots.default;
                 /** @type {[typeof IconArrowRight, ]} */ ;
@@ -998,7 +1073,7 @@ else {
                 type: "number",
                 min: "1",
                 max: "10",
-                ...{ class: "mt-1 w-32 rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800" },
+                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800 sm:w-32" },
                 'aria-invalid': (__VLS_ctx.generalErrors.quantity ? 'true' : 'false'),
                 'aria-describedby': "quantity-error",
                 required: true,
@@ -1013,7 +1088,7 @@ else {
                 (__VLS_ctx.generalErrors.quantity);
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex justify-between" },
+                ...{ class: "flex flex-col gap-3 sm:flex-row sm:justify-between" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1028,11 +1103,11 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" },
+                ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 type: "submit",
-                ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
+                ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto" },
             });
             var __VLS_27;
         }
@@ -1080,7 +1155,7 @@ else {
                 }, ...__VLS_functionalComponentArgsRest(__VLS_42));
                 __VLS_44.slots.default;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "flex items-center justify-between" },
+                    ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
                     ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
@@ -1154,7 +1229,7 @@ else {
                     ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "mt-1 flex items-center gap-3" },
+                    ...{ class: "mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
                     type: "date",
@@ -1275,7 +1350,7 @@ else {
                 var __VLS_44;
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex justify-between" },
+                ...{ class: "flex flex-col gap-3 sm:flex-row sm:justify-between" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1290,12 +1365,12 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" },
+                ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.goToReview) },
                 type: "button",
-                ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
+                ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto" },
             });
             if (__VLS_ctx.errorMessage) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1371,12 +1446,12 @@ else {
                 (__VLS_ctx.selectedPaymentLabel);
                 if (__VLS_ctx.isManualPaymentSelected) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                        ...{ class: "text-xs text-amber-600 dark:text-amber-300" },
+                        ...{ class: "text-xs text-primary-600 dark:text-primary-200" },
                     });
                 }
                 if (__VLS_ctx.isFreePaymentSelected) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                        ...{ class: "text-xs text-green-600 dark:text-green-300" },
+                        ...{ class: "text-xs text-primary-500 dark:text-primary-200" },
                     });
                 }
             }
@@ -1389,7 +1464,7 @@ else {
                     ...{ class: "rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "flex items-start justify-between gap-3" },
+                    ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "flex items-center gap-3" },
@@ -1439,7 +1514,7 @@ else {
                 (__VLS_ctx.getChurchName(person.churchId));
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-2 text-right" },
+                ...{ class: "flex flex-col gap-2 text-left sm:text-right" },
             });
             if (!__VLS_ctx.isFreeEvent) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1455,7 +1530,7 @@ else {
             });
             (__VLS_ctx.isFreeEvent ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.ticketPriceCents * __VLS_ctx.people.length));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex justify-between" },
+                ...{ class: "flex flex-col gap-3 sm:flex-row sm:justify-between" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1470,17 +1545,17 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" },
+                ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.submitBatch) },
                 type: "button",
-                ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
+                ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto" },
                 disabled: (__VLS_ctx.submitting),
             });
             if (__VLS_ctx.submitting) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                    ...{ class: "flex items-center gap-2" },
+                    ...{ class: "flex items-center justify-center gap-2" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                     ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
@@ -1488,7 +1563,7 @@ else {
             }
             else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                (__VLS_ctx.isFreeEvent ? "Confirmar inscricoes" : "Gerar pagamento");
+                (__VLS_ctx.isFreeEvent ? "Confirmar inscrições" : "Gerar pagamento");
             }
             if (__VLS_ctx.errorMessage) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1532,7 +1607,7 @@ else {
                 ...{ class: "rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex items-center justify-between gap-3 text-sm text-neutral-600 dark:text-neutral-300" },
+                ...{ class: "flex flex-col gap-2 text-sm text-neutral-600 dark:text-neutral-300 sm:flex-row sm:items-center sm:justify-between" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.code, __VLS_intrinsicElements.code)({
@@ -1590,7 +1665,7 @@ else {
                     ...{ class: "space-y-3" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.header, __VLS_intrinsicElements.header)({
-                    ...{ class: "flex items-center justify-between" },
+                    ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
                     ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
@@ -1690,6 +1765,17 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-neutral-500" },
         });
+        if (__VLS_ctx.nextLotInfo) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
+            (__VLS_ctx.nextLotInfo.name);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
+            (__VLS_ctx.nextLotInfo.price);
+            (__VLS_ctx.nextLotInfo.startsAt);
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        }
         var __VLS_53;
     }
 }
@@ -1712,10 +1798,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
@@ -1727,51 +1809,62 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:inline']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-amber-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-amber-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-amber-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-amber-500/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-amber-500/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-amber-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-amber-100/50']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-amber-500/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-amber-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-amber-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-amber-500/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-amber-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-amber-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-amber-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-amber-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:text-amber-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['ml-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-3']} */ ;
@@ -1821,7 +1914,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-32']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
@@ -1832,12 +1925,17 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-32']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
@@ -1848,6 +1946,8 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
@@ -1857,6 +1957,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -1877,8 +1978,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
@@ -1929,8 +2033,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
@@ -2018,7 +2125,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
@@ -2029,6 +2140,8 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
@@ -2038,6 +2151,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
@@ -2104,11 +2218,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-amber-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-amber-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-green-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-green-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -2119,9 +2233,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -2147,7 +2263,8 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2157,7 +2274,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
@@ -2168,6 +2289,8 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
@@ -2177,8 +2300,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
@@ -2226,12 +2352,14 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-2']} */ ;
@@ -2279,8 +2407,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
@@ -2383,8 +2514,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             catalog: catalog,
             isFreeEvent: isFreeEvent,
             ticketPriceCents: ticketPriceCents,
-            priceLabel: priceLabel,
+            priceInfo: priceInfo,
             currentLotName: currentLotName,
+            nextLotInfo: nextLotInfo,
             registrationOpen: registrationOpen,
             currentStep: currentStep,
             buyerCpf: buyerCpf,

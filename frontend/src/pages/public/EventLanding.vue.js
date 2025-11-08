@@ -5,9 +5,34 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { API_BASE_URL } from "../../config/api";
 const { api } = useApi();
 const events = ref([]);
 const loading = ref(false);
+const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+const resolveBannerUrl = (value) => {
+    if (!value)
+        return "";
+    if (/^(https?:|data:|blob:)/i.test(value)) {
+        return value;
+    }
+    const sanitized = value.replace(/^\/+/, "");
+    if (!sanitized)
+        return "";
+    return `${apiOrigin.replace(/\/$/, "")}/uploads/${sanitized}`;
+};
+const priceInfo = (event) => {
+    if (event.isFree) {
+        return { label: "Gratuito", pending: false };
+    }
+    if (event.currentLot) {
+        return { label: formatCurrency(event.currentLot.priceCents), pending: false };
+    }
+    if (event.currentPriceCents && event.currentPriceCents > 0) {
+        return { label: formatCurrency(event.currentPriceCents), pending: false };
+    }
+    return { label: "Aguardando liberação do lote", pending: true };
+};
 onMounted(async () => {
     loading.value = true;
     try {
@@ -94,7 +119,21 @@ else {
         }, ...__VLS_functionalComponentArgsRest(__VLS_14));
         __VLS_16.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex h-full flex-col justify-between gap-4" },
+            ...{ class: "flex h-full flex-col gap-4 md:flex-row" },
+        });
+        if (__VLS_ctx.resolveBannerUrl(event.bannerUrl)) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "md:w-40" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                src: (__VLS_ctx.resolveBannerUrl(event.bannerUrl)),
+                alt: "Banner do evento",
+                ...{ class: "h-32 w-full rounded-xl object-cover md:h-full" },
+                loading: "lazy",
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-1 flex-col justify-between gap-4" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "space-y-2" },
@@ -117,14 +156,27 @@ else {
         (__VLS_ctx.formatDate(event.startDate));
         (__VLS_ctx.formatDate(event.endDate));
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "text-lg font-semibold text-primary-600 dark:text-primary-400" },
+            ...{ class: ([
+                    'text-lg font-semibold',
+                    __VLS_ctx.priceInfo(event).pending
+                        ? 'text-neutral-500 dark:text-neutral-400'
+                        : 'text-primary-600 dark:text-primary-400'
+                ]) },
         });
-        (event.isFree ? "Gratuito" : __VLS_ctx.formatCurrency(event.currentPriceCents ?? event.priceCents));
+        (__VLS_ctx.priceInfo(event).label);
+        if (!__VLS_ctx.priceInfo(event).pending && !event.isFree) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        }
         if (event.currentLot?.name) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
             });
             (event.currentLot.name);
+        }
+        else if (!event.isFree) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs uppercase tracking-wide text-amber-600 dark:text-amber-300" },
+            });
         }
         const __VLS_17 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
@@ -206,6 +258,17 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:w-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-32']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
@@ -222,15 +285,16 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-amber-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-amber-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
@@ -250,10 +314,11 @@ const __VLS_self = (await import('vue')).defineComponent({
             RouterLink: RouterLink,
             BaseCard: BaseCard,
             LoadingSpinner: LoadingSpinner,
-            formatCurrency: formatCurrency,
             formatDate: formatDate,
             events: events,
             loading: loading,
+            resolveBannerUrl: resolveBannerUrl,
+            priceInfo: priceInfo,
         };
     },
 });

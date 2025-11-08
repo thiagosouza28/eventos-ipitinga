@@ -131,18 +131,18 @@ const statusBadge = computed(() => {
   if (result.value.status === "CONFIRMED") {
     return {
       text: "Presenca confirmada!",
-      class: "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-200"
+      class: "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100"
     };
   }
   if (result.value.status === "READY") {
     return {
       text: "Pagamento confirmado. Solicite a senha para registrar presenca.",
-      class: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200"
+      class: "bg-primary-200 text-primary-900 dark:bg-primary-500/30 dark:text-primary-50"
     };
   }
   return {
     text: "Presenca ja havia sido confirmada",
-    class: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200"
+    class: "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100"
   };
 });
 

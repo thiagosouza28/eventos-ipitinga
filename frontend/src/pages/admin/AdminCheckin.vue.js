@@ -56,7 +56,7 @@ const pendingStatusInfo = computed(() => {
         return {
             label: "Pronto para confirmar",
             description: "Revise os dados abaixo e confirme a presenca do participante.",
-            className: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200"
+            className: "bg-primary-50 text-primary-800 dark:bg-primary-500/20 dark:text-primary-100"
         };
     }
     const checkinAt = pendingCheckin.value.registration.checkinAt
@@ -67,7 +67,7 @@ const pendingStatusInfo = computed(() => {
         description: checkinAt
             ? `Check-in registrado em ${checkinAt}.`
             : "Este participante ja possui check-in registrado.",
-        className: "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200"
+        className: "bg-neutral-900 text-white dark:bg-black/80 dark:text-white"
     };
 });
 const displayCpf = (value) => formatCPF(value);
@@ -119,7 +119,9 @@ const toggleFacingMode = () => {
 const showFeedback = (message, variant) => {
     feedback.value = message;
     feedbackClass.value =
-        variant === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
+        variant === "success"
+            ? "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100"
+            : "bg-neutral-900 text-white dark:bg-black/80 dark:text-white";
     if (feedbackTimer)
         window.clearTimeout(feedbackTimer);
     feedbackTimer = window.setTimeout(() => {

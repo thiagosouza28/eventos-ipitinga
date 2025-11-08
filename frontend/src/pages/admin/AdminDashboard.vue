@@ -31,14 +31,14 @@
           </RouterLink>
           <RouterLink
             to="/admin/financial"
-            class="inline-flex w-full items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-500 sm:w-auto"
+            class="inline-flex w-full items-center justify-center rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-600 sm:w-auto"
           >
             Dashboard Financeiro
           </RouterLink>
           <RouterLink
             v-if="checkinTarget"
             :to="`/admin/checkin/${checkinTarget}`"
-            class="inline-flex w-full items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 sm:w-auto"
+            class="inline-flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto"
           >
             Abrir check-in
           </RouterLink>
@@ -102,7 +102,7 @@
                 <span
                   :class="[
                     'rounded-full px-3 py-1 text-xs font-semibold uppercase',
-                    event.isActive ? 'bg-green-100 text-green-700' : 'bg-neutral-200 text-neutral-600'
+                    event.isActive ? 'bg-primary-100 text-primary-700' : 'bg-neutral-200 text-neutral-600'
                   ]"
                 >
                   {{ event.isActive ? "Ativo" : "Inativo" }}
@@ -117,10 +117,7 @@
                   >
                     Ver público
                   </RouterLink>
-                  <RouterLink
-                    :to="`/admin/checkin/${event.id}`"
-                    class="text-sm text-emerald-600 hover:text-emerald-500"
-                  >
+                  <RouterLink :to="`/admin/checkin/${event.id}`" class="text-sm text-primary-600 hover:text-primary-500">
                     Check-in
                   </RouterLink>
                 </div>
@@ -160,4 +157,3 @@ const checkinTarget = computed(() => {
   return preferred?.id ?? admin.events[0]?.id ?? null;
 });
 </script>
-

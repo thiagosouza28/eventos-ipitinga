@@ -39,6 +39,7 @@ export interface Event {
   startDate: string;
   endDate: string;
   location: string;
+  bannerUrl?: string | null;
   priceCents: number;
   isFree: boolean;
   minAgeYears?: number | null;

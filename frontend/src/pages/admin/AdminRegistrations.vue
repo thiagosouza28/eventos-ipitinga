@@ -78,10 +78,18 @@
           <button type="submit" class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" :disabled="isApplying">
             {{ isApplying ? 'Aplicando...' : 'Aplicar' }}
           </button>
-          <button type="button" class="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500" @click="openAddPaid">
+          <button
+            type="button"
+            class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            @click="openAddPaid"
+          >
             + Nova inscrição
           </button>
-          <button type="button" class="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500" @click="openAddFree">
+          <button
+            type="button"
+            class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            @click="openAddFree"
+          >
             + Nova inscrição (Gratuita)
           </button>
         </div>
@@ -201,7 +209,13 @@
                   <button v-if="isPaymentLinkVisible(registration)" class="text-primary-600 hover:text-primary-500" @click="copyPaymentLink(registration)">Link pagamento</button>
                   <button v-if="registration.paymentMethod === 'CASH' && registration.status === 'PENDING_PAYMENT' && registration.orderId" class="text-primary-600 hover:text-primary-500" @click="openConfirm('confirm-cash', registration)">Confirmar pagamento</button>
                   <button v-if="canCancelRegistration(registration.status) && registration.status === 'PENDING_PAYMENT'" class="text-red-600 hover:text-red-500" @click="openConfirm('cancel', registration)">Cancelar</button>
-                  <button v-if="registration.status === 'PAID'" class="text-amber-600 hover:text-amber-500" @click="openConfirm('refund', registration)">Estornar</button>
+                    <button
+                      v-if="registration.status === 'PAID'"
+                      class="text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200"
+                      @click="openConfirm('refund', registration)"
+                    >
+                      Estornar
+                    </button>
                   <button v-if="canDeleteRegistration(registration.status)" class="text-red-600 hover:text-red-500" @click="openConfirm('delete', registration)">Excluir</button>
                 </div>
               </td>
@@ -237,7 +251,10 @@
             </div>
           </div>
 
-          <div v-if="addDialog.paymentMethod === 'PIX_MP'" class="md:col-span-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          <div
+            v-if="addDialog.paymentMethod === 'PIX_MP'"
+            class="md:col-span-2 rounded-md bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:bg-primary-500/10 dark:text-primary-200"
+          >
             Será gerado um link de pagamento PIX após salvar. O link será aberto e copiado automaticamente.
           </div>
 
@@ -267,7 +284,12 @@
           </div>
           <div class="md:col-span-2 flex justify-end gap-3">
             <button type="button" class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="closeAdd">Fechar</button>
-            <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500">Salvar</button>
+            <button
+              type="submit"
+              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            >
+              Salvar
+            </button>
           </div>
         </form>
       </div>
@@ -565,15 +587,22 @@ const formatBirthDate = (value: string | Date | null | undefined) => {
 const translateStatus = (s: string) => statusLabels[s] ?? s
 const statusBadgeClass = (s: string) => {
   switch (s) {
-    case 'PENDING_PAYMENT': return 'bg-amber-100 text-amber-700'
-    case 'PAID': return 'bg-emerald-100 text-emerald-700'
-    case 'CHECKED_IN': return 'bg-blue-100 text-blue-700'
-    case 'REFUNDED': return 'bg-sky-100 text-sky-700'
-    case 'CANCELED': return 'bg-red-100 text-red-700'
-    case 'DRAFT': return 'bg-neutral-200 text-neutral-600'
-    default: return 'bg-neutral-200 text-neutral-600'
+    case "PENDING_PAYMENT":
+      return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+    case "PAID":
+      return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
+    case "CHECKED_IN":
+      return "bg-primary-200 text-primary-800 dark:bg-primary-500/30 dark:text-primary-50";
+    case "REFUNDED":
+      return "bg-neutral-200 text-neutral-900 dark:bg-neutral-700 dark:text-white";
+    case "CANCELED":
+      return "bg-black text-white dark:bg-neutral-900 dark:text-white";
+    case "DRAFT":
+      return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
+    default:
+      return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
   }
-}
+};
 
 // Busca local por nome/CPF
 const displayedRegistrations = computed(() => {

@@ -77,7 +77,7 @@
                     {{ participant.fullName }}
                   </span>
                   <span
-                    class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/20 dark:text-amber-200"
+                    class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-800 dark:bg-primary-500/20 dark:text-primary-100"
                   >
                     {{ formatParticipantStatus(participant.status) }}
                   </span>
@@ -337,25 +337,25 @@ const statusIcon = computed(() => {
 const statusStyles = computed(() => {
   if (isFreeEvent.value || payment.value?.status === "PAID") {
     return {
-      container: "border-green-300 bg-green-50 dark:border-green-500/40 dark:bg-green-500/10",
-      badge: "bg-green-500"
+      container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
+      badge: "bg-primary-600"
     };
   }
   if (isManualPayment.value) {
     return {
-      container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10",
-      badge: "bg-amber-500"
+      container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
+      badge: "bg-neutral-900"
     };
   }
   if (payment.value?.status === "CANCELED") {
     return {
-      container: "border-red-300 bg-red-50 dark:border-red-500/40 dark:bg-red-500/10",
-      badge: "bg-red-500"
+      container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
+      badge: "bg-black"
     };
   }
   return {
-    container: "border-amber-300 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-500/10",
-    badge: "bg-amber-500"
+    container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
+    badge: "bg-primary-500"
   };
 });
 
