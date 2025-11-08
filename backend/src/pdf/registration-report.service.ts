@@ -39,6 +39,16 @@ export type RegistrationReportGroup = {
   extraInfo?: string | null;
   participants: RegistrationReportParticipant[];
 };
+// Participante para a ficha de confirmação presencial (uso no evento)
+export type EventSheetParticipant = {
+  fullName: string;
+  birthDate: string; // dd/mm/yyyy
+  ageYears: number | null;
+  churchName: string;
+  districtName: string;
+  photoUrl?: string | null;
+  eventTitle?: string | null;
+};
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Rascunho",
@@ -142,7 +152,49 @@ export const generateRegistrationReportPdf = async ({
     })
     .join("");
 
-  const html = `
+  /*  // Layout opcional: duas fichas por página (empilhadas)
+  let bodyHtml = cardsHtml;
+  if (layout === "two") {
+    const items = participants
+      .map((p) => {
+        const minor = typeof p.ageYears === "number" ? p.ageYears < 18 : false;
+        return `
+          <div class=\"card\">
+            <div class=\"card-header\">
+              ${p.photoUrl ? `<img class=\\\"avatar\\\" src=\\\"${p.photoUrl}\\\" alt=\\\"Foto\\\"/>` : ''}
+              <div class=\"ident\">
+                <div class=\"name\">${p.fullName}</div>
+                <div class=\"meta\">Nascimento: <strong>${p.birthDate}</strong> &middot; Idade: <strong>${p.ageYears ?? "-"}</strong></div>
+                <div class=\"meta\">Igreja: <strong>${p.churchName}</strong> &middot; Distrito: <strong>${p.districtName}</strong></div>
+                ${p.eventTitle ? `<div class=\\\"meta\\\">Evento: <strong>${p.eventTitle}</strong></div>` : ''}
+              </div>
+            </div>
+            <div class=\"terms\">
+              <div class=\"title\">Termo de participação</div>
+              <p>
+                Declaro, para os devidos fins, que li e estou de acordo com as regras gerais do evento,
+                comprometendo-me a segui-las e a zelar pela minha segurança e a dos demais participantes.
+                Autorizo, de forma gratuita e por tempo indeterminado, o uso da minha imagem em fotos e vídeos destinados à divulgação institucional do evento.
+              </p>
+              ${minor ? `<p class=\\\"minor\\\"><strong>Participante menor de 18 anos.</strong> A confirmação presencial requer autorização do responsável legal, que declara ciência e concordância com os termos acima.</p>` : ''}
+            </div>
+            <div class=\"sign\">
+              <div class=\"row\"><div class=\"field\"><label>Local e data</label><div class=\"line\"></div></div><div class=\"field\"><label>Assinatura do participante</label><div class=\"line\"></div></div></div>
+              ${minor ? `<div class=\\\"row\\\">\n                   <div class=\\\"field\\\">\n                     <label>Nome do responsável</label>\n                     <div class=\\\"line\\\"></div>\n                   </div>\n                   <div class=\\\"field\\\">\n                     <label>Assinatura do responsável</label>\n                     <div class=\\\"line\\\"></div>\n                   </div>\n                 </div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+    const chunks: string[] = [];
+    for (let i = 0; i < items.length; i += 2) {
+      const inner = items.slice(i, i + 2).join("");
+      const last = i + 2 >= items.length;
+      chunks.push(`<div class=\"page-chunk\" style=\"${last ? '' : 'page-break-after: always;'}\">${inner}</div>`);
+    }
+    bodyHtml = chunks.join("");
+  }
+
+  */  const html = `
     <!DOCTYPE html>
     <html lang="pt-BR">
       <head>
@@ -286,6 +338,165 @@ export const generateRegistrationReportPdf = async ({
     format: "A4",
     printBackground: true,
     margin: { top: "12mm", bottom: "15mm", left: "12mm", right: "12mm" }
+  });
+  await page.close();
+  return pdfBuffer;
+};
+// Gera PDF com fichas individuais simplificadas para confirmação presencial no evento
+export const generateRegistrationEventSheetPdf = async ({
+  generatedAt,
+  context,
+  participants,
+  layout = "single"
+}: {
+  generatedAt: string;
+  context?: { title?: string | null; logoUrl?: string | null; footerText?: string | null } | null;
+  participants: EventSheetParticipant[];
+  layout?: "single" | "two";
+}) => {
+  const cardsHtml = participants
+    .map((p) => {
+      const minor = typeof p.ageYears === "number" ? p.ageYears < 18 : false;
+      return `
+        <div class="card">
+          <div class="card-header">
+            ${p.photoUrl ? `<img class=\"avatar\" src=\"${p.photoUrl}\" alt=\"Foto\"/>` : ''}
+            <div class="ident">
+              <div class="name">${p.fullName}</div>
+              <div class="meta">Nascimento: <strong>${p.birthDate}</strong> &middot; Idade: <strong>${
+                p.ageYears ?? "-"
+              }</strong></div>
+              <div class="meta">Igreja: <strong>${p.churchName}</strong> &middot; Distrito: <strong>${p.districtName}</strong></div>
+              ${p.eventTitle ? `<div class=\"meta\">Evento: <strong>${p.eventTitle}</strong></div>` : ''}
+            </div>
+          </div>
+
+          <div class="terms">
+            <div class="title">Termo de participação</div>
+            <p>
+              Declaro estar ciente e de acordo com os termos, orientações e regras gerais do evento,
+              comprometendo-me a cumpri-las e assumindo responsabilidade pela minha participação.
+              Autorizo o uso de minha imagem em registros institucionais.
+            </p>
+            ${minor
+              ? `<p class=\"minor\">Participante menor de 18 anos: a confirmação requer autorização do responsável legal.</p>`
+              : ''}
+          </div>
+
+          <div class="sign">
+            <div class="row">
+              <div class="field">
+                <label>Local e data</label>
+                <div class="line"></div>
+              </div>
+              <div class="field">
+                <label>Assinatura do participante</label>
+                <div class="line"></div>
+              </div>
+            </div>
+            ${minor
+              ? `<div class=\"row\">\n                   <div class=\"field\">\n                     <label>Nome do responsável</label>\n                     <div class=\"line\"></div>\n                   </div>\n                   <div class=\"field\">\n                     <label>Assinatura do responsável</label>\n                     <div class=\"line\"></div>\n                   </div>\n                 </div>`
+              : ''}
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Layout opcional: duas fichas por página (empilhadas)
+  let bodyHtml = cardsHtml;
+  if (layout === "two") {
+    const items = participants
+      .map((p) => {
+        const minor = typeof p.ageYears === "number" ? p.ageYears < 18 : false;
+        return `
+          <div class=\"card\">
+            <div class=\"card-header\">
+              ${p.photoUrl ? `<img class=\\\"avatar\\\" src=\\\"${p.photoUrl}\\\" alt=\\\"Foto\\\"/>` : ''}
+              <div class=\"ident\">
+                <div class=\"name\">${p.fullName}</div>
+                <div class=\"meta\">Nascimento: <strong>${p.birthDate}</strong> &middot; Idade: <strong>${p.ageYears ?? "-"}</strong></div>
+                <div class=\"meta\">Igreja: <strong>${p.churchName}</strong> &middot; Distrito: <strong>${p.districtName}</strong></div>
+                ${p.eventTitle ? `<div class=\\\"meta\\\">Evento: <strong>${p.eventTitle}</strong></div>` : ''}
+              </div>
+            </div>
+            <div class=\"terms\">
+              <div class=\"title\">Termo de participação</div>
+              <p>
+                Declaro, para os devidos fins, que li e estou de acordo com as regras gerais do evento,
+                comprometendo-me a segui-las e a zelar pela minha segurança e a dos demais participantes.
+                Autorizo, de forma gratuita e por tempo indeterminado, o uso da minha imagem em fotos e vídeos destinados à divulgação institucional do evento.
+              </p>
+              ${minor ? `<p class=\\\"minor\\\"><strong>Participante menor de 18 anos.</strong> A confirmação presencial requer autorização do responsável legal, que declara ciência e concordância com os termos acima.</p>` : ''}
+            </div>
+            <div class=\"sign\">
+              <div class=\"row\"><div class=\"field\"><label>Local e data</label><div class=\"line\"></div></div><div class=\"field\"><label>Assinatura do participante</label><div class=\"line\"></div></div></div>
+              ${minor ? `<div class=\\\"row\\\">\n                   <div class=\\\"field\\\">\n                     <label>Nome do responsável</label>\n                     <div class=\\\"line\\\"></div>\n                   </div>\n                   <div class=\\\"field\\\">\n                     <label>Assinatura do responsável</label>\n                     <div class=\\\"line\\\"></div>\n                   </div>\n                 </div>` : ''}
+            </div>
+          </div>
+        `;
+      });
+    const chunks: string[] = [];
+    for (let i = 0; i < items.length; i += 2) {
+      const inner = items.slice(i, i + 2).join("");
+      const last = i + 2 >= items.length;
+      chunks.push(`<div class=\"page-chunk\" style=\"${last ? '' : 'page-break-after: always;'}\">${inner}</div>`);
+    }
+    bodyHtml = chunks.join("");
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang=\"pt-BR\">
+      <head>
+        <meta charset=\"UTF-8\" />
+        <title>Fichas de Confirmação Presencial</title>
+        <style>
+          @page { size: A4; margin: 14mm 12mm 22mm 12mm; }
+          * { box-sizing: border-box; font-family: \"Inter\", Arial, sans-serif; }
+          body { margin: 0; background: #f4f4f5; color: #111827; }
+          header { margin-bottom: 16px; padding: 12px 16px; background: #111827; color: #fff; border-radius: 12px; }
+          header h1 { margin: 0 0 4px 0; font-size: 18px; font-weight: 600; }
+          header p { margin: 0; font-size: 12px; opacity: 0.9; }
+          .cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
+          .card { background: #fff; border-radius: 12px; padding: 12px; border: 1px solid #e5e7eb; page-break-inside: avoid; }
+          .card-header { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; margin-bottom: 8px; }
+          .avatar { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; }
+          .ident .name { font-size: 16px; font-weight: 700; color: #111827; }
+          .ident .meta { font-size: 12px; color: #374151; margin-top: 2px; }
+          .terms { margin-top: 6px; font-size: 12px; color: #1f2937; }
+          .terms .title { font-weight: 600; margin-bottom: 4px; }
+          .terms .minor { margin-top: 4px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; padding: 6px 8px; border-radius: 6px; }
+          .sign { margin-top: 10px; }
+          .sign .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+          .sign .field { display: flex; flex-direction: column; gap: 6px; }
+          .sign label { font-size: 11px; color: #6b7280; }
+          .sign .line { height: 28px; border-bottom: 1px dashed #9ca3af; }
+          .footer { position: fixed; bottom: 0; left: 12mm; right: 12mm; height: 16mm; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; }
+          .pageno:after { content: counter(page) " / " counter(pages); }
+          .page-chunk { display: grid; grid-template-columns: 1fr; gap: 12px; }
+          .page-chunk .card { min-height: 125mm; }
+        </style>
+      </head>
+      <body>
+        <header>
+          <h1>Confirmação Presencial ${context?.title ? `- ${context.title}` : ''}</h1>
+          <p>Gerado em ${generatedAt} &middot; Total de participantes: ${participants.length}</p>
+        </header>
+        <div class=\"cards\">
+          ${bodyHtml || `<div style=\"font-size:12px;color:#6b7280\">Nenhum participante encontrado.</div>`}
+        </div>
+      </body>
+    </html>
+  `;
+
+  const browserInstance = await ensureBrowser();
+  const page = await browserInstance.newPage();
+  await page.setContent(html, { waitUntil: "networkidle" });
+  const pdfBuffer = await page.pdf({
+    format: "A4",
+    printBackground: true,
+    margin: { top: "10mm", bottom: "12mm", left: "10mm", right: "10mm" }
   });
   await page.close();
   return pdfBuffer;

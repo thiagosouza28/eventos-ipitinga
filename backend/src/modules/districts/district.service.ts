@@ -293,10 +293,10 @@ export class DistrictService {
   async update(id: string, data: { name?: string; pastorName?: string }, actorId?: string) {
     const exists = await prisma.district.findUnique({ where: { id } });
     if (!exists) throw new NotFoundError("Distrito nao encontrado");
-    
-    // Garantir que name e pastorName sejam strings primitivas
-    const cleanData: { name?: string; pastorName?: string } = {};
-    
+
+    // Normalizar strings recebidas
+    const cleanData: { name?: string; pastorName?: string | null } = {};
+
     if (data.name !== undefined && data.name !== null) {
       if (typeof data.name === "string") {
         cleanData.name = data.name.trim();
@@ -309,19 +309,52 @@ export class DistrictService {
         throw new Error(`Nome deve ser string, recebido: ${typeof cleanData.name}`);
       }
     }
-    
+
     if (data.pastorName !== undefined && data.pastorName !== null) {
       if (typeof data.pastorName === "string") {
-        cleanData.pastorName = data.pastorName.trim() || undefined;
+        const v = data.pastorName.trim();
+        cleanData.pastorName = v.length ? v : null;
       } else if (data.pastorName && typeof data.pastorName === "object") {
         const str = JSON.stringify(data.pastorName).replace(/^"|"$/g, "").trim();
-        cleanData.pastorName = str || undefined;
+        cleanData.pastorName = str.length ? str : null;
       } else {
-        cleanData.pastorName = String(data.pastorName).trim() || undefined;
+        const str = String(data.pastorName).trim();
+        cleanData.pastorName = str.length ? str : null;
       }
     }
-    
-    const district = await prisma.district.update({ where: { id }, data: cleanData });
+
+    // Atualizar de forma resiliente (garante coluna e grava valor)
+    const columns = await prisma.$queryRaw<Array<{ name: string }>>`
+      PRAGMA table_info(District);
+    `;
+    const hasPastorName = columns.some((c) => c.name === "pastorName");
+    if (!hasPastorName) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE District ADD COLUMN pastorName TEXT;`);
+    }
+
+    // Monta SET dinâmico para SQL raw (evita problemas de serialização)
+    const sets: string[] = [];
+    const params: any[] = [];
+    if (cleanData.name !== undefined) {
+      sets.push("name = ?");
+      params.push(cleanData.name);
+    }
+    if (cleanData.pastorName !== undefined) {
+      sets.push("pastorName = ?");
+      params.push(cleanData.pastorName);
+    }
+
+    if (sets.length) {
+      params.push(id);
+      await prisma.$executeRawUnsafe(
+        `UPDATE District SET ${sets.join(", ")} WHERE id = ?`,
+        ...params
+      );
+    }
+
+    const district = await prisma.district.findUnique({ where: { id } });
+    if (!district) throw new NotFoundError("Distrito nao encontrado");
+
     await auditService.log({
       actorUserId: actorId,
       action: "DISTRICT_UPDATED",

@@ -8,7 +8,29 @@ import { PaymentMethod } from "../../config/payment-methods";
 import { Gender } from "../../config/gender";
 import { BulkPaymentDto } from "./dtos/bulk-payment.dto";
 
-const cuidOrUuid = z.string().uuid().or(z.string().cuid());
+// Schema que aceita tanto CUID quanto UUID sem mostrar erro de UUID primeiro
+// CUID do Prisma: pode começar com qualquer letra minúscula seguido de caracteres alfanuméricos
+// UUID: formato padrão com hífens (8-4-4-4-12)
+const cuidOrUuid = z.string().refine(
+  (val) => {
+    if (!val || typeof val !== 'string') return false;
+    const trimmed = val.trim();
+    if (trimmed.length === 0) return false;
+    
+    // Validar como UUID (formato com hífens: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(trimmed)) return true;
+    
+    // Validar como CUID (Prisma: começa com letra minúscula seguido de caracteres alfanuméricos)
+    // CUIDs do Prisma geralmente têm 20-30 caracteres no total
+    // Aceitamos strings que começam com letra minúscula seguida de pelo menos 15 caracteres alfanuméricos
+    const cuidRegex = /^[a-z][0-9a-z]{15,}$/i;
+    if (cuidRegex.test(trimmed)) return true;
+    
+    return false;
+  },
+  { message: "Deve ser um ID válido (CUID ou UUID)" }
+);
 
 const markPaidSchema = z.object({
   paymentId: z.string().min(3).optional(),
@@ -36,14 +58,27 @@ const batchSchema = z.object({
         fullName: z.string().min(3),
         cpf: cpfSchema,
         birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        gender: z.nativeEnum(Gender),
+        gender: z.preprocess(
+          (val) => {
+            if (!val) return Gender.OTHER;
+            const str = String(val).trim().toUpperCase();
+            // Aceitar valores em português ou inglês
+            if (str === "MASCULINO" || str === "MALE") return Gender.MALE;
+            if (str === "FEMININO" || str === "FEMALE") return Gender.FEMALE;
+            if (str === "OUTRO" || str === "OTHER") return Gender.OTHER;
+            return str as Gender; // Tentar usar o valor original se já for válido
+          },
+          z.nativeEnum(Gender)
+        ),
         districtId: cuidOrUuid,
         churchId: cuidOrUuid,
         photoUrl: z
-          .string()
-          .min(20, "Foto do participante deve ser uma imagem em base64")
+          .union([
+            z.string().min(20, "Foto do participante deve ser uma imagem em base64"),
+            z.literal(null),
+            z.literal("")
+          ])
           .optional()
-          .or(z.literal(null))
       })
     )
     .min(1)
@@ -78,11 +113,26 @@ export const startInscriptionHandler = async (request: Request, response: Respon
 };
 
 export const createBatchInscriptionHandler = async (request: Request, response: Response) => {
-  const payload = batchSchema.parse(request.body);
-  const actorId = request.user?.id;
-  const actorRole = request.user?.role;
-  const result = await orderService.createBatch(payload, actorId, actorRole);
-  return response.status(201).json(result);
+  try {
+    const payload = batchSchema.parse(request.body);
+    const actorId = request.user?.id;
+    const actorRole = request.user?.role;
+    const result = await orderService.createBatch(payload, actorId, actorRole);
+    return response.status(201).json(result);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      console.error('[ERROR] createBatchInscriptionHandler - Erro de validação:');
+      console.error('[ERROR] - Erros detalhados:', JSON.stringify(error.errors, null, 2));
+      console.error('[ERROR] - Request body:', JSON.stringify(request.body, null, 2));
+      
+      return response.status(422).json({
+        message: "Dados inválidos",
+        issues: error.flatten(),
+        errors: error.errors
+      });
+    }
+    throw error;
+  }
 };
 
 export const getOrderPaymentHandler = async (request: Request, response: Response) => {
@@ -111,7 +161,8 @@ export const markOrderPaidHandler = async (request: Request, response: Response)
     paymentId ?? `MANUAL-${Date.now()}`,
     {
       paidAt: paidAt ? new Date(paidAt) : undefined,
-      manualReference: manualReference ?? paymentId ?? undefined
+      manualReference: manualReference ?? paymentId ?? undefined,
+      actorUserId: request.user?.id
     }
   );
   return response.json(order);

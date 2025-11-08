@@ -1,4 +1,4 @@
-﻿import { config } from "dotenv";
+import { config } from "dotenv";
 import path from "path";
 import { z } from "zod";
 
@@ -43,6 +43,7 @@ const envSchema = z.object({
   MP_ACCESS_TOKEN: z.string().min(1),
   MP_WEBHOOK_SECRET: z.string().optional(),
   MP_INTEGRATOR_ID: z.string().optional(),
+  MP_WEBHOOK_PUBLIC_URL: z.string().url().optional(),
   PDF_SIGN_SECRET: z.string().min(1),
   HMAC_SECRET: z.string().min(1),
   CORS_ORIGINS: z.string().default("http://localhost:5173"),

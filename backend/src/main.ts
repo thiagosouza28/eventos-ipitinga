@@ -89,7 +89,7 @@ const start = async () => {
     const port = env.PORT;
 
     server.listen(port, () => {
-            logger.info(`?? API disponível em ${env.API_URL}`);
+      logger.info(`API disponÃ­vel em ${env.API_URL}`);
       startOrderExpirationJob();
     });
 
@@ -106,9 +106,10 @@ const start = async () => {
     process.on("SIGINT", shutdown);
     process.on("SIGTERM", shutdown);
   } catch (error) {
-        logger.fatal({ error }, "Não foi possível iniciar o servidor.");
+        logger.fatal({ error }, "NÃ£o foi possÃ­vel iniciar o servidor.");
     process.exit(1);
   }
 };
 
 void start();
+

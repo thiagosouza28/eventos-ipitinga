@@ -48,7 +48,9 @@ import {
   registrationsReportHandler,
   refundRegistrationHandler,
   updateRegistrationHandler,
-  markRegistrationsPaidHandler
+  markRegistrationsPaidHandler,
+  regenerateRegistrationPaymentLinkHandler,
+  getRegistrationHistoryHandler
 } from "../../modules/registrations/registration.controller";
 import {
   downloadReceiptHandler,
@@ -74,8 +76,11 @@ import {
   getEventSummaryHandler,
   getDistrictSummaryHandler,
   getChurchSummaryHandler,
-  getGeneralSummaryHandler
+  getGeneralSummaryHandler,
+  downloadEventFinancialReportHandler
 } from "../../modules/financial/financial.controller";
+import { uploadMiddleware } from "../../config/upload";
+import { uploadImageHandler } from "../../modules/uploads/upload.controller";
 
 export const router = Router();
 
@@ -87,6 +92,13 @@ router.post("/inscriptions/check", checkParticipantCpfHandler);
 router.get("/orders/pending", listPendingOrdersHandler);
 router.post("/orders/bulk-payment", bulkPaymentHandler);
 router.post("/inscriptions/batch", createBatchInscriptionHandler);
+// Versão autenticada para criação de inscrições em modo administrativo
+router.post(
+  "/admin/inscriptions/batch",
+  authenticate,
+  authorize("AdminGeral", "AdminDistrital"),
+  createBatchInscriptionHandler
+);
 router.get("/payments/order/:orderId", getOrderPaymentHandler);
 router.get("/payments/preference/:preferenceId", getPaymentByPreferenceIdHandler);
 router.post("/receipts/lookup", lookupReceiptsHandler);
@@ -121,20 +133,30 @@ router.get("/admin/events", authorize("AdminGeral", "AdminDistrital"), listEvent
 router.post("/admin/events", authorize("AdminGeral"), createEventHandler);
 router.patch("/admin/events/:id", authorize("AdminGeral"), updateEventHandler);
 router.delete("/admin/events/:id", authorize("AdminGeral"), deleteEventHandler);
+router.post(
+  "/admin/uploads",
+  authorize("AdminGeral"),
+  uploadMiddleware.single("file"),
+  uploadImageHandler
+);
 router.get(
   "/admin/events/:eventId/lots",
   authorize("AdminGeral", "AdminDistrital"),
   listEventLotsHandler
 );
-router.post("/admin/events/:eventId/lots", authorize("AdminGeral"), createEventLotHandler);
+router.post(
+  "/admin/events/:eventId/lots",
+  authorize("AdminGeral", "AdminDistrital"),
+  createEventLotHandler
+);
 router.patch(
   "/admin/events/:eventId/lots/:lotId",
-  authorize("AdminGeral"),
+  authorize("AdminGeral", "AdminDistrital"),
   updateEventLotHandler
 );
 router.delete(
   "/admin/events/:eventId/lots/:lotId",
-  authorize("AdminGeral"),
+  authorize("AdminGeral", "AdminDistrital"),
   deleteEventLotHandler
 );
 
@@ -186,6 +208,19 @@ router.post(
   markRegistrationsPaidHandler
 );
 
+router.post(
+  "/admin/registrations/:id/payment-link",
+  authorize("AdminGeral", "AdminDistrital", "Tesoureiro"),
+  regenerateRegistrationPaymentLinkHandler
+);
+
+// Registration History
+router.get(
+  "/admin/registrations/:id/history",
+  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro"),
+  getRegistrationHistoryHandler
+);
+
 router.get(
   "/admin/checkin/:eventId",
   authorize("AdminGeral", "AdminDistrital", "DiretorLocal"),
@@ -219,3 +254,8 @@ router.get("/admin/financial/summary", authorize("AdminGeral", "AdminDistrital")
 router.get("/admin/financial/events/:eventId", authorize("AdminGeral", "AdminDistrital"), getEventSummaryHandler);
 router.get("/admin/financial/events/:eventId/districts/:districtId", authorize("AdminGeral", "AdminDistrital"), getDistrictSummaryHandler);
 router.get("/admin/financial/events/:eventId/churches/:churchId", authorize("AdminGeral", "AdminDistrital"), getChurchSummaryHandler);
+router.get(
+  "/admin/financial/events/:eventId/report.pdf",
+  authorize("AdminGeral", "AdminDistrital"),
+  downloadEventFinancialReportHandler
+);

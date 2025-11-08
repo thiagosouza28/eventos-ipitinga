@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+﻿import { promises as fs } from "fs";
 import path from "path";
 
 import type { Prisma } from "@prisma/client";
@@ -13,7 +13,9 @@ import type { RegistrationStatus as RegistrationStatusValue } from "../../config
 import { maskCpf, sanitizeCpf } from "../../utils/mask";
 import {
   generateRegistrationReportPdf,
-  RegistrationReportGroup
+  RegistrationReportGroup,
+  generateRegistrationEventSheetPdf,
+  EventSheetParticipant
 } from "../../pdf/registration-report.service";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/default-photo";
 import { PaymentMethod, PAYMENT_METHOD_LABELS } from "../../config/payment-methods";
@@ -35,8 +37,31 @@ const brDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short"
 });
 
+// FormataÃ§Ã£o de data sem timezone (para datas de nascimento)
+const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric"
+});
+
 const formatDateBr = (date: Date | null | undefined) =>
-  date ? brDateFormatter.format(date) : "Não informado";
+  date ? brDateFormatter.format(date) : "NÃ£o informado";
+
+// FormataÃ§Ã£o de data de nascimento usando componentes UTC diretamente
+// Isso garante que a data exibida seja exatamente a data UTC salva no banco,
+// sem conversÃ£o de timezone que pode causar mudanÃ§a de dia
+const formatBirthDateBr = (date: Date | null | undefined) => {
+  if (!date) return "NÃ£o informado";
+  
+  // Extrair componentes UTC diretamente da data
+  // Quando a data Ã© salva como "1998-11-05T00:00:00.000Z", queremos exibir "05/11/1998"
+  // Usando UTC garantimos que nÃ£o haverÃ¡ mudanÃ§a de dia por causa do fuso horÃ¡rio
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+  
+  return `${day}/${month}/${year}`;
+};
 
 const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => {
   let baseUrl: URL;
@@ -118,7 +143,7 @@ export class RegistrationService {
       where: { eventId, cpf: sanitizedCpf, status: { notIn: ["REFUNDED", "CANCELED"] } }
     });
     if (exists) {
-      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} já possui inscrição para este evento. Não é possível fazer mais de uma inscrição com o mesmo CPF no mesmo evento.`);
+      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} jÃ¡ possui inscriÃ§Ã£o para este evento. NÃ£o Ã© possÃ­vel fazer mais de uma inscriÃ§Ã£o com o mesmo CPF no mesmo evento.`);
     }
   }
 
@@ -252,10 +277,10 @@ export class RegistrationService {
           const period =
             event && event.startDate && event.endDate
               ? `${formatDateBr(event.startDate)} - ${formatDateBr(event.endDate)}`
-              : "Não informado";
+              : "NÃ£o informado";
           resultMap.set(idKey, {
             id: key,
-            name: event?.title ?? "Não informado",
+            name: event?.title ?? "NÃ£o informado",
             period,
             totals: REGISTRATION_STATUSES.reduce(
               (acc, status) => Object.assign(acc, { [status]: 0 }),
@@ -308,8 +333,8 @@ export class RegistrationService {
         const church = key ? churchMap.get(key) : null;
         resultMap.set(idKey, {
           id: key,
-          name: church?.name ?? "Não informado",
-          districtName: church?.district?.name ?? "Não informado",
+          name: church?.name ?? "NÃ£o informado",
+          districtName: church?.district?.name ?? "NÃ£o informado",
           totals: REGISTRATION_STATUSES.reduce(
             (acc, status) => Object.assign(acc, { [status]: 0 }),
             { total: 0 } as Record<typeof REGISTRATION_STATUSES[number] | "total", number>
@@ -338,9 +363,11 @@ export class RegistrationService {
       churchId?: string;
       fullName?: string;
       birthDate?: string;
+      cpf?: string;
       gender?: Gender;
       photoUrl?: string | null;
-    }
+    },
+    actorId?: string
   ) {
     const registration = await prisma.registration.findUnique({ where: { id } });
     if (!registration) throw new NotFoundError("Inscricao nao encontrada");
@@ -358,16 +385,41 @@ export class RegistrationService {
     }
     if (data.birthDate) {
       const ageYears = this.computeAge(data.birthDate);
-      payload.birthDate = new Date(data.birthDate);
+      // Garantir que a data seja salva como UTC midnight do dia correto
+      const birthDateParts = data.birthDate.split('-');
+      payload.birthDate = new Date(Date.UTC(
+        parseInt(birthDateParts[0], 10), // ano
+        parseInt(birthDateParts[1], 10) - 1, // mÃªs (0-indexed)
+        parseInt(birthDateParts[2], 10) // dia
+      ));
       payload.ageYears = ageYears;
+    }
+    if (data.cpf) {
+      const sanitized = sanitizeCpf(data.cpf);
+      if (sanitized !== registration.cpf) {
+        const exists = await prisma.registration.findFirst({
+          where: {
+            eventId: registration.eventId,
+            cpf: sanitized,
+            status: { notIn: ["REFUNDED", "CANCELED"] }
+          }
+        });
+        if (exists) {
+          throw new ConflictError(`CPF ${maskCpf(sanitized)} ja possui inscricao para este evento`);
+        }
+        payload.cpf = sanitized;
+      }
     }
     if (data.gender) {
       payload.gender = parseGender(data.gender);
     }
+    let newPhotoUrl: string | null | undefined = undefined;
+    const previousPhotoUrl = registration.photoUrl ?? null;
     if (data.photoUrl !== undefined) {
-      payload.photoUrl = data.photoUrl
+      newPhotoUrl = data.photoUrl
         ? await storageService.saveBase64Image(data.photoUrl)
         : null;
+      payload.photoUrl = newPhotoUrl;
     }
 
     if (Object.keys(payload).length === 0) {
@@ -378,7 +430,12 @@ export class RegistrationService {
       where: { id },
       data: payload
     });
+    // Se atualizamos a foto e a URL mudou, tentar remover a anterior do storage
+    if (newPhotoUrl !== undefined && previousPhotoUrl && newPhotoUrl !== previousPhotoUrl) {
+      await storageService.deleteByUrl(previousPhotoUrl).catch(() => undefined);
+    }
     await auditService.log({
+      actorUserId: actorId,
       action: "REGISTRATION_UPDATED",
       entity: "registration",
       entityId: id,
@@ -394,7 +451,7 @@ export class RegistrationService {
     });
     if (!registration) throw new NotFoundError("Inscricao nao encontrada");
     if (registration.status === "PAID") {
-      throw new AppError("Não é possível cancelar inscrição paga (solicite estorno)", 400);
+      throw new AppError("NÃ£o Ã© possÃ­vel cancelar inscriÃ§Ã£o paga (solicite estorno)", 400);
     }
     await prisma.registration.update({
       where: { id },
@@ -513,7 +570,7 @@ export class RegistrationService {
       eventPeriod: `${formatDateBr(registration.event.startDate)} - ${formatDateBr(registration.event.endDate)}`,
       fullName: registration.fullName,
       cpf: registration.cpf,
-      birthDate: formatDateBr(registration.birthDate),
+      birthDate: formatBirthDateBr(registration.birthDate),
       ageYears: registration.ageYears,
       districtName: registration.district.name,
       churchName: registration.church.name,
@@ -701,6 +758,167 @@ export class RegistrationService {
 
     return pdfBuffer;
   }
+
+  async generateEventSheetPdf(
+    filters: RegistrationFilters,
+    groupBy: "event" | "church",
+    layout: "single" | "two" = "single"
+  ) {
+    const registrations = await prisma.registration.findMany({
+      where: buildRegistrationWhere(filters),
+      include: {
+        event: true,
+        district: true,
+        church: { include: { district: true } }
+      },
+      orderBy: [
+        groupBy === "event" ? { event: { title: "asc" } } : { church: { name: "asc" } },
+        { fullName: "asc" }
+      ]
+    });
+
+    const participants: EventSheetParticipant[] = registrations.map((r) => {
+      const event = r.event;
+      const church = r.church;
+      const district = r.district ?? church?.district;
+
+      const birthDateBr = r.birthDate ? formatBirthDateBr(r.birthDate) : "Nao informado";
+      let age: number | null = r.ageYears ?? null;
+      if (age == null && r.birthDate) {
+        try { age = this.computeAge(r.birthDate.toISOString().slice(0, 10)); } catch {}
+      }
+
+      return {
+        fullName: r.fullName,
+        birthDate: birthDateBr,
+        ageYears: age,
+        churchName: church?.name ?? "Nao informado",
+        districtName: district?.name ?? "Nao informado",
+        photoUrl: r.photoUrl ?? undefined,
+        eventTitle: event?.title ?? undefined
+      };
+    });
+
+    // Tentar compor um título de contexto (ex.: por evento ou por igreja)
+    let contextTitle: string | null = null;
+    if (groupBy === "event") {
+      const uniqueEvent = Array.from(new Set(registrations.map((r) => r.event?.title).filter(Boolean)));
+      contextTitle = uniqueEvent.length === 1 ? `Evento: ${uniqueEvent[0]}` : null;
+    } else {
+      const uniqueChurch = Array.from(new Set(registrations.map((r) => r.church?.name).filter(Boolean)));
+      const uniqueDistrict = Array.from(new Set((registrations.map((r) => r.district?.name ?? r.church?.district?.name).filter(Boolean)) as string[]));
+      if (uniqueChurch.length === 1 && uniqueDistrict.length === 1) {
+        contextTitle = `Distrito: ${uniqueDistrict[0]} · Igreja: ${uniqueChurch[0]}`;
+      }
+    }
+
+    const pdfBuffer = await generateRegistrationEventSheetPdf({
+      generatedAt: brDateTimeFormatter.format(new Date()),
+      context: { title: contextTitle, footerText: contextTitle ?? undefined },
+      participants,
+      layout
+    });
+
+    return pdfBuffer;
+  }
+
+  /**
+   * Retorna histórico consolidado da inscrição (auditoria, pagamentos, estornos, etc.)
+   */
+  async getHistory(registrationId: string) {
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      include: { order: true }
+    });
+    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+
+    const orderId = registration.orderId;
+
+    const [logs, refunds] = await Promise.all([
+      prisma.auditLog.findMany({
+        where: {
+          OR: [
+            { entity: "registration", entityId: registrationId },
+            orderId ? { entity: "order", entityId: orderId } : undefined
+          ].filter(Boolean) as any
+        },
+        orderBy: { createdAt: "asc" }
+      }) as any,
+      prisma.refund.findMany({
+        where: { registrationId: registrationId },
+        orderBy: { createdAt: "asc" }
+      })
+    ]);
+
+    const events: Array<{
+      type: string;
+      at: Date;
+      label?: string;
+      actor?: { id: string; name?: string | null; email?: string | null; role?: string | null } | null;
+      details?: Record<string, unknown>;
+    }> = [];
+
+    // Criação da inscrição
+    events.push({ type: "REGISTRATION_CREATED", at: registration.createdAt, label: "Inscrição criada" });
+
+    // Método de pagamento selecionado (se existir)
+    const initialMethod = (registration.paymentMethod as any) || (registration.order as any)?.paymentMethod || null;
+    if (initialMethod) {
+      events.push({ type: "PAYMENT_METHOD_SELECTED", at: registration.createdAt, label: `Forma de pagamento escolhida`, details: { paymentMethod: initialMethod } });
+    }
+
+    // Pagamento confirmado na inscrição
+    if (registration.paidAt) {
+      events.push({ type: "PAYMENT_CONFIRMED", at: registration.paidAt, label: "Pagamento confirmado", details: { paymentMethod: (registration.paymentMethod as any) ?? (registration.order as any)?.paymentMethod } });
+    }
+
+    // Logs de auditoria
+    for (const log of logs) {
+      let metadata: any = undefined;
+      try { metadata = log.metadataJson ? JSON.parse(log.metadataJson) : undefined } catch {}
+      const action = String(log.action);
+      const labelMap: Record<string, string> = {
+        ORDER_CREATED: "Pedido criado",
+        ORDER_PAID: "Pedido pago",
+        REGISTRATION_UPDATED: "Inscrição atualizada",
+        REGISTRATION_CANCELED: "Inscrição cancelada",
+        REGISTRATION_DELETED: "Inscrição excluída",
+        REGISTRATION_REFUNDED: "Estorno realizado"
+      };
+      events.push({
+        type: action,
+        at: log.createdAt,
+        label: labelMap[action] ?? undefined,
+        actor: log.actorUserId ? { id: log.actorUserId } : null,
+        details: metadata
+      });
+    }
+
+    // Estornos
+    for (const ref of refunds) {
+      events.push({
+        type: "PAYMENT_REFUNDED",
+        at: ref.createdAt,
+        label: "Estorno realizado",
+        details: { amountCents: ref.amountCents, reason: ref.reason, mpRefundId: ref.mpRefundId }
+      });
+    }
+
+    // Ordenar e retornar
+    events.sort((a, b) => a.at.getTime() - b.at.getTime());
+    return {
+      registration: {
+        id: registration.id,
+        status: registration.status,
+        paymentMethod: registration.paymentMethod,
+        paidAt: registration.paidAt,
+        createdAt: registration.createdAt
+      },
+      orderId,
+      events
+    };
+  }
 }
 
 export const registrationService = new RegistrationService();
+

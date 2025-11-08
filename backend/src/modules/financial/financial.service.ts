@@ -26,12 +26,14 @@ export class FinancialService {
       totalCents: bigint | number;
       feeCents: bigint | number | null;
       netAmountCents: bigint | number | null;
+      paymentMethod?: string | null;
     }>>(`
       SELECT 
         o.id,
         o.totalCents,
         ${feeCentsSelect},
-        ${netAmountCentsSelect}
+        ${netAmountCentsSelect},
+        o.paymentMethod
       FROM "Order" o
       WHERE o.eventId = '${eventId}' AND o.status = 'PAID'
     `);
@@ -41,7 +43,8 @@ export class FinancialService {
       id: row.id,
       totalCents: Number(row.totalCents),
       feeCents: Number(row.feeCents || 0),
-      netAmountCents: Number(row.netAmountCents || row.totalCents)
+      netAmountCents: Number(row.netAmountCents || row.totalCents),
+      paymentMethod: (row as any).paymentMethod as string | null
     }));
 
     // Buscar registrations separadamente para evitar problemas com Prisma Client
@@ -81,15 +84,42 @@ export class FinancialService {
       registrations: registrationsByOrderId[order.id] || []
     }));
 
+    const pendingOrdersRaw = await prisma.order.findMany({
+      where: { eventId, status: "PENDING" },
+      select: {
+        id: true,
+        totalCents: true,
+        paymentMethod: true
+      }
+    });
+
+    const pendingOrders = pendingOrdersRaw.map((order) => ({
+      id: order.id,
+      totalCents: Number(order.totalCents || 0),
+      paymentMethod: (order.paymentMethod ?? null) as string | null
+    }));
+
     // Calcular totais
     let totalGrossCents = 0;
     let totalFeesCents = 0;
     let totalNetCents = 0;
+    let pixGrossCents = 0;
+    let pixFeesCents = 0;
+    let pixNetCents = 0;
+    let cashCents = 0;
 
     for (const order of paidOrders) {
       totalGrossCents += order.totalCents;
       totalFeesCents += order.feeCents;
       totalNetCents += order.netAmountCents;
+      const method = (order as any).paymentMethod ? String((order as any).paymentMethod).toUpperCase() : '';
+      if (method === 'PIX_MP') {
+        pixGrossCents += order.totalCents;
+        pixFeesCents += order.feeCents;
+        pixNetCents += order.netAmountCents;
+      } else if (method === 'CASH') {
+        cashCents += order.totalCents;
+      }
     }
 
     // Total de despesas
@@ -120,6 +150,19 @@ export class FinancialService {
       0
     );
 
+    let pendingGrossCents = 0;
+    let pendingPixGrossCents = 0;
+    let pendingCashGrossCents = 0;
+    for (const order of pendingOrders) {
+      pendingGrossCents += order.totalCents;
+      const method = order.paymentMethod ? order.paymentMethod.toUpperCase() : "";
+      if (method === "PIX_MP") {
+        pendingPixGrossCents += order.totalCents;
+      } else if (method === "CASH") {
+        pendingCashGrossCents += order.totalCents;
+      }
+    }
+
     return {
       event: {
         id: event.id,
@@ -130,11 +173,20 @@ export class FinancialService {
         grossCents: totalGrossCents,
         feesCents: totalFeesCents,
         netCents: totalNetCents,
+        pix: { grossCents: pixGrossCents, feesCents: pixFeesCents, netCents: pixNetCents },
+        cashCents: cashCents,
+        generalNetCents: pixNetCents + cashCents,
         expensesCents,
         cashBalanceCents
       },
       paidRegistrationsCount,
-      paidOrdersCount: paidOrders.length
+      paidOrdersCount: paidOrders.length,
+      pendingOrdersCount: pendingOrders.length,
+      pendingTotals: {
+        grossCents: pendingGrossCents,
+        pixGrossCents: pendingPixGrossCents,
+        cashGrossCents: pendingCashGrossCents
+      }
     };
   }
 
@@ -275,6 +327,35 @@ export class FinancialService {
     };
   }
 
+  async getEventFinancialReportData(eventId: string) {
+    const summary = await this.getEventSummary(eventId);
+    let expenses: Array<{ id: string; description: string; amountCents: number; date: Date; madeBy: string }> = [];
+    try {
+      expenses = await prisma.expense.findMany({
+        where: { eventId },
+        orderBy: { date: "asc" },
+        select: {
+          id: true,
+          description: true,
+          amountCents: true,
+          date: true,
+          madeBy: true
+        }
+      });
+    } catch (error: any) {
+      if (error.code === "P2021" || error.code === "P2022" || error.message?.includes("does not exist")) {
+        expenses = [];
+      } else {
+        throw error;
+      }
+    }
+
+    return {
+      ...summary,
+      expenses
+    };
+  }
+
   /**
    * Retorna o resumo financeiro geral (todos os eventos)
    */
@@ -301,6 +382,7 @@ export class FinancialService {
           o.totalCents,
           ${feeCentsSelect},
           ${netAmountCentsSelect},
+          o.paymentMethod,
           e.id as event_id,
           e.title as event_title,
           e.slug as event_slug
@@ -329,6 +411,7 @@ export class FinancialService {
         totalCents: Number(row.totalCents),
         feeCents: Number(row.feeCents || 0),
         netAmountCents: Number(row.netAmountCents || row.totalCents),
+        paymentMethod: (row as any).paymentMethod as string | null,
         event: {
           id: row.event_id,
           title: row.event_title,
@@ -339,11 +422,23 @@ export class FinancialService {
     let totalGrossCents = 0;
     let totalFeesCents = 0;
     let totalNetCents = 0;
+    let pixGrossCents = 0;
+    let pixFeesCents = 0;
+    let pixNetCents = 0;
+    let cashCents = 0;
 
     for (const order of paidOrders) {
       totalGrossCents += order.totalCents;
       totalFeesCents += order.feeCents;
       totalNetCents += order.netAmountCents;
+      const method = (order as any).paymentMethod ? String((order as any).paymentMethod).toUpperCase() : '';
+      if (method === 'PIX_MP') {
+        pixGrossCents += order.totalCents;
+        pixFeesCents += order.feeCents;
+        pixNetCents += order.netAmountCents;
+      } else if (method === 'CASH') {
+        cashCents += order.totalCents;
+      }
     }
 
     // Verificar se a tabela Expense existe antes de tentar consultar
@@ -397,6 +492,9 @@ export class FinancialService {
           grossCents: totalGrossCents,
           feesCents: totalFeesCents,
           netCents: totalNetCents,
+          pix: { grossCents: pixGrossCents, feesCents: pixFeesCents, netCents: pixNetCents },
+          cashCents: cashCents,
+          generalNetCents: pixNetCents + cashCents,
           expensesCents,
           cashBalanceCents
         },

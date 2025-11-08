@@ -5,6 +5,17 @@ import { eventService } from "./event.service";
 import { PaymentMethod } from "../../config/payment-methods";
 
 const paymentMethodSchema = z.nativeEnum(PaymentMethod);
+const bannerFieldSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^(https?:\/\/.+|[\w.\-\/]+)$/i,
+    "Informe uma URL completa ou o nome de um arquivo salvo (ex.: banner.jpg)"
+  );
+const slugFieldSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/i, "Slug deve conter apenas letras, números e hífens");
 
 const createSchema = z.object({
   title: z.string().min(3),
@@ -12,7 +23,8 @@ const createSchema = z.object({
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
   location: z.string().min(3),
-  bannerUrl: z.string().url().optional(),
+  bannerUrl: bannerFieldSchema.optional(),
+  slug: slugFieldSchema.optional(),
   isFree: z.boolean(),
   priceCents: z.number().int().min(0).optional(),
   minAgeYears: z.number().int().min(0).optional(),

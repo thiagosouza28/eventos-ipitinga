@@ -1,4 +1,4 @@
-import cron from "node-cron";
+﻿import cron from "node-cron";
 
 import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
@@ -49,7 +49,7 @@ export const cancelExpiredOrders = async () => {
         action: "ORDER_EXPIRED",
         entity: "order",
         entityId: order.id,
-        metadataJson: { reason: "expired" }
+        metadataJson: JSON.stringify({ reason: "expired" })
       }))
     })
   ]);
@@ -75,3 +75,4 @@ export const stopOrderExpirationJob = () => {
     job.stop();
   }
 };
+

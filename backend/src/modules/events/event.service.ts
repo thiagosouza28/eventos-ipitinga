@@ -3,7 +3,7 @@ import slugify from "slugify";
 
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
-import { ConflictError, NotFoundError } from "../../utils/errors";
+import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { eventLotService } from "./event-lot.service";
 import {
@@ -21,6 +21,15 @@ const buildSlug = (title: string) =>
     strict: true,
     locale: "pt"
   });
+
+const normalizeSlugInput = (value: string) => {
+  const normalized = slugify(value, {
+    lower: true,
+    strict: true,
+    locale: "pt"
+  });
+  return normalized;
+};
 
 const serializeLot = (lot: EventLotEntity | null | undefined) => {
   if (!lot) {
@@ -147,6 +156,23 @@ export class EventService {
     });
   }
 
+  private async resolveUniqueSlug(baseSlug: string, ignoreId?: string) {
+    let slug = baseSlug;
+    let attempt = 1;
+    while (
+      await prisma.event.findFirst({
+        where: {
+          slug,
+          id: ignoreId ? { not: ignoreId } : undefined
+        }
+      })
+    ) {
+      attempt += 1;
+      slug = `${baseSlug}-${attempt}`;
+    }
+    return slug;
+  }
+
   async create(data: {
     title: string;
     description: string;
@@ -154,20 +180,24 @@ export class EventService {
     endDate: string;
     location: string;
     bannerUrl?: string;
+    slug?: string;
     isFree: boolean;
     priceCents?: number;
     minAgeYears?: number | null;
     isActive?: boolean;
     paymentMethods?: PaymentMethod[];
   }) {
-    const baseSlug = buildSlug(`${data.title}-${new Date(data.startDate).getFullYear()}`);
+    const desiredSlug = data.slug ? normalizeSlugInput(data.slug) : null;
+    const baseSlug =
+      desiredSlug && desiredSlug.length > 0
+        ? desiredSlug
+        : buildSlug(`${data.title}-${new Date(data.startDate).getFullYear()}`);
 
-    let slug = baseSlug;
-    let attempt = 1;
-    while (await prisma.event.findUnique({ where: { slug } })) {
-      attempt += 1;
-      slug = `${baseSlug}-${attempt}`;
+    if (!baseSlug) {
+      throw new AppError("Slug inválido", 400);
     }
+
+    const slug = await this.resolveUniqueSlug(baseSlug);
 
     const event = await prisma.event.create({
       data: {
@@ -206,6 +236,7 @@ export class EventService {
       isFree?: boolean;
       isActive?: boolean;
       paymentMethods?: PaymentMethod[];
+      slug?: string;
     }>
   ) {
     const event = await prisma.event.findUnique({ where: { id } });
@@ -226,6 +257,14 @@ export class EventService {
       payload.paymentMethods = serializePaymentMethods(
         data.paymentMethods.length ? data.paymentMethods : DEFAULT_PAYMENT_METHODS
       );
+    }
+
+    if (data.slug !== undefined) {
+      const normalized = normalizeSlugInput(data.slug);
+      if (!normalized) {
+        throw new AppError("Slug inválido", 400);
+      }
+      payload.slug = await this.resolveUniqueSlug(normalized, id);
     }
 
     const updated = await prisma.event.update({

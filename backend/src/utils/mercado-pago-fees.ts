@@ -5,9 +5,9 @@
  * - transaction_details.net_received_amount (valor líquido recebido)
  * - transaction_amount (valor bruto)
  * 
- * Taxa padrão do Mercado Pago: 0,99% para pagamentos via PIX
+ * Taxa padrão do Mercado Pago: 0,94% para pagamentos via PIX
  */
-const MERCADO_PAGO_FEE_PERCENTAGE = 0.0099; // 0,99%
+const MERCADO_PAGO_FEE_PERCENTAGE = 0.0094; // 0,94%
 
 export function calculateMercadoPagoFees(payment: any, totalCents: number): {
   feeCents: number;
@@ -48,7 +48,7 @@ export function calculateMercadoPagoFees(payment: any, totalCents: number): {
     }
   }
 
-  // Se ainda não conseguimos calcular a taxa, usar a taxa padrão de 0,99%
+  // Se ainda não conseguimos calcular a taxa, usar a taxa padrão de 0,94%
   if (feeCents === 0 && netAmountCents === totalCents) {
     feeCents = Math.round(totalCents * MERCADO_PAGO_FEE_PERCENTAGE);
     netAmountCents = totalCents - feeCents;
@@ -60,4 +60,5 @@ export function calculateMercadoPagoFees(payment: any, totalCents: number): {
 
   return { feeCents, netAmountCents };
 }
+
 

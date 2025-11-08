@@ -1,10 +1,33 @@
-﻿import { MercadoPagoConfig, Preference, Payment, PaymentRefund } from "mercadopago";
+import { MercadoPagoConfig, Preference, Payment, PaymentRefund } from "mercadopago";
 import type { PreferenceCreateData } from "mercadopago/dist/clients/preference/create/types";
 
 import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../utils/errors";
 import { logger } from "../utils/logger";
+
+const isPublicHttpsUrl = (url: string | null | undefined) => {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return false;
+    const host = u.hostname.toLowerCase();
+    if (host === "localhost" || host === "127.0.0.1" || host.endsWith(".local")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const resolveNotificationUrl = () => {
+  const base =
+    (env.MP_WEBHOOK_PUBLIC_URL && isPublicHttpsUrl(env.MP_WEBHOOK_PUBLIC_URL) && env.MP_WEBHOOK_PUBLIC_URL) ||
+    (isPublicHttpsUrl(env.API_URL) && env.API_URL) ||
+    null;
+  if (!base) return null;
+  const normalized = base.trim().replace(/\/$/, "");
+  return `${normalized}/webhooks/mercadopago`;
+};
 
 type PreferenceItem = {
   id: string;
@@ -61,6 +84,70 @@ class PaymentService {
     }
   }
 
+  // Fallback para gerar um pagamento PIX e obter o QR code diretamente
+  async createPixPaymentForOrder(orderId: string) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { registrations: true, event: true }
+    });
+    if (!order) {
+      throw new NotFoundError("Pedido nao encontrado");
+    }
+
+    const totalCents = order.registrations.reduce((acc, registration) => {
+      const priceCents =
+        registration.priceCents && registration.priceCents > 0
+          ? registration.priceCents
+          : order.event.priceCents;
+      return acc + priceCents;
+    }, 0);
+
+    const notificationUrl = resolveNotificationUrl();
+
+    // Resolver dados do pagador exigidos pelo Mercado Pago para PIX
+    const rawCpf = (order.buyerCpf || order.registrations[0]?.cpf || "").toString();
+    const sanitizedCpf = rawCpf.replace(/\D/g, "");
+    if (!sanitizedCpf || sanitizedCpf.length !== 11) {
+      throw new AppError("CPF do pagador ausente ou invalido para gerar PIX", 400);
+    }
+
+    const buyerName = (order as any).buyerName as string | null | undefined;
+    const buyerEmail = (order as any).buyerEmail as string | null | undefined;
+    const [firstName, ...restNames] = (buyerName ?? "Participante").trim().split(/\s+/);
+    const lastName = restNames.join(" ") || "CATRE";
+    const emailFallback = buyerEmail && /.+@.+\..+/.test(buyerEmail)
+      ? buyerEmail
+      : `${sanitizedCpf}@example.com`;
+
+    // Criar pagamento PIX associado ao orderId (via external_reference)
+    const body: any = {
+      transaction_amount: totalCents / 100,
+      description: `Pedido ${order.id}`,
+      payment_method_id: "pix",
+      external_reference: order.id,
+      payer: {
+        email: emailFallback,
+        first_name: firstName,
+        last_name: lastName,
+        entity_type: "individual",
+        identification: {
+          type: "CPF",
+          number: sanitizedCpf
+        }
+      }
+    };
+    if (notificationUrl) {
+      body.notification_url = notificationUrl;
+    }
+    const payment = await this.payment.create({ body });
+
+    const pointOfInteraction = (payment as any).point_of_interaction;
+    return {
+      mpPaymentId: payment.id ? String(payment.id) : undefined,
+      pixQrData: pointOfInteraction?.transaction_data
+    };
+  }
+
   async createPreference(orderId: string) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -112,13 +199,27 @@ class PaymentService {
       throw new AppError("URL de sucesso para retorno automático não configurada.", 500);
     }
 
+    // Resolver dados do pagador para a Preferncia (Checkout Pro)
+    const prefCpfRaw = (order.buyerCpf || order.registrations[0]?.cpf || "").toString();
+    const prefCpf = prefCpfRaw.replace(/\D/g, "");
+    const prefBuyerName = (order as any).buyerName as string | null | undefined;
+    const prefBuyerEmail = (order as any).buyerEmail as string | null | undefined;
+    const [prefFirstName, ...prefRest] = (prefBuyerName ?? "Participante").trim().split(/\s+/);
+    const prefLastName = prefRest.join(" ") || "CATRE";
+    const prefEmail = prefBuyerEmail && /.+@.+\..+/.test(prefBuyerEmail)
+      ? prefBuyerEmail
+      : `${prefCpf}@example.com`;
+
     const preferencePayload: PreferenceCreateData["body"] = {
       external_reference: order.id,
       items,
       payer: {
+        email: prefEmail,
+        first_name: prefFirstName,
+        last_name: prefLastName,
         identification: {
           type: "CPF",
-          number: order.buyerCpf
+          number: prefCpf
         }
       },
       back_urls: backUrls,
@@ -132,8 +233,7 @@ class PaymentService {
         buyerCpf: order.buyerCpf,
         lotId: order.pricingLotId,
         preferenceVersion: nextVersion
-      },
-      notification_url: `${apiUrl}/webhooks/mercadopago`
+      }
     };
 
     const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");
@@ -262,13 +362,18 @@ class PaymentService {
       pending: `${appUrl}/pendencias?cpf=${buyerCpf}`
     };
 
+    const bulkCpf = (buyerCpf || orders[0]?.buyerCpf || "").toString().replace(/\D/g, "");
+    const bulkEmail = `${bulkCpf}@example.com`;
     const preferencePayload: PreferenceCreateData["body"] = {
       external_reference: externalReference,
       items,
       payer: {
+        email: bulkEmail,
+        first_name: "Participante",
+        last_name: "CATRE",
         identification: {
           type: "CPF",
-          number: buyerCpf
+          number: bulkCpf
         }
       },
       back_urls: backUrls,
@@ -282,8 +387,7 @@ class PaymentService {
         buyerCpf,
         isBulk: true,
         preferenceVersion: 1
-      },
-      notification_url: `${apiUrl}/webhooks/mercadopago`
+      }
     };
 
     const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");

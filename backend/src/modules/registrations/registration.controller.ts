@@ -6,12 +6,19 @@ import { paymentService } from "../../services/payment.service";
 import { registrationService } from "./registration.service";
 import { NotFoundError } from "../../utils/errors";
 import { Gender } from "../../config/gender";
+import { isValidCpf } from "../../utils/cpf";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
-const optionalId = z.preprocess(
-  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
-  cuidOrUuid.optional()
-);
+// Aceitar IDs vazios como undefined e ignorar valores inválidos em filtros
+const optionalId = z.preprocess((value) => {
+  if (typeof value !== "string") return undefined;
+  const s = value.trim();
+  if (s.length === 0) return undefined;
+  // Validar contra UUID ou CUID; se não for nenhum, ignorar (undefined) ao invés de lançar erro
+  const isUuid = z.string().uuid().safeParse(s).success;
+  const isCuid = z.string().cuid().safeParse(s).success;
+  return isUuid || isCuid ? s : undefined;
+}, z.string().optional());
 
 const optionalStatus = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
@@ -28,12 +35,22 @@ const listSchema = z.object({
 const reportSchema = listSchema.extend({
   groupBy: z.enum(["event", "church"])
 });
+const reportDownloadSchema = reportSchema.extend({
+  template: z.enum(["standard", "event"]).optional().default("standard"),
+  layout: z.enum(["single", "two"]).optional()
+});
+
+const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "") : v);
 
 const updateSchema = z.object({
   districtId: z.string().uuid().optional(),
   churchId: z.string().uuid().optional(),
   fullName: z.string().min(3).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  cpf: z
+    .preprocess(onlyDigits, z.string().length(11))
+    .refine((v) => isValidCpf(String(v)), { message: "CPF invalido" })
+    .optional(),
   gender: z.nativeEnum(Gender).optional(),
   photoUrl: z.string().min(20).optional().or(z.literal(null))
 });
@@ -70,8 +87,11 @@ export const registrationsReportHandler = async (request: Request, response: Res
 };
 
 export const downloadRegistrationsReportHandler = async (request: Request, response: Response) => {
-  const { groupBy, ...filters } = reportSchema.parse(request.query);
-  const pdfBuffer = await registrationService.generateReportPdf(filters, groupBy);
+  const { groupBy, template, layout, ...filters } = reportDownloadSchema.parse(request.query);
+  const pdfBuffer =
+    template === "event"
+      ? await registrationService.generateEventSheetPdf(filters, groupBy, (layout as any) ?? "single")
+      : await registrationService.generateReportPdf(filters, groupBy);
   const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
   response.setHeader("Content-Type", "application/pdf");
   response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
@@ -80,7 +100,7 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
 
 export const updateRegistrationHandler = async (request: Request, response: Response) => {
   const payload = updateSchema.parse(request.body);
-  const registration = await registrationService.update(request.params.id, payload);
+  const registration = await registrationService.update(request.params.id, payload, request.user?.id);
   return response.json(registration);
 };
 
@@ -113,7 +133,8 @@ export const refundRegistrationHandler = async (request: Request, response: Resp
     registrationId: registration.id,
     amountCents,
     mpRefundId: String(refund.id),
-    reason: payload.reason
+    reason: payload.reason,
+    actorUserId: request.user?.id
   });
 
   return response.json({ refundId: refund.id, status: refund.status });
@@ -121,9 +142,32 @@ export const refundRegistrationHandler = async (request: Request, response: Resp
 
 export const markRegistrationsPaidHandler = async (request: Request, response: Response) => {
   const payload = bulkMarkPaidSchema.parse(request.body);
-  const result = await orderService.markManualRegistrationsPaid(payload.registrationIds, {
-    paidAt: payload.paidAt ? new Date(payload.paidAt) : undefined,
-    reference: payload.reference
-  });
+  const result = await orderService.markManualRegistrationsPaid(
+    payload.registrationIds,
+    {
+      paidAt: payload.paidAt ? new Date(payload.paidAt) : undefined,
+      reference: payload.reference
+    },
+    request.user?.id
+  );
   return response.json(result);
+};
+
+// Gera/renova um link de pagamento exclusivo para uma inscrição
+// - Se a inscrição estiver em um pedido com outras inscrições, cria um novo pedido apenas para ela
+// - Se já estiver sozinha em um pedido, apenas gera uma nova preferência e invalida links antigos
+export const regenerateRegistrationPaymentLinkHandler = async (
+  request: Request,
+  response: Response
+) => {
+  const { id } = request.params;
+  const result = await orderService.createIndividualPaymentForRegistration(id);
+  return response.json(result);
+};
+
+// Histórico da inscrição
+export const getRegistrationHistoryHandler = async (request: Request, response: Response) => {
+  const { id } = request.params;
+  const history = await registrationService.getHistory(id);
+  return response.json(history);
 };

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import { financialService } from "./financial.service";
+import { generateFinancialEventReportPdf } from "../../pdf/financial-report.service";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 
@@ -41,6 +42,39 @@ export const getGeneralSummaryHandler = async (request: Request, response: Respo
       message: "Erro ao obter resumo financeiro",
       error: error.message,
       code: error.code || "UNKNOWN_ERROR"
+    });
+  }
+};
+
+export const downloadEventFinancialReportHandler = async (request: Request, response: Response) => {
+  try {
+    const { eventId } = request.params;
+    const reportData = await financialService.getEventFinancialReportData(eventId);
+    const generatedAt = new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }).format(new Date());
+
+    const pdfBuffer = await generateFinancialEventReportPdf({
+      generatedAt,
+      event: reportData.event,
+      totals: reportData.totals,
+      paidOrdersCount: reportData.paidOrdersCount,
+      paidRegistrationsCount: reportData.paidRegistrationsCount,
+      expenses: reportData.expenses
+    });
+
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader(
+      "Content-Disposition",
+      `attachment; filename="relatorio-financeiro-${reportData.event.slug ?? reportData.event.id}.pdf"`
+    );
+    return response.send(pdfBuffer);
+  } catch (error: any) {
+    console.error("Erro ao gerar relatório financeiro em PDF:", error);
+    return response.status(500).json({
+      message: "Erro ao gerar relatório financeiro",
+      error: error.message
     });
   }
 };

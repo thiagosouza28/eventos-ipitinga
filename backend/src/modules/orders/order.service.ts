@@ -1,4 +1,4 @@
-﻿import { randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 
 import { env } from "../../config/env";
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
@@ -94,9 +94,7 @@ export class OrderService {
     const fallbackMethod =
       allowedMethods[0] ?? DEFAULT_PAYMENT_METHODS[0] ?? PaymentMethod.PIX_MP;
     let resolvedMethod =
-      requestedMethod && allowedMethods.includes(requestedMethod)
-        ? requestedMethod
-        : fallbackMethod;
+      requestedMethod && (allowedMethods.includes(requestedMethod) || ((actorRole === "AdminGeral" || actorRole === "AdminDistrital") && AdminOnlyPaymentMethods.includes(requestedMethod as any))) ? requestedMethod : fallbackMethod;
 
     // Verificar se método é exclusivo de admin
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
@@ -187,13 +185,23 @@ export class OrderService {
           throw new AppError(`Participante ${person.fullName} nao atende idade minima`, 400);
         }
 
+        // Garantir que a data de nascimento seja salva como UTC midnight do dia correto
+        // Quando recebemos "1998-11-05", queremos salvar como "1998-11-05T00:00:00.000Z"
+        // Isso garante que ao formatar usando UTC, a data será exibida corretamente
+        const birthDateParts = person.birthDate.split('-');
+        const birthDateUTC = new Date(Date.UTC(
+          parseInt(birthDateParts[0], 10), // ano
+          parseInt(birthDateParts[1], 10) - 1, // mês (0-indexed)
+          parseInt(birthDateParts[2], 10) // dia
+        ));
+
         const registration = await tx.registration.create({
           data: {
             orderId: order.id,
             eventId: payload.eventId,
             fullName: person.fullName,
             cpf: person.cpf,
-            birthDate: new Date(person.birthDate),
+            birthDate: birthDateUTC,
             ageYears,
             districtId: person.districtId,
             churchId: person.churchId,
@@ -388,8 +396,33 @@ export class OrderService {
 
     const payment =
       preference ?? (await paymentService.createPreference(orderId));
+
+    // Tentar obter/garantir dados de PIX (qr_code e base64)
+    let pixQrData = (payment as any)?.pixQrData;
+
+    // Se j houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
+    if (latestPayment?.id && !pixQrData) {
+      try {
+        const details = await paymentService.fetchPayment(String(latestPayment.id));
+        pixQrData = (details as any)?.point_of_interaction?.transaction_data ?? pixQrData;
+      } catch (error) {
+        logger.warn({ orderId, paymentId: latestPayment.id, error }, "Falha ao recuperar QR do pagamento existente");
+      }
+    }
+
+    // Como fallback final, gerar um pagamento PIX especifico para obter o QR
+    if (!pixQrData && paymentMethod === PaymentMethod.PIX_MP) {
+      try {
+        const pix = await paymentService.createPixPaymentForOrder(orderId);
+        pixQrData = pix.pixQrData ?? pixQrData;
+      } catch (error) {
+        logger.warn({ orderId, error }, "Falha ao criar pagamento PIX para gerar QR");
+      }
+    }
+
     return {
       ...payment,
+      pixQrData,
       status: latestStatus ?? order.status,
       statusDetail: latestPayment?.statusDetail,
       paymentMethod,
@@ -415,10 +448,7 @@ export class OrderService {
       select: {
         id: true,
         eventId: true,
-        buyerName: true,
         buyerCpf: true,
-        buyerEmail: true,
-        buyerPhone: true,
         totalCents: true,
         status: true,
         paymentMethod: true,
@@ -432,19 +462,14 @@ export class OrderService {
         registrations: {
           select: {
             id: true,
-            eventId: true,
-            orderId: true,
-            name: true,
+            fullName: true,
             cpf: true,
             birthDate: true,
-            email: true,
-            phone: true,
             districtId: true,
             churchId: true,
             priceCents: true,
             status: true,
-            createdAt: true,
-            updatedAt: true
+            createdAt: true
           }
         },
         refunds: {
@@ -461,6 +486,86 @@ export class OrderService {
     });
   }
 
+  // Gera um pagamento exclusivo para uma inscrição específica.
+  // Se a inscrição pertencer a um pedido com outras inscrições, move-a para um novo pedido (split)
+  // e invalida a preferência antiga do pedido original. Se já estiver sozinha, apenas gera nova preferência.
+  async createIndividualPaymentForRegistration(registrationId: string) {
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      include: { order: true, event: true }
+    });
+    if (!registration) {
+      throw new NotFoundError("Inscricao nao encontrada");
+    }
+    if (registration.status === RegistrationStatus.PAID) {
+      throw new AppError("Inscricao ja paga", 400);
+    }
+    if (registration.status === RegistrationStatus.CANCELED) {
+      throw new AppError("Inscricao cancelada", 400);
+    }
+
+    const oldOrderId = registration.orderId;
+    // Ver quantas inscrições existem no pedido atual
+    const countInOldOrder = await prisma.registration.count({ where: { orderId: oldOrderId } });
+
+    let targetOrderId = oldOrderId;
+    // Sempre invalidar versão antiga do pedido atual para impedir reuso de links
+    await prisma.order.update({
+      where: { id: oldOrderId },
+      data: {
+        preferenceVersion: { increment: 1 },
+        // Remover a preferencia antiga para forcar geracao de nova quando necessario
+        mpPreferenceId: null
+      }
+    }).catch(() => undefined);
+
+    if (countInOldOrder > 1) {
+      // Criar novo pedido apenas para esta inscrição
+      const priceCents = registration.priceCents && registration.priceCents > 0
+        ? registration.priceCents
+        : registration.event.priceCents ?? 0;
+      const orderId = randomUUID();
+      const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+
+      await prisma.$transaction(async (tx) => {
+        await tx.order.create({
+          data: {
+            id: orderId,
+            eventId: registration.eventId,
+            buyerCpf: sanitizeCpf(registration.cpf),
+            totalCents: priceCents,
+            status: OrderStatus.PENDING,
+            paymentMethod: registration.order.paymentMethod as any ?? 'PIX_MP',
+            externalReference: orderId,
+            expiresAt
+          }
+        });
+
+        // Reatribuir inscricao
+        await tx.registration.update({
+          where: { id: registrationId },
+          data: { orderId: orderId, paymentMethod: registration.order.paymentMethod as any ?? 'PIX_MP' }
+        });
+
+        // Atualizar valor do pedido antigo
+        const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
+        const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
+        await tx.order.update({
+          where: { id: oldOrderId },
+          data: {
+            totalCents: newTotal,
+            status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
+            mpPreferenceId: null
+          }
+        });
+        targetOrderId = orderId;
+      });
+    }
+
+    // Gerar/garantir preferencia para o pedido alvo
+    const payment = await paymentService.createPreference(targetOrderId);
+    return { orderId: targetOrderId, payment };
+  }
   async markPaid(
     orderId: string,
     paymentId: string,
@@ -469,6 +574,7 @@ export class OrderService {
       paidAt?: Date;
       manualReference?: string | null;
       paymentMethod?: PaymentMethod;
+      actorUserId?: string | null;
     }
   ) {
     const order = await prisma.order.findUnique({
@@ -574,6 +680,7 @@ export class OrderService {
 
     await registrationService.generateReceiptsForOrder(orderId);
     await auditService.log({
+      actorUserId: options?.actorUserId ?? undefined,
       action: "ORDER_PAID",
       entity: "order",
       entityId: orderId,
@@ -587,13 +694,15 @@ export class OrderService {
     registrationId,
     amountCents,
     mpRefundId,
-    reason
+    reason,
+    actorUserId
   }: {
     orderId: string;
     registrationId: string;
     amountCents: number;
     mpRefundId: string;
     reason?: string;
+    actorUserId?: string | null;
   }) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
     if (!order) throw new NotFoundError("Pedido nao encontrado");
@@ -613,6 +722,7 @@ export class OrderService {
     ]);
 
     await auditService.log({
+      actorUserId: actorUserId ?? undefined,
       action: "REGISTRATION_REFUNDED",
       entity: "registration",
       entityId: registrationId,
@@ -622,7 +732,8 @@ export class OrderService {
 
   async markManualRegistrationsPaid(
     registrationIds: string[],
-    options?: { paidAt?: Date; reference?: string }
+    options?: { paidAt?: Date; reference?: string },
+    actorUserId?: string | null
   ) {
     if (!registrationIds.length) {
       throw new AppError("Informe ao menos uma inscricao para quitacao", 400);
@@ -686,7 +797,8 @@ export class OrderService {
       await this.markPaid(orderId, reference, {
         paidAt,
         manualReference: reference,
-        paymentMethod: group.paymentMethod
+        paymentMethod: group.paymentMethod,
+        actorUserId: actorUserId ?? undefined
       });
     }
 
@@ -699,3 +811,4 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
+
