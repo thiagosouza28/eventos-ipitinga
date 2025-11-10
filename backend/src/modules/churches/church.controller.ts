@@ -5,16 +5,23 @@ import { churchService } from "./church.service";
 
 const createSchema = z.object({
   name: z.string().min(3),
-  districtId: z.string().cuid(),
+  districtId: z.string().min(1),
   directorName: z.string().min(1).optional(),
   directorCpf: z.string().optional(),
-  directorBirthDate: z.string().datetime().optional(),
+  directorBirthDate: z.string().optional(),
   directorEmail: z.string().email().optional(),
   directorWhatsapp: z.string().optional(),
   directorPhotoUrl: z.string().url().optional()
 });
 
 const updateSchema = createSchema.partial();
+
+const directorLookupSchema = z.object({
+  cpf: z
+    .string()
+    .min(11)
+    .transform((value) => value.replace(/\D/g, ""))
+});
 
 export const listChurchesHandler = async (request: Request, response: Response) => {
   const { districtId } = request.query;
@@ -117,4 +124,13 @@ export const updateChurchHandler = async (request: Request, response: Response) 
 export const deleteChurchHandler = async (request: Request, response: Response) => {
   await churchService.delete(request.params.id, request.user?.id);
   return response.status(204).send();
+};
+
+export const findChurchByDirectorCpfHandler = async (request: Request, response: Response) => {
+  const { cpf } = directorLookupSchema.parse(request.query);
+  const result = await churchService.findByDirectorCpf(cpf);
+  if (!result) {
+    return response.status(404).json({ message: "Igreja nao encontrada para este CPF." });
+  }
+  return response.json(result);
 };

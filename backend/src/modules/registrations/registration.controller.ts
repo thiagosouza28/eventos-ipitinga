@@ -4,9 +4,11 @@ import { z } from "zod";
 import { orderService } from "../orders/order.service";
 import { paymentService } from "../../services/payment.service";
 import { registrationService } from "./registration.service";
-import { NotFoundError } from "../../utils/errors";
+import { AppError, NotFoundError } from "../../utils/errors";
 import { Gender } from "../../config/gender";
 import { isValidCpf } from "../../utils/cpf";
+import { PaymentMethod } from "../../config/payment-methods";
+import { logger } from "../../utils/logger";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 // Aceitar IDs vazios como undefined e ignorar valores inválidos em filtros
@@ -122,22 +124,70 @@ export const refundRegistrationHandler = async (request: Request, response: Resp
   }
   const amountCents = payload.amountCents ?? registration.priceCents ?? registration.event.priceCents;
 
-  const refund = await paymentService.refundRegistration(
-    registration.orderId,
-    registration.id,
-    amountCents
-  );
+  const registerManualRefund = async (options?: { warning?: string }) => {
+    const manualRefundId = `MANUAL-REFUND-${registration.id}-${Date.now()}`;
+    const combinedReason = [payload.reason, options?.warning].filter(Boolean).join(" | ") || undefined;
+    await orderService.markRefunded({
+      orderId: registration.orderId,
+      registrationId: registration.id,
+      amountCents,
+      mpRefundId: manualRefundId,
+      reason: combinedReason,
+      actorUserId: request.user?.id
+    });
+    const body: Record<string, unknown> = {
+      refundId: manualRefundId,
+      status: "MANUAL_REFUND"
+    };
+    if (options?.warning) {
+      body.warning = options.warning;
+    }
+    return response.status(options?.warning ? 202 : 200).json(body);
+  };
 
-  await orderService.markRefunded({
-    orderId: registration.orderId,
-    registrationId: registration.id,
-    amountCents,
-    mpRefundId: String(refund.id),
-    reason: payload.reason,
-    actorUserId: request.user?.id
-  });
+  const orderPaymentMethod = registration.order.paymentMethod as PaymentMethod | null;
+  const mpPaymentId = registration.order.mpPaymentId;
+  const isMercadoPagoPayment =
+    orderPaymentMethod === PaymentMethod.PIX_MP &&
+    typeof mpPaymentId === "string" &&
+    mpPaymentId.trim().length > 0 &&
+    !mpPaymentId.startsWith("MANUAL-");
 
-  return response.json({ refundId: refund.id, status: refund.status });
+  if (!isMercadoPagoPayment) {
+    return registerManualRefund();
+  }
+
+  try {
+    const refund = await paymentService.refundRegistration(
+      registration.orderId,
+      registration.id,
+      amountCents
+    );
+
+    await orderService.markRefunded({
+      orderId: registration.orderId,
+      registrationId: registration.id,
+      amountCents,
+      mpRefundId: String(refund.id),
+      reason: payload.reason,
+      actorUserId: request.user?.id
+    });
+
+    return response.json({ refundId: refund.id, status: refund.status });
+  } catch (error) {
+    if (error instanceof AppError && error.statusCode >= 500) {
+      logger.warn(
+        {
+          registrationId: registration.id,
+          orderId: registration.orderId,
+          message: error.message
+        },
+        "Falha no estorno Mercado Pago, registrando manualmente"
+      );
+      return registerManualRefund({ warning: error.message });
+    }
+    throw error;
+  }
 };
 
 export const markRegistrationsPaidHandler = async (request: Request, response: Response) => {

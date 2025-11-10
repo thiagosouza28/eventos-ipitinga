@@ -14,6 +14,9 @@ describe("POST /api/inscriptions/check", () => {
     const isCpfRegistered = jest
       .spyOn(registrationService, "isCpfRegistered")
       .mockResolvedValue(true);
+    const getLatestProfileByCpf = jest
+      .spyOn(registrationService, "getLatestProfileByCpf")
+      .mockResolvedValue(null);
 
     const response = await request(app)
       .post("/api/inscriptions/check")
@@ -23,11 +26,12 @@ describe("POST /api/inscriptions/check", () => {
       })
       .expect(200);
 
-    expect(response.body).toEqual({ exists: true });
+    expect(response.body).toEqual({ existsInEvent: true, profile: null });
     expect(isCpfRegistered).toHaveBeenCalledWith(
       "00000000-0000-0000-0000-000000000001",
       "52998224725"
     );
+    expect(getLatestProfileByCpf).toHaveBeenCalledWith("52998224725");
   });
 
   it("validates payload schema", async () => {

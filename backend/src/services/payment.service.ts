@@ -5,6 +5,13 @@ import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../utils/errors";
 import { logger } from "../utils/logger";
+import { eventService } from "../modules/events/event.service";
+import {
+  DEFAULT_PENDING_PAYMENT_VALUE_RULE,
+  isPendingPaymentValueRule,
+  PendingPaymentValueRule
+} from "../config/pending-payment-value-rule";
+import { PaymentMethod } from "../config/payment-methods";
 
 const isPublicHttpsUrl = (url: string | null | undefined) => {
   if (!url) return false;
@@ -29,11 +36,94 @@ const resolveNotificationUrl = () => {
   return `${normalized}/webhooks/mercadopago`;
 };
 
+const resolveCurrentLotInfo = async (eventId: string, fallbackPriceCents?: number | null) => {
+  const lot = await eventService.findActiveLot(eventId);
+  if (lot && typeof lot.priceCents === "number") {
+    return {
+      priceCents: Math.max(lot.priceCents, 0),
+      lotId: lot.id
+    };
+  }
+  return {
+    priceCents: Math.max(fallbackPriceCents ?? 0, 0),
+    lotId: null
+  };
+};
+
+export const resolveCurrentLotPriceCents = async (eventId: string, fallbackPriceCents?: number | null) =>
+  (await resolveCurrentLotInfo(eventId, fallbackPriceCents)).priceCents;
+
 type PreferenceItem = {
   id: string;
   title: string;
   quantity: number;
   unit_price: number;
+};
+
+type PricingResult = {
+  items: PreferenceItem[];
+  totalCents: number;
+};
+
+const resolvePendingRuleForOrder = (order: any): PendingPaymentValueRule => {
+  const ruleValue = order.event?.pendingPaymentValueRule;
+  if (isPendingPaymentValueRule(ruleValue)) {
+    return ruleValue;
+  }
+  return DEFAULT_PENDING_PAYMENT_VALUE_RULE;
+};
+
+const buildPreferenceItemsForOrder = async (order: any): Promise<PricingResult> => {
+  const rule = resolvePendingRuleForOrder(order);
+  const fallbackPriceCents = order.event?.priceCents ?? 0;
+  const registrations = order.registrations ?? [];
+
+  if (rule === "UPDATE_TO_ACTIVE_LOT") {
+    const { priceCents: unitPriceCents, lotId } = await resolveCurrentLotInfo(order.eventId, fallbackPriceCents);
+    const totalCents = unitPriceCents * registrations.length;
+    await prisma.$transaction([
+      prisma.order.update({
+        where: { id: order.id },
+        data: {
+          totalCents,
+          pricingLotId: lotId ?? null
+        }
+      }),
+      prisma.registration.updateMany({
+        where: { orderId: order.id },
+        data: { priceCents: unitPriceCents }
+      })
+    ]);
+    order.totalCents = totalCents;
+    order.pricingLotId = lotId ?? null;
+    registrations.forEach((registration: any) => {
+      registration.priceCents = unitPriceCents;
+    });
+    const items = registrations.map((registration: any) => ({
+      id: registration.id,
+      title: `${order.event.title} - ${registration.fullName}`,
+      quantity: 1,
+      unit_price: unitPriceCents / 100
+    }));
+    return { items, totalCents };
+  }
+
+  const items: PreferenceItem[] = [];
+  let totalCents = 0;
+  for (const registration of registrations) {
+    const priceCents =
+      registration.priceCents && registration.priceCents > 0
+        ? registration.priceCents
+        : fallbackPriceCents;
+    items.push({
+      id: registration.id,
+      title: `${order.event.title} - ${registration.fullName}`,
+      quantity: 1,
+      unit_price: priceCents / 100
+    });
+    totalCents += priceCents;
+  }
+  return { items, totalCents };
 };
 
 export const extractPreferenceVersion = (metadata: any): number | null => {
@@ -94,13 +184,7 @@ class PaymentService {
       throw new NotFoundError("Pedido nao encontrado");
     }
 
-    const totalCents = order.registrations.reduce((acc, registration) => {
-      const priceCents =
-        registration.priceCents && registration.priceCents > 0
-          ? registration.priceCents
-          : order.event.priceCents;
-      return acc + priceCents;
-    }, 0);
+    const { totalCents } = await buildPreferenceItemsForOrder(order);
 
     const notificationUrl = resolveNotificationUrl();
 
@@ -128,8 +212,8 @@ class PaymentService {
       external_reference: order.id,
       payer: {
         email: emailFallback,
-        name: firstName || "Participante",
-        surname: lastName,
+        first_name: firstName || "Participante",
+        last_name: lastName,
         identification: {
           type: "CPF",
           number: sanitizedCpf
@@ -159,25 +243,7 @@ class PaymentService {
 
     const nextVersion = (order.preferenceVersion ?? 0) + 1;
 
-    const items: PreferenceItem[] = order.registrations.map((registration) => {
-      const priceCents =
-        registration.priceCents && registration.priceCents > 0
-          ? registration.priceCents
-          : order.event.priceCents;
-      return {
-        id: registration.id,
-        title: `${order.event.title} - ${registration.fullName}`,
-        quantity: 1,
-        unit_price: priceCents / 100
-      };
-    });
-    const totalCents = order.registrations.reduce((acc, registration) => {
-      const priceCents =
-        registration.priceCents && registration.priceCents > 0
-          ? registration.priceCents
-          : order.event.priceCents;
-      return acc + priceCents;
-    }, 0);
+    const { items, totalCents } = await buildPreferenceItemsForOrder(order);
 
     const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
     if (!appUrl) {
@@ -314,32 +380,22 @@ class PaymentService {
 
     const buyerCpf = buyerCpfs[0];
 
-    // Criar items combinando todos os registros de todos os pedidos
     const items: PreferenceItem[] = [];
-    let totalCents = 0;
     const registrationIds: string[] = [];
     const eventNames: string[] = [];
+    let totalCents = 0;
 
+    // Criar items combinando todos os registros de todos os pedidos
     for (const order of orders) {
       const eventName = order.event.title;
       if (!eventNames.includes(eventName)) {
         eventNames.push(eventName);
       }
 
+      const { items: orderItems, totalCents: orderTotal } = await buildPreferenceItemsForOrder(order);
+      items.push(...orderItems);
+      totalCents += orderTotal;
       for (const registration of order.registrations) {
-        const priceCents =
-          registration.priceCents && registration.priceCents > 0
-            ? registration.priceCents
-            : order.event.priceCents;
-        
-        items.push({
-          id: registration.id,
-          title: `${eventName} - ${registration.fullName}`,
-          quantity: 1,
-          unit_price: priceCents / 100
-        });
-        
-        totalCents += priceCents;
         registrationIds.push(registration.id);
       }
     }
@@ -472,16 +528,33 @@ class PaymentService {
       throw new ConflictError("Pedido nao possui pagamento confirmado");
     }
 
-    const response = await this.refund.create({
-      payment_id: order.mpPaymentId,
-      body: {
-        amount: amountCents / 100
-      }
-    });
+    const paymentMethod = order.paymentMethod as PaymentMethod | null;
+    if (
+      paymentMethod !== PaymentMethod.PIX_MP ||
+      order.mpPaymentId.startsWith("MANUAL-")
+    ) {
+      throw new ConflictError("Pedido nao foi pago pelo Mercado Pago");
+    }
 
-    logger.info({ orderId, registrationId, refundId: response.id }, "Estorno solicitado ao Mercado Pago");
+    try {
+      const response = await this.refund.create({
+        payment_id: order.mpPaymentId,
+        body: {
+          amount: amountCents / 100
+        }
+      });
 
-    return response;
+      logger.info({ orderId, registrationId, refundId: response.id }, "Estorno solicitado ao Mercado Pago");
+
+      return response;
+    } catch (error: any) {
+      logger.error({ orderId, registrationId, error }, "Falha ao solicitar estorno no Mercado Pago");
+      const message =
+        error?.message ??
+        error?.cause?.[0]?.description ??
+        "Erro ao solicitar estorno no Mercado Pago";
+      throw new AppError(message, Number(error?.status) || 502);
+    }
   }
 }
 

@@ -12,6 +12,10 @@ import {
   parsePaymentMethods,
   serializePaymentMethods
 } from "../../config/payment-methods";
+import {
+  DEFAULT_PENDING_PAYMENT_VALUE_RULE,
+  PendingPaymentValueRule
+} from "../../config/pending-payment-value-rule";
 
 type EventLotEntity = Awaited<ReturnType<typeof eventLotService.list>>[number];
 
@@ -186,6 +190,7 @@ export class EventService {
     minAgeYears?: number | null;
     isActive?: boolean;
     paymentMethods?: PaymentMethod[];
+    pendingPaymentValueRule?: PendingPaymentValueRule;
   }) {
     const desiredSlug = data.slug ? normalizeSlugInput(data.slug) : null;
     const baseSlug =
@@ -206,6 +211,7 @@ export class EventService {
         paymentMethods: serializePaymentMethods(
           data.paymentMethods ?? DEFAULT_PAYMENT_METHODS
         ),
+        pendingPaymentValueRule: data.pendingPaymentValueRule ?? DEFAULT_PENDING_PAYMENT_VALUE_RULE,
         slug
       }
     });
@@ -237,6 +243,7 @@ export class EventService {
       isActive?: boolean;
       paymentMethods?: PaymentMethod[];
       slug?: string;
+      pendingPaymentValueRule?: PendingPaymentValueRule;
     }>
   ) {
     const event = await prisma.event.findUnique({ where: { id } });
@@ -263,6 +270,10 @@ export class EventService {
     if (data.paymentMethods !== undefined) {
       const methods = data.paymentMethods.length ? data.paymentMethods : DEFAULT_PAYMENT_METHODS;
       payload.paymentMethods = serializePaymentMethods(methods);
+    }
+
+    if (data.pendingPaymentValueRule !== undefined) {
+      payload.pendingPaymentValueRule = data.pendingPaymentValueRule;
     }
 
    if (data.slug !== undefined) {

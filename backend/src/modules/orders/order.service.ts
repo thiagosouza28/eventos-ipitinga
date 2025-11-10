@@ -5,7 +5,7 @@ import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue }
 import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
-import { paymentService, extractPreferenceVersion } from "../../services/payment.service";
+import { paymentService, extractPreferenceVersion, resolveCurrentLotPriceCents } from "../../services/payment.service";
 import { registrationService } from "../registrations/registration.service";
 import { eventService } from "../events/event.service";
 import { storageService } from "../../storage/storage.service";
@@ -19,6 +19,11 @@ import {
   PaymentMethod,
   parsePaymentMethods
 } from "../../config/payment-methods";
+import {
+  DEFAULT_PENDING_PAYMENT_VALUE_RULE,
+  isPendingPaymentValueRule,
+  PendingPaymentValueRule
+} from "../../config/pending-payment-value-rule";
 import { Gender, parseGender } from "../../config/gender";
 import { calculateMercadoPagoFees } from "../../utils/mercado-pago-fees";
 
@@ -51,27 +56,96 @@ export class OrderService {
         event: {
           select: {
             id: true,
-            title: true
+            title: true,
+            priceCents: true,
+            pendingPaymentValueRule: true
           }
         }
       }
     });
-    return orders;
+
+    return Promise.all(
+      orders.map(async (order) => {
+        const ruleValue = order.event?.pendingPaymentValueRule;
+        const pricingRule = isPendingPaymentValueRule(ruleValue)
+          ? ruleValue
+          : DEFAULT_PENDING_PAYMENT_VALUE_RULE;
+
+        if (pricingRule !== "UPDATE_TO_ACTIVE_LOT") {
+          return {
+            ...order,
+            pendingPricingRule: pricingRule
+          };
+        }
+
+        const unitPriceCents = await resolveCurrentLotPriceCents(
+          order.eventId,
+          order.event?.priceCents ?? order.totalCents / Math.max(order.registrations.length, 1)
+        );
+
+        return {
+          ...order,
+          totalCents: unitPriceCents * order.registrations.length,
+          registrations: order.registrations.map((registration) => ({
+            ...registration,
+            priceCents: unitPriceCents
+          })),
+          pendingPricingRule: pricingRule
+        };
+      })
+    );
   }
 
   async findPendingOrder(eventId: string, buyerCpf: string) {
     const orders = await prisma.order.findMany({
-      where: { 
+      where: {
         eventId,
         buyerCpf: sanitizeCpf(buyerCpf),
         status: "PENDING"
       },
       include: {
         registrations: true,
-        event: true
+        event: {
+          select: {
+            id: true,
+            title: true,
+            priceCents: true,
+            pendingPaymentValueRule: true
+          }
+        }
       }
     });
-    return orders;
+
+    return Promise.all(
+      orders.map(async (order) => {
+        const ruleValue = order.event?.pendingPaymentValueRule;
+        const pricingRule = isPendingPaymentValueRule(ruleValue)
+          ? ruleValue
+          : DEFAULT_PENDING_PAYMENT_VALUE_RULE;
+
+        if (pricingRule !== "UPDATE_TO_ACTIVE_LOT") {
+          return {
+            ...order,
+            pendingPricingRule: pricingRule
+          };
+        }
+
+        const unitPriceCents = await resolveCurrentLotPriceCents(
+          order.eventId,
+          order.event?.priceCents ?? order.totalCents / Math.max(order.registrations.length, 1)
+        );
+
+        return {
+          ...order,
+          totalCents: unitPriceCents * order.registrations.length,
+          registrations: order.registrations.map((registration) => ({
+            ...registration,
+            priceCents: unitPriceCents
+          })),
+          pendingPricingRule: pricingRule
+        };
+      })
+    );
   }
 
   async createBatch(payload: {
@@ -297,11 +371,17 @@ export class OrderService {
       throw new AppError("Pedido expirado ou cancelado", 400);
     }
     const participantCount = order.registrations.length;
-
-    const totalCents = order.registrations.reduce((sum, registration) => {
-      const price = registration.priceCents ?? order.event.priceCents;
-      return sum + price;
-    }, 0);
+    const fallbackPriceCents = order.event?.priceCents ?? 0;
+    const paymentRule = isPendingPaymentValueRule(order.event?.pendingPaymentValueRule)
+      ? (order.event?.pendingPaymentValueRule as PendingPaymentValueRule)
+      : DEFAULT_PENDING_PAYMENT_VALUE_RULE;
+    let totalCents = order.totalCents;
+    let needsPriceUpdate = false;
+    if (paymentRule === "UPDATE_TO_ACTIVE_LOT" && participantCount > 0) {
+      const unitPriceCents = await resolveCurrentLotPriceCents(order.eventId, fallbackPriceCents);
+      totalCents = unitPriceCents * participantCount;
+      needsPriceUpdate = totalCents !== order.totalCents;
+    }
 
     const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
     const isManualMethod = ManualPaymentMethods.includes(paymentMethod);
@@ -385,8 +465,10 @@ export class OrderService {
       }
     }
 
+    const shouldRefreshPreference = needsPriceUpdate;
+
     let preference;
-    if (order.mpPreferenceId && order.expiresAt && order.expiresAt > new Date()) {
+    if (!shouldRefreshPreference && order.mpPreferenceId && order.expiresAt && order.expiresAt > new Date()) {
       try {
         preference = await paymentService.getPreference(order.mpPreferenceId);
       } catch (error) {
@@ -413,7 +495,7 @@ export class OrderService {
     // Como fallback final, gerar um pagamento PIX especifico para obter o QR
     if (!pixQrData && paymentMethod === PaymentMethod.PIX_MP) {
       try {
-        const pix = await paymentService.createPixPaymentForOrder(orderId);
+      const pix = await paymentService.createPixPaymentForOrder(orderId);
         pixQrData = pix.pixQrData ?? pixQrData;
       } catch (error) {
         logger.warn({ orderId, error }, "Falha ao criar pagamento PIX para gerar QR");
@@ -433,9 +515,12 @@ export class OrderService {
   }
 
   async list(filters: { eventId?: string; status?: OrderStatusValue }) {
-    // Verificar se as colunas existem antes de usar
-    const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("Order")`);
-    const columnNames = columns.map(col => col.name);
+    const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'Order'
+    `;
+    const columnNames = columns.map((col) => col.column_name);
     const hasFeeCents = columnNames.includes("feeCents");
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
@@ -640,10 +725,13 @@ export class OrderService {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
-      // Verificar se as colunas existem antes de tentar atualizar
-      const orderColumns = await tx.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("Order")`);
-      const hasFeeCents = orderColumns.some(col => col.name === "feeCents");
-      const hasNetAmountCents = orderColumns.some(col => col.name === "netAmountCents");
+      const orderColumns = await tx.$queryRaw<Array<{ column_name: string }>>`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'Order'
+      `;
+      const hasFeeCents = orderColumns.some((col) => col.column_name === "feeCents");
+      const hasNetAmountCents = orderColumns.some((col) => col.column_name === "netAmountCents");
 
       const updateData: any = {
         status: OrderStatus.PAID,

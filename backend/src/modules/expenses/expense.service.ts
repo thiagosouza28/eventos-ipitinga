@@ -105,8 +105,10 @@ export class ExpenseService {
   async listByEvent(eventId: string) {
     try {
       // Verificar se a tabela Expense existe
-      const tables = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-        `SELECT name FROM sqlite_master WHERE type='table' AND name='Expense'`
+      const tables = await prisma.$queryRawUnsafe<Array<{ TABLE_NAME: string }>>(
+        `SELECT TABLE_NAME
+         FROM information_schema.TABLES
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Expense'`
       );
 
       if (tables.length === 0) {

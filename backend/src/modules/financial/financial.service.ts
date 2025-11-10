@@ -12,8 +12,14 @@ export class FinancialService {
     }
 
     // Verificar se as colunas existem antes de usar
-    const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("Order")`);
-    const columnNames = columns.map(col => col.name);
+    const columns = await prisma.$queryRaw<Array<{ column_name?: string; COLUMN_NAME?: string }>>`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'Order'
+    `;
+    const columnNames = columns.map(
+      (col) => col.column_name ?? col.COLUMN_NAME ?? (col as any).name ?? ""
+    );
     const hasFeeCents = columnNames.includes("feeCents");
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
@@ -34,7 +40,7 @@ export class FinancialService {
         ${feeCentsSelect},
         ${netAmountCentsSelect},
         o.paymentMethod
-      FROM "Order" o
+      FROM \`Order\` o
       WHERE o.eventId = '${eventId}' AND o.status = 'PAID'
     `);
 
@@ -362,8 +368,14 @@ export class FinancialService {
   async getGeneralSummary() {
     try {
       // Verificar se as colunas existem antes de usar
-      const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(`PRAGMA table_info("Order")`);
-      const columnNames = columns.map(col => col.name);
+    const columns = await prisma.$queryRaw<Array<{ column_name?: string; COLUMN_NAME?: string }>>`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = DATABASE() AND table_name = 'Order'
+    `;
+    const columnNames = columns.map(
+      (col) => col.column_name ?? col.COLUMN_NAME ?? (col as any).name ?? ""
+    );
       const hasFeeCents = columnNames.includes("feeCents");
       const hasNetAmountCents = columnNames.includes("netAmountCents");
 
@@ -386,8 +398,8 @@ export class FinancialService {
           e.id as event_id,
           e.title as event_title,
           e.slug as event_slug
-        FROM "Order" o
-        INNER JOIN "Event" e ON o.eventId = e.id
+        FROM \`Order\` o
+        INNER JOIN \`Event\` e ON o.eventId = e.id
         WHERE o.status = 'PAID'
       `;
 

@@ -12,16 +12,34 @@ import { prisma } from "./lib/prisma";
 import { closeReceiptBrowser } from "./pdf/receipt.service";
 import { logger } from "./utils/logger";
 
-const REQUIRED_TABLES = ["Event", "EventLot"];
+const REQUIRED_TABLES = [
+  "District",
+  "Church",
+  "Event",
+  "EventLot",
+  "Order",
+  "Registration",
+  "Refund",
+  "WebhookEvent",
+  "AuditLog",
+  "User",
+  "Expense"
+];
+
+const backendRoot = path.resolve(__dirname, "..");
 
 const resolvePrismaBinary = () => {
   const binaryName = process.platform === "win32" ? "prisma.cmd" : "prisma";
-  const candidate = path.resolve(process.cwd(), "node_modules", ".bin", binaryName);
+  const candidate = path.resolve(backendRoot, "node_modules", ".bin", binaryName);
   if (existsSync(candidate)) {
-    return { command: candidate, args: ["migrate", "deploy"], shell: false };
+    return { command: candidate, args: ["migrate", "deploy", "--schema", "prisma/schema.prisma"], shell: false };
   }
   const fallback = process.platform === "win32" ? "npx.cmd" : "npx";
-  return { command: fallback, args: ["prisma", "migrate", "deploy"], shell: process.platform === "win32" };
+  return {
+    command: fallback,
+    args: ["prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"],
+    shell: process.platform === "win32"
+  };
 };
 
 const runMigrations = () =>
@@ -29,7 +47,8 @@ const runMigrations = () =>
     const { command, args, shell } = resolvePrismaBinary();
     const child = spawn(command, args, {
       stdio: "inherit",
-      shell
+      shell,
+      cwd: backendRoot
     });
 
     child.on("exit", (code) => {
@@ -47,21 +66,11 @@ const runMigrations = () =>
 
 const ensureDatabaseSchema = async () => {
   try {
-    const isSQLite =
-      env.DATABASE_URL.startsWith("file:") || env.DATABASE_URL.includes("sqlite");
-
-    const existingTables =
-      isSQLite
-        ? await prisma.$queryRaw<{ name: string }[]>`
-            SELECT name
-            FROM sqlite_master
-            WHERE type = 'table' AND name IN (${Prisma.join(REQUIRED_TABLES)})
-          `
-        : await prisma.$queryRaw<{ name: string }[]>`
-            SELECT table_name AS name
-            FROM information_schema.tables
-            WHERE table_schema = 'public' AND table_name IN (${Prisma.join(REQUIRED_TABLES)})
-          `;
+    const existingTables = await prisma.$queryRaw<{ name: string }[]>`
+      SELECT table_name AS name
+      FROM information_schema.tables
+      WHERE table_schema = DATABASE() AND table_name IN (${Prisma.join(REQUIRED_TABLES)})
+    `;
 
     const existing = new Set(existingTables.map((table) => table.name));
     const missing = REQUIRED_TABLES.filter((table) => !existing.has(table));

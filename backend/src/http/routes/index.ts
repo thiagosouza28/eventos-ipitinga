@@ -7,7 +7,8 @@ import {
   createChurchHandler,
   listChurchesHandler,
   updateChurchHandler,
-  deleteChurchHandler
+  deleteChurchHandler,
+  findChurchByDirectorCpfHandler
 } from "../../modules/churches/church.controller";
 import {
   createDistrictHandler,
@@ -108,6 +109,7 @@ router.post("/checkin/confirm", confirmCheckinLinkHandler);
 router.post("/webhooks/mercadopago", mercadoPagoWebhookHandler);
 router.get("/catalog/districts", listDistrictsHandler);
 router.get("/catalog/churches", listChurchesHandler);
+router.get("/catalog/churches/director", findChurchByDirectorCpfHandler);
 
 // AutenticaÃ§Ã£o
 router.post("/admin/login", loginHandler);

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { eventService } from "./event.service";
 import { PaymentMethod } from "../../config/payment-methods";
+import { PendingPaymentValueRuleValues } from "../../config/pending-payment-value-rule";
 
 const paymentMethodSchema = z.nativeEnum(PaymentMethod);
 const bannerFieldSchema = z
@@ -17,6 +18,8 @@ const slugFieldSchema = z
   .trim()
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/i, "Slug deve conter apenas letras, números e hífens");
 
+const pendingPaymentValueRuleSchema = z.enum(PendingPaymentValueRuleValues);
+
 const createSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
@@ -29,7 +32,8 @@ const createSchema = z.object({
   priceCents: z.number().int().min(0).optional(),
   minAgeYears: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
-  paymentMethods: z.array(paymentMethodSchema).min(1).optional()
+  paymentMethods: z.array(paymentMethodSchema).min(1).optional(),
+  pendingPaymentValueRule: pendingPaymentValueRuleSchema.optional()
 });
 
 const updateSchema = createSchema.partial();
