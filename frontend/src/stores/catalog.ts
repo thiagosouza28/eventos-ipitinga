@@ -2,12 +2,14 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 import { useApi } from "../composables/useApi";
-import type { District, Church } from "../types/api";
+import type { District, Church, Ministry, ChurchDirectorMatch } from "../types/api";
+import { normalizeCPF } from "../utils/cpf";
 
 export const useCatalogStore = defineStore("catalog", () => {
   const { api } = useApi();
   const districts = ref<District[]>([]);
   const churches = ref<Church[]>([]);
+  const ministries = ref<Ministry[]>([]);
   const lastChurchFilter = ref<string | undefined>(undefined);
 
   const loadDistricts = async () => {
@@ -167,11 +169,72 @@ export const useCatalogStore = defineStore("catalog", () => {
     await refreshChurches();
   };
 
+  const loadMinistries = async () => {
+    const response = await api.get("/catalog/ministries");
+    ministries.value = (response.data || []).map(
+      (m: any): Ministry => ({
+        id: String(m.id || ""),
+        name: String(m.name || ""),
+        description: m.description ? String(m.description) : null,
+        isActive: Boolean(m.isActive)
+      })
+    );
+  };
+
+  const createMinistry = async (payload: { name: string; description?: string; isActive?: boolean }) => {
+    await api.post("/admin/ministries", {
+      name: String(payload.name),
+      description: payload.description ? String(payload.description) : undefined,
+      isActive: payload.isActive ?? true
+    });
+    await loadMinistries();
+  };
+
+  const updateMinistry = async (
+    id: string,
+    payload: { name?: string; description?: string | null; isActive?: boolean }
+  ) => {
+    await api.patch(`/admin/ministries/${id}`, {
+      name: payload.name !== undefined ? String(payload.name) : undefined,
+      description:
+        payload.description !== undefined
+          ? payload.description
+            ? String(payload.description)
+            : null
+          : undefined,
+      isActive: payload.isActive ?? undefined
+    });
+    await loadMinistries();
+  };
+
+  const deleteMinistry = async (id: string) => {
+    await api.delete(`/admin/ministries/${id}`);
+    await loadMinistries();
+  };
+
+  const findChurchByDirectorCpf = async (cpf: string) => {
+    const digits = normalizeCPF(cpf);
+    if (!digits) return null;
+    try {
+      const response = await api.get("/catalog/churches/director", { params: { cpf: digits } });
+      return response.data as ChurchDirectorMatch;
+    } catch (error: any) {
+      if (error?.response?.status === 404) return null;
+      throw error;
+    }
+  };
+
   return {
     districts,
     churches,
+    ministries,
     loadDistricts,
     loadChurches,
+    loadMinistries,
+    findChurchByDirectorCpf,
+    createMinistry,
+    updateMinistry,
+    deleteMinistry,
     createDistrict,
     updateDistrict,
     deleteDistrict,

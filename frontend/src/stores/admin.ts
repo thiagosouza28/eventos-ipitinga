@@ -2,7 +2,7 @@
 import { ref } from "vue";
 
 import { useApi } from "../composables/useApi";
-import type { Event, EventLot, Order, Registration } from "../types/api";
+import type { Event, EventLot, Order, Registration, AdminUser } from "../types/api";
 
 export const useAdminStore = defineStore("admin", () => {
   const { api } = useApi();
@@ -12,6 +12,7 @@ export const useAdminStore = defineStore("admin", () => {
   const registrationFilters = ref<Record<string, unknown>>({});
   const orders = ref<Order[]>([]);
   const dashboard = ref<Record<string, unknown> | null>(null);
+  const users = ref<AdminUser[]>([]);
 
   const loadEvents = async () => {
     const response = await api.get("/admin/events");
@@ -118,6 +119,12 @@ export const useAdminStore = defineStore("admin", () => {
   const cancelRegistration = async (id: string) => {
     await api.post(`/admin/registrations/${id}/cancel`);
     await loadRegistrations(registrationFilters.value);
+  };
+
+  const reactivateRegistration = async (id: string) => {
+    const response = await api.post(`/admin/registrations/${id}/reactivate`);
+    await loadRegistrations(registrationFilters.value);
+    return response.data as { orderId?: string };
   };
 
   const refundRegistration = async (id: string, payload: { amountCents?: number; reason?: string }) => {
@@ -256,12 +263,41 @@ export const useAdminStore = defineStore("admin", () => {
     return response.data as { fileName: string; url: string; size: number; mimeType: string };
   };
 
+  const loadUsers = async () => {
+    const response = await api.get("/admin/users");
+    users.value = response.data;
+    return users.value;
+  };
+
+  type CreateUserPayload = {
+    name: string;
+    email: string;
+    cpf?: string | null;
+    phone?: string | null;
+    role: AdminUser["role"];
+    districtScopeId?: string | null;
+    churchScopeId?: string | null;
+    ministryIds?: string[];
+  };
+
+  const createUser = async (payload: CreateUserPayload) => {
+    const response = await api.post("/admin/users", payload);
+    await loadUsers();
+    return response.data as { user: AdminUser; temporaryPassword: string };
+  };
+
+  const resetUserPassword = async (userId: string) => {
+    const response = await api.post(`/admin/users/${userId}/reset-password`);
+    return response.data as { temporaryPassword: string };
+  };
+
   return {
     events,
     eventLots,
     registrations,
     orders,
     dashboard,
+    users,
     loadEvents,
     saveEvent,
     deleteEvent,
@@ -274,6 +310,7 @@ export const useAdminStore = defineStore("admin", () => {
     downloadFinancialReport,
     updateRegistration,
     cancelRegistration,
+    reactivateRegistration,
     deleteRegistration,
     createAdminRegistration,
     refundRegistration,
@@ -287,6 +324,9 @@ export const useAdminStore = defineStore("admin", () => {
     checkinScan,
     checkinManualLookup,
     confirmCheckin,
-    uploadAsset
+    uploadAsset,
+    loadUsers,
+    createUser,
+    resetUserPassword
   };
 });

@@ -18,10 +18,30 @@
             Gerenciar eventos
           </RouterLink>
           <RouterLink
-            to="/admin/catalog"
+            to="/admin/districts"
             class="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
           >
-            Distritos e igrejas
+            Distritos
+          </RouterLink>
+          <RouterLink
+            to="/admin/churches"
+            class="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+          >
+            Igrejas
+          </RouterLink>
+          <RouterLink
+            v-if="auth.isAdminGeral"
+            to="/admin/ministries"
+            class="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+          >
+            Ministerios
+          </RouterLink>
+          <RouterLink
+            v-if="auth.isAdminGeral"
+            :to="{ name: 'admin-users' }"
+            class="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+          >
+            Cadastrar usuarios
           </RouterLink>
           <RouterLink
             to="/admin/registrations"
@@ -142,8 +162,10 @@ import { RouterLink } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useAdminStore } from "../../stores/admin";
 import { formatDate } from "../../utils/format";
+import { useAuthStore } from "../../stores/auth";
 
 const admin = useAdminStore();
+const auth = useAuthStore();
 
 onMounted(async () => {
   await admin.loadEvents();

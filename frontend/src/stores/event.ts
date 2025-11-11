@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 
 import { useApi } from "../composables/useApi";
-import type { Event, PaymentMethod } from "../types/api";
+import type { Event, PaymentMethod, ChurchDirectorMatch } from "../types/api";
 
 type PersonPayload = {
   fullName: string;
@@ -52,20 +52,33 @@ export const useEventStore = defineStore("event", () => {
 
   const checkPendingOrder = async (buyerCpf: string) => {
     if (!event.value) {
-      throw new Error("Evento não carregado");
+      throw new Error("Evento nǜo carregado");
     }
-    
-    // Validação adicional para garantir que o CPF seja válido
-    if (!buyerCpf || typeof buyerCpf !== "string" || buyerCpf.trim().length === 0) {
-      throw new Error("CPF é obrigatório");
+
+    const sanitizedCpf = (buyerCpf ?? "").toString().replace(/\D/g, "");
+    if (!sanitizedCpf) {
+      throw new Error("CPF Ǹ obrigat��rio");
     }
-    
+
     const response = await api.post("/inscriptions/start", {
       eventId: event.value.id,
-      buyerCpf: buyerCpf.trim()
+      buyerCpf: sanitizedCpf
     });
     pendingOrders.value = response.data.pendingOrders ?? [];
-    return { pendingOrders: pendingOrders.value };
+
+    let suggestedChurch: ChurchDirectorMatch | null = null;
+    try {
+      const directorResponse = await api.get("/catalog/churches/director", {
+        params: { cpf: sanitizedCpf }
+      });
+      suggestedChurch = directorResponse.data ?? null;
+    } catch (error: any) {
+      if (!error?.response || error.response.status !== 404) {
+        console.warn("Falha ao buscar igreja do diretor pelo CPF", error);
+      }
+    }
+
+    return { pendingOrders: pendingOrders.value, suggestedChurch };
   };
 
   const createBatchOrder = async (

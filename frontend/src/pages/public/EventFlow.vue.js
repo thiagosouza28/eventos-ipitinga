@@ -9,8 +9,10 @@ import IconArrowRight from "../../components/ui/IconArrowRight.vue";
 import { useCatalogStore } from "../../stores/catalog";
 import { useEventStore } from "../../stores/event";
 import { useApi } from "../../composables/useApi";
+import { API_BASE_URL } from "../../config/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
+import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS, FREE_PAYMENT_METHODS } from "../../config/paymentMethods";
 import { useAuthStore } from "../../stores/auth";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
@@ -82,6 +84,25 @@ const nextLotInfo = computed(() => {
         price: formatCurrency(nextLot.value.priceCents)
     };
 });
+const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
+const eventBannerError = ref(false);
+const resolveBannerUrl = (value) => {
+    if (!value)
+        return "";
+    if (/^(https?:|data:|blob:)/i.test(value)) {
+        return value;
+    }
+    const sanitized = value.replace(/^\/+/, "");
+    if (!sanitized)
+        return "";
+    if (sanitized.startsWith("uploads/")) {
+        return `${apiOrigin.replace(/\/$/, "")}/${sanitized}`;
+    }
+    return `${uploadsBaseUrl}/${sanitized}`;
+};
+const resolvedBannerUrl = computed(() => resolveBannerUrl(eventStore.event?.bannerUrl));
+const eventHasBanner = computed(() => Boolean(resolvedBannerUrl.value) && !eventBannerError.value);
 const registrationOpen = computed(() => {
     if (!eventStore.event)
         return false;
@@ -93,6 +114,89 @@ const currentStep = ref(0);
 const buyerCpf = ref("");
 const responsibleProfile = ref(null);
 const quantity = ref(1);
+const shouldPersistState = ref(true);
+const STORAGE_KEY = REGISTRATION_STORAGE_KEY;
+const canUseStorage = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const loadPersistedState = () => {
+    if (!canUseStorage)
+        return;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw)
+            return;
+        const saved = JSON.parse(raw);
+        if (typeof saved.buyerCpf === "string")
+            buyerCpf.value = saved.buyerCpf;
+        if (typeof saved.selectedDistrictId === "string")
+            selectedDistrictId.value = saved.selectedDistrictId;
+        if (typeof saved.selectedChurchId === "string")
+            selectedChurchId.value = saved.selectedChurchId;
+        if (typeof saved.quantity === "number")
+            quantity.value = saved.quantity;
+        if (Array.isArray(saved.people) && saved.people.length) {
+            people.splice(0, people.length, ...saved.people.map((person) => ({
+                fullName: person.fullName || "",
+                cpf: person.cpf || "",
+                birthDate: person.birthDate || "",
+                gender: person.gender || "",
+                districtId: person.districtId || "",
+                churchId: person.churchId || "",
+                photoUrl: person.photoUrl || null
+            })));
+            resetParticipantCpfState(people.length);
+        }
+        if (typeof saved.currentStep === "number")
+            currentStep.value = saved.currentStep;
+    }
+    catch (error) {
+        console.warn("Nao foi possivel carregar o estado salvo do formulario", error);
+    }
+};
+const persistState = () => {
+    if (!canUseStorage)
+        return;
+    if (!shouldPersistState.value) {
+        clearPersistedState();
+        return;
+    }
+    try {
+        const payload = {
+            buyerCpf: buyerCpf.value,
+            selectedDistrictId: selectedDistrictId.value,
+            selectedChurchId: selectedChurchId.value,
+            quantity: quantity.value,
+            people: people.map((person) => ({ ...person })),
+            currentStep: currentStep.value
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
+    catch (error) {
+        console.warn("Nao foi possivel salvar o estado local do formulario", error);
+    }
+};
+const clearPersistedState = () => {
+    if (!canUseStorage)
+        return;
+    localStorage.removeItem(STORAGE_KEY);
+};
+const disableStatePersistence = () => {
+    shouldPersistState.value = false;
+    clearPersistedState();
+};
+const MIN_PARTICIPANTS = 1;
+const MAX_PARTICIPANTS = 10;
+const canDecreaseQuantity = computed(() => quantity.value > MIN_PARTICIPANTS);
+const canIncreaseQuantity = computed(() => quantity.value < MAX_PARTICIPANTS);
+const decreaseQuantity = () => {
+    if (canDecreaseQuantity.value) {
+        quantity.value -= 1;
+    }
+};
+const increaseQuantity = () => {
+    if (canIncreaseQuantity.value) {
+        quantity.value += 1;
+    }
+};
 const pendingOrders = ref([]);
 const selectedDistrictId = ref("");
 const selectedChurchId = ref("");
@@ -463,17 +567,23 @@ onMounted(async () => {
     await eventStore.fetchEvent(props.slug);
     await catalog.loadDistricts();
     await catalog.loadChurches();
+    loadPersistedState();
+});
+watch(() => eventStore.event?.bannerUrl, () => {
+    eventBannerError.value = false;
 });
 watch(currentStep, (step) => {
     if (step !== 2 &&
         CPF_GLOBAL_MESSAGES.includes(errorMessage.value)) {
         errorMessage.value = "";
     }
+    persistState();
 });
 watch(buyerCpf, () => {
     if (currentStep.value === 0 && errorMessage.value) {
         errorMessage.value = "";
     }
+    persistState();
 });
 watch(selectedDistrictId, (districtId) => {
     generalErrors.district = "";
@@ -489,6 +599,7 @@ watch(selectedDistrictId, (districtId) => {
             ensurePersonChurch(index);
         });
     }
+    persistState();
 });
 watch(selectedChurchId, (churchId) => {
     generalErrors.church = "";
@@ -532,6 +643,19 @@ const handleCpfSubmit = async (cpfDigits) => {
     try {
         const response = await eventStore.checkPendingOrder(cpfDigits);
         pendingOrders.value = response?.pendingOrders ?? [];
+        const suggestion = response?.suggestedChurch;
+        if (suggestion) {
+            if (!catalog.districts.some((district) => district.id === suggestion.districtId)) {
+                await catalog.loadDistricts();
+            }
+            if (!catalog.churches.some((church) => church.id === suggestion.churchId)) {
+                await catalog.loadChurches();
+            }
+            selectedDistrictId.value = suggestion.districtId;
+            if (catalog.churches.some((church) => church.id === suggestion.churchId)) {
+                selectedChurchId.value = suggestion.churchId;
+            }
+        }
         currentStep.value = 1;
     }
     catch (error) {
@@ -654,6 +778,7 @@ const submitBatch = async () => {
             photoUrl: person.photoUrl
         }));
         const response = await eventStore.createBatchOrder(normalizeCPF(buyerCpf.value), selectedPaymentMethod.value, payload);
+        disableStatePersistence();
         // Se for mÃ©todo gratuito, nÃ£o redirecionar para pÃ¡gina de pagamento
         if (isFreePaymentSelected.value && response.payment?.isFree) {
             // Redirecionar para pÃ¡gina de evento com mensagem de sucesso
@@ -741,6 +866,16 @@ const inlineStatusStyles = computed(() => {
         badge: "bg-primary-500"
     };
 });
+watch(quantity, (value) => {
+    const normalized = Math.min(MAX_PARTICIPANTS, Math.max(MIN_PARTICIPANTS, Number.isFinite(value) ? value : MIN_PARTICIPANTS));
+    if (normalized !== value) {
+        quantity.value = normalized;
+    }
+    persistState();
+});
+watch(people, () => {
+    persistState();
+}, { deep: true });
 const copyInlinePixCode = async () => {
     const code = inlinePayment.value?.pixQrData?.qr_code;
     if (!code)
@@ -783,6 +918,8 @@ debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
+// CSS variable injection 
+// CSS variable injection end 
 if (__VLS_ctx.eventStore.loading) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     /** @type {[typeof LoadingSpinner, ]} */ ;
@@ -815,9 +952,11 @@ else {
         ...{ class: "space-y-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between" },
+        ...{ class: "flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex-1" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
         ...{ class: "text-2xl font-semibold text-neutral-800 dark:text-neutral-50" },
     });
@@ -826,6 +965,34 @@ else {
         ...{ class: "text-neutral-500 dark:text-neutral-400" },
     });
     (__VLS_ctx.eventStore.event.description);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "self-start w-full lg:w-auto" },
+    });
+    if (__VLS_ctx.eventHasBanner) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+            ...{ onError: (...[$event]) => {
+                    if (!!(__VLS_ctx.eventStore.loading))
+                        return;
+                    if (!!(!__VLS_ctx.eventStore.event))
+                        return;
+                    if (!(__VLS_ctx.eventHasBanner))
+                        return;
+                    __VLS_ctx.eventBannerError = true;
+                } },
+            src: (__VLS_ctx.resolvedBannerUrl || ''),
+            alt: "Banner do evento",
+            ...{ class: "w-full max-h-60 object-contain" },
+            loading: "lazy",
+        });
+    }
+    else if (__VLS_ctx.eventStore.event?.bannerUrl) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex h-40 w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500" },
+        });
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "text-left sm:text-right" },
     });
@@ -1070,16 +1237,34 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                 ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-1 flex w-full items-center rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800 sm:w-56" },
+                'aria-invalid': (__VLS_ctx.generalErrors.quantity ? 'true' : 'false'),
+                'aria-describedby': "quantity-error",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.decreaseQuantity) },
+                type: "button",
+                ...{ class: "h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900" },
+                disabled: (!__VLS_ctx.canDecreaseQuantity),
+                'aria-label': "Diminuir quantidade",
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
                 type: "number",
                 min: "1",
                 max: "10",
-                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800 sm:w-32" },
-                'aria-invalid': (__VLS_ctx.generalErrors.quantity ? 'true' : 'false'),
-                'aria-describedby': "quantity-error",
+                'data-quantity-input': true,
+                ...{ class: "h-10 w-full border-0 bg-transparent text-center text-lg font-semibold outline-none" },
                 required: true,
             });
             (__VLS_ctx.quantity);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.increaseQuantity) },
+                type: "button",
+                ...{ class: "h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900" },
+                disabled: (!__VLS_ctx.canIncreaseQuantity),
+                'aria-label': "Aumentar quantidade",
+            });
             if (__VLS_ctx.generalErrors.quantity) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     id: "quantity-error",
@@ -1089,7 +1274,7 @@ else {
                 (__VLS_ctx.generalErrors.quantity);
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-3 sm:flex-row sm:justify-between" },
+                ...{ class: "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1104,11 +1289,11 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+                ...{ class: "w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 type: "submit",
-                ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto" },
+                ...{ class: "w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto" },
             });
             var __VLS_27;
         }
@@ -1351,7 +1536,7 @@ else {
                 var __VLS_44;
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-3 sm:flex-row sm:justify-between" },
+                ...{ class: "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1366,12 +1551,12 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+                ...{ class: "w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.goToReview) },
                 type: "button",
-                ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto" },
+                ...{ class: "w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto" },
             });
             if (__VLS_ctx.errorMessage) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1531,7 +1716,7 @@ else {
             });
             (__VLS_ctx.isFreeEvent ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.ticketPriceCents * __VLS_ctx.people.length));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-3 sm:flex-row sm:justify-between" },
+                ...{ class: "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1546,12 +1731,12 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+                ...{ class: "w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.submitBatch) },
                 type: "button",
-                ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto" },
+                ...{ class: "w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto" },
                 disabled: (__VLS_ctx.submitting),
             });
             if (__VLS_ctx.submitting) {
@@ -1786,15 +1971,43 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['self-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-h-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-contain']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-72']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-left']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -1915,47 +2128,82 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-56']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-transparent']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-32']} */ ;
+/** @type {__VLS_StyleScopedClasses['outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col-reverse']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-600/30']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
@@ -2125,31 +2373,40 @@ else {
 /** @type {__VLS_StyleScopedClasses['w-24']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col-reverse']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-600/30']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
@@ -2274,31 +2531,40 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col-reverse']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-600/30']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
@@ -2518,11 +2784,18 @@ const __VLS_self = (await import('vue')).defineComponent({
             priceInfo: priceInfo,
             currentLotName: currentLotName,
             nextLotInfo: nextLotInfo,
+            eventBannerError: eventBannerError,
+            resolvedBannerUrl: resolvedBannerUrl,
+            eventHasBanner: eventHasBanner,
             registrationOpen: registrationOpen,
             currentStep: currentStep,
             buyerCpf: buyerCpf,
             responsibleProfile: responsibleProfile,
             quantity: quantity,
+            canDecreaseQuantity: canDecreaseQuantity,
+            canIncreaseQuantity: canIncreaseQuantity,
+            decreaseQuantity: decreaseQuantity,
+            increaseQuantity: increaseQuantity,
             pendingOrders: pendingOrders,
             selectedDistrictId: selectedDistrictId,
             selectedChurchId: selectedChurchId,

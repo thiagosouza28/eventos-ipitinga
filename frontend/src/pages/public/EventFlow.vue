@@ -10,14 +10,34 @@
   <div v-else class="space-y-6">
     <BaseCard>
       <div class="space-y-4">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="flex-1">
             <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
               {{ eventStore.event.title }}
             </h1>
             <p class="text-neutral-500 dark:text-neutral-400">
               {{ eventStore.event.description }}
             </p>
+          </div>
+          <div class="self-start w-full lg:w-auto">
+            <div
+              v-if="eventHasBanner"
+              class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700"
+            >
+              <img
+                :src="resolvedBannerUrl || ''"
+                alt="Banner do evento"
+                class="w-full max-h-60 object-contain"
+                loading="lazy"
+                @error="eventBannerError = true"
+              />
+            </div>
+            <div
+              v-else-if="eventStore.event?.bannerUrl"
+              class="flex h-40 w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500"
+            >
+              Imagem indisponivel
+            </div>
           </div>
           <div class="text-left sm:text-right">
             <p class="text-sm text-neutral-500">
@@ -162,16 +182,39 @@
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
               Quantidade de participantes
             </label>
-            <input
-              v-model.number="quantity"
-              type="number"
-              min="1"
-              max="10"
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-center text-lg font-semibold dark:border-neutral-700 dark:bg-neutral-800 sm:w-32"
+            <div
+              class="mt-1 flex w-full items-center rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800 sm:w-56"
               :aria-invalid="generalErrors.quantity ? 'true' : 'false'"
               aria-describedby="quantity-error"
-              required
-            />
+            >
+              <button
+                type="button"
+                class="h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                :disabled="!canDecreaseQuantity"
+                @click="decreaseQuantity"
+                aria-label="Diminuir quantidade"
+              >
+                -
+              </button>
+              <input
+                v-model.number="quantity"
+                type="number"
+                min="1"
+                max="10"
+                data-quantity-input
+                class="h-10 w-full border-0 bg-transparent text-center text-lg font-semibold outline-none"
+                required
+              />
+              <button
+                type="button"
+                class="h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                :disabled="!canIncreaseQuantity"
+                @click="increaseQuantity"
+                aria-label="Aumentar quantidade"
+              >
+                +
+              </button>
+            </div>
             <p
               v-if="generalErrors.quantity"
               id="quantity-error"
@@ -181,17 +224,17 @@
               {{ generalErrors.quantity }}
             </p>
           </div>
-          <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
+          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
             <button
               type="button"
-              class="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+              class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
               @click="currentStep--"
             >
               Voltar
             </button>
             <button
               type="submit"
-              class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto"
+              class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto"
             >
               Avançar
             </button>
@@ -361,17 +404,17 @@
           </div>
         </BaseCard>
 
-        <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
           <button
             type="button"
-            class="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+            class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
             @click="currentStep--"
           >
             Voltar
           </button>
           <button
             type="button"
-            class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 sm:w-auto"
+            class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto"
             @click="goToReview"
           >
             Revisar inscrições
@@ -488,17 +531,17 @@
               {{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents * people.length) }}
             </p>
           </div>
-          <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
+          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
             <button
               type="button"
-              class="w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+              class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
               @click="currentStep--"
             >
               Voltar
             </button>
             <button
               type="button"
-              class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
+              class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
               :disabled="submitting"
               @click="submitBatch"
             >
@@ -653,9 +696,11 @@
 import { useCatalogStore } from "../../stores/catalog";
 import { useEventStore } from "../../stores/event";
 import { useApi } from "../../composables/useApi";
+import { API_BASE_URL } from "../../config/api";
 import type { Church, EventLot, RegistrationProfile } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
+import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 import {
   paymentMethodLabel,
   PAYMENT_METHODS,
@@ -768,16 +813,113 @@ const nextLotInfo = computed(() => {
     price: formatCurrency(nextLot.value.priceCents)
   };
 });
+  const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+  const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
+  const eventBannerError = ref(false);
+  const resolveBannerUrl = (value?: string | null) => {
+    if (!value) return "";
+    if (/^(https?:|data:|blob:)/i.test(value)) {
+      return value;
+    }
+    const sanitized = value.replace(/^\/+/, "");
+    if (!sanitized) return "";
+    if (sanitized.startsWith("uploads/")) {
+      return `${apiOrigin.replace(/\/$/, "")}/${sanitized}`;
+    }
+    return `${uploadsBaseUrl}/${sanitized}`;
+  };
+  const resolvedBannerUrl = computed(() => resolveBannerUrl(eventStore.event?.bannerUrl));
+  const eventHasBanner = computed(
+    () => Boolean(resolvedBannerUrl.value) && !eventBannerError.value
+  );
+
   const registrationOpen = computed(() => {
     if (!eventStore.event) return false;
     if (isFreeEvent.value) return true;
     return Boolean(eventStore.event.currentLot);
   });
 
-  const currentStep = ref(0);
-  const buyerCpf = ref("");
-  const responsibleProfile = ref<RegistrationProfile | null>(null);
-  const quantity = ref(1);
+const currentStep = ref(0);
+const buyerCpf = ref("");
+const responsibleProfile = ref<RegistrationProfile | null>(null);
+const quantity = ref(1);
+const shouldPersistState = ref(true);
+const STORAGE_KEY = REGISTRATION_STORAGE_KEY;
+const canUseStorage = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const loadPersistedState = () => {
+  if (!canUseStorage) return;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (typeof saved.buyerCpf === "string") buyerCpf.value = saved.buyerCpf;
+    if (typeof saved.selectedDistrictId === "string") selectedDistrictId.value = saved.selectedDistrictId;
+    if (typeof saved.selectedChurchId === "string") selectedChurchId.value = saved.selectedChurchId;
+    if (typeof saved.quantity === "number") quantity.value = saved.quantity;
+    if (Array.isArray(saved.people) && saved.people.length) {
+      people.splice(
+        0,
+        people.length,
+        ...saved.people.map((person: PersonForm) => ({
+          fullName: person.fullName || "",
+          cpf: person.cpf || "",
+          birthDate: person.birthDate || "",
+          gender: person.gender || "",
+          districtId: person.districtId || "",
+          churchId: person.churchId || "",
+          photoUrl: person.photoUrl || null
+        }))
+      );
+      resetParticipantCpfState(people.length);
+    }
+    if (typeof saved.currentStep === "number") currentStep.value = saved.currentStep;
+  } catch (error) {
+    console.warn("Nao foi possivel carregar o estado salvo do formulario", error);
+  }
+};
+const persistState = () => {
+  if (!canUseStorage) return;
+  if (!shouldPersistState.value) {
+    clearPersistedState();
+    return;
+  }
+  try {
+    const payload = {
+      buyerCpf: buyerCpf.value,
+      selectedDistrictId: selectedDistrictId.value,
+      selectedChurchId: selectedChurchId.value,
+      quantity: quantity.value,
+      people: people.map((person) => ({ ...person })),
+      currentStep: currentStep.value
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.warn("Nao foi possivel salvar o estado local do formulario", error);
+  }
+};
+const clearPersistedState = () => {
+  if (!canUseStorage) return;
+  localStorage.removeItem(STORAGE_KEY);
+};
+
+const disableStatePersistence = () => {
+  shouldPersistState.value = false;
+  clearPersistedState();
+};
+  const MIN_PARTICIPANTS = 1;
+  const MAX_PARTICIPANTS = 10;
+  const canDecreaseQuantity = computed(() => quantity.value > MIN_PARTICIPANTS);
+  const canIncreaseQuantity = computed(() => quantity.value < MAX_PARTICIPANTS);
+  const decreaseQuantity = () => {
+    if (canDecreaseQuantity.value) {
+      quantity.value -= 1;
+    }
+  };
+  const increaseQuantity = () => {
+    if (canIncreaseQuantity.value) {
+      quantity.value += 1;
+    }
+  };
   const pendingOrders = ref<PendingOrder[]>([]);
   const selectedDistrictId = ref("");
   const selectedChurchId = ref("");
@@ -1207,7 +1349,15 @@ const nextLotInfo = computed(() => {
     await eventStore.fetchEvent(props.slug);
     await catalog.loadDistricts();
     await catalog.loadChurches();
+    loadPersistedState();
   });
+
+  watch(
+    () => eventStore.event?.bannerUrl,
+    () => {
+      eventBannerError.value = false;
+    }
+  );
 
   watch(currentStep, (step) => {
     if (
@@ -1216,12 +1366,14 @@ const nextLotInfo = computed(() => {
     ) {
       errorMessage.value = "";
     }
+    persistState();
   });
 
   watch(buyerCpf, () => {
     if (currentStep.value === 0 && errorMessage.value) {
       errorMessage.value = "";
     }
+    persistState();
   });
 
   watch(selectedDistrictId, (districtId) => {
@@ -1242,6 +1394,7 @@ const nextLotInfo = computed(() => {
         ensurePersonChurch(index);
       });
     }
+    persistState();
   });
 
   watch(selectedChurchId, (churchId) => {
@@ -1301,6 +1454,20 @@ const nextLotInfo = computed(() => {
     try {
       const response = await eventStore.checkPendingOrder(cpfDigits);
       pendingOrders.value = response?.pendingOrders ?? [];
+
+      const suggestion = response?.suggestedChurch;
+      if (suggestion) {
+        if (!catalog.districts.some((district) => district.id === suggestion.districtId)) {
+          await catalog.loadDistricts();
+        }
+        if (!catalog.churches.some((church) => church.id === suggestion.churchId)) {
+          await catalog.loadChurches();
+        }
+        selectedDistrictId.value = suggestion.districtId;
+        if (catalog.churches.some((church) => church.id === suggestion.churchId)) {
+          selectedChurchId.value = suggestion.churchId;
+        }
+      }
       currentStep.value = 1;
     } catch (error: any) {
       errorMessage.value = error.response?.data?.message ?? "NÃ£o foi possÃ­vel verificar.";
@@ -1441,7 +1608,7 @@ const nextLotInfo = computed(() => {
         selectedPaymentMethod.value,
         payload
       );
-      
+      disableStatePersistence();
       // Se for mÃ©todo gratuito, nÃ£o redirecionar para pÃ¡gina de pagamento
       if (isFreePaymentSelected.value && response.payment?.isFree) {
         // Redirecionar para pÃ¡gina de evento com mensagem de sucesso
@@ -1539,6 +1706,28 @@ const nextLotInfo = computed(() => {
     };
   });
 
+  watch(
+    quantity,
+    (value) => {
+      const normalized = Math.min(
+        MAX_PARTICIPANTS,
+        Math.max(MIN_PARTICIPANTS, Number.isFinite(value) ? value : MIN_PARTICIPANTS)
+      );
+      if (normalized !== value) {
+        quantity.value = normalized;
+      }
+      persistState();
+    }
+  );
+
+  watch(
+    people,
+    () => {
+      persistState();
+    },
+    { deep: true }
+  );
+
   const copyInlinePixCode = async () => {
     const code = inlinePayment.value?.pixQrData?.qr_code;
     if (!code) return;
@@ -1571,24 +1760,15 @@ const nextLotInfo = computed(() => {
     if (inlinePollHandle.value) { clearInterval(inlinePollHandle.value); inlinePollHandle.value = null; }
   };</script>
 
+<style scoped>
+input[data-quantity-input]::-webkit-outer-spin-button,
+input[data-quantity-input]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+input[data-quantity-input] {
+  -moz-appearance: textfield;
+}
+</style>
 

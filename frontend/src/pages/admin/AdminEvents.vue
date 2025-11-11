@@ -51,6 +51,7 @@
               <th class="pb-2">Título</th>
               <th class="pb-2">Periodo</th>
               <th class="pb-2">Valor vigente</th>
+              <th class="pb-2">Regra de valor pendente</th>
               <th class="pb-2">Lote atual</th>
               <th class="pb-2">Status</th>
               <th class="pb-2 text-right">Acoes</th>
@@ -70,10 +71,16 @@
               <td class="py-3">
                 {{ event.isFree ? "Gratuito" : formatCurrency(event.currentPriceCents ?? event.priceCents) }}
               </td>
+              <td
+                class="py-3 text-sm text-neutral-600 dark:text-neutral-300"
+                :title="getPendingPaymentValueRuleDescription(event.pendingPaymentValueRule)"
+              >
+                {{ getPendingPaymentValueRuleLabel(event.pendingPaymentValueRule) }}
+              </td>
               <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">
                 {{ event.currentLot?.name ?? "--" }}
               </td>
-              <td class="py-3">
+            <td class="py-3">
                 <span
                   :class="[
                     'rounded-full px-3 py-1 text-xs font-semibold uppercase',
@@ -110,7 +117,7 @@
               </td>
             </tr>
             <tr v-if="!admin.events.length">
-              <td class="py-3 text-sm text-neutral-500" colspan="6">
+              <td class="py-3 text-sm text-neutral-500" colspan="7">
                 Nenhum evento cadastrado ate o momento.
               </td>
             </tr>
@@ -251,6 +258,28 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Ministerio responsavel
+          </label>
+          <select
+            v-model="createForm.ministryId"
+            required
+            :disabled="!activeMinistries.length"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-70"
+          >
+            <option value="">Selecione</option>
+            <option v-for="ministry in activeMinistries" :key="ministry.id" :value="ministry.id">
+              {{ ministry.name }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Escolha o ministerio que coordenara este evento. Cadastre novos ministerios na pagina de catalogo.
+          </p>
+          <p v-if="!activeMinistries.length" class="text-xs text-red-500 dark:text-red-400">
+            Cadastre ao menos um ministerio ativo para criar eventos.
+          </p>
+        </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Tipo de inscricao
@@ -310,6 +339,29 @@
                 <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
                 <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</span>
               </span>
+            </label>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Regra de valor para pagamentos pendentes
+          </label>
+          <div class="mt-2 grid gap-2">
+            <label
+              v-for="option in pendingPaymentValueRuleOptions"
+              :key="option.value"
+              class="flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            >
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="createForm.pendingPaymentValueRule"
+                  type="radio"
+                  :value="option.value"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                />
+                <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
+              </div>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</p>
             </label>
           </div>
         </div>
@@ -465,6 +517,25 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Ministerio responsavel
+          </label>
+          <select
+            v-model="editForm.ministryId"
+            required
+            :disabled="!allMinistryOptions.length"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-70"
+          >
+            <option value="">Selecione</option>
+            <option v-for="ministry in allMinistryOptions" :key="ministry.id" :value="ministry.id">
+              {{ ministry.name }}{{ ministry.isActive ? "" : " (inativo)" }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Apenas ministerios ativos podem ser usados em novos eventos.
+          </p>
+        </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Tipo de inscricao
@@ -524,6 +595,29 @@
                 <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
                 <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</span>
               </span>
+            </label>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Regra de valor para pagamentos pendentes
+          </label>
+          <div class="mt-2 grid gap-2">
+            <label
+              v-for="option in pendingPaymentValueRuleOptions"
+              :key="option.value"
+              class="flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
+            >
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="editForm.pendingPaymentValueRule"
+                  type="radio"
+                  :value="option.value"
+                  class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                />
+                <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
+              </div>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</p>
             </label>
           </div>
         </div>
@@ -613,6 +707,10 @@
               <dd>{{ details.event?.location }}</dd>
             </div>
             <div class="flex justify-between gap-4">
+              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Ministerio</dt>
+              <dd>{{ details.event?.ministry?.name ?? "Nao vinculado" }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
               <dt class="font-medium text-neutral-500 dark:text-neutral-400">Status</dt>
               <dd>{{ details.event?.isActive ? "Ativo" : "Inativo" }}</dd>
             </div>
@@ -628,6 +726,17 @@
                 <div v-if="details.event?.currentLot?.name" class="text-xs text-neutral-400">
                   Lote vigente: {{ details.event?.currentLot?.name }}
                 </div>
+              </dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Regra de valor pendente</dt>
+              <dd class="text-right">
+                <div class="font-semibold text-neutral-800 dark:text-neutral-100">
+                  {{ getPendingPaymentValueRuleLabel(details.event?.pendingPaymentValueRule) }}
+                </div>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                  {{ getPendingPaymentValueRuleDescription(details.event?.pendingPaymentValueRule) }}
+                </p>
               </dd>
             </div>
             <div class="flex justify-between gap-4">
@@ -936,18 +1045,36 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
-import type { Event as ApiEvent, EventLot, PaymentMethod } from "../../types/api";
+import type { Event as ApiEvent, EventLot, PaymentMethod, Ministry } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
+import {
+  DEFAULT_PENDING_PAYMENT_VALUE_RULE,
+  PENDING_PAYMENT_VALUE_RULES,
+  getPendingPaymentValueRuleDescription,
+  getPendingPaymentValueRuleLabel,
+  PendingPaymentValueRule
+} from "../../config/pendingPaymentValueRules";
 
 const admin = useAdminStore();
+const catalog = useCatalogStore();
 const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
 
+const pendingPaymentValueRuleOptions = PENDING_PAYMENT_VALUE_RULES;
+const defaultPendingPaymentValueRule: PendingPaymentValueRule = DEFAULT_PENDING_PAYMENT_VALUE_RULE;
+
 const defaultPaymentMethodValues = (): PaymentMethod[] =>
   PAYMENT_METHODS.map((option) => option.value);
+
+const activeMinistries = computed<Ministry[]>(() =>
+  catalog.ministries.filter((ministry) => ministry.isActive)
+);
+const allMinistryOptions = computed<Ministry[]>(() => catalog.ministries);
+const pickDefaultMinistryId = () => activeMinistries.value[0]?.id ?? "";
 
 const toPriceCents = (input: unknown) => {
   if (input === null || input === undefined) return 0;
@@ -966,6 +1093,21 @@ const formatPriceDisplay = (valueInCents: number) =>
   });
 
 type FormMode = "create" | "edit";
+
+type EventForm = {
+  title: string;
+  slug: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  bannerUrl: string;
+  isFree: boolean;
+  minAgeYears: string;
+  paymentMethods: PaymentMethod[];
+  pendingPaymentValueRule: PendingPaymentValueRule;
+  ministryId: string;
+};
 
 const slugifyValue = (value: string) =>
   value
@@ -995,7 +1137,7 @@ const applySlugSuggestion = (mode: FormMode) => {
   form.slug = suggestSlugFromForm(form);
 };
 
-const createForm = reactive({
+const createForm = reactive<EventForm>({
   title: "",
   slug: "",
   description: "",
@@ -1005,10 +1147,12 @@ const createForm = reactive({
   bannerUrl: "",
   isFree: false,
   minAgeYears: "",
-  paymentMethods: defaultPaymentMethodValues()
+  paymentMethods: defaultPaymentMethodValues(),
+  pendingPaymentValueRule: defaultPendingPaymentValueRule,
+  ministryId: ""
 });
 
-const editForm = reactive({
+const editForm = reactive<EventForm>({
   title: "",
   slug: "",
   description: "",
@@ -1018,7 +1162,9 @@ const editForm = reactive({
   bannerUrl: "",
   isFree: false,
   minAgeYears: "",
-  paymentMethods: defaultPaymentMethodValues()
+  paymentMethods: defaultPaymentMethodValues(),
+  pendingPaymentValueRule: defaultPendingPaymentValueRule,
+  ministryId: ""
 });
 
 const editingEventId = ref<string | null>(null);
@@ -1062,6 +1208,25 @@ const lotsForDetails = computed<EventLot[]>(() => {
   const lots = admin.eventLots[details.event.id];
   return lots ?? [];
 });
+
+watch(
+  activeMinistries,
+  () => {
+    if (
+      !createForm.ministryId ||
+      !activeMinistries.value.some((ministry) => ministry.id === createForm.ministryId)
+    ) {
+      createForm.ministryId = pickDefaultMinistryId();
+    }
+    if (
+      editForm.ministryId &&
+      !allMinistryOptions.value.some((ministry) => ministry.id === editForm.ministryId)
+    ) {
+      editForm.ministryId = "";
+    }
+  },
+  { deep: true }
+);
 
 const formatDateTimeBr = (value: string) => {
   const date = new Date(value);
@@ -1285,6 +1450,8 @@ const resetCreateForm = () => {
   createForm.isFree = false;
   createForm.minAgeYears = "";
   createForm.paymentMethods = defaultPaymentMethodValues();
+  createForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
+  createForm.ministryId = pickDefaultMinistryId();
 };
 
 const resetEditForm = () => {
@@ -1298,6 +1465,8 @@ const resetEditForm = () => {
   editForm.isFree = false;
   editForm.minAgeYears = "";
   editForm.paymentMethods = defaultPaymentMethodValues();
+  editForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
+  editForm.ministryId = pickDefaultMinistryId();
 };
 
 const submitLot = async () => {
@@ -1400,6 +1569,10 @@ const submitCreate = async () => {
     showError("Falha ao criar evento", { message: "Selecione ao menos uma forma de pagamento." });
     return;
   }
+  if (!createForm.ministryId) {
+    showError("Falha ao criar evento", { message: "Selecione o ministerio responsavel pelo evento." });
+    return;
+  }
   const normalizedSlug = sanitizeSlugInput(createForm.slug);
   savingCreate.value = true;
   try {
@@ -1414,8 +1587,10 @@ const submitCreate = async () => {
       isFree: createForm.isFree,
       priceCents: 0,
       paymentMethods: [...createForm.paymentMethods],
+      pendingPaymentValueRule: createForm.pendingPaymentValueRule,
       minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
-      isActive: true
+      isActive: true,
+      ministryId: createForm.ministryId
     } as Partial<ApiEvent>);
     resetCreateForm();
     showCreateForm.value = false;
@@ -1430,6 +1605,10 @@ const submitEdit = async () => {
   if (!editingEventId.value) return;
   if (!editForm.paymentMethods.length) {
     showError("Falha ao atualizar evento", { message: "Selecione ao menos uma forma de pagamento." });
+    return;
+  }
+  if (!editForm.ministryId) {
+    showError("Falha ao atualizar evento", { message: "Selecione o ministerio responsavel pelo evento." });
     return;
   }
   const normalizedSlug = sanitizeSlugInput(editForm.slug);
@@ -1447,7 +1626,9 @@ const submitEdit = async () => {
       isFree: editForm.isFree,
       minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
       priceCents: 0,
-      paymentMethods: [...editForm.paymentMethods]
+      paymentMethods: [...editForm.paymentMethods],
+      pendingPaymentValueRule: editForm.pendingPaymentValueRule,
+      ministryId: editForm.ministryId
     } as Partial<ApiEvent>);
     cancelEdit();
   } catch (error) {
@@ -1472,6 +1653,9 @@ const startEdit = (event: ApiEvent) => {
     event.paymentMethods && event.paymentMethods.length
       ? [...event.paymentMethods]
       : defaultPaymentMethodValues();
+  editForm.pendingPaymentValueRule =
+    event.pendingPaymentValueRule ?? defaultPendingPaymentValueRule;
+  editForm.ministryId = event.ministryId ?? "";
   nextTick(() => {
     editCardRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
@@ -1555,9 +1739,16 @@ watch(
 );
 
 onMounted(async () => {
-  await admin.loadEvents();
-  if (!admin.events.length) {
-    showCreateForm.value = true;
+  try {
+    await Promise.all([admin.loadEvents(), catalog.loadMinistries()]);
+    if (!createForm.ministryId) {
+      createForm.ministryId = pickDefaultMinistryId();
+    }
+    if (!admin.events.length) {
+      showCreateForm.value = true;
+    }
+  } catch (error) {
+    showError("Falha ao carregar eventos ou ministerios", error);
   }
 });
 </script>

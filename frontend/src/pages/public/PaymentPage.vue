@@ -87,7 +87,7 @@
           </div>
         </div>
 
-        <div v-if="!isFreeEvent" class="flex-1 space-y-6">
+        <div v-if="!isFreeEvent && !isPaid" class="flex-1 space-y-6">
           <section
             v-if="isManualPayment"
             class="space-y-3 rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-sm text-neutral-600 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300"
@@ -179,7 +179,7 @@
             </section>
           </template>
         </div>
-        <div v-else class="flex-1 space-y-6">
+        <div v-else-if="isFreeEvent" class="flex-1 space-y-6">
           <section class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300">
             <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Nenhuma acao necessaria</h2>
             <p class="mt-2">
@@ -210,17 +210,36 @@
         </RouterLink>
       </div>
     </BaseCard>
+
+    <BaseCard v-if="payment">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="space-y-1">
+          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscrição</h2>
+          <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            Limpamos os dados anteriores deste dispositivo. Clique abaixo para iniciar um novo preenchimento.
+          </p>
+        </div>
+        <button
+          type="button"
+          class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500"
+          @click="handleStartNewRegistration"
+        >
+          Nova inscrição
+        </button>
+      </div>
+    </BaseCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useEventStore } from "../../stores/event";
 import { paymentMethodLabel } from "../../config/paymentMethods";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 
 type PaymentResponse = {
   preferenceId?: string;
@@ -246,19 +265,34 @@ type PaymentResponse = {
 
 const props = defineProps<{ slug: string; orderId: string }>();
 const route = useRoute();
+const router = useRouter();
 const eventStore = useEventStore();
 
 const payment = ref<PaymentResponse | null>(null);
 const loadingStatus = ref(false);
 const pollHandle = ref<number | null>(null);
 
-const ticketPriceCents = computed(
-  () => eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0
-);
+const clearRegistrationDraftState = () => {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") return;
+  window.localStorage.removeItem(REGISTRATION_STORAGE_KEY);
+};
+
+const handleStartNewRegistration = () => {
+  clearRegistrationDraftState();
+  router.push({ name: "event", params: { slug: props.slug } });
+};
+
 const currentLotName = computed(() => eventStore.event?.currentLot?.name ?? null);
 const participantCount = computed(
   () => payment.value?.participantCount ?? eventStore.lastOrder?.registrationIds.length ?? 1
 );
+const ticketPriceCents = computed(() => {
+  if (payment.value?.totalCents != null) {
+    const count = Math.max(participantCount.value, 1);
+    return Math.round(payment.value.totalCents / count);
+  }
+  return eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0;
+});
 const isPaid = computed(() => payment.value?.status === "PAID");
 const isFreeEvent = computed(() => Boolean(payment.value?.isFree || eventStore.event?.isFree));
 
@@ -433,6 +467,7 @@ const stopPolling = () => {
 };
 
 onMounted(async () => {
+  clearRegistrationDraftState();
   if (!eventStore.event || eventStore.event.slug !== props.slug) {
     await eventStore.fetchEvent(props.slug);
   }

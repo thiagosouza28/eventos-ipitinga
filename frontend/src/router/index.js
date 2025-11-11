@@ -13,8 +13,12 @@ const AdminRegistrations = () => import("../pages/admin/AdminRegistrations.vue")
 const AdminOrders = () => import("../pages/admin/AdminOrders.vue");
 const AdminCheckin = () => import("../pages/admin/AdminCheckin.vue");
 const AdminCatalog = () => import("../pages/admin/AdminCatalog.vue");
+const AdminDistricts = () => import("../pages/admin/AdminDistricts.vue");
+const AdminChurches = () => import("../pages/admin/AdminChurches.vue");
+const AdminMinistries = () => import("../pages/admin/AdminMinistries.vue");
 const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
 const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
+const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -39,9 +43,33 @@ export const router = createRouter({
             meta: { requiresAuth: true }
         },
         {
+            path: "/admin/users",
+            name: "admin-users",
+            component: AdminUsers,
+            meta: { requiresAuth: true }
+        },
+        {
             path: "/admin/catalog",
             name: "admin-catalog",
             component: AdminCatalog,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: "/admin/districts",
+            name: "admin-districts",
+            component: AdminDistricts,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: "/admin/churches",
+            name: "admin-churches",
+            component: AdminChurches,
+            meta: { requiresAuth: true }
+        },
+        {
+            path: "/admin/ministries",
+            name: "admin-ministries",
+            component: AdminMinistries,
             meta: { requiresAuth: true }
         },
         {

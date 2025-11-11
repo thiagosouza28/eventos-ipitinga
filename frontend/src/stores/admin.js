@@ -9,6 +9,7 @@ export const useAdminStore = defineStore("admin", () => {
     const registrationFilters = ref({});
     const orders = ref([]);
     const dashboard = ref(null);
+    const users = ref([]);
     const loadEvents = async () => {
         const response = await api.get("/admin/events");
         events.value = response.data;
@@ -88,6 +89,11 @@ export const useAdminStore = defineStore("admin", () => {
     const cancelRegistration = async (id) => {
         await api.post(`/admin/registrations/${id}/cancel`);
         await loadRegistrations(registrationFilters.value);
+    };
+    const reactivateRegistration = async (id) => {
+        const response = await api.post(`/admin/registrations/${id}/reactivate`);
+        await loadRegistrations(registrationFilters.value);
+        return response.data;
     };
     const refundRegistration = async (id, payload) => {
         await api.post(`/admin/registrations/${id}/refund`, payload);
@@ -179,12 +185,27 @@ export const useAdminStore = defineStore("admin", () => {
         });
         return response.data;
     };
+    const loadUsers = async () => {
+        const response = await api.get("/admin/users");
+        users.value = response.data;
+        return users.value;
+    };
+    const createUser = async (payload) => {
+        const response = await api.post("/admin/users", payload);
+        await loadUsers();
+        return response.data;
+    };
+    const resetUserPassword = async (userId) => {
+        const response = await api.post(`/admin/users/${userId}/reset-password`);
+        return response.data;
+    };
     return {
         events,
         eventLots,
         registrations,
         orders,
         dashboard,
+        users,
         loadEvents,
         saveEvent,
         deleteEvent,
@@ -197,6 +218,7 @@ export const useAdminStore = defineStore("admin", () => {
         downloadFinancialReport,
         updateRegistration,
         cancelRegistration,
+        reactivateRegistration,
         deleteRegistration,
         createAdminRegistration,
         refundRegistration,
@@ -210,7 +232,10 @@ export const useAdminStore = defineStore("admin", () => {
         checkinScan,
         checkinManualLookup,
         confirmCheckin,
-        uploadAsset
+        uploadAsset,
+        loadUsers,
+        createUser,
+        resetUserPassword
     };
 });
 //# sourceMappingURL=admin.js.map

@@ -1,19 +1,36 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, onMounted, onUnmounted, ref } from "vue";
-import { RouterLink, useRoute } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useEventStore } from "../../stores/event";
 import { paymentMethodLabel } from "../../config/paymentMethods";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 const props = defineProps();
 const route = useRoute();
+const router = useRouter();
 const eventStore = useEventStore();
 const payment = ref(null);
 const loadingStatus = ref(false);
 const pollHandle = ref(null);
-const ticketPriceCents = computed(() => eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0);
+const clearRegistrationDraftState = () => {
+    if (typeof window === "undefined" || typeof window.localStorage === "undefined")
+        return;
+    window.localStorage.removeItem(REGISTRATION_STORAGE_KEY);
+};
+const handleStartNewRegistration = () => {
+    clearRegistrationDraftState();
+    router.push({ name: "event", params: { slug: props.slug } });
+};
 const currentLotName = computed(() => eventStore.event?.currentLot?.name ?? null);
 const participantCount = computed(() => payment.value?.participantCount ?? eventStore.lastOrder?.registrationIds.length ?? 1);
+const ticketPriceCents = computed(() => {
+    if (payment.value?.totalCents != null) {
+        const count = Math.max(participantCount.value, 1);
+        return Math.round(payment.value.totalCents / count);
+    }
+    return eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0;
+});
 const isPaid = computed(() => payment.value?.status === "PAID");
 const isFreeEvent = computed(() => Boolean(payment.value?.isFree || eventStore.event?.isFree));
 const statusLabels = {
@@ -176,6 +193,7 @@ const stopPolling = () => {
     }
 };
 onMounted(async () => {
+    clearRegistrationDraftState();
     if (!eventStore.event || eventStore.event.slug !== props.slug) {
         await eventStore.fetchEvent(props.slug);
     }
@@ -330,7 +348,7 @@ if (__VLS_ctx.payment) {
             (__VLS_ctx.formatParticipantStatus(participant.status));
         }
     }
-    if (!__VLS_ctx.isFreeEvent) {
+    if (!__VLS_ctx.isFreeEvent && !__VLS_ctx.isPaid) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex-1 space-y-6" },
         });
@@ -463,7 +481,7 @@ if (__VLS_ctx.payment) {
                         ...{ onClick: (...[$event]) => {
                                 if (!(__VLS_ctx.payment))
                                     return;
-                                if (!(!__VLS_ctx.isFreeEvent))
+                                if (!(!__VLS_ctx.isFreeEvent && !__VLS_ctx.isPaid))
                                     return;
                                 if (!!(__VLS_ctx.isManualPayment))
                                     return;
@@ -488,7 +506,7 @@ if (__VLS_ctx.payment) {
             }
         }
     }
-    else {
+    else if (__VLS_ctx.isFreeEvent) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex-1 space-y-6" },
         });
@@ -537,6 +555,31 @@ if (__VLS_ctx.isPaid) {
     __VLS_16.slots.default;
     var __VLS_16;
     var __VLS_12;
+}
+if (__VLS_ctx.payment) {
+    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+    // @ts-ignore
+    const __VLS_17 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+    const __VLS_18 = __VLS_17({}, ...__VLS_functionalComponentArgsRest(__VLS_17));
+    __VLS_19.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-1" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+        ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.handleStartNewRegistration) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500" },
+    });
+    var __VLS_19;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
@@ -851,6 +894,32 @@ if (__VLS_ctx.isPaid) {
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
@@ -862,8 +931,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             eventStore: eventStore,
             payment: payment,
             loadingStatus: loadingStatus,
-            ticketPriceCents: ticketPriceCents,
+            handleStartNewRegistration: handleStartNewRegistration,
             currentLotName: currentLotName,
+            ticketPriceCents: ticketPriceCents,
             isPaid: isPaid,
             isFreeEvent: isFreeEvent,
             formatParticipantStatus: formatParticipantStatus,

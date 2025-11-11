@@ -57,6 +57,7 @@ export const useAuthStore = defineStore("auth", () => {
     const isAdminGeral = computed(() => role.value === "AdminGeral");
     const isAdminDistrital = computed(() => role.value === "AdminDistrital");
     const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
+    const canManageUsers = computed(() => isAdminGeral.value);
     return {
         token,
         user,
@@ -65,6 +66,7 @@ export const useAuthStore = defineStore("auth", () => {
         isAdminGeral,
         isAdminDistrital,
         canCreateFree,
+        canManageUsers,
         signIn,
         signOut
     };

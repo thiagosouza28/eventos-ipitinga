@@ -10,6 +10,7 @@ import { formatCurrency } from '../../utils/format';
 import ConfirmDialog from '../../components/ui/ConfirmDialog.vue';
 import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf';
 import { paymentMethodLabel } from '../../config/paymentMethods';
+import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto';
 const admin = useAdminStore();
 const catalog = useCatalogStore();
 const auth = useAuthStore();
@@ -35,6 +36,11 @@ const registrationStatusOptions = [
     { value: 'CHECKED_IN', label: statusLabels.CHECKED_IN },
     { value: 'CANCELED', label: statusLabels.CANCELED },
     { value: 'REFUNDED', label: statusLabels.REFUNDED }
+];
+const genderOptions = [
+    { value: 'MALE', label: 'Masculino' },
+    { value: 'FEMALE', label: 'Feminino' },
+    { value: 'OTHER', label: 'Outro' }
 ];
 const filtersReady = ref(false);
 const isApplying = ref(false);
@@ -239,80 +245,195 @@ const displayedRegistrations = computed(() => {
 });
 // Nova inscrição (PIX, Dinheiro ou Gratuita)
 const addDialog = reactive({ open: false, paymentMethod: 'PIX_MP' });
-const addForm = reactive({ eventId: '', fullName: '', birthDate: '', cpf: '', districtId: '', churchId: '' });
-const openAddPaid = () => {
-    addDialog.paymentMethod = 'PIX_MP';
+const addForm = reactive({
+    eventId: '',
+    fullName: '',
+    birthDate: '',
+    cpf: '',
+    gender: '',
+    districtId: '',
+    churchId: '',
+    responsibleCpf: '',
+    responsiblePhone: '',
+    photoUrl: null
+});
+const addPhotoPreview = ref(null);
+const responsibleLookup = reactive({
+    status: 'idle',
+    message: ''
+});
+const resetAddForm = (paymentMethod = 'PIX_MP') => {
+    addDialog.paymentMethod = paymentMethod;
     addForm.eventId = filters.eventId || (admin.events[0]?.id ?? '');
     addForm.fullName = '';
     addForm.birthDate = '';
     addForm.cpf = '';
+    addForm.gender = '';
     addForm.districtId = filters.districtId || (catalog.districts[0]?.id ?? '');
     addForm.churchId = filters.churchId || (churchesByDistrict(addForm.districtId)[0]?.id ?? '');
+    addForm.responsibleCpf = '';
+    addForm.responsiblePhone = '';
+    addForm.photoUrl = null;
+    addPhotoPreview.value = null;
+    responsibleLookup.status = 'idle';
+    responsibleLookup.message = '';
+};
+const openAddDialog = () => {
+    resetAddForm();
     addDialog.open = true;
 };
-const openAddFree = () => {
-    addDialog.paymentMethod = 'FREE_PREVIOUS_YEAR';
-    addForm.eventId = filters.eventId || (admin.events[0]?.id ?? '');
-    addForm.fullName = '';
-    addForm.birthDate = '';
-    addForm.cpf = '';
-    addForm.districtId = filters.districtId || (catalog.districts[0]?.id ?? '');
-    addForm.churchId = filters.churchId || (churchesByDistrict(addForm.districtId)[0]?.id ?? '');
-    addDialog.open = true;
+const closeAdd = () => {
+    addDialog.open = false;
+    resetAddForm(addDialog.paymentMethod);
 };
-const closeAdd = () => { addDialog.open = false; };
+const formatCpfInputValue = (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (!digits)
+        return '';
+    if (digits.length > 9)
+        return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => `${a}.${b}.${c}${d ? '-' + d : ''}`);
+    if (digits.length > 6)
+        return digits.replace(/(\d{3})(\d{3})(\d{0,3})/, (_, a, b, c) => `${a}.${b}.${c}`);
+    if (digits.length > 3)
+        return digits.replace(/(\d{3})(\d{0,3})/, (_, a, b) => `${a}.${b}`);
+    return digits;
+};
 const onAddCpfInput = (e) => {
     const el = e.target;
-    const digits = el.value.replace(/\D/g, '').slice(0, 11);
-    let masked = digits;
-    if (digits.length > 9)
-        masked = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => `${a}.${b}.${c}${d ? '-' + d : ''}`);
-    else if (digits.length > 6)
-        masked = digits.replace(/(\d{3})(\d{3})(\d{0,3})/, (_, a, b, c) => `${a}.${b}.${c}`);
-    else if (digits.length > 3)
-        masked = digits.replace(/(\d{3})(\d{0,3})/, (_, a, b) => `${a}.${b}`);
-    addForm.cpf = masked;
+    addForm.cpf = formatCpfInputValue(el.value);
+};
+const onResponsibleCpfInput = (e) => {
+    const el = e.target;
+    addForm.responsibleCpf = formatCpfInputValue(el.value);
+    responsibleLookup.status = 'idle';
+    responsibleLookup.message = '';
+};
+const formatPhoneInputValue = (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (!digits)
+        return '';
+    if (digits.length <= 2)
+        return `(${digits}`;
+    if (digits.length <= 6)
+        return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10)
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+const onResponsiblePhoneInput = (e) => {
+    const el = e.target;
+    addForm.responsiblePhone = formatPhoneInputValue(el.value);
+};
+const handleResponsibleCpfLookup = async () => {
+    const digits = normalizeCPF(addForm.responsibleCpf);
+    if (!digits || digits.length !== 11) {
+        responsibleLookup.status = 'error';
+        responsibleLookup.message = 'Informe um CPF do responsável válido.';
+        return;
+    }
+    try {
+        responsibleLookup.status = 'idle';
+        responsibleLookup.message = 'Buscando igreja vinculada...';
+        const match = await catalog.findChurchByDirectorCpf(digits);
+        if (!match) {
+            responsibleLookup.status = 'error';
+            responsibleLookup.message = 'Nenhuma igreja encontrada para este CPF.';
+            return;
+        }
+        responsibleLookup.status = 'success';
+        responsibleLookup.message = `Responsável identificado: ${match.directorName ?? 'Diretor'} - ${match.churchName}`;
+        addForm.districtId = match.districtId;
+        addForm.churchId = match.churchId;
+    }
+    catch (error) {
+        responsibleLookup.status = 'error';
+        responsibleLookup.message = error?.response?.data?.message ?? 'Falha ao buscar igreja para este CPF.';
+    }
+};
+watch(() => addForm.districtId, (value) => {
+    if (!value) {
+        addForm.churchId = '';
+        return;
+    }
+    const options = churchesByDistrict(value);
+    if (!options.length) {
+        addForm.churchId = '';
+        return;
+    }
+    if (!options.some((church) => church.id === addForm.churchId)) {
+        addForm.churchId = options[0].id;
+    }
+});
+const handleAddPhotoChange = (event) => {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file)
+        return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        const result = reader.result;
+        addPhotoPreview.value = result;
+        addForm.photoUrl = result;
+    };
+    reader.readAsDataURL(file);
+};
+const clearAddPhoto = () => {
+    addPhotoPreview.value = null;
+    addForm.photoUrl = null;
 };
 const saveNewRegistration = async () => {
     try {
         if (!addForm.eventId) {
-            showError('Evento obrigatório', new Error('Selecione o evento'));
+            showError('Evento obrigat�rio', new Error('Selecione o evento'));
             return;
         }
         if (!addForm.fullName || addForm.fullName.trim().length < 3) {
-            showError('Nome inválido', new Error('Informe o nome completo'));
+            showError('Nome inv�lido', new Error('Informe o nome completo'));
             return;
         }
         if (!addForm.birthDate) {
-            showError('Nascimento inválido', new Error('Informe a data'));
+            showError('Nascimento inv�lido', new Error('Informe a data'));
+            return;
+        }
+        if (!addForm.gender) {
+            showError('Dados incompletos', new Error('Selecione o g�nero do participante'));
             return;
         }
         if (!validateCPF(addForm.cpf)) {
-            showError('CPF inválido', new Error('Informe um CPF válido'));
+            showError('CPF inv�lido', new Error('Informe um CPF v�lido para o participante'));
+            return;
+        }
+        if (!validateCPF(addForm.responsibleCpf)) {
+            showError('CPF do respons�vel inv�lido', new Error('Informe um CPF v�lido do respons�vel'));
             return;
         }
         if (!addForm.districtId || !addForm.churchId) {
-            showError('Local inválido', new Error('Selecione distrito e igreja'));
+            showError('Local inv�lido', new Error('Selecione distrito e igreja'));
+            return;
+        }
+        const phoneDigits = addForm.responsiblePhone.replace(/\\D/g, '');
+        if (phoneDigits.length < 10) {
+            showError('Telefone inv�lido', new Error('Informe o telefone do respons�vel'));
             return;
         }
         const result = await admin.createAdminRegistration({
             eventId: addForm.eventId,
-            buyerCpf: normalizeCPF(addForm.cpf),
+            buyerCpf: normalizeCPF(addForm.responsibleCpf),
             paymentMethod: addDialog.paymentMethod,
             person: {
                 fullName: addForm.fullName.trim(),
                 cpf: normalizeCPF(addForm.cpf),
                 birthDate: addForm.birthDate,
-                gender: 'OTHER',
+                gender: addForm.gender || 'OTHER',
                 districtId: addForm.districtId,
                 churchId: addForm.churchId,
-                photoUrl: null
+                photoUrl: addForm.photoUrl || null
             }
         });
         if (addDialog.paymentMethod === 'PIX_MP' && result?.orderId) {
             const slug = findEventSlug(addForm.eventId);
             if (slug) {
-                const link = `${window.location.origin}/evento/${slug}/pagamento/${result.orderId}`;
+                const link = window.location.origin + '/evento/' + slug + '/pagamento/' + result.orderId;
                 try {
                     await navigator.clipboard.writeText(link);
                 }
@@ -324,11 +445,17 @@ const saveNewRegistration = async () => {
         scheduleApply(true);
     }
     catch (error) {
-        showError('Falha ao criar inscrição', error);
+        showError('Falha ao criar inscri��o', error);
     }
 };
 // Acoes e helpers adicionais
 const findEventSlug = (eventId) => admin.events.find((e) => e.id === eventId)?.slug ?? '';
+const resolvePhotoUrl = (photoUrl) => {
+    if (typeof photoUrl === 'string' && photoUrl.trim().length > 0) {
+        return photoUrl;
+    }
+    return DEFAULT_PHOTO_DATA_URL;
+};
 const paymentMethodShort = (method) => {
     if (!method)
         return '—';
@@ -532,6 +659,12 @@ const openConfirm = (action, registration) => {
         confirmState.confirmLabel = 'Confirmar pagamento';
         confirmState.type = 'default';
     }
+    else if (action === 'reactivate') {
+        confirmState.title = 'Reativar inscricao';
+        confirmState.description = 'Reativar a inscricao de ' + registration.fullName + ' e gerar um novo link de pagamento?';
+        confirmState.confirmLabel = 'Reativar';
+        confirmState.type = 'default';
+    }
     else {
         confirmState.title = 'Excluir inscricao';
         confirmState.description = 'Excluir a inscricao de ' + registration.fullName + '? O registro sera removido permanentemente.';
@@ -563,11 +696,35 @@ const executeConfirmAction = async () => {
             await admin.refundRegistration(registration.id, {});
         else if (action === 'delete')
             await admin.deleteRegistration(registration.id);
+        else if (action === 'reactivate') {
+            processing.message = 'Gerando novo pagamento...';
+            processing.open = true;
+            try {
+                const result = await admin.reactivateRegistration(registration.id);
+                const slug = findEventSlug(registration.eventId);
+                const orderId = result?.orderId ?? registration.orderId;
+                if (slug && orderId) {
+                    const link = `${window.location.origin}/evento/${slug}/pagamento/${orderId}`;
+                    try {
+                        await navigator.clipboard.writeText(link);
+                    }
+                    catch { }
+                    window.open(link, '_blank');
+                }
+                else {
+                    showError('Nao foi possivel gerar link', new Error('Dados insuficientes para gerar pagamento.'));
+                }
+            }
+            finally {
+                processing.open = false;
+            }
+        }
         else if (action === 'confirm-cash') {
             if (!registration.orderId) {
                 showError('Nao foi possivel confirmar pagamento', new Error('Inscricao sem pedido associado.'));
                 return;
             }
+            processing.message = 'Confirmando pagamento...';
             processing.open = true;
             await ensureMinDelay(admin.confirmOrderPayment(registration.orderId, { manualReference: 'CASH-ADMIN', paidAt: new Date().toISOString() }), 2000);
             processing.open = false;
@@ -578,7 +735,8 @@ const executeConfirmAction = async () => {
             cancel: 'Falha ao cancelar inscricao',
             refund: 'Falha ao estornar inscricao',
             delete: 'Falha ao excluir inscricao',
-            'confirm-cash': 'Falha ao confirmar pagamento'
+            'confirm-cash': 'Falha ao confirmar pagamento',
+            reactivate: 'Falha ao reativar inscricao'
         };
         if (action === 'confirm-cash') {
             showError('Falha ao confirmar pagamento', e);
@@ -759,12 +917,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElement
 });
 (__VLS_ctx.isApplying ? 'Aplicando...' : 'Aplicar');
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.openAddPaid) },
-    type: "button",
-    ...{ class: "shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.openAddFree) },
+    ...{ onClick: (__VLS_ctx.openAddDialog) },
     type: "button",
     ...{ class: "shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
 });
@@ -946,6 +1099,9 @@ else {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+        ...{ class: "px-4 py-3 w-20" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
         ...{ class: "px-4 py-3" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
@@ -968,6 +1124,14 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
             key: (registration.id),
             ...{ class: "border-t border-neutral-200 dark:border-neutral-800" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+            ...{ class: "px-4 py-3 align-top" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+            src: (__VLS_ctx.resolvePhotoUrl(registration.photoUrl)),
+            ...{ class: "h-12 w-12 rounded-full border border-neutral-200 object-cover dark:border-neutral-700" },
+            alt: (`Foto de ${registration.fullName}`),
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "px-4 py-3 align-top" },
@@ -1092,6 +1256,18 @@ else {
                 ...{ class: "text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200" },
             });
         }
+        if (registration.status === 'CANCELED') {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        if (!(registration.status === 'CANCELED'))
+                            return;
+                        __VLS_ctx.openConfirm('reactivate', registration);
+                    } },
+                ...{ class: "text-primary-600 hover:text-primary-500" },
+            });
+        }
         if (__VLS_ctx.canDeleteRegistration(registration.status)) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1112,18 +1288,60 @@ if (__VLS_ctx.addDialog.open) {
         ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "w-full max-w-3xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900" },
+        ...{ class: "w-full max-w-4xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
         ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-sm text-neutral-500 dark:text-neutral-400" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
         ...{ onSubmit: (__VLS_ctx.saveNewRegistration) },
         ...{ class: "mt-4 grid gap-4 md:grid-cols-2" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs font-semibold uppercase text-neutral-500" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onInput: (__VLS_ctx.onResponsibleCpfInput) },
+        ...{ onBlur: (__VLS_ctx.handleResponsibleCpfLookup) },
+        value: (__VLS_ctx.addForm.responsibleCpf),
+        inputmode: "numeric",
+        autocomplete: "off",
+        maxlength: "14",
+        placeholder: "000.000.000-00",
+        required: true,
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    if (__VLS_ctx.responsibleLookup.message) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: (['mt-2 text-xs', __VLS_ctx.responsibleLookup.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-primary-600 dark:text-primary-300']) },
+        });
+        (__VLS_ctx.responsibleLookup.message);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onInput: (__VLS_ctx.onResponsiblePhoneInput) },
+        value: (__VLS_ctx.addForm.responsiblePhone),
+        inputmode: "numeric",
+        placeholder: "(91) 99999-9999",
+        required: true,
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.addForm.eventId),
@@ -1137,43 +1355,53 @@ if (__VLS_ctx.addDialog.open) {
         });
         (event.title);
     }
-    if (__VLS_ctx.addDialog.paymentMethod !== 'FREE_PREVIOUS_YEAR') {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "md:col-span-1" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "mt-2 flex gap-4 text-sm" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "inline-flex items-center gap-2" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            type: "radio",
-            value: "PIX_MP",
-        });
-        (__VLS_ctx.addDialog.paymentMethod);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "inline-flex items-center gap-2" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            type: "radio",
-            value: "CASH",
-        });
-        (__VLS_ctx.addDialog.paymentMethod);
-    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-2 flex flex-wrap gap-4 text-sm" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "inline-flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "radio",
+        value: "PIX_MP",
+    });
+    (__VLS_ctx.addDialog.paymentMethod);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "inline-flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "radio",
+        value: "CASH",
+    });
+    (__VLS_ctx.addDialog.paymentMethod);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "inline-flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "radio",
+        value: "FREE_PREVIOUS_YEAR",
+    });
+    (__VLS_ctx.addDialog.paymentMethod);
     if (__VLS_ctx.addDialog.paymentMethod === 'PIX_MP') {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "md:col-span-2 rounded-md bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:bg-primary-500/10 dark:text-primary-200" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2 mt-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs font-semibold uppercase text-neutral-500" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         value: (__VLS_ctx.addForm.fullName),
@@ -1184,7 +1412,7 @@ if (__VLS_ctx.addDialog.open) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         type: "date",
@@ -1194,7 +1422,7 @@ if (__VLS_ctx.addDialog.open) {
     (__VLS_ctx.addForm.birthDate);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         ...{ onInput: (__VLS_ctx.onAddCpfInput) },
@@ -1208,12 +1436,36 @@ if (__VLS_ctx.addDialog.open) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.addForm.gender),
+        required: true,
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+        disabled: true,
+    });
+    for (const [option] of __VLS_getVForSourceType((__VLS_ctx.genderOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (option.value),
+            value: (option.value),
+        });
+        (option.label);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.addForm.districtId),
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+        disabled: true,
     });
     for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
@@ -1224,12 +1476,16 @@ if (__VLS_ctx.addDialog.open) {
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.addForm.churchId),
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+        disabled: true,
     });
     for (const [church] of __VLS_getVForSourceType((__VLS_ctx.churchesByDistrict(__VLS_ctx.addForm.districtId)))) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
@@ -1237,6 +1493,45 @@ if (__VLS_ctx.addDialog.open) {
             value: (church.id),
         });
         (church.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-1 flex flex-wrap items-center gap-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onChange: (__VLS_ctx.handleAddPhotoChange) },
+        type: "file",
+        accept: "image/*",
+        ...{ class: "block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+        src: (__VLS_ctx.addPhotoPreview || __VLS_ctx.DEFAULT_PHOTO_DATA_URL),
+        alt: "Pr�-visualiza��o",
+        ...{ class: "h-20 w-20 rounded-lg object-cover" },
+    });
+    if (__VLS_ctx.addPhotoPreview) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.clearAddPhoto) },
+            type: "button",
+            ...{ class: "text-xs font-medium text-red-600 hover:text-red-500" },
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2 flex flex-col gap-2 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    if (__VLS_ctx.responsibleLookup.status === 'success') {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2 flex justify-end gap-3" },
@@ -1674,16 +1969,6 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -1858,6 +2143,9 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-20']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
@@ -1872,6 +2160,16 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['border-t']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['align-top']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
@@ -1935,6 +2233,8 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
@@ -1946,7 +2246,7 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['bg-black/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-w-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-4xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-5']} */ ;
@@ -1956,15 +2256,60 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -1975,16 +2320,19 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:col-span-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -2001,11 +2349,17 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -2017,10 +2371,10 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -2032,10 +2386,10 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -2047,10 +2401,10 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -2062,10 +2416,10 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
@@ -2076,6 +2430,63 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:mr-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:rounded-md']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:border-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['file:text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:file:bg-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-20']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-20']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-end']} */ ;
@@ -2370,10 +2781,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             formatCurrency: formatCurrency,
             ConfirmDialog: ConfirmDialog,
             formatCPF: formatCPF,
+            DEFAULT_PHOTO_DATA_URL: DEFAULT_PHOTO_DATA_URL,
             admin: admin,
             catalog: catalog,
             filters: filters,
             registrationStatusOptions: registrationStatusOptions,
+            genderOptions: genderOptions,
             isApplying: isApplying,
             errorDialog: errorDialog,
             applyFilters: applyFilters,
@@ -2394,11 +2807,18 @@ const __VLS_self = (await import('vue')).defineComponent({
             displayedRegistrations: displayedRegistrations,
             addDialog: addDialog,
             addForm: addForm,
-            openAddPaid: openAddPaid,
-            openAddFree: openAddFree,
+            addPhotoPreview: addPhotoPreview,
+            responsibleLookup: responsibleLookup,
+            openAddDialog: openAddDialog,
             closeAdd: closeAdd,
             onAddCpfInput: onAddCpfInput,
+            onResponsibleCpfInput: onResponsibleCpfInput,
+            onResponsiblePhoneInput: onResponsiblePhoneInput,
+            handleResponsibleCpfLookup: handleResponsibleCpfLookup,
+            handleAddPhotoChange: handleAddPhotoChange,
+            clearAddPhoto: clearAddPhoto,
             saveNewRegistration: saveNewRegistration,
+            resolvePhotoUrl: resolvePhotoUrl,
             paymentMethodShort: paymentMethodShort,
             editDialog: editDialog,
             editForm: editForm,

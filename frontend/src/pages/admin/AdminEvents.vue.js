@@ -6,14 +6,22 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
+import { DEFAULT_PENDING_PAYMENT_VALUE_RULE, PENDING_PAYMENT_VALUE_RULES, getPendingPaymentValueRuleDescription, getPendingPaymentValueRuleLabel } from "../../config/pendingPaymentValueRules";
 const admin = useAdminStore();
+const catalog = useCatalogStore();
 const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
+const pendingPaymentValueRuleOptions = PENDING_PAYMENT_VALUE_RULES;
+const defaultPendingPaymentValueRule = DEFAULT_PENDING_PAYMENT_VALUE_RULE;
 const defaultPaymentMethodValues = () => PAYMENT_METHODS.map((option) => option.value);
+const activeMinistries = computed(() => catalog.ministries.filter((ministry) => ministry.isActive));
+const allMinistryOptions = computed(() => catalog.ministries);
+const pickDefaultMinistryId = () => activeMinistries.value[0]?.id ?? "";
 const toPriceCents = (input) => {
     if (input === null || input === undefined)
         return 0;
@@ -64,7 +72,9 @@ const createForm = reactive({
     bannerUrl: "",
     isFree: false,
     minAgeYears: "",
-    paymentMethods: defaultPaymentMethodValues()
+    paymentMethods: defaultPaymentMethodValues(),
+    pendingPaymentValueRule: defaultPendingPaymentValueRule,
+    ministryId: ""
 });
 const editForm = reactive({
     title: "",
@@ -76,7 +86,9 @@ const editForm = reactive({
     bannerUrl: "",
     isFree: false,
     minAgeYears: "",
-    paymentMethods: defaultPaymentMethodValues()
+    paymentMethods: defaultPaymentMethodValues(),
+    pendingPaymentValueRule: defaultPendingPaymentValueRule,
+    ministryId: ""
 });
 const editingEventId = ref(null);
 const savingCreate = ref(false);
@@ -115,6 +127,16 @@ const lotsForDetails = computed(() => {
     const lots = admin.eventLots[details.event.id];
     return lots ?? [];
 });
+watch(activeMinistries, () => {
+    if (!createForm.ministryId ||
+        !activeMinistries.value.some((ministry) => ministry.id === createForm.ministryId)) {
+        createForm.ministryId = pickDefaultMinistryId();
+    }
+    if (editForm.ministryId &&
+        !allMinistryOptions.value.some((ministry) => ministry.id === editForm.ministryId)) {
+        editForm.ministryId = "";
+    }
+}, { deep: true });
 const formatDateTimeBr = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -317,6 +339,8 @@ const resetCreateForm = () => {
     createForm.isFree = false;
     createForm.minAgeYears = "";
     createForm.paymentMethods = defaultPaymentMethodValues();
+    createForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
+    createForm.ministryId = pickDefaultMinistryId();
 };
 const resetEditForm = () => {
     editForm.title = "";
@@ -329,6 +353,8 @@ const resetEditForm = () => {
     editForm.isFree = false;
     editForm.minAgeYears = "";
     editForm.paymentMethods = defaultPaymentMethodValues();
+    editForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
+    editForm.ministryId = pickDefaultMinistryId();
 };
 const submitLot = async () => {
     if (!details.event)
@@ -424,6 +450,10 @@ const submitCreate = async () => {
         showError("Falha ao criar evento", { message: "Selecione ao menos uma forma de pagamento." });
         return;
     }
+    if (!createForm.ministryId) {
+        showError("Falha ao criar evento", { message: "Selecione o ministerio responsavel pelo evento." });
+        return;
+    }
     const normalizedSlug = sanitizeSlugInput(createForm.slug);
     savingCreate.value = true;
     try {
@@ -438,8 +468,10 @@ const submitCreate = async () => {
             isFree: createForm.isFree,
             priceCents: 0,
             paymentMethods: [...createForm.paymentMethods],
+            pendingPaymentValueRule: createForm.pendingPaymentValueRule,
             minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
-            isActive: true
+            isActive: true,
+            ministryId: createForm.ministryId
         });
         resetCreateForm();
         showCreateForm.value = false;
@@ -458,6 +490,10 @@ const submitEdit = async () => {
         showError("Falha ao atualizar evento", { message: "Selecione ao menos uma forma de pagamento." });
         return;
     }
+    if (!editForm.ministryId) {
+        showError("Falha ao atualizar evento", { message: "Selecione o ministerio responsavel pelo evento." });
+        return;
+    }
     const normalizedSlug = sanitizeSlugInput(editForm.slug);
     savingEdit.value = true;
     try {
@@ -473,7 +509,9 @@ const submitEdit = async () => {
             isFree: editForm.isFree,
             minAgeYears: editForm.minAgeYears ? Number(editForm.minAgeYears) : undefined,
             priceCents: 0,
-            paymentMethods: [...editForm.paymentMethods]
+            paymentMethods: [...editForm.paymentMethods],
+            pendingPaymentValueRule: editForm.pendingPaymentValueRule,
+            ministryId: editForm.ministryId
         });
         cancelEdit();
     }
@@ -499,6 +537,9 @@ const startEdit = (event) => {
         event.paymentMethods && event.paymentMethods.length
             ? [...event.paymentMethods]
             : defaultPaymentMethodValues();
+    editForm.pendingPaymentValueRule =
+        event.pendingPaymentValueRule ?? defaultPendingPaymentValueRule;
+    editForm.ministryId = event.ministryId ?? "";
     nextTick(() => {
         editCardRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -574,9 +615,17 @@ watch(() => admin.events, () => {
     }
 });
 onMounted(async () => {
-    await admin.loadEvents();
-    if (!admin.events.length) {
-        showCreateForm.value = true;
+    try {
+        await Promise.all([admin.loadEvents(), catalog.loadMinistries()]);
+        if (!createForm.ministryId) {
+            createForm.ministryId = pickDefaultMinistryId();
+        }
+        if (!admin.events.length) {
+            showCreateForm.value = true;
+        }
+    }
+    catch (error) {
+        showError("Falha ao carregar eventos ou ministerios", error);
     }
 });
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
@@ -689,6 +738,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th
     ...{ class: "pb-2" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+    ...{ class: "pb-2" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
     ...{ class: "pb-2 text-right" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({
@@ -718,6 +770,11 @@ for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
         ...{ class: "py-3" },
     });
     (event.isFree ? "Gratuito" : __VLS_ctx.formatCurrency(event.currentPriceCents ?? event.priceCents));
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+        ...{ class: "py-3 text-sm text-neutral-600 dark:text-neutral-300" },
+        title: (__VLS_ctx.getPendingPaymentValueRuleDescription(event.pendingPaymentValueRule)),
+    });
+    (__VLS_ctx.getPendingPaymentValueRuleLabel(event.pendingPaymentValueRule));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
         ...{ class: "py-3 text-sm text-neutral-600 dark:text-neutral-300" },
     });
@@ -768,7 +825,7 @@ if (!__VLS_ctx.admin.events.length) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
         ...{ class: "py-3 text-sm text-neutral-500" },
-        colspan: "6",
+        colspan: "7",
     });
 }
 var __VLS_16;
@@ -931,6 +988,34 @@ if (__VLS_ctx.showCreateForm) {
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.createForm.ministryId),
+        required: true,
+        disabled: (!__VLS_ctx.activeMinistries.length),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-70" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.activeMinistries))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (ministry.id),
+            value: (ministry.id),
+        });
+        (ministry.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    if (!__VLS_ctx.activeMinistries.length) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs text-red-500 dark:text-red-400" },
+        });
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -1001,6 +1086,38 @@ if (__VLS_ctx.showCreateForm) {
         });
         (option.label);
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+        (option.description);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-2 grid gap-2" },
+    });
+    for (const [option] of __VLS_getVForSourceType((__VLS_ctx.pendingPaymentValueRuleOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            key: (option.value),
+            ...{ class: "flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center gap-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            type: "radio",
+            value: (option.value),
+            ...{ class: "h-4 w-4 text-primary-600 focus:ring-primary-500" },
+        });
+        (__VLS_ctx.createForm.pendingPaymentValueRule);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
+        });
+        (option.label);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
         });
         (option.description);
@@ -1185,6 +1302,30 @@ if (__VLS_ctx.editingEventId) {
         required: true,
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.editForm.ministryId),
+        required: true,
+        disabled: (!__VLS_ctx.allMinistryOptions.length),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-70" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.allMinistryOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (ministry.id),
+            value: (ministry.id),
+        });
+        (ministry.name);
+        (ministry.isActive ? "" : " (inativo)");
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -1255,6 +1396,38 @@ if (__VLS_ctx.editingEventId) {
         });
         (option.label);
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+        (option.description);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-2 grid gap-2" },
+    });
+    for (const [option] of __VLS_getVForSourceType((__VLS_ctx.pendingPaymentValueRuleOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            key: (option.value),
+            ...{ class: "flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center gap-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            type: "radio",
+            value: (option.value),
+            ...{ class: "h-4 w-4 text-primary-600 focus:ring-primary-500" },
+        });
+        (__VLS_ctx.editForm.pendingPaymentValueRule);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
+        });
+        (option.label);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
         });
         (option.description);
@@ -1402,6 +1575,14 @@ if (__VLS_ctx.details.open) {
         ...{ class: "font-medium text-neutral-500 dark:text-neutral-400" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({});
+    (__VLS_ctx.details.event?.ministry?.name ?? "Nao vinculado");
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex justify-between gap-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.dt, __VLS_intrinsicElements.dt)({
+        ...{ class: "font-medium text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({});
     (__VLS_ctx.details.event?.isActive ? "Ativo" : "Inativo");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex justify-between gap-4" },
@@ -1426,6 +1607,23 @@ if (__VLS_ctx.details.open) {
         });
         (__VLS_ctx.details.event?.currentLot?.name);
     }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex justify-between gap-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.dt, __VLS_intrinsicElements.dt)({
+        ...{ class: "font-medium text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({
+        ...{ class: "text-right" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+    });
+    (__VLS_ctx.getPendingPaymentValueRuleLabel(__VLS_ctx.details.event?.pendingPaymentValueRule));
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    (__VLS_ctx.getPendingPaymentValueRuleDescription(__VLS_ctx.details.event?.pendingPaymentValueRule));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex justify-between gap-4" },
     });
@@ -1849,6 +2047,7 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['pb-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['pb-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['pb-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['pb-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['divide-y']} */ ;
 /** @type {__VLS_StyleScopedClasses['divide-neutral-200']} */ ;
@@ -1862,6 +2061,10 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
@@ -2051,6 +2254,28 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2139,6 +2364,45 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
@@ -2335,6 +2599,25 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2423,6 +2706,45 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
@@ -2551,6 +2873,12 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
@@ -2559,6 +2887,19 @@ var __VLS_46;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
@@ -2972,8 +3313,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             Modal: Modal,
             formatCurrency: formatCurrency,
             formatDate: formatDate,
+            getPendingPaymentValueRuleDescription: getPendingPaymentValueRuleDescription,
+            getPendingPaymentValueRuleLabel: getPendingPaymentValueRuleLabel,
             admin: admin,
             paymentMethodOptions: paymentMethodOptions,
+            pendingPaymentValueRuleOptions: pendingPaymentValueRuleOptions,
+            activeMinistries: activeMinistries,
+            allMinistryOptions: allMinistryOptions,
             applySlugSuggestion: applySlugSuggestion,
             createForm: createForm,
             editForm: editForm,

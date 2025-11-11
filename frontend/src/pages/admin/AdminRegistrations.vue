@@ -81,16 +81,9 @@
           <button
             type="button"
             class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-            @click="openAddPaid"
+            @click="openAddDialog"
           >
             + Nova inscrição
-          </button>
-          <button
-            type="button"
-            class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-            @click="openAddFree"
-          >
-            + Nova inscrição (Gratuita)
           </button>
         </div>
       </form>
@@ -168,8 +161,9 @@
       </div>
       <div v-else class="overflow-x-auto">
         <table class="min-w-full table-auto text-sm">
-          <thead class="bg-neutral-50 text-left text-xs font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+<thead class="bg-neutral-50 text-left text-xs font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
             <tr>
+              <th class="px-4 py-3 w-20">Foto</th>
               <th class="px-4 py-3">Participante</th>
               <th class="px-4 py-3">Evento</th>
               <th class="px-4 py-3">Distrito / Igreja</th>
@@ -180,6 +174,13 @@
           </thead>
           <tbody>
             <tr v-for="registration in displayedRegistrations" :key="registration.id" class="border-t border-neutral-200 dark:border-neutral-800">
+              <td class="px-4 py-3 align-top">
+                <img
+                  :src="resolvePhotoUrl(registration.photoUrl)"
+                  class="h-12 w-12 rounded-full border border-neutral-200 object-cover dark:border-neutral-700"
+                  :alt="`Foto de ${registration.fullName}`"
+                />
+              </td>
               <td class="px-4 py-3 align-top">
                 <div class="font-medium text-neutral-800 dark:text-neutral-100">{{ registration.fullName }}</div>
                 <div class="text-xs text-neutral-500">CPF: {{ formatCPF(registration.cpf) }}</div>
@@ -216,6 +217,13 @@
                     >
                       Estornar
                     </button>
+                  <button
+                    v-if="registration.status === 'CANCELED'"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openConfirm('reactivate', registration)"
+                  >
+                    Reativar
+                  </button>
                   <button v-if="canDeleteRegistration(registration.status)" class="text-red-600 hover:text-red-500" @click="openConfirm('delete', registration)">Excluir</button>
                 </div>
               </td>
@@ -225,21 +233,57 @@
       </div>
     </BaseCard>
 
-    <!-- Modal de adição -->
+    <!-- Modal de adi��o -->
     <div v-if="addDialog.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-      <div class="w-full max-w-3xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900">
-        <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscrição</h3>
+      <div class="w-full max-w-4xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900">
+        <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscri��o</h3>
+        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          Informe os dados do respons�vel e do participante para gerar a inscri��o.
+        </p>
         <form @submit.prevent="saveNewRegistration" class="mt-4 grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <p class="text-xs font-semibold uppercase text-neutral-500">Respons�vel</p>
+          </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-neutral-500">Evento</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF do respons�vel</label>
+            <input
+              :value="addForm.responsibleCpf"
+              @input="onResponsibleCpfInput"
+              @blur="handleResponsibleCpfLookup"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="14"
+              placeholder="000.000.000-00"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+            <p
+              v-if="responsibleLookup.message"
+              :class="['mt-2 text-xs', responsibleLookup.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-primary-600 dark:text-primary-300']"
+            >
+              {{ responsibleLookup.message }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Telefone do respons�vel</label>
+            <input
+              :value="addForm.responsiblePhone"
+              @input="onResponsiblePhoneInput"
+              inputmode="numeric"
+              placeholder="(91) 99999-9999"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Evento</label>
             <select v-model="addForm.eventId" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
               <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
             </select>
           </div>
-
-          <div v-if="addDialog.paymentMethod !== 'FREE_PREVIOUS_YEAR'" class="md:col-span-1">
-            <label class="block text-xs font-semibold uppercase text-neutral-500">Forma de pagamento</label>
-            <div class="mt-2 flex gap-4 text-sm">
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Forma de pagamento</label>
+            <div class="mt-2 flex flex-wrap gap-4 text-sm">
               <label class="inline-flex items-center gap-2">
                 <input type="radio" value="PIX_MP" v-model="addDialog.paymentMethod" />
                 PIX
@@ -248,47 +292,99 @@
                 <input type="radio" value="CASH" v-model="addDialog.paymentMethod" />
                 Dinheiro
               </label>
+              <label class="inline-flex items-center gap-2">
+                <input type="radio" value="FREE_PREVIOUS_YEAR" v-model="addDialog.paymentMethod" />
+                Gratuita
+              </label>
             </div>
           </div>
-
           <div
             v-if="addDialog.paymentMethod === 'PIX_MP'"
             class="md:col-span-2 rounded-md bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:bg-primary-500/10 dark:text-primary-200"
           >
-            Será gerado um link de pagamento PIX após salvar. O link será aberto e copiado automaticamente.
+            Ser� gerado um link de pagamento PIX ap�s salvar. O link ser� aberto e copiado automaticamente.
           </div>
-
+          <div class="md:col-span-2 mt-4">
+            <p class="text-xs font-semibold uppercase text-neutral-500">Participante</p>
+          </div>
           <div class="md:col-span-2">
-            <label class="block text-xs font-semibold uppercase text-neutral-500">Nome</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nome completo</label>
             <input v-model="addForm.fullName" type="text" required minlength="3" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-neutral-500">Nascimento</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nascimento</label>
             <input v-model="addForm.birthDate" type="date" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-neutral-500">CPF</label>
-            <input :value="addForm.cpf" @input="onAddCpfInput" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="000.000.000-00" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF do participante</label>
+            <input
+              :value="addForm.cpf"
+              @input="onAddCpfInput"
+              inputmode="numeric"
+              autocomplete="off"
+              maxlength="14"
+              placeholder="000.000.000-00"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            />
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-neutral-500">Distrito</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">G�nero</label>
+            <select v-model="addForm.gender" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option value="" disabled>Selecione</option>
+              <option v-for="option in genderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Distrito</label>
             <select v-model="addForm.districtId" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option value="" disabled>Selecione</option>
               <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold uppercase text-neutral-500">Igreja</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Igreja</label>
             <select v-model="addForm.churchId" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
+              <option value="" disabled>Selecione</option>
               <option v-for="church in churchesByDistrict(addForm.districtId)" :key="church.id" :value="church.id">{{ church.name }}</option>
             </select>
           </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Foto (opcional)</label>
+            <div class="mt-1 flex flex-wrap items-center gap-4">
+              <input
+                type="file"
+                accept="image/*"
+                class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100"
+                @change="handleAddPhotoChange"
+              />
+              <div class="flex items-center gap-2">
+                <img :src="addPhotoPreview || DEFAULT_PHOTO_DATA_URL" alt="Pr�-visualiza��o" class="h-20 w-20 rounded-lg object-cover" />
+                <button
+                  v-if="addPhotoPreview"
+                  type="button"
+                  class="text-xs font-medium text-red-600 hover:text-red-500"
+                  @click="clearAddPhoto"
+                >
+                  Remover
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="md:col-span-2 flex flex-col gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+            <span v-if="responsibleLookup.status === 'success'">
+              Igreja identificada automaticamente pelo CPF do respons�vel. Ajuste se necess�rio.
+            </span>
+            <span v-else>
+              Informe o CPF do respons�vel da igreja selecionada para valida��o.
+            </span>
+          </div>
           <div class="md:col-span-2 flex justify-end gap-3">
-            <button type="button" class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="closeAdd">Fechar</button>
-            <button
-              type="submit"
-              class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-            >
-              Salvar
+            <button type="button" class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="closeAdd">
+              Cancelar
+            </button>
+            <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">
+              Salvar inscri��o
             </button>
           </div>
         </form>
@@ -409,10 +505,11 @@ import { useAdminStore } from '../../stores/admin'
 import { useCatalogStore } from '../../stores/catalog'
 import { useAuthStore } from '../../stores/auth'
 import type { Church, Registration } from '../../types/api'
-import { maskCpf, formatCurrency } from '../../utils/format'
+import { formatCurrency } from '../../utils/format'
 import ConfirmDialog from '../../components/ui/ConfirmDialog.vue'
 import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf'
 import { paymentMethodLabel } from '../../config/paymentMethods'
+import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto'
 
 const admin = useAdminStore()
 const catalog = useCatalogStore()
@@ -442,6 +539,12 @@ const registrationStatusOptions = [
   { value: 'CHECKED_IN', label: statusLabels.CHECKED_IN },
   { value: 'CANCELED', label: statusLabels.CANCELED },
   { value: 'REFUNDED', label: statusLabels.REFUNDED }
+]
+
+const genderOptions = [
+  { value: 'MALE', label: 'Masculino' },
+  { value: 'FEMALE', label: 'Feminino' },
+  { value: 'OTHER', label: 'Outro' }
 ]
 
 const filtersReady = ref(false)
@@ -618,69 +721,180 @@ const displayedRegistrations = computed(() => {
 
 // Nova inscrição (PIX, Dinheiro ou Gratuita)
 const addDialog = reactive({ open: false, paymentMethod: 'PIX_MP' as 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR' })
-const addForm = reactive({ eventId: '', fullName: '', birthDate: '', cpf: '', districtId: '', churchId: '' })
+const addForm = reactive({
+  eventId: '',
+  fullName: '',
+  birthDate: '',
+  cpf: '',
+  gender: '',
+  districtId: '',
+  churchId: '',
+  responsibleCpf: '',
+  responsiblePhone: '',
+  photoUrl: null as string | null
+})
+const addPhotoPreview = ref<string | null>(null)
+const responsibleLookup = reactive<{ status: 'idle' | 'success' | 'error'; message: string }>({
+  status: 'idle',
+  message: ''
+})
 
-const openAddPaid = () => {
-  addDialog.paymentMethod = 'PIX_MP'
+const resetAddForm = (paymentMethod: 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR' = 'PIX_MP') => {
+  addDialog.paymentMethod = paymentMethod
   addForm.eventId = filters.eventId || (admin.events[0]?.id ?? '')
   addForm.fullName = ''
   addForm.birthDate = ''
   addForm.cpf = ''
+  addForm.gender = ''
   addForm.districtId = filters.districtId || (catalog.districts[0]?.id ?? '')
   addForm.churchId = filters.churchId || (churchesByDistrict(addForm.districtId)[0]?.id ?? '')
+  addForm.responsibleCpf = ''
+  addForm.responsiblePhone = ''
+  addForm.photoUrl = null
+  addPhotoPreview.value = null
+  responsibleLookup.status = 'idle'
+  responsibleLookup.message = ''
+}
+
+const openAddDialog = () => {
+  resetAddForm()
   addDialog.open = true
 }
 
-const openAddFree = () => {
-  addDialog.paymentMethod = 'FREE_PREVIOUS_YEAR'
-  addForm.eventId = filters.eventId || (admin.events[0]?.id ?? '')
-  addForm.fullName = ''
-  addForm.birthDate = ''
-  addForm.cpf = ''
-  addForm.districtId = filters.districtId || (catalog.districts[0]?.id ?? '')
-  addForm.churchId = filters.churchId || (churchesByDistrict(addForm.districtId)[0]?.id ?? '')
-  addDialog.open = true
+const closeAdd = () => {
+  addDialog.open = false
+  resetAddForm(addDialog.paymentMethod)
 }
 
-const closeAdd = () => { addDialog.open = false }
+const formatCpfInputValue = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (!digits) return ''
+  if (digits.length > 9) return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_, a, b, c, d) => `${a}.${b}.${c}${d ? '-' + d : ''}`)
+  if (digits.length > 6) return digits.replace(/(\d{3})(\d{3})(\d{0,3})/, (_, a, b, c) => `${a}.${b}.${c}`)
+  if (digits.length > 3) return digits.replace(/(\d{3})(\d{0,3})/, (_, a, b) => `${a}.${b}`)
+  return digits
+}
 
 const onAddCpfInput = (e: Event) => {
   const el = e.target as HTMLInputElement
-  const digits = el.value.replace(/\D/g, '').slice(0, 11)
-  let masked = digits
-  if (digits.length > 9) masked = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, (_: any, a: string, b: string, c: string, d: string) => `${a}.${b}.${c}${d ? '-' + d : ''}`)
-  else if (digits.length > 6) masked = digits.replace(/(\d{3})(\d{3})(\d{0,3})/, (_: any, a: string, b: string, c: string) => `${a}.${b}.${c}`)
-  else if (digits.length > 3) masked = digits.replace(/(\d{3})(\d{0,3})/, (_: any, a: string, b: string) => `${a}.${b}`)
-  addForm.cpf = masked
+  addForm.cpf = formatCpfInputValue(el.value)
+}
+
+const onResponsibleCpfInput = (e: Event) => {
+  const el = e.target as HTMLInputElement
+  addForm.responsibleCpf = formatCpfInputValue(el.value)
+  responsibleLookup.status = 'idle'
+  responsibleLookup.message = ''
+}
+
+const formatPhoneInputValue = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11)
+  if (!digits) return ''
+  if (digits.length <= 2) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+}
+
+const onResponsiblePhoneInput = (e: Event) => {
+  const el = e.target as HTMLInputElement
+  addForm.responsiblePhone = formatPhoneInputValue(el.value)
+}
+
+const handleResponsibleCpfLookup = async () => {
+  const digits = normalizeCPF(addForm.responsibleCpf)
+  if (!digits || digits.length !== 11) {
+    responsibleLookup.status = 'error'
+    responsibleLookup.message = 'Informe um CPF do responsável válido.'
+    return
+  }
+
+  try {
+    responsibleLookup.status = 'idle'
+    responsibleLookup.message = 'Buscando igreja vinculada...'
+    const match = await catalog.findChurchByDirectorCpf(digits)
+    if (!match) {
+      responsibleLookup.status = 'error'
+      responsibleLookup.message = 'Nenhuma igreja encontrada para este CPF.'
+      return
+    }
+    responsibleLookup.status = 'success'
+    responsibleLookup.message = `Responsável identificado: ${match.directorName ?? 'Diretor'} - ${match.churchName}`
+    addForm.districtId = match.districtId
+    addForm.churchId = match.churchId
+  } catch (error: any) {
+    responsibleLookup.status = 'error'
+    responsibleLookup.message = error?.response?.data?.message ?? 'Falha ao buscar igreja para este CPF.'
+  }
+}
+
+watch(
+  () => addForm.districtId,
+  (value) => {
+    if (!value) {
+      addForm.churchId = ''
+      return
+    }
+    const options = churchesByDistrict(value)
+    if (!options.length) {
+      addForm.churchId = ''
+      return
+    }
+    if (!options.some((church) => church.id === addForm.churchId)) {
+      addForm.churchId = options[0].id
+    }
+  }
+)
+
+const handleAddPhotoChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const result = reader.result as string
+    addPhotoPreview.value = result
+    addForm.photoUrl = result
+  }
+  reader.readAsDataURL(file)
+}
+
+const clearAddPhoto = () => {
+  addPhotoPreview.value = null
+  addForm.photoUrl = null
 }
 
 const saveNewRegistration = async () => {
   try {
-    if (!addForm.eventId) { showError('Evento obrigatório', new Error('Selecione o evento')); return }
-    if (!addForm.fullName || addForm.fullName.trim().length < 3) { showError('Nome inválido', new Error('Informe o nome completo')); return }
-    if (!addForm.birthDate) { showError('Nascimento inválido', new Error('Informe a data')); return }
-    if (!validateCPF(addForm.cpf)) { showError('CPF inválido', new Error('Informe um CPF válido')); return }
-    if (!addForm.districtId || !addForm.churchId) { showError('Local inválido', new Error('Selecione distrito e igreja')); return }
+    if (!addForm.eventId) { showError('Evento obrigat�rio', new Error('Selecione o evento')); return }
+    if (!addForm.fullName || addForm.fullName.trim().length < 3) { showError('Nome inv�lido', new Error('Informe o nome completo')); return }
+    if (!addForm.birthDate) { showError('Nascimento inv�lido', new Error('Informe a data')); return }
+    if (!addForm.gender) { showError('Dados incompletos', new Error('Selecione o g�nero do participante')); return }
+    if (!validateCPF(addForm.cpf)) { showError('CPF inv�lido', new Error('Informe um CPF v�lido para o participante')); return }
+    if (!validateCPF(addForm.responsibleCpf)) { showError('CPF do respons�vel inv�lido', new Error('Informe um CPF v�lido do respons�vel')); return }
+    if (!addForm.districtId || !addForm.churchId) { showError('Local inv�lido', new Error('Selecione distrito e igreja')); return }
+    const phoneDigits = addForm.responsiblePhone.replace(/\\D/g, '')
+    if (phoneDigits.length < 10) { showError('Telefone inv�lido', new Error('Informe o telefone do respons�vel')); return }
 
     const result = await admin.createAdminRegistration({
       eventId: addForm.eventId,
-      buyerCpf: normalizeCPF(addForm.cpf),
+      buyerCpf: normalizeCPF(addForm.responsibleCpf),
       paymentMethod: addDialog.paymentMethod,
       person: {
         fullName: addForm.fullName.trim(),
         cpf: normalizeCPF(addForm.cpf),
         birthDate: addForm.birthDate,
-        gender: 'OTHER',
+        gender: addForm.gender || 'OTHER',
         districtId: addForm.districtId,
         churchId: addForm.churchId,
-        photoUrl: null
+        photoUrl: addForm.photoUrl || null
       }
     })
 
     if (addDialog.paymentMethod === 'PIX_MP' && result?.orderId) {
       const slug = findEventSlug(addForm.eventId)
       if (slug) {
-        const link = `${window.location.origin}/evento/${slug}/pagamento/${result.orderId}`
+        const link = window.location.origin + '/evento/' + slug + '/pagamento/' + result.orderId
         try { await navigator.clipboard.writeText(link) } catch {}
         window.open(link, '_blank')
       }
@@ -688,12 +902,19 @@ const saveNewRegistration = async () => {
     closeAdd()
     scheduleApply(true)
   } catch (error) {
-    showError('Falha ao criar inscrição', error)
+    showError('Falha ao criar inscri��o', error)
   }
 }
 
 // Acoes e helpers adicionais
 const findEventSlug = (eventId: string) => admin.events.find((e) => e.id === eventId)?.slug ?? ''
+
+const resolvePhotoUrl = (photoUrl?: string | null) => {
+  if (typeof photoUrl === 'string' && photoUrl.trim().length > 0) {
+    return photoUrl
+  }
+  return DEFAULT_PHOTO_DATA_URL
+}
 
 const paymentMethodShort = (method?: string | null) => {
   if (!method) return '—'
@@ -844,7 +1065,7 @@ const cancellableStatuses = new Set<Registration['status']>(['PENDING_PAYMENT','
 const canCancelRegistration = (s: Registration['status']) => cancellableStatuses.has(s)
 const canDeleteRegistration = (s: Registration['status']) => deletableStatuses.has(s)
 
-type ConfirmAction = 'cancel' | 'refund' | 'delete' | 'confirm-cash'
+type ConfirmAction = 'cancel' | 'refund' | 'delete' | 'confirm-cash' | 'reactivate'
 const confirmState = reactive({ open: false, action: null as ConfirmAction | null, registration: null as Registration | null, title: '', description: '', confirmLabel: 'Confirmar', cancelLabel: 'Cancelar', type: 'default' as 'default' | 'danger' })
 
 const resetConfirmState = () => { confirmState.open = false; confirmState.action = null; confirmState.registration = null; confirmState.title = ''; confirmState.description = ''; confirmState.confirmLabel = 'Confirmar'; confirmState.cancelLabel = 'Cancelar'; confirmState.type = 'default' }
@@ -858,6 +1079,7 @@ const openConfirm = (action: ConfirmAction, registration: Registration) => {
   if (action === 'cancel') { confirmState.title = 'Cancelar inscricao'; confirmState.description = 'Cancelar a inscricao de ' + registration.fullName + '? Esta acao nao pode ser desfeita.'; confirmState.confirmLabel = 'Cancelar'; confirmState.type = 'danger' }
   else if (action === 'refund') { confirmState.title = 'Estornar inscricao'; confirmState.description = 'Confirmar estorno da inscricao de ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar estorno'; confirmState.type = 'default' }
   else if (action === 'confirm-cash') { confirmState.title = 'Confirmar pagamento em dinheiro'; confirmState.description = 'Confirmar recebimento manual em dinheiro para ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar pagamento'; confirmState.type = 'default' }
+  else if (action === 'reactivate') { confirmState.title = 'Reativar inscricao'; confirmState.description = 'Reativar a inscricao de ' + registration.fullName + ' e gerar um novo link de pagamento?'; confirmState.confirmLabel = 'Reativar'; confirmState.type = 'default' }
   else { confirmState.title = 'Excluir inscricao'; confirmState.description = 'Excluir a inscricao de ' + registration.fullName + '? O registro sera removido permanentemente.'; confirmState.confirmLabel = 'Excluir'; confirmState.type = 'danger' }
 }
 
@@ -879,8 +1101,26 @@ const executeConfirmAction = async () => {
     if (action === 'cancel') await admin.cancelRegistration(registration.id)
     else if (action === 'refund') await admin.refundRegistration(registration.id, {})
     else if (action === 'delete') await admin.deleteRegistration(registration.id)
-    else if (action === 'confirm-cash') {
+    else if (action === 'reactivate') {
+      processing.message = 'Gerando novo pagamento...'
+      processing.open = true
+      try {
+        const result = await admin.reactivateRegistration(registration.id)
+        const slug = findEventSlug(registration.eventId)
+        const orderId = result?.orderId ?? registration.orderId
+        if (slug && orderId) {
+          const link = `${window.location.origin}/evento/${slug}/pagamento/${orderId}`
+          try { await navigator.clipboard.writeText(link) } catch {}
+          window.open(link, '_blank')
+        } else {
+          showError('Nao foi possivel gerar link', new Error('Dados insuficientes para gerar pagamento.'))
+        }
+      } finally {
+        processing.open = false
+      }
+    } else if (action === 'confirm-cash') {
       if (!registration.orderId) { showError('Nao foi possivel confirmar pagamento', new Error('Inscricao sem pedido associado.')); return }
+      processing.message = 'Confirmando pagamento...'
       processing.open = true
       await ensureMinDelay(admin.confirmOrderPayment(registration.orderId, { manualReference: 'CASH-ADMIN', paidAt: new Date().toISOString() }), 2000)
       processing.open = false
@@ -890,11 +1130,13 @@ const executeConfirmAction = async () => {
       cancel: 'Falha ao cancelar inscricao',
       refund: 'Falha ao estornar inscricao',
       delete: 'Falha ao excluir inscricao',
-      'confirm-cash': 'Falha ao confirmar pagamento'
+      'confirm-cash': 'Falha ao confirmar pagamento',
+      reactivate: 'Falha ao reativar inscricao'
     }
     if (action === 'confirm-cash') { showError('Falha ao confirmar pagamento', e); return }
     showError(titles[action], e)
   }
 }
 </script>
+
 

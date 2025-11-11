@@ -3,16 +3,19 @@ import { ref, computed } from "vue";
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
-
-type UserRole = "AdminGeral" | "AdminDistrital" | "DiretorLocal" | "Tesoureiro";
+import type { Role } from "../types/api";
 
 type AuthUser = {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: Role;
   districtScopeId?: string | null;
   churchScopeId?: string | null;
+  cpf?: string | null;
+  phone?: string | null;
+  mustChangePassword?: boolean;
+  ministries?: Array<{ id: string; name: string }>;
 };
 
 const STORAGE_KEY = "catre-auth";
@@ -70,10 +73,11 @@ export const useAuthStore = defineStore("auth", () => {
 
   loadFromStorage();
 
-  const role = computed(() => user.value?.role ?? null);
+  const role = computed<Role | null>(() => user.value?.role ?? null);
   const isAdminGeral = computed(() => role.value === "AdminGeral");
   const isAdminDistrital = computed(() => role.value === "AdminDistrital");
   const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
+  const canManageUsers = computed(() => isAdminGeral.value);
 
   return {
     token,
@@ -83,6 +87,7 @@ export const useAuthStore = defineStore("auth", () => {
     isAdminGeral,
     isAdminDistrital,
     canCreateFree,
+     canManageUsers,
     signIn,
     signOut
   };

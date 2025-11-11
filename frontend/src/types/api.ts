@@ -1,4 +1,9 @@
-export type Role = "AdminGeral" | "AdminDistrital" | "DiretorLocal" | "Tesoureiro";
+export type Role =
+  | "AdminGeral"
+  | "AdminDistrital"
+  | "DiretorLocal"
+  | "Tesoureiro"
+  | "CoordenadorMinisterio";
 
 export type OrderStatus = "PENDING" | "PAID" | "PARTIALLY_REFUNDED" | "CANCELED" | "EXPIRED";
 
@@ -12,6 +17,10 @@ export type RegistrationStatus =
 
 export type PaymentMethod = "PIX_MP" | "CASH" | "CARD_FULL" | "CARD_INSTALLMENTS" | "FREE_PREVIOUS_YEAR";
 
+export type PendingPaymentValueRule =
+  | "KEEP_ORIGINAL"
+  | "UPDATE_TO_ACTIVE_LOT";
+
 export interface District {
   id: string;
   name: string;
@@ -22,6 +31,27 @@ export interface Church {
   id: string;
   name: string;
   districtId: string;
+  directorName?: string | null;
+  directorCpf?: string | null;
+  directorBirthDate?: string | null;
+  directorEmail?: string | null;
+  directorWhatsapp?: string | null;
+  directorPhotoUrl?: string | null;
+}
+
+export interface Ministry {
+  id: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+}
+
+export interface ChurchDirectorMatch {
+  churchId: string;
+  churchName: string;
+  districtId: string;
+  districtName: string | null;
+  directorName?: string | null;
 }
 
 export interface EventLot {
@@ -49,6 +79,23 @@ export interface Event {
   currentLot?: EventLot | null;
   lots?: EventLot[];
   paymentMethods?: PaymentMethod[];
+  pendingPaymentValueRule: PendingPaymentValueRule;
+  ministryId?: string | null;
+  ministry?: Ministry | null;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  cpf?: string | null;
+  phone?: string | null;
+  districtScopeId?: string | null;
+  churchScopeId?: string | null;
+  mustChangePassword?: boolean;
+  ministries?: Array<{ id: string; name: string }>;
+  createdAt?: string;
 }
 
 export interface Registration {
