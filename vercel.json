@@ -6,11 +6,7 @@
   "functions": {
     "backend/dist/main.js": {
       "runtime": "nodejs20.x",
-      "includeFiles": [
-        "backend/dist/**",
-        "backend/prisma/schema.prisma",
-        "backend/prisma/migrations/**"
-      ]
+      "includeFiles": "backend/**"
     }
   },
   "routes": [
