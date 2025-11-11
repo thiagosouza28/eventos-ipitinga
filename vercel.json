@@ -1,30 +1,22 @@
 {
-  "buildCommand": "npm --prefix frontend run build",
-  "outputDirectory": "frontend/dist",
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "version": 2,
+  "framework": null,
+  "installCommand": "npm install --prefix backend",
+  "buildCommand": "npm run build --prefix backend",
+  "functions": {
+    "backend/dist/main.js": {
+      "runtime": "nodejs20.x",
+      "includeFiles": [
+        "backend/dist/**",
+        "backend/prisma/schema.prisma",
+        "backend/prisma/migrations/**"
+      ]
     }
-  ],
-  "headers": [
+  },
+  "routes": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+      "src": "/(.*)",
+      "dest": "backend/dist/main.js"
     }
   ]
 }

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { env } from "../src/config/env";
+import { Role } from "../src/config/roles";
 import { prisma } from "../src/lib/prisma";
 
 const ensureDistrict = async (name: string) => {
@@ -22,10 +23,30 @@ const ensureChurch = async (name: string, districtId: string) => {
   });
 };
 
-const ensureEvent = async () => {
+const ensureMinistry = async (name: string, description?: string | null) => {
+  const existing = await prisma.ministry.findUnique({ where: { name } });
+  if (existing) return existing;
+  return prisma.ministry.create({
+    data: {
+      name,
+      description: description ?? null,
+      isActive: true
+    }
+  });
+};
+
+const ensureEvent = async (ministryId: string) => {
   const slug = "retiro-espiritual-2025";
   const existing = await prisma.event.findUnique({ where: { slug } });
-  if (existing) return existing;
+  if (existing) {
+    if (!existing.ministryId) {
+      return prisma.event.update({
+        where: { id: existing.id },
+        data: { ministryId }
+      });
+    }
+    return existing;
+  }
   return prisma.event.create({
     data: {
       title: "Retiro Espiritual 2025",
@@ -35,26 +56,46 @@ const ensureEvent = async () => {
       location: "CATRE Ipitinga, MG",
       priceCents: 25000,
       minAgeYears: 12,
-      slug
+      slug,
+      ministryId
     }
   });
 };
 
-const ensureUser = async (
-  name: string,
-  email: string,
-  password: string,
-  role: string
-) => {
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return existing;
+type EnsureUserInput = {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+  districtScopeId?: string | null;
+  churchScopeId?: string | null;
+};
+
+const ensureUser = async ({
+  name,
+  email,
+  password,
+  role,
+  districtScopeId,
+  churchScopeId
+}: EnsureUserInput) => {
   const passwordHash = await bcrypt.hash(password, env.PASSWORD_SALT_ROUNDS);
-  return prisma.user.create({
-    data: {
+  return prisma.user.upsert({
+    where: { email },
+    create: {
       name,
       email,
       passwordHash,
-      role
+      role,
+      districtScopeId: districtScopeId ?? null,
+      churchScopeId: churchScopeId ?? null
+    },
+    update: {
+      name,
+      role,
+      passwordHash,
+      districtScopeId: districtScopeId ?? null,
+      churchScopeId: churchScopeId ?? null
     }
   });
 };
@@ -68,24 +109,73 @@ const run = async () => {
   const centralChurch = await ensureChurch("Igreja Central", north.id);
   const hopeChurch = await ensureChurch("Igreja Esperanca", south.id);
 
-  const event = await ensureEvent();
+  const youthMinistry = await ensureMinistry("Ministério Jovem", "Coordenação geral das atividades jovens.");
+  const musicMinistry = await ensureMinistry("Ministério de Música", "Equipe de louvor e adoração.");
 
-  const adminUser = await ensureUser("Admin Geral", env.ADMIN_EMAIL, env.ADMIN_PASSWORD, "AdminGeral");
-  const supportUser = await ensureUser(
-    "Usuario CATRE",
-    "thgdsztls@gmail.com",
-    "281021",
-    "AdminDistrital"
-  );
+  const event = await ensureEvent(youthMinistry.id);
+
+  const seededUsers: EnsureUserInput[] = [
+    {
+      name: "Admin Geral",
+      email: env.ADMIN_EMAIL,
+      password: env.ADMIN_PASSWORD,
+      role: "AdminGeral"
+    },
+    {
+      name: "Helena Rocha",
+      email: "distrital.norte@catre.local",
+      password: env.ADMIN_PASSWORD,
+      role: "AdminDistrital",
+      districtScopeId: north.id
+    },
+    {
+      name: "Ricardo Lima",
+      email: "distrital.sul@catre.local",
+      password: env.ADMIN_PASSWORD,
+      role: "AdminDistrital",
+      districtScopeId: south.id
+    },
+    {
+      name: "Daniela Carvalho",
+      email: "diretora.central@catre.local",
+      password: env.ADMIN_PASSWORD,
+      role: "DiretorLocal",
+      churchScopeId: centralChurch.id
+    },
+    {
+      name: "Juliana Araujo",
+      email: "diretora.esperanca@catre.local",
+      password: env.ADMIN_PASSWORD,
+      role: "DiretorLocal",
+      churchScopeId: hopeChurch.id
+    },
+    {
+      name: "Tesouraria CATRE",
+      email: "tesouraria@catre.local",
+      password: env.ADMIN_PASSWORD,
+      role: "Tesoureiro"
+    }
+  ];
+
+  const users = await Promise.all(seededUsers.map((user) => ensureUser(user)));
 
   console.log("[seed] Done.");
   console.table({
     "Evento exemplo": event.slug,
     "Igreja 1": centralChurch.name,
     "Igreja 2": hopeChurch.name,
-    "Usuario Admin": adminUser.email,
-    "Usuario Suporte": supportUser.email
+    "Usuario Admin": env.ADMIN_EMAIL,
+    "Ministerio padrao": youthMinistry.name
   });
+  console.table(
+    users.map((user) => ({
+      Nome: user.name,
+      Email: user.email,
+      Role: user.role,
+      Distrito: user.districtScopeId ?? "-",
+      Igreja: user.churchScopeId ?? "-"
+    }))
+  );
 };
 
 run()

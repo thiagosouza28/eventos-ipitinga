@@ -130,9 +130,12 @@ export class EventService {
     });
   }
 
-  async listAdmin() {
+  async listAdmin(ministryIds?: string[]) {
+    const where: Prisma.EventWhereInput = ministryIds && ministryIds.length ? { ministryId: { in: ministryIds } } : {};
     const events = await prisma.event.findMany({
-      orderBy: { startDate: "desc" }
+      where,
+      orderBy: { startDate: "desc" },
+      include: { ministry: true }
     });
 
     if (events.length === 0) {
@@ -155,7 +158,8 @@ export class EventService {
         lots,
         paymentMethods: parsePaymentMethods(event.paymentMethods),
         currentLot: serializeLot(activeLot),
-        currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
+        currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
+        ministry: event.ministry
       };
     });
   }
@@ -191,6 +195,7 @@ export class EventService {
     isActive?: boolean;
     paymentMethods?: PaymentMethod[];
     pendingPaymentValueRule?: PendingPaymentValueRule;
+    ministryId: string;
   }) {
     const desiredSlug = data.slug ? normalizeSlugInput(data.slug) : null;
     const baseSlug =
@@ -203,6 +208,11 @@ export class EventService {
     }
 
     const slug = await this.resolveUniqueSlug(baseSlug);
+
+    const ministry = await prisma.ministry.findUnique({ where: { id: data.ministryId } });
+    if (!ministry || !ministry.isActive) {
+      throw new AppError("Ministerio invalido", 400);
+    }
 
     const event = await prisma.event.create({
       data: {
@@ -244,6 +254,7 @@ export class EventService {
       paymentMethods?: PaymentMethod[];
       slug?: string;
       pendingPaymentValueRule?: PendingPaymentValueRule;
+      ministryId?: string;
     }>
   ) {
     const event = await prisma.event.findUnique({ where: { id } });
@@ -276,10 +287,18 @@ export class EventService {
       payload.pendingPaymentValueRule = data.pendingPaymentValueRule;
     }
 
-   if (data.slug !== undefined) {
+    if (data.ministryId !== undefined) {
+      const ministry = await prisma.ministry.findUnique({ where: { id: data.ministryId } });
+      if (!ministry || !ministry.isActive) {
+        throw new AppError("Ministerio invalido", 400);
+      }
+      payload.ministry = { connect: { id: data.ministryId } };
+    }
+
+    if (data.slug !== undefined) {
       const normalized = normalizeSlugInput(data.slug);
       if (!normalized) {
-        throw new AppError("Slug inválido", 400);
+        throw new AppError("Slug invalido", 400);
       }
       payload.slug = await this.resolveUniqueSlug(normalized, id);
     }
@@ -288,6 +307,14 @@ export class EventService {
       where: { id },
       data: payload
     });
+
+    if (data.ministryId && data.ministryId !== event.ministryId) {
+      await prisma.registration.updateMany({
+        where: { eventId: id },
+        data: { ministryId: data.ministryId }
+      });
+    }
+
     const serialized = {
       ...updated,
       paymentMethods: parsePaymentMethods(updated.paymentMethods)
@@ -299,9 +326,7 @@ export class EventService {
       metadata: payload
     });
     return serialized;
-  }
-
-  findActiveLot(eventId: string, referenceDate = new Date()) {
+  }  findActiveLot(eventId: string, referenceDate = new Date()) {
     return eventLotService.findActive(eventId, referenceDate);
   }
 
@@ -329,3 +354,4 @@ export class EventService {
 }
 
 export const eventService = new EventService();
+

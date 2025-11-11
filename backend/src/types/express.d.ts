@@ -8,6 +8,7 @@ declare global {
       role: Role;
       districtScopeId?: string | null;
       churchScopeId?: string | null;
+      ministryIds?: string[];
     }
 
     interface Request {

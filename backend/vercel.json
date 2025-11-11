@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
+  "functions": {
+    "dist/main.js": {
+      "runtime": "nodejs20.x",
+      "includeFiles": [
+        "dist/**",
+        "prisma/schema.prisma",
+        "prisma/migrations/**"
+      ]
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/main.js"
+    }
+  ]
+}

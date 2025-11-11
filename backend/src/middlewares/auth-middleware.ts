@@ -10,6 +10,7 @@ type TokenPayload = {
   role: Role;
   districtScopeId?: string | null;
   churchScopeId?: string | null;
+  ministryIds?: string[];
 };
 
 export const authenticate = (request: Request, _response: Response, next: NextFunction) => {
@@ -29,7 +30,8 @@ export const authenticate = (request: Request, _response: Response, next: NextFu
       id: decoded.sub,
       role: decoded.role,
       districtScopeId: decoded.districtScopeId,
-      churchScopeId: decoded.churchScopeId
+      churchScopeId: decoded.churchScopeId,
+      ministryIds: decoded.ministryIds ?? []
     };
     return next();
   } catch (error) {

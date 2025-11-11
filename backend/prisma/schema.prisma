@@ -2,10 +2,12 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 
 model District {
   id            String         @id @default(cuid())
@@ -16,6 +18,7 @@ model District {
   users         User[]         @relation("DistrictUsers")
   registrations Registration[]
 }
+
 
 model Church {
   id                String         @id @default(cuid())
@@ -36,6 +39,7 @@ model Church {
   @@index([districtId])
 }
 
+
 model Event {
   id             String         @id @default(cuid())
   title          String
@@ -52,10 +56,15 @@ model Event {
   paymentMethods String         @default("PIX_MP")
   pendingPaymentValueRule String @default("KEEP_ORIGINAL")
   createdAt      DateTime       @default(now())
+  ministryId     String?
   orders         Order[]
   registrations  Registration[]
   lots           EventLot[]
   expenses       Expense[]
+  ministry       Ministry?      @relation(fields: [ministryId], references: [id])
+
+  @@index([ministryId])
+
 }
 
 model Order {
@@ -87,10 +96,12 @@ model Order {
   @@index([status])
 }
 
+
 model Registration {
   id            String    @id @default(cuid())
   orderId       String
   eventId       String
+  ministryId    String?
   fullName      String
   cpf           String
   birthDate     DateTime
@@ -108,6 +119,7 @@ model Registration {
   createdAt     DateTime  @default(now())
   order         Order     @relation(fields: [orderId], references: [id])
   event         Event     @relation(fields: [eventId], references: [id])
+  ministry      Ministry? @relation(fields: [ministryId], references: [id])
   district      District  @relation(fields: [districtId], references: [id])
   church        Church    @relation(fields: [churchId], references: [id])
   refunds       Refund[]
@@ -118,6 +130,7 @@ model Registration {
   @@index([cpf])
   @@index([status])
 }
+
 
 model Refund {
   id             String       @id @default(cuid())
@@ -131,6 +144,7 @@ model Refund {
   registration   Registration @relation(fields: [registrationId], references: [id])
 }
 
+
 model WebhookEvent {
   id             String    @id @default(cuid())
   provider       String
@@ -143,6 +157,7 @@ model WebhookEvent {
   order          Order?    @relation(fields: [orderId], references: [id])
 }
 
+
 model AuditLog {
   id           String   @id @default(cuid())
   actorUserId  String?
@@ -154,18 +169,24 @@ model AuditLog {
   actor        User?    @relation(fields: [actorUserId], references: [id])
 }
 
+
 model User {
   id              String     @id @default(cuid())
   name            String
+  cpf             String?    @unique
+  phone           String?
   email           String     @unique
   passwordHash    String
   role            String
   districtScopeId String?
+  mustChangePassword Boolean @default(false)
   churchScopeId   String?
   createdAt       DateTime   @default(now())
   districtScope   District?  @relation("DistrictUsers", fields: [districtScopeId], references: [id])
   churchScope     Church?    @relation("ChurchUsers", fields: [churchScopeId], references: [id])
   auditLogs       AuditLog[]
+  ministries      MinistryUser[]
+
 }
 
 model EventLot {
@@ -183,6 +204,7 @@ model EventLot {
   @@index([eventId])
 }
 
+
 model Expense {
   id          String    @id @default(cuid())
   eventId     String
@@ -199,3 +221,37 @@ model Expense {
   @@index([eventId])
   @@index([date])
 }
+
+
+
+
+model Ministry {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  description String?
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  events      Event[]
+  registrations Registration[]
+  users       MinistryUser[]
+}
+
+
+model MinistryUser {
+  userId     String
+  ministryId String
+  assignedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  ministry   Ministry @relation(fields: [ministryId], references: [id])
+
+  @@id([userId, ministryId])
+  @@index([ministryId])
+}
+
+
+
+
+
+
+

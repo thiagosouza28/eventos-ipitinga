@@ -1,0 +1,18 @@
+services:
+  - type: web_service
+    name: CATRE Ipitinga Backend
+    env: node
+    plan: starter
+    branch: main
+    root: backend
+    buildCommand: npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: catre-ipitinga-db
+    engine: postgresql
+    plan: starter
+    version: 16

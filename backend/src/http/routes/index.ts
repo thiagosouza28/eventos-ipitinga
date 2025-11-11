@@ -2,7 +2,7 @@
 
 import { authenticate } from "../../middlewares/auth-middleware";
 import { authorize } from "../../middlewares/rbac-middleware";
-import { loginHandler } from "../../modules/auth/auth.controller";
+import { loginHandler, changePasswordHandler } from "../../modules/auth/auth.controller";
 import {
   createChurchHandler,
   listChurchesHandler,
@@ -31,6 +31,12 @@ import {
   deleteEventLotHandler
 } from "../../modules/events/event-lot.controller";
 import {
+  listMinistriesHandler,
+  createMinistryHandler,
+  updateMinistryHandler,
+  deleteMinistryHandler
+} from "../../modules/ministries/ministry.controller";
+import {
   getOrderPaymentHandler,
   getPaymentByPreferenceIdHandler,
   listOrdersHandler,
@@ -47,6 +53,7 @@ import {
   listRegistrationsHandler,
   downloadRegistrationsReportHandler,
   registrationsReportHandler,
+  reactivateRegistrationHandler,
   refundRegistrationHandler,
   updateRegistrationHandler,
   markRegistrationsPaidHandler,
@@ -82,6 +89,12 @@ import {
 } from "../../modules/financial/financial.controller";
 import { uploadMiddleware } from "../../config/upload";
 import { uploadImageHandler } from "../../modules/uploads/upload.controller";
+import {
+  listUsersHandler,
+  createUserHandler,
+  updateUserHandler,
+  resetUserPasswordHandler
+} from "../../modules/users/user.controller";
 
 export const router = Router();
 
@@ -97,7 +110,7 @@ router.post("/inscriptions/batch", createBatchInscriptionHandler);
 router.post(
   "/admin/inscriptions/batch",
   authenticate,
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   createBatchInscriptionHandler
 );
 router.get("/payments/order/:orderId", getOrderPaymentHandler);
@@ -110,6 +123,7 @@ router.post("/webhooks/mercadopago", mercadoPagoWebhookHandler);
 router.get("/catalog/districts", listDistrictsHandler);
 router.get("/catalog/churches", listChurchesHandler);
 router.get("/catalog/churches/director", findChurchByDirectorCpfHandler);
+router.get("/catalog/ministries", listMinistriesHandler);
 
 // AutenticaÃ§Ã£o
 router.post("/admin/login", loginHandler);
@@ -117,21 +131,45 @@ router.post("/admin/login", loginHandler);
 // Admin protegido
 router.use("/admin", authenticate);
 
+router.post("/admin/profile/change-password", changePasswordHandler);
+
 router.get(
   "/admin/districts",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   listDistrictsHandler
 );
 router.post("/admin/districts", authorize("AdminGeral"), createDistrictHandler);
 router.patch("/admin/districts/:id", authorize("AdminGeral"), updateDistrictHandler);
 router.delete("/admin/districts/:id", authorize("AdminGeral"), deleteDistrictHandler);
 
+router.get(
+  "/admin/ministries",
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  listMinistriesHandler
+);
+router.post("/admin/ministries", authorize("AdminGeral"), createMinistryHandler);
+router.patch("/admin/ministries/:id", authorize("AdminGeral"), updateMinistryHandler);
+router.delete("/admin/ministries/:id", authorize("AdminGeral"), deleteMinistryHandler);
+
+router.get("/admin/users", authorize("AdminGeral"), listUsersHandler);
+router.post("/admin/users", authorize("AdminGeral"), createUserHandler);
+router.patch("/admin/users/:id", authorize("AdminGeral"), updateUserHandler);
+router.post(
+  "/admin/users/:id/reset-password",
+  authorize("AdminGeral"),
+  resetUserPasswordHandler
+);
+
 router.get("/admin/churches", authorize("AdminGeral", "AdminDistrital"), listChurchesHandler);
 router.post("/admin/churches", authorize("AdminGeral", "AdminDistrital"), createChurchHandler);
 router.patch("/admin/churches/:id", authorize("AdminGeral", "AdminDistrital"), updateChurchHandler);
 router.delete("/admin/churches/:id", authorize("AdminGeral", "AdminDistrital"), deleteChurchHandler);
 
-router.get("/admin/events", authorize("AdminGeral", "AdminDistrital"), listEventsAdminHandler);
+router.get(
+  "/admin/events",
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  listEventsAdminHandler
+);
 router.post("/admin/events", authorize("AdminGeral"), createEventHandler);
 router.patch("/admin/events/:id", authorize("AdminGeral"), updateEventHandler);
 router.delete("/admin/events/:id", authorize("AdminGeral"), deleteEventHandler);
@@ -143,22 +181,22 @@ router.post(
 );
 router.get(
   "/admin/events/:eventId/lots",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   listEventLotsHandler
 );
 router.post(
   "/admin/events/:eventId/lots",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   createEventLotHandler
 );
 router.patch(
   "/admin/events/:eventId/lots/:lotId",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   updateEventLotHandler
 );
 router.delete(
   "/admin/events/:eventId/lots/:lotId",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   deleteEventLotHandler
 );
 
@@ -171,33 +209,38 @@ router.post(
 
 router.get(
   "/admin/registrations",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro"),
+  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
   listRegistrationsHandler
 );
 router.get(
   "/admin/registrations/report",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro"),
+  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
   registrationsReportHandler
 );
 router.get(
   "/admin/registrations/report.pdf",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro"),
+  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
   downloadRegistrationsReportHandler
 );
 router.patch(
   "/admin/registrations/:id",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   updateRegistrationHandler
 );
 router.delete(
   "/admin/registrations/:id",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   deleteRegistrationHandler
 );
 router.post(
   "/admin/registrations/:id/cancel",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   cancelRegistrationHandler
+);
+router.post(
+  "/admin/registrations/:id/reactivate",
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  reactivateRegistrationHandler
 );
 router.post(
   "/admin/registrations/:id/refund",
@@ -219,7 +262,7 @@ router.post(
 // Registration History
 router.get(
   "/admin/registrations/:id/history",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro"),
+  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
   getRegistrationHistoryHandler
 );
 
@@ -252,12 +295,34 @@ router.patch("/admin/expenses/:id", authorize("AdminGeral", "AdminDistrital"), u
 router.delete("/admin/expenses/:id", authorize("AdminGeral"), deleteExpenseHandler);
 
 // Financial Dashboard
-router.get("/admin/financial/summary", authorize("AdminGeral", "AdminDistrital"), getGeneralSummaryHandler);
-router.get("/admin/financial/events/:eventId", authorize("AdminGeral", "AdminDistrital"), getEventSummaryHandler);
-router.get("/admin/financial/events/:eventId/districts/:districtId", authorize("AdminGeral", "AdminDistrital"), getDistrictSummaryHandler);
-router.get("/admin/financial/events/:eventId/churches/:churchId", authorize("AdminGeral", "AdminDistrital"), getChurchSummaryHandler);
+router.get("/admin/financial/summary", authorize("AdminGeral", "AdminDistrital"),
+  getGeneralSummaryHandler);
+router.get(
+  "/admin/financial/events/:eventId",
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  getEventSummaryHandler
+);
+router.get(
+  "/admin/financial/events/:eventId/districts/:districtId",
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  getDistrictSummaryHandler
+);
+router.get(
+  "/admin/financial/events/:eventId/churches/:churchId",
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  getChurchSummaryHandler
+);
 router.get(
   "/admin/financial/events/:eventId/report.pdf",
-  authorize("AdminGeral", "AdminDistrital"),
+  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
   downloadEventFinancialReportHandler
 );
+
+
+
+
+
+
+
+
+

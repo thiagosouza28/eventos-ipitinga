@@ -22,7 +22,7 @@ describe("RegistrationService", () => {
         where: {
           eventId: "00000000-0000-0000-0000-000000000001",
           cpf: "52998224725",
-          status: { notIn: ["REFUNDED", "CANCELED"] }
+          status: { in: ["DRAFT", "PENDING_PAYMENT", "PAID", "CHECKED_IN"] }
         }
       });
     });

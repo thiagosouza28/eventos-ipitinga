@@ -33,7 +33,8 @@ const createSchema = z.object({
   minAgeYears: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
   paymentMethods: z.array(paymentMethodSchema).min(1).optional(),
-  pendingPaymentValueRule: pendingPaymentValueRuleSchema.optional()
+  pendingPaymentValueRule: pendingPaymentValueRuleSchema.optional(),
+  ministryId: z.string().cuid()
 });
 
 const updateSchema = createSchema.partial();
@@ -43,8 +44,8 @@ export const getEventBySlugHandler = async (request: Request, response: Response
   return response.json(event);
 };
 
-export const listEventsAdminHandler = async (_request: Request, response: Response) => {
-  const events = await eventService.listAdmin();
+export const listEventsAdminHandler = async (request: Request, response: Response) => {
+  const events = await eventService.listAdmin(request.user?.ministryIds);
   return response.json(events);
 };
 

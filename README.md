@@ -16,7 +16,8 @@ Aplicação completa (backend + frontend) para gerenciar inscrições de eventos
 - [Testes](#testes)
 - [Documentação da API](#documentação-da-api)
 - [Seeds de exemplo](#seeds-de-exemplo)
-- [Próximos passos sugeridos](#próximos-passos-sugeridos)
+- [Deploy no Render](#deploy-no-render)
+- [Pr�ximos passos sugeridos](#pr�ximos-passos-sugeridos)
 
 ## Principais recursos
 
@@ -87,7 +88,7 @@ Aplicação completa (backend + frontend) para gerenciar inscrições de eventos
    npm --workspace backend run prisma:seed
    ```
 
-   > A seed cria um usuário `AdminGeral` (email/senha em `.env`) e dados básicos.
+   > A seed cria usuários de exemplo (Admin geral, distrital, diretores locais e tesouraria) usando o email/senha configurados em `.env`, além dos dados básicos.
 
 ## Variáveis de ambiente
 
@@ -208,12 +209,24 @@ npm --workspace frontend run test
 
 Após rodar `npm --workspace backend run prisma:seed` você terá:
 
-- Usuário admin: `admin@catre.test` / `Admin123!`
+- Usuários admin/Distrital/Diretor/Tesouraria (todos usam a senha `ADMIN_PASSWORD` do `.env`):
+  - `Admin Geral` (`AdminGeral`): email definido em `ADMIN_EMAIL`.
+  - `distrital.norte@catre.local` (`AdminDistrital`) - associado ao Distrito Norte.
+  - `distrital.sul@catre.local` (`AdminDistrital`) - associado ao Distrito Sul.
+  - `diretora.central@catre.local` (`DiretorLocal`) - associado à Igreja Central.
+  - `diretora.esperanca@catre.local` (`DiretorLocal`) - associado à Igreja Esperança.
+  - `tesouraria@catre.local` (`Tesoureiro`).
 - Distritos: "Distrito Norte", "Distrito Sul"
 - Igrejas: "Igreja Central", "Igreja Esperança"
-- Evento: "Retiro Espiritual 2025" (`slug: retiro-espiritual-2025`)
+- Ministérios: "Ministerio Jovem" (ativo) e "Ministerio de Musica" (ativo)
+- Evento: "Retiro Espiritual 2025" (`slug: retiro-espiritual-2025`) vinculado ao Ministério Jovem
 
 > Em desenvolvimento, faça login com esse usuário via `/admin`.
+
+## Deploy no Render
+
+- O arquivo `render.yaml` j� configura o servi�o `CATRE Ipitinga Backend` com Node/Express e um banco PostgreSQL Starter. O Render respeita o `root: backend` e usa os comandos `npm run build` e `npm run start`.
+- As etapas completas (vari�veis de ambiente, URLs, webhook e rotinas de observabilidade) est�o documentadas em `docs/render-backend.md`. Mantenha segredos (JWT, Mercado Pago, Supabase/S3) apenas no painel do Render e sincronize o `API_URL` com `https://<seu-backend>.onrender.com/api`.
 
 ## Próximos passos sugeridos
 

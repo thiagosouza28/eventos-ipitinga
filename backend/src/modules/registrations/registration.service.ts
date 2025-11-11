@@ -9,7 +9,7 @@ import { auditService } from "../../services/audit.service";
 import { generateReceiptPdf } from "../../pdf/receipt.service";
 import { signReceiptToken, verifyReceiptToken } from "../../utils/hmac";
 import { env } from "../../config/env";
-import type { RegistrationStatus as RegistrationStatusValue } from "../../config/statuses";
+import { OrderStatus, RegistrationStatus, type RegistrationStatus as RegistrationStatusValue } from "../../config/statuses";
 import { maskCpf, sanitizeCpf } from "../../utils/mask";
 import {
   generateRegistrationReportPdf,
@@ -21,6 +21,7 @@ import { DEFAULT_PHOTO_DATA_URL } from "../../config/default-photo";
 import { PaymentMethod, PAYMENT_METHOD_LABELS } from "../../config/payment-methods";
 import { Gender, parseGender } from "../../config/gender";
 import { storageService } from "../../storage/storage.service";
+import { orderService } from "../orders/order.service";
 
 const receiptsDir = path.resolve(__dirname, "..", "..", "tmp", "receipts");
 
@@ -110,6 +111,13 @@ const REGISTRATION_STATUSES = [
   "CHECKED_IN"
 ] as const;
 
+const ACTIVE_REGISTRATION_STATUSES: RegistrationStatusValue[] = [
+  "DRAFT",
+  "PENDING_PAYMENT",
+  "PAID",
+  "CHECKED_IN"
+];
+
 type RegistrationFilters = {
   eventId?: string;
   districtId?: string;
@@ -117,11 +125,12 @@ type RegistrationFilters = {
   status?: RegistrationStatusValue;
 };
 
-const buildRegistrationWhere = (filters: RegistrationFilters = {}) => ({
+const buildRegistrationWhere = (filters: RegistrationFilters = {}, ministryIds?: string[]) => ({
   eventId: filters.eventId,
   districtId: filters.districtId,
   churchId: filters.churchId,
-  status: filters.status
+  status: filters.status,
+  ...(ministryIds && ministryIds.length ? { ministryId: { in: ministryIds } } : {})
 });
 
 export class RegistrationService {
@@ -140,7 +149,11 @@ export class RegistrationService {
   async ensureUniqueCpf(eventId: string, cpf: string) {
     const sanitizedCpf = sanitizeCpf(cpf);
     const exists = await prisma.registration.findFirst({
-      where: { eventId, cpf: sanitizedCpf, status: { notIn: ["REFUNDED", "CANCELED"] } }
+      where: {
+        eventId,
+        cpf: sanitizedCpf,
+        status: { in: ACTIVE_REGISTRATION_STATUSES }
+      }
     });
     if (exists) {
       throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} jÃ¡ possui inscriÃ§Ã£o para este evento. NÃ£o Ã© possÃ­vel fazer mais de uma inscriÃ§Ã£o com o mesmo CPF no mesmo evento.`);
@@ -150,7 +163,11 @@ export class RegistrationService {
   async isCpfRegistered(eventId: string, cpf: string) {
     const sanitizedCpf = sanitizeCpf(cpf);
     const exists = await prisma.registration.findFirst({
-      where: { eventId, cpf: sanitizedCpf, status: { notIn: ["REFUNDED", "CANCELED"] } }
+      where: {
+        eventId,
+        cpf: sanitizedCpf,
+        status: { in: ACTIVE_REGISTRATION_STATUSES }
+      }
     });
     return Boolean(exists);
   }
@@ -179,9 +196,9 @@ export class RegistrationService {
     };
   }
 
-  async list(filters: RegistrationFilters) {
+  async list(filters: RegistrationFilters, ministryIds?: string[]) {
     return prisma.registration.findMany({
-      where: buildRegistrationWhere(filters),
+      where: buildRegistrationWhere(filters, ministryIds),
       select: {
         id: true,
         orderId: true,
@@ -243,8 +260,8 @@ export class RegistrationService {
     });
   }
 
-  async report(filters: RegistrationFilters, groupBy: "event" | "church") {
-    const where = buildRegistrationWhere(filters);
+  async report(filters: RegistrationFilters, groupBy: "event" | "church", ministryIds?: string[]) {
+    const where = buildRegistrationWhere(filters, ministryIds);
     if (groupBy === "event") {
       const grouped = await prisma.registration.groupBy({
         by: ["eventId", "status"],
@@ -401,7 +418,7 @@ export class RegistrationService {
           where: {
             eventId: registration.eventId,
             cpf: sanitized,
-            status: { notIn: ["REFUNDED", "CANCELED"] }
+            status: { in: ACTIVE_REGISTRATION_STATUSES }
           }
         });
         if (exists) {
@@ -461,7 +478,7 @@ export class RegistrationService {
     const remaining = await prisma.registration.count({
       where: {
         orderId: registration.orderId,
-        status: { notIn: ["CANCELED", "REFUNDED"] }
+        status: { in: ACTIVE_REGISTRATION_STATUSES }
       }
     });
 
@@ -478,6 +495,57 @@ export class RegistrationService {
       entityId: id,
       metadata: { orderId: registration.orderId }
     });
+  }
+
+  async reactivate(id: string, actorId?: string) {
+    const registration = await prisma.registration.findUnique({
+      where: { id },
+      include: {
+        order: true,
+        event: true
+      }
+    });
+    if (!registration) {
+      throw new NotFoundError("Inscricao nao encontrada");
+    }
+    if (registration.status !== RegistrationStatus.CANCELED) {
+      throw new AppError("Somente inscricoes canceladas podem ser reativadas", 400);
+    }
+    if (!registration.orderId || !registration.order) {
+      throw new AppError("Inscricao sem pedido associado", 400);
+    }
+
+    const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.registration.update({
+        where: { id },
+        data: {
+          status: RegistrationStatus.PENDING_PAYMENT,
+          paidAt: null
+        }
+      });
+      await tx.order.update({
+        where: { id: registration.orderId },
+        data: {
+          status: OrderStatus.PENDING,
+          expiresAt,
+          paidAt: null,
+          mpPaymentId: null,
+          mpPreferenceId: null
+        }
+      });
+    });
+
+    await auditService.log({
+      action: "REGISTRATION_REACTIVATED",
+      entity: "registration",
+      entityId: id,
+      actorUserId: actorId,
+      metadata: { orderId: registration.orderId }
+    });
+
+    return orderService.createIndividualPaymentForRegistration(id);
   }
 
   async delete(id: string) {
@@ -663,9 +731,9 @@ export class RegistrationService {
     return calculateAge(birthDate);
   }
 
-  async generateReportPdf(filters: RegistrationFilters, groupBy: "event" | "church") {
+  async generateReportPdf(filters: RegistrationFilters, groupBy: "event" | "church", ministryIds?: string[]) {
     const registrations = await prisma.registration.findMany({
-      where: buildRegistrationWhere(filters),
+      where: buildRegistrationWhere(filters, ministryIds),
       include: {
         event: true,
         district: true,
@@ -762,10 +830,11 @@ export class RegistrationService {
   async generateEventSheetPdf(
     filters: RegistrationFilters,
     groupBy: "event" | "church",
-    layout: "single" | "two" = "single"
+    layout: "single" | "two" = "single",
+    ministryIds?: string[]
   ) {
     const registrations = await prisma.registration.findMany({
-      where: buildRegistrationWhere(filters),
+      where: buildRegistrationWhere(filters, ministryIds),
       include: {
         event: true,
         district: true,

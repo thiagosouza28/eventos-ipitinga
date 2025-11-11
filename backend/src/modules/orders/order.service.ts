@@ -162,6 +162,9 @@ export class OrderService {
     if (!event || !event.isActive) {
       throw new NotFoundError("Evento nao disponivel");
     }
+    if (!event.ministryId) {
+      throw new AppError("Evento sem ministerio associado", 400);
+    }
 
     const allowedMethods = parsePaymentMethods(event.paymentMethods);
     const requestedMethod = payload.paymentMethod;
@@ -282,6 +285,7 @@ export class OrderService {
             photoUrl: person.storedPhoto,
             gender: person.gender,
             paymentMethod: resolvedMethod,
+            ministryId: event.ministryId,
             status: (isFreeEvent || isFreePaymentMethod)
               ? RegistrationStatus.PAID
               : RegistrationStatus.PENDING_PAYMENT,
@@ -377,10 +381,29 @@ export class OrderService {
       : DEFAULT_PENDING_PAYMENT_VALUE_RULE;
     let totalCents = order.totalCents;
     let needsPriceUpdate = false;
+    let recalculatedUnitPrice: number | null = null;
     if (paymentRule === "UPDATE_TO_ACTIVE_LOT" && participantCount > 0) {
       const unitPriceCents = await resolveCurrentLotPriceCents(order.eventId, fallbackPriceCents);
       totalCents = unitPriceCents * participantCount;
+      recalculatedUnitPrice = unitPriceCents;
       needsPriceUpdate = totalCents !== order.totalCents;
+    }
+
+    if (needsPriceUpdate && recalculatedUnitPrice !== null) {
+      await prisma.$transaction([
+        prisma.order.update({
+          where: { id: order.id },
+          data: { totalCents }
+        }),
+        prisma.registration.updateMany({
+          where: { orderId: order.id },
+          data: { priceCents: recalculatedUnitPrice }
+        })
+      ]);
+      order.totalCents = totalCents;
+      order.registrations.forEach((registration) => {
+        registration.priceCents = recalculatedUnitPrice as number;
+      });
     }
 
     const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;

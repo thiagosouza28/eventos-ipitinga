@@ -71,7 +71,7 @@ const bulkMarkPaidSchema = z.object({
 export const listRegistrationsHandler = async (request: Request, response: Response) => {
   try {
     const filters = listSchema.parse(request.query);
-    const registrations = await registrationService.list(filters);
+    const registrations = await registrationService.list(filters, request.user?.ministryIds);
     return response.json(registrations);
   } catch (error: any) {
     console.error("Erro ao listar inscrições:", error);
@@ -84,7 +84,7 @@ export const listRegistrationsHandler = async (request: Request, response: Respo
 
 export const registrationsReportHandler = async (request: Request, response: Response) => {
   const { groupBy, ...filters } = reportSchema.parse(request.query);
-  const report = await registrationService.report(filters, groupBy);
+  const report = await registrationService.report(filters, groupBy, request.user?.ministryIds);
   return response.json(report);
 };
 
@@ -92,8 +92,13 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
   const { groupBy, template, layout, ...filters } = reportDownloadSchema.parse(request.query);
   const pdfBuffer =
     template === "event"
-      ? await registrationService.generateEventSheetPdf(filters, groupBy, (layout as any) ?? "single")
-      : await registrationService.generateReportPdf(filters, groupBy);
+      ? await registrationService.generateEventSheetPdf(
+          filters,
+          groupBy,
+          (layout as any) ?? "single",
+          request.user?.ministryIds
+        )
+      : await registrationService.generateReportPdf(filters, groupBy, request.user?.ministryIds);
   const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
   response.setHeader("Content-Type", "application/pdf");
   response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
@@ -109,6 +114,11 @@ export const updateRegistrationHandler = async (request: Request, response: Resp
 export const cancelRegistrationHandler = async (request: Request, response: Response) => {
   await registrationService.cancel(request.params.id);
   return response.status(204).send();
+};
+
+export const reactivateRegistrationHandler = async (request: Request, response: Response) => {
+  const result = await registrationService.reactivate(request.params.id, request.user?.id);
+  return response.json(result);
 };
 
 export const deleteRegistrationHandler = async (request: Request, response: Response) => {
