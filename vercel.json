@@ -3,12 +3,15 @@
   "framework": null,
   "installCommand": "npm install --prefix backend",
   "buildCommand": "npm run build --prefix backend",
-  "functions": {
-    "backend/dist/main.js": {
-      "runtime": "nodejs20.x",
-      "includeFiles": "backend/**"
+  "builds": [
+    {
+      "src": "backend/dist/main.js",
+      "use": "@vercel/node@2.15.15",
+      "config": {
+        "includeFiles": "backend/**"
+      }
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
