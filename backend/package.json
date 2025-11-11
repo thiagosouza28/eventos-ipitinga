@@ -21,6 +21,9 @@
     "db:setup": "ts-node scripts/setup-sqlite.ts",
     "openapi": "ts-node scripts/generate-openapi.ts"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.19.0",
     "@supabase/supabase-js": "^2.45.0",

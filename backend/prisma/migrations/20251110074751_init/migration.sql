@@ -5,13 +5,13 @@
 
 */
 -- AlterTable
-ALTER TABLE `event` ADD COLUMN `ministryId` VARCHAR(191) NULL;
+ALTER TABLE `Event` ADD COLUMN `ministryId` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `registration` ADD COLUMN `ministryId` VARCHAR(191) NULL;
+ALTER TABLE `Registration` ADD COLUMN `ministryId` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `user` ADD COLUMN `cpf` VARCHAR(191) NULL,
+ALTER TABLE `User` ADD COLUMN `cpf` VARCHAR(191) NULL,
     ADD COLUMN `mustChangePassword` BOOLEAN NOT NULL DEFAULT false,
     ADD COLUMN `phone` VARCHAR(191) NULL;
 
