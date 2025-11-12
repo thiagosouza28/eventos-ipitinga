@@ -2,7 +2,7 @@ import "express-async-errors";
 
 import compression from "compression";
 import cors from "cors";
-import express from "express";
+import express, { type RequestHandler } from "express";
 import helmet from "helmet";
 import path from "path";
 
@@ -11,7 +11,7 @@ import { errorHandler } from "./middlewares/error-handler";
 import { normalizeBody } from "./middlewares/normalize-body";
 import { publicLimiter } from "./middlewares/rate-limit";
 import { requestLogger } from "./utils/logger";
-import { router } from "./http/routes";
+import router from "./http/routes";
 
 export const createApp = () => {
   const app = express();
@@ -34,7 +34,8 @@ export const createApp = () => {
     next();
   });
 
-  app.use("/api", publicLimiter);
+  const limiterMiddleware = publicLimiter as unknown as RequestHandler;
+  app.use("/api", limiterMiddleware);
   app.use("/api", router);
 
   app.use(errorHandler);
