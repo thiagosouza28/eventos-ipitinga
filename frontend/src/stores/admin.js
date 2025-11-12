@@ -10,11 +10,26 @@ export const useAdminStore = defineStore("admin", () => {
     const orders = ref([]);
     const dashboard = ref(null);
     const users = ref([]);
+    const extractArray = (input, fallbackKeys = []) => {
+        if (Array.isArray(input)) {
+            return input;
+        }
+        if (input && typeof input === "object") {
+            for (const key of fallbackKeys) {
+                const value = input[key];
+                if (Array.isArray(value)) {
+                    return value;
+                }
+            }
+        }
+        return [];
+    };
     const loadEvents = async () => {
         const response = await api.get("/admin/events");
-        events.value = response.data;
+        const data = extractArray(response.data, ["events", "data"]);
+        events.value = data;
         const lotsMap = {};
-        response.data.forEach((event) => {
+        data.forEach((event) => {
             lotsMap[event.id] = event.lots ?? [];
         });
         eventLots.value = lotsMap;

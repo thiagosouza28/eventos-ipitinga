@@ -8,6 +8,20 @@ export const useCatalogStore = defineStore("catalog", () => {
     const churches = ref([]);
     const ministries = ref([]);
     const lastChurchFilter = ref(undefined);
+    const ensureArray = (input, fallbackKeys = []) => {
+        if (Array.isArray(input)) {
+            return input;
+        }
+        if (input && typeof input === "object") {
+            for (const key of fallbackKeys) {
+                const value = input[key];
+                if (Array.isArray(value)) {
+                    return value;
+                }
+            }
+        }
+        return [];
+    };
     const loadDistricts = async () => {
         const response = await api.get("/catalog/districts");
         // Normalizar os dados para garantir que sejam strings
@@ -145,7 +159,8 @@ export const useCatalogStore = defineStore("catalog", () => {
     };
     const loadMinistries = async () => {
         const response = await api.get("/catalog/ministries");
-        ministries.value = (response.data || []).map((m) => ({
+        const data = ensureArray(response.data, ["ministries", "data"]);
+        ministries.value = data.map((m) => ({
             id: String(m.id || ""),
             name: String(m.name || ""),
             description: m.description ? String(m.description) : null,
