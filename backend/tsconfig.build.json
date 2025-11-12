@@ -1,19 +1,19 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "ES2020",
     "module": "CommonJS",
     "rootDir": "src",
     "outDir": "dist",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "strict": false,
     "strictNullChecks": true,
     "noImplicitAny": true,
     "sourceMap": false,
     "declaration": true,
     "declarationMap": true,
-    "types": ["node"],
-    "lib": ["ES2021"]
+    "lib": ["ES2021"],
+    "preserveSymlinks": false
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["test", "**/*.spec.ts", "**/*.test.ts", "scripts", "prisma/seed.ts"]
 }
