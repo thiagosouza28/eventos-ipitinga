@@ -14,17 +14,7 @@
     "resolveJsonModule": true,
     "types": ["node", "jest"],
     "paths": {
-      "@/*": ["src/*"],
-      "express": ["../node_modules/express", "node_modules/express"],
-      "express/*": ["../node_modules/express/*", "node_modules/express/*"],
-      "express-serve-static-core": [
-        "../node_modules/express-serve-static-core",
-        "node_modules/express-serve-static-core"
-      ],
-      "express-serve-static-core/*": [
-        "../node_modules/express-serve-static-core/*",
-        "node_modules/express-serve-static-core/*"
-      ]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src", "prisma", "scripts", "test"],
