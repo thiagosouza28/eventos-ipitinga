@@ -11,6 +11,20 @@ export const useCatalogStore = defineStore("catalog", () => {
   const churches = ref<Church[]>([]);
   const ministries = ref<Ministry[]>([]);
   const lastChurchFilter = ref<string | undefined>(undefined);
+  const ensureArray = <T>(input: unknown, fallbackKeys: string[] = []): T[] => {
+    if (Array.isArray(input)) {
+      return input as T[];
+    }
+    if (input && typeof input === "object") {
+      for (const key of fallbackKeys) {
+        const value = (input as Record<string, unknown>)[key];
+        if (Array.isArray(value)) {
+          return value as T[];
+        }
+      }
+    }
+    return [];
+  };
 
   const loadDistricts = async () => {
     const response = await api.get("/catalog/districts");
@@ -171,7 +185,8 @@ export const useCatalogStore = defineStore("catalog", () => {
 
   const loadMinistries = async () => {
     const response = await api.get("/catalog/ministries");
-    ministries.value = (response.data || []).map(
+    const data = ensureArray<Ministry>(response.data, ["ministries", "data"]);
+    ministries.value = data.map(
       (m: any): Ministry => ({
         id: String(m.id || ""),
         name: String(m.name || ""),

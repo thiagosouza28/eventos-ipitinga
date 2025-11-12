@@ -6,7 +6,7 @@
   "builds": [
     {
       "src": "backend/dist/main.js",
-      "use": "@vercel/node@2.15.15",
+      "use": "@vercel/node@5.5.5",
       "config": {
         "includeFiles": "backend/**"
       }

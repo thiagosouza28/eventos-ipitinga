@@ -14,11 +14,27 @@ export const useAdminStore = defineStore("admin", () => {
   const dashboard = ref<Record<string, unknown> | null>(null);
   const users = ref<AdminUser[]>([]);
 
+  const extractArray = <T>(input: unknown, fallbackKeys: string[] = []): T[] => {
+    if (Array.isArray(input)) {
+      return input as T[];
+    }
+    if (input && typeof input === "object") {
+      for (const key of fallbackKeys) {
+        const value = (input as Record<string, unknown>)[key];
+        if (Array.isArray(value)) {
+          return value as T[];
+        }
+      }
+    }
+    return [];
+  };
+
   const loadEvents = async () => {
     const response = await api.get("/admin/events");
-    events.value = response.data;
+    const data = extractArray<Event>(response.data, ["events", "data"]);
+    events.value = data;
     const lotsMap: Record<string, EventLot[]> = {};
-    response.data.forEach((event: Event) => {
+    data.forEach((event: Event) => {
       lotsMap[event.id] = event.lots ?? [];
     });
     eventLots.value = lotsMap;
