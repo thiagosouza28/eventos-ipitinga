@@ -1,5 +1,6 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, ref, watch } from "vue";
+import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useApi } from "../../composables/useApi";
 import { formatCPF, normalizeCPF } from "../../utils/cpf";
@@ -147,12 +148,18 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    type: "date",
+/** @type {[typeof DateField, ]} */ ;
+// @ts-ignore
+const __VLS_3 = __VLS_asFunctionalComponent(DateField, new DateField({
+    modelValue: (__VLS_ctx.birthDate),
     required: true,
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-(__VLS_ctx.birthDate);
+    ...{ class: "mt-1" },
+}));
+const __VLS_4 = __VLS_3({
+    modelValue: (__VLS_ctx.birthDate),
+    required: true,
+    ...{ class: "mt-1" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_3));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "flex flex-col items-center gap-3 sm:flex-row sm:justify-end" },
 });
@@ -172,13 +179,13 @@ var __VLS_2;
 if (__VLS_ctx.showFeedbackCard) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_3 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_6 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "w-full" },
     }));
-    const __VLS_4 = __VLS_3({
+    const __VLS_7 = __VLS_6({
         ...{ class: "w-full" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_3));
-    __VLS_5.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_6));
+    __VLS_8.slots.default;
     if (__VLS_ctx.errorMessage) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "rounded-lg border border-red-400 bg-red-50 p-4 text-sm text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200" },
@@ -212,6 +219,7 @@ if (__VLS_ctx.showFeedbackCard) {
                 href: (__VLS_ctx.resolveReceiptUrl(receipt.receiptUrl)),
                 target: "_blank",
                 rel: "noopener",
+                download: (`comprovante-${receipt.registrationId}.pdf`),
                 ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500" },
             });
         }
@@ -222,7 +230,7 @@ if (__VLS_ctx.showFeedbackCard) {
         });
         (__VLS_ctx.emptyMessage || "Nenhum comprovante encontrado para os dados informados.");
     }
-    var __VLS_5;
+    var __VLS_8;
 }
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
@@ -269,14 +277,6 @@ if (__VLS_ctx.showFeedbackCard) {
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
@@ -361,6 +361,7 @@ var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            DateField: DateField,
             BaseCard: BaseCard,
             cpf: cpf,
             birthDate: birthDate,

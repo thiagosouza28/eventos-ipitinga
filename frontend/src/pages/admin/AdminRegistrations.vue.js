@@ -1,6 +1,7 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { reactive, ref, onMounted, watch, computed } from 'vue';
 import { RouterLink } from 'vue-router';
+import DateField from '../../components/forms/DateField.vue';
 import BaseCard from '../../components/ui/BaseCard.vue';
 import ErrorDialog from '../../components/ui/ErrorDialog.vue';
 import { useAdminStore } from '../../stores/admin';
@@ -1414,12 +1415,18 @@ if (__VLS_ctx.addDialog.open) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        type: "date",
+    /** @type {[typeof DateField, ]} */ ;
+    // @ts-ignore
+    const __VLS_23 = __VLS_asFunctionalComponent(DateField, new DateField({
+        modelValue: (__VLS_ctx.addForm.birthDate),
         required: true,
-        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-    });
-    (__VLS_ctx.addForm.birthDate);
+        ...{ class: "mt-1" },
+    }));
+    const __VLS_24 = __VLS_23({
+        modelValue: (__VLS_ctx.addForm.birthDate),
+        required: true,
+        ...{ class: "mt-1" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_23));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
@@ -1644,12 +1651,18 @@ if (__VLS_ctx.editDialog.open) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        type: "date",
+    /** @type {[typeof DateField, ]} */ ;
+    // @ts-ignore
+    const __VLS_26 = __VLS_asFunctionalComponent(DateField, new DateField({
+        modelValue: (__VLS_ctx.editForm.birthDate),
         required: true,
-        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-    });
-    (__VLS_ctx.editForm.birthDate);
+        ...{ class: "mt-1" },
+    }));
+    const __VLS_27 = __VLS_26({
+        modelValue: (__VLS_ctx.editForm.birthDate),
+        required: true,
+        ...{ class: "mt-1" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_26));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
@@ -1759,7 +1772,7 @@ if (__VLS_ctx.editDialog.open) {
 }
 /** @type {[typeof ConfirmDialog, ]} */ ;
 // @ts-ignore
-const __VLS_23 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
+const __VLS_29 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
     ...{ 'onUpdate:modelValue': {} },
     ...{ 'onConfirm': {} },
     ...{ 'onCancel': {} },
@@ -1770,7 +1783,7 @@ const __VLS_23 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
     cancelLabel: (__VLS_ctx.confirmState.cancelLabel),
     type: (__VLS_ctx.confirmState.type),
 }));
-const __VLS_24 = __VLS_23({
+const __VLS_30 = __VLS_29({
     ...{ 'onUpdate:modelValue': {} },
     ...{ 'onConfirm': {} },
     ...{ 'onCancel': {} },
@@ -1780,20 +1793,20 @@ const __VLS_24 = __VLS_23({
     confirmLabel: (__VLS_ctx.confirmState.confirmLabel),
     cancelLabel: (__VLS_ctx.confirmState.cancelLabel),
     type: (__VLS_ctx.confirmState.type),
-}, ...__VLS_functionalComponentArgsRest(__VLS_23));
-let __VLS_26;
-let __VLS_27;
-let __VLS_28;
-const __VLS_29 = {
+}, ...__VLS_functionalComponentArgsRest(__VLS_29));
+let __VLS_32;
+let __VLS_33;
+let __VLS_34;
+const __VLS_35 = {
     'onUpdate:modelValue': (__VLS_ctx.handleDialogVisibility)
 };
-const __VLS_30 = {
+const __VLS_36 = {
     onConfirm: (__VLS_ctx.executeConfirmAction)
 };
-const __VLS_31 = {
+const __VLS_37 = {
     onCancel: (__VLS_ctx.resetConfirmState)
 };
-var __VLS_25;
+var __VLS_31;
 if (__VLS_ctx.processing.open) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "fixed inset-0 z-[60] flex items-center justify-center bg-black/60" },
@@ -2376,15 +2389,6 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
@@ -2626,15 +2630,6 @@ if (__VLS_ctx.processing.open) {
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
@@ -2776,6 +2771,7 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             RouterLink: RouterLink,
+            DateField: DateField,
             BaseCard: BaseCard,
             ErrorDialog: ErrorDialog,
             formatCurrency: formatCurrency,

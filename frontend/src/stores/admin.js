@@ -210,6 +210,11 @@ export const useAdminStore = defineStore("admin", () => {
         await loadUsers();
         return response.data;
     };
+    const updateUser = async (userId, payload) => {
+        const response = await api.patch(`/admin/users/${userId}`, payload);
+        await loadUsers();
+        return response.data;
+    };
     const resetUserPassword = async (userId) => {
         const response = await api.post(`/admin/users/${userId}/reset-password`);
         return response.data;
@@ -250,6 +255,7 @@ export const useAdminStore = defineStore("admin", () => {
         uploadAsset,
         loadUsers,
         createUser,
+        updateUser,
         resetUserPassword
     };
 });

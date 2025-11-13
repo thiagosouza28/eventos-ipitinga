@@ -1,6 +1,7 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
+import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
@@ -341,7 +342,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     maxlength: "14",
     ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
 });
-__VLS_asFunctionalDirective(__VLS_directives.vMaska)(null, { ...__VLS_directiveBindingRestFields, value: ('###.###.###-##') }, null, null);
+__VLS_asFunctionalDirective(__VLS_directives.vMaska)(null, { ...__VLS_directiveBindingRestFields, value: ({ mask: '###.###.###-##' }) }, null, null);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
@@ -349,12 +350,18 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
     ...{ class: "text-red-500" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    type: "date",
+/** @type {[typeof DateField, ]} */ ;
+// @ts-ignore
+const __VLS_22 = __VLS_asFunctionalComponent(DateField, new DateField({
+    modelValue: (__VLS_ctx.churchForm.directorBirthDate),
     required: true,
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-(__VLS_ctx.churchForm.directorBirthDate);
+    ...{ class: "mt-1" },
+}));
+const __VLS_23 = __VLS_22({
+    modelValue: (__VLS_ctx.churchForm.directorBirthDate),
+    required: true,
+    ...{ class: "mt-1" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_22));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "grid gap-4 md:grid-cols-2" },
 });
@@ -416,9 +423,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElement
 var __VLS_17;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-const __VLS_23 = __VLS_22({}, ...__VLS_functionalComponentArgsRest(__VLS_22));
-__VLS_24.slots.default;
+const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
+__VLS_27.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between" },
 });
@@ -432,30 +439,30 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "flex flex-wrap gap-3" },
 });
-const __VLS_25 = {}.RouterLink;
+const __VLS_28 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
-const __VLS_26 = __VLS_asFunctionalComponent(__VLS_25, new __VLS_25({
+const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
     to: "/admin/dashboard",
     ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" },
 }));
-const __VLS_27 = __VLS_26({
+const __VLS_30 = __VLS_29({
     to: "/admin/dashboard",
     ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_26));
-__VLS_28.slots.default;
-var __VLS_28;
+}, ...__VLS_functionalComponentArgsRest(__VLS_29));
+__VLS_31.slots.default;
+var __VLS_31;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     ...{ onClick: (__VLS_ctx.openNewChurchForm) },
     type: "button",
     ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
 });
-var __VLS_24;
+var __VLS_27;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_29 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-const __VLS_30 = __VLS_29({}, ...__VLS_functionalComponentArgsRest(__VLS_29));
-__VLS_31.slots.default;
+const __VLS_32 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+const __VLS_33 = __VLS_32({}, ...__VLS_functionalComponentArgsRest(__VLS_32));
+__VLS_34.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "space-y-4" },
 });
@@ -562,7 +569,7 @@ if (!__VLS_ctx.filteredChurches.length) {
         colspan: "6",
     });
 }
-var __VLS_31;
+var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
@@ -635,14 +642,6 @@ var __VLS_31;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
@@ -825,6 +824,7 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             RouterLink: RouterLink,
+            DateField: DateField,
             BaseCard: BaseCard,
             ErrorDialog: ErrorDialog,
             ConfirmDialog: ConfirmDialog,

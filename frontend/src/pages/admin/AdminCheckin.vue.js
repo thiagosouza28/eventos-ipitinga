@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { QrcodeStream } from "vue-qrcode-reader";
 import { formatCPF } from "../../utils/cpf";
 import BaseCard from "../../components/ui/BaseCard.vue";
+import DateField from "../../components/forms/DateField.vue";
 import { useAdminStore } from "../../stores/admin";
 const route = useRoute();
 const admin = useAdminStore();
@@ -11,7 +12,6 @@ const cpf = ref("");
 const birthDate = ref("");
 const feedback = ref("");
 const feedbackClass = ref("");
-const cpfMask = { mask: "###.###.###-##" };
 const facingMode = ref("environment");
 const streamKey = ref(0);
 const cameraReady = ref(false);
@@ -22,6 +22,8 @@ const lastScanned = ref(null);
 const manualLoading = ref(false);
 const confirming = ref(false);
 const pendingCheckin = ref(null);
+const pendingHistory = ref([]);
+const historyLoading = ref(false);
 let feedbackTimer = null;
 const cameraConstraints = computed(() => ({
     facingMode: { ideal: facingMode.value },
@@ -42,6 +44,35 @@ const cameraStatus = computed(() => {
     if (isProcessing.value)
         return "Processando QR Code...";
     return "";
+});
+const summaryCards = computed(() => {
+    const totals = admin.dashboard?.totals ?? {};
+    return [
+        {
+            key: "CHECKED_IN",
+            title: "Check-ins",
+            label: "Presencas confirmadas",
+            value: totals.CHECKED_IN ?? 0,
+            accent: "from-emerald-500 to-teal-500",
+            icon: "✓"
+        },
+        {
+            key: "PAID",
+            title: "Pagos",
+            label: "Prontos para check-in",
+            value: totals.PAID ?? 0,
+            accent: "from-sky-500 to-blue-600",
+            icon: "★"
+        },
+        {
+            key: "PENDING_PAYMENT",
+            title: "Pendentes",
+            label: "Aguardando pagamento",
+            value: totals.PENDING_PAYMENT ?? 0,
+            accent: "from-amber-400 to-orange-500",
+            icon: "…"
+        }
+    ];
 });
 const formatDateTime = (value) => new Date(value).toLocaleString("pt-BR", {
     day: "2-digit",
@@ -70,7 +101,26 @@ const pendingStatusInfo = computed(() => {
         className: "bg-neutral-900 text-white dark:bg-black/80 dark:text-white"
     };
 });
+const historyLabelMap = {
+    REGISTRATION_CREATED: "Inscricao criada",
+    PAYMENT_METHOD_SELECTED: "Forma de pagamento escolhida",
+    PAYMENT_CONFIRMED: "Pagamento confirmado",
+    ORDER_PAID: "Pedido pago",
+    CHECKIN_COMPLETED: "Check-in confirmado",
+    REGISTRATION_UPDATED: "Dados atualizados",
+    REGISTRATION_CANCELED: "Inscricao cancelada",
+    REGISTRATION_DELETED: "Inscricao excluida",
+    PAYMENT_REFUNDED: "Estorno registrado"
+};
+const latestHistory = computed(() => pendingHistory.value.slice(0, 5));
+const formatHistoryLabel = (entry) => entry.label ?? historyLabelMap[entry.type] ?? entry.type.replace(/_/g, " ");
 const displayCpf = (value) => formatCPF(value);
+const handleCpfInputChange = (event) => {
+    const input = event.target;
+    if (!input)
+        return;
+    cpf.value = formatCPF(input.value);
+};
 const applyPendingResult = (result, source, fallbackSignature) => {
     const confirmation = result.confirmation ??
         (result.status === "READY"
@@ -85,15 +135,46 @@ const applyPendingResult = (result, source, fallbackSignature) => {
         source,
         confirmation
     };
+    pendingHistory.value = [];
+    void loadPendingHistory(result.registration.id);
 };
 const clearPending = () => {
     pendingCheckin.value = null;
     confirming.value = false;
     isProcessing.value = false;
+    pendingHistory.value = [];
+    historyLoading.value = false;
 };
 const cancelPending = () => {
     clearPending();
     lastScanned.value = null;
+};
+const normalizeHistoryEvent = (input) => ({
+    type: String(input?.type ?? "EVENT"),
+    at: typeof input?.at === "string"
+        ? input.at
+        : new Date(input?.at ?? input?.createdAt ?? Date.now()).toISOString(),
+    label: typeof input?.label === "string" ? input.label : undefined,
+    actor: input?.actor ?? null,
+    details: input?.details ?? undefined
+});
+const loadPendingHistory = async (registrationId) => {
+    historyLoading.value = true;
+    try {
+        const history = await admin.getRegistrationHistory(registrationId);
+        const events = Array.isArray(history?.events) ? history.events : [];
+        const normalized = events
+            .map((event) => normalizeHistoryEvent(event))
+            .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+        pendingHistory.value = normalized;
+    }
+    catch (error) {
+        console.error("Erro ao carregar historico de check-in", error);
+        pendingHistory.value = [];
+    }
+    finally {
+        historyLoading.value = false;
+    }
 };
 const loadDashboard = async () => {
     const eventId = route.params.eventId;
@@ -289,6 +370,38 @@ const __VLS_5 = __VLS_4({
 }, ...__VLS_functionalComponentArgsRest(__VLS_4));
 __VLS_6.slots.default;
 var __VLS_6;
+if (__VLS_ctx.summaryCards.length) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" },
+    });
+    for (const [card] of __VLS_getVForSourceType((__VLS_ctx.summaryCards))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            key: (card.key),
+            ...{ class: "rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/30" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center justify-between" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
+        });
+        (card.title);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-2xl font-semibold text-neutral-900 dark:text-neutral-50" },
+        });
+        (card.value);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white" },
+            ...{ class: (card.accent) },
+        });
+        (card.icon);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "mt-2 text-sm text-neutral-500 dark:text-neutral-400" },
+        });
+        (card.label);
+    }
+}
 var __VLS_2;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
@@ -376,25 +489,32 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements
     ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    ...{ onInput: (__VLS_ctx.handleCpfInputChange) },
     value: (__VLS_ctx.cpf),
     type: "text",
     placeholder: "000.000.000-00",
     inputmode: "numeric",
+    maxlength: "14",
     autocomplete: "off",
     ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
     required: true,
 });
-__VLS_asFunctionalDirective(__VLS_directives.vMaska)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.cpfMask) }, null, null);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    type: "date",
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+/** @type {[typeof DateField, ]} */ ;
+// @ts-ignore
+const __VLS_19 = __VLS_asFunctionalComponent(DateField, new DateField({
+    modelValue: (__VLS_ctx.birthDate),
     required: true,
-});
-(__VLS_ctx.birthDate);
+    ...{ class: "mt-1" },
+}));
+const __VLS_20 = __VLS_19({
+    modelValue: (__VLS_ctx.birthDate),
+    required: true,
+    ...{ class: "mt-1" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_19));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     type: "submit",
     ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto" },
@@ -412,13 +532,13 @@ var __VLS_9;
 if (__VLS_ctx.pendingCheckin) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_19 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "space-y-4" },
     }));
-    const __VLS_20 = __VLS_19({
+    const __VLS_23 = __VLS_22({
         ...{ class: "space-y-4" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_19));
-    __VLS_21.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_22));
+    __VLS_24.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-col gap-4 md:flex-row md:items-start" },
     });
@@ -473,6 +593,44 @@ if (__VLS_ctx.pendingCheckin) {
         (__VLS_ctx.pendingStatusInfo.description);
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "rounded-xl border border-neutral-200 bg-white/80 p-4 dark:border-neutral-700 dark:bg-neutral-900/40" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center justify-between" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-sm font-semibold text-neutral-800 dark:text-neutral-100" },
+    });
+    if (__VLS_ctx.historyLoading) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-xs text-neutral-400 dark:text-neutral-500" },
+        });
+    }
+    if (__VLS_ctx.latestHistory.length) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.ul, __VLS_intrinsicElements.ul)({
+            ...{ class: "mt-3 space-y-3" },
+        });
+        for (const [item] of __VLS_getVForSourceType((__VLS_ctx.latestHistory))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.li, __VLS_intrinsicElements.li)({
+                key: (item.type + item.at),
+                ...{ class: "border-l-2 border-neutral-200 pl-3 text-sm text-neutral-600 dark:border-neutral-700 dark:text-neutral-300" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-medium text-neutral-800 dark:text-neutral-100" },
+            });
+            (__VLS_ctx.formatHistoryLabel(item));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (__VLS_ctx.formatDateTime(item.at));
+        }
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "mt-3 text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-wrap gap-3" },
     });
     if (__VLS_ctx.pendingCheckin.status === 'READY') {
@@ -491,14 +649,14 @@ if (__VLS_ctx.pendingCheckin) {
         disabled: (__VLS_ctx.confirming),
     });
     (__VLS_ctx.pendingCheckin.status === "READY" ? "Cancelar" : "Fechar");
-    var __VLS_21;
+    var __VLS_24;
 }
 if (__VLS_ctx.admin.dashboard) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-    const __VLS_23 = __VLS_22({}, ...__VLS_functionalComponentArgsRest(__VLS_22));
-    __VLS_24.slots.default;
+    const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+    const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
+    __VLS_27.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
         ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
     });
@@ -515,7 +673,7 @@ if (__VLS_ctx.admin.dashboard) {
         (item.fullName);
         (__VLS_ctx.formatDateTime(item.checkinAt));
     }
-    var __VLS_24;
+    var __VLS_27;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -545,6 +703,45 @@ if (__VLS_ctx.admin.dashboard) {
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:grid-cols-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
@@ -628,15 +825,6 @@ if (__VLS_ctx.admin.dashboard) {
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
@@ -697,6 +885,42 @@ if (__VLS_ctx.admin.dashboard) {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-l-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['pl-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -739,12 +963,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             RouterLink: RouterLink,
             QrcodeStream: QrcodeStream,
             BaseCard: BaseCard,
+            DateField: DateField,
             admin: admin,
             cpf: cpf,
             birthDate: birthDate,
             feedback: feedback,
             feedbackClass: feedbackClass,
-            cpfMask: cpfMask,
             facingMode: facingMode,
             streamKey: streamKey,
             isProcessing: isProcessing,
@@ -752,12 +976,17 @@ const __VLS_self = (await import('vue')).defineComponent({
             manualLoading: manualLoading,
             confirming: confirming,
             pendingCheckin: pendingCheckin,
+            historyLoading: historyLoading,
             cameraConstraints: cameraConstraints,
             cameraPaused: cameraPaused,
             cameraStatus: cameraStatus,
+            summaryCards: summaryCards,
             formatDateTime: formatDateTime,
             pendingStatusInfo: pendingStatusInfo,
+            latestHistory: latestHistory,
+            formatHistoryLabel: formatHistoryLabel,
             displayCpf: displayCpf,
+            handleCpfInputChange: handleCpfInputChange,
             cancelPending: cancelPending,
             restartCamera: restartCamera,
             toggleFacingMode: toggleFacingMode,

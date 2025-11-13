@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -6,6 +7,7 @@ import multer from "multer";
 import { AppError } from "../utils/errors";
 
 const uploadsDir = path.resolve(__dirname, "..", "..", "tmp", "uploads");
+fs.mkdirSync(uploadsDir, { recursive: true });
 
 export const uploadMiddleware = multer({
   storage: multer.diskStorage({

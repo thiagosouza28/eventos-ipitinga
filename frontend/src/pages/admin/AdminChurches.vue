@@ -71,7 +71,7 @@
               required
               maxlength="14"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-              v-maska="'###.###.###-##'"
+              v-maska="{ mask: '###.###.###-##' }"
             />
           </div>
           <div>

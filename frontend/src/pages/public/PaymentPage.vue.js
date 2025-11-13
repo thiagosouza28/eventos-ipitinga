@@ -1,10 +1,13 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import JSZip from "jszip";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useEventStore } from "../../stores/event";
 import { paymentMethodLabel } from "../../config/paymentMethods";
+import { API_BASE_URL } from "../../config/api";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { sanitizeFileName } from "../../utils/files";
 import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 const props = defineProps();
 const route = useRoute();
@@ -13,6 +16,46 @@ const eventStore = useEventStore();
 const payment = ref(null);
 const loadingStatus = ref(false);
 const pollHandle = ref(null);
+const receiptDownloadStorageKey = `order:${props.orderId}:receipts-downloaded`;
+const readStoredReceiptState = () => {
+    if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") {
+        return "idle";
+    }
+    try {
+        return window.sessionStorage.getItem(receiptDownloadStorageKey) === "done" ? "done" : "idle";
+    }
+    catch {
+        return "idle";
+    }
+};
+const autoReceiptDownloadState = ref(readStoredReceiptState());
+const downloadingReceipts = ref(false);
+const receiptDownloadError = ref("");
+const apiBase = (() => {
+    try {
+        return new URL(API_BASE_URL, typeof window !== "undefined" ? window.location.origin : undefined);
+    }
+    catch {
+        if (typeof window !== "undefined") {
+            return new URL(window.location.origin);
+        }
+        return new URL("http://localhost");
+    }
+})();
+const resolveReceiptUrl = (target) => {
+    try {
+        return new URL(target, apiBase).toString();
+    }
+    catch {
+        return target;
+    }
+};
+const rawReceiptLinks = computed(() => payment.value?.receipts ?? []);
+const receiptLinks = computed(() => rawReceiptLinks.value.map((receipt) => ({
+    ...receipt,
+    resolvedUrl: resolveReceiptUrl(receipt.receiptUrl)
+})));
+const hasReceiptLinks = computed(() => receiptLinks.value.length > 0);
 const clearRegistrationDraftState = () => {
     if (typeof window === "undefined" || typeof window.localStorage === "undefined")
         return;
@@ -44,6 +87,8 @@ const statusLabels = {
 const formatParticipantStatus = (status) => statusLabels[status] ?? status;
 const pendingParticipants = computed(() => payment.value?.participants?.filter((participant) => participant.status !== "PAID") ?? []);
 const isManualPayment = computed(() => Boolean(payment.value?.isManual));
+const receiptsReady = computed(() => isPaid.value && hasReceiptLinks.value);
+const receiptsGenerating = computed(() => isPaid.value && !hasReceiptLinks.value);
 const paymentMethodName = computed(() => paymentMethodLabel(payment.value?.paymentMethod ?? null));
 const manualInstructions = computed(() => {
     const method = payment.value?.paymentMethod;
@@ -58,6 +103,95 @@ const manualInstructions = computed(() => {
             return "";
     }
 });
+const persistReceiptDownloadState = () => {
+    if (typeof window === "undefined" || typeof window.sessionStorage === "undefined")
+        return;
+    try {
+        window.sessionStorage.setItem(receiptDownloadStorageKey, "done");
+    }
+    catch {
+        // Silently ignore storage errors (private mode, etc).
+    }
+};
+const buildReceiptFileName = (receipt, index) => {
+    const base = sanitizeFileName(receipt.fullName || `participante-${index + 1}`, "participante");
+    return `${base}-${receipt.registrationId}.pdf`;
+};
+const triggerBlobDownload = (blob, fileName) => {
+    if (typeof window === "undefined")
+        return;
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(href);
+};
+const fetchReceiptBlob = async (url) => {
+    const response = await fetch(url, { credentials: "include" });
+    if (!response.ok) {
+        throw new Error(`Falha ao baixar comprovante (${response.status})`);
+    }
+    return await response.blob();
+};
+const downloadSingleReceipt = async (receipt, index) => {
+    const blob = await fetchReceiptBlob(receipt.resolvedUrl ?? receipt.receiptUrl);
+    triggerBlobDownload(blob, buildReceiptFileName(receipt, index));
+};
+const downloadReceiptArchive = async (receipts) => {
+    const zip = new JSZip();
+    for (let index = 0; index < receipts.length; index += 1) {
+        const receipt = receipts[index];
+        const blob = await fetchReceiptBlob(receipt.resolvedUrl ?? receipt.receiptUrl);
+        zip.file(buildReceiptFileName(receipt, index), blob);
+    }
+    const archiveName = `comprovantes-${sanitizeFileName(props.orderId, "pedido")}.zip`;
+    const archive = await zip.generateAsync({ type: "blob" });
+    triggerBlobDownload(archive, archiveName);
+};
+const downloadReceipts = async (mode = "manual") => {
+    if (typeof window === "undefined" || !hasReceiptLinks.value)
+        return false;
+    downloadingReceipts.value = true;
+    if (mode === "manual") {
+        receiptDownloadError.value = "";
+    }
+    try {
+        if (receiptLinks.value.length === 1) {
+            await downloadSingleReceipt(receiptLinks.value[0], 0);
+        }
+        else {
+            await downloadReceiptArchive(receiptLinks.value);
+        }
+        persistReceiptDownloadState();
+        autoReceiptDownloadState.value = "done";
+        return true;
+    }
+    catch (error) {
+        console.error("Erro ao baixar comprovantes", error);
+        receiptDownloadError.value =
+            mode === "auto"
+                ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botao abaixo para tentar novamente."
+                : "Nao foi possivel baixar os comprovantes. Tente novamente.";
+        return false;
+    }
+    finally {
+        downloadingReceipts.value = false;
+    }
+};
+const triggerAutoReceiptDownload = () => {
+    if (autoReceiptDownloadState.value !== "idle" || !hasReceiptLinks.value)
+        return;
+    if (typeof window === "undefined")
+        return;
+    autoReceiptDownloadState.value = "pending";
+    void downloadReceipts("auto").then((success) => {
+        autoReceiptDownloadState.value = success ? "done" : "failed";
+    });
+};
+const handleManualReceiptDownload = () => downloadReceipts("manual");
 const statusTitle = computed(() => {
     if (isFreeEvent.value)
         return "Inscricoes confirmadas";
@@ -192,6 +326,14 @@ const stopPolling = () => {
         pollHandle.value = null;
     }
 };
+watch(() => ({
+    status: payment.value?.status,
+    receiptCount: receiptLinks.value.length
+}), ({ status, receiptCount }) => {
+    if (status === "PAID" && receiptCount > 0) {
+        triggerAutoReceiptDownload();
+    }
+}, { immediate: true });
 onMounted(async () => {
     clearRegistrationDraftState();
     if (!eventStore.event || eventStore.event.slug !== props.slug) {
@@ -347,6 +489,52 @@ if (__VLS_ctx.payment) {
             });
             (__VLS_ctx.formatParticipantStatus(participant.status));
         }
+    }
+    if (__VLS_ctx.receiptsReady) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-4 space-y-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-900 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-50" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-col gap-2 md:flex-row md:items-center md:justify-between" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm font-semibold" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm text-green-800 dark:text-green-100/80" },
+        });
+        (__VLS_ctx.autoReceiptDownloadState === "done"
+            ? "Os arquivos foram enviados automaticamente. Use o botao caso precise baixar novamente."
+            : "Os comprovantes estao prontos para download.");
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.handleManualReceiptDownload) },
+            type: "button",
+            ...{ class: "inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-green-500 dark:hover:bg-green-400" },
+            disabled: (__VLS_ctx.downloadingReceipts),
+        });
+        if (__VLS_ctx.downloadingReceipts) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "flex items-center gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        }
+        if (__VLS_ctx.receiptDownloadError) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm text-red-600 dark:text-red-300" },
+            });
+            (__VLS_ctx.receiptDownloadError);
+        }
+    }
+    else if (__VLS_ctx.receiptsGenerating) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-4 rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-200" },
+        });
     }
     if (!__VLS_ctx.isFreeEvent && !__VLS_ctx.isPaid) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -717,6 +905,69 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['text-primary-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/20']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-green-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-green-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-green-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-green-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-green-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-green-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-green-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-green-100/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-green-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-green-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-green-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-green-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-t-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
@@ -931,6 +1182,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             eventStore: eventStore,
             payment: payment,
             loadingStatus: loadingStatus,
+            autoReceiptDownloadState: autoReceiptDownloadState,
+            downloadingReceipts: downloadingReceipts,
+            receiptDownloadError: receiptDownloadError,
             handleStartNewRegistration: handleStartNewRegistration,
             currentLotName: currentLotName,
             ticketPriceCents: ticketPriceCents,
@@ -939,8 +1193,11 @@ const __VLS_self = (await import('vue')).defineComponent({
             formatParticipantStatus: formatParticipantStatus,
             pendingParticipants: pendingParticipants,
             isManualPayment: isManualPayment,
+            receiptsReady: receiptsReady,
+            receiptsGenerating: receiptsGenerating,
             paymentMethodName: paymentMethodName,
             manualInstructions: manualInstructions,
+            handleManualReceiptDownload: handleManualReceiptDownload,
             statusTitle: statusTitle,
             statusMessage: statusMessage,
             isPixPayment: isPixPayment,

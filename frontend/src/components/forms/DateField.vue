@@ -2,13 +2,12 @@
   <div class="relative w-full">
     <input
       ref="textInput"
-      v-maska="'##/##/####'"
+      v-maska="{ mask: '##/##/####' }"
       v-bind="forwardedAttrs"
       :class="mergedInputClass"
       v-model="displayValue"
       type="text"
       inputmode="numeric"
-      pattern="[0-9/]*"
       :placeholder="placeholder"
       :name="name"
       :id="id"

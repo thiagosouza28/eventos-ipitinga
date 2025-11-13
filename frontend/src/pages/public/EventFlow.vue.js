@@ -1,6 +1,7 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import DateField from "../../components/forms/DateField.vue";
 import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
@@ -211,10 +212,10 @@ const errorMessage = ref("");
 const inscricaoFormRef = ref(null);
 const cpfAvailabilityCache = new Map();
 const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
-const REGISTERED_ERROR = "CPF ja possui inscricao confirmada para este evento";
+const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento";
 const DUPLICATE_GLOBAL_ERROR = "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
-const REGISTERED_GLOBAL_ERROR = "Um ou mais CPFs ja possuem inscricao confirmada neste evento.";
-const REMOTE_ERROR_MESSAGE = "Nao foi possivel verificar CPF agora. Tente novamente.";
+const REGISTERED_GLOBAL_ERROR = "Um ou mais CPFs já possuem inscricão confirmada neste evento.";
+const REMOTE_ERROR_MESSAGE = "Não foi possível verificar CPF agora. Tente novamente.";
 const CPF_GLOBAL_MESSAGES = [
     DUPLICATE_GLOBAL_ERROR,
     REGISTERED_GLOBAL_ERROR,
@@ -274,8 +275,8 @@ const churchesByDistrict = computed(() => {
     return map;
 });
 const getPersonChurchOptions = (districtId) => churchesByDistrict.value.get(districtId) ?? [];
-const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "Nao informado";
-const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "Nao informado";
+const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "Não informado";
+const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
 const getGenderLabel = (value) => genderOptions.find((option) => option.value === value)?.label ?? value;
 const calculateAgeYears = (birthDate) => {
     if (!birthDate)
@@ -379,7 +380,7 @@ const getCpfError = (value) => {
     const digits = normalizeCPF(value);
     if (!digits.length)
         return "";
-    return validateCPF(value) ? "" : "CPF invalido";
+    return validateCPF(value) ? "" : "CPF inválido";
 };
 const updateParticipantGlobalError = () => {
     if (currentStep.value !== 2)
@@ -636,7 +637,7 @@ const handleCpfSubmit = async (cpfDigits) => {
     checkingCpf.value = true;
     errorMessage.value = "";
     if (!cpfDigits || !validateCPF(cpfDigits)) {
-        errorMessage.value = "CPF invÃ¡lido";
+        errorMessage.value = "CPF inválido";
         checkingCpf.value = false;
         return;
     }
@@ -659,7 +660,7 @@ const handleCpfSubmit = async (cpfDigits) => {
         currentStep.value = 1;
     }
     catch (error) {
-        errorMessage.value = error.response?.data?.message ?? "NÃ£o foi possÃ­vel verificar.";
+        errorMessage.value = error.response?.data?.message ?? "Não foi possível verificar.";
     }
     finally {
         checkingCpf.value = false;
@@ -715,7 +716,7 @@ const goToReview = async () => {
         !person.districtId ||
         !person.churchId);
     if (hasMissing) {
-        errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+        errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
         return;
     }
     currentStep.value = 3;
@@ -753,14 +754,14 @@ const submitBatch = async () => {
             !person.districtId ||
             !person.churchId);
         if (hasMissing) {
-            errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+            errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
             currentStep.value = 2;
             return;
         }
     }
     catch (error) {
-        if (error?.response?.data?.message?.includes("CPF jÃ¡ registrado")) {
-            errorMessage.value = "CPF ja possui inscricao confirmada para este evento";
+        if (error?.response?.data?.message?.includes("CPF já registrado")) {
+            errorMessage.value = "CPF já possui inscrição confirmada para este evento";
             currentStep.value = 2;
             return;
         }
@@ -796,7 +797,7 @@ const submitBatch = async () => {
         }
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Erro ao criar inscricoes.";
+        const message = error.response?.data?.message ?? "Erro ao criar inscrições.";
         errorMessage.value = message;
         if (error.response?.status === 409) {
             await handleConflictError(message);
@@ -1335,9 +1336,11 @@ else {
                 // @ts-ignore
                 const __VLS_42 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
                     key: (index),
+                    ...{ class: "rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40" },
                 }));
                 const __VLS_43 = __VLS_42({
                     key: (index),
+                    ...{ class: "rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40" },
                 }, ...__VLS_functionalComponentArgsRest(__VLS_42));
                 __VLS_44.slots.default;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1417,13 +1420,20 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" },
                 });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                    type: "date",
+                /** @type {[typeof DateField, ]} */ ;
+                // @ts-ignore
+                const __VLS_45 = __VLS_asFunctionalComponent(DateField, new DateField({
+                    modelValue: (person.birthDate),
                     required: true,
                     disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60" },
-                });
-                (person.birthDate);
+                    ...{ class: "w-full" },
+                }));
+                const __VLS_46 = __VLS_45({
+                    modelValue: (person.birthDate),
+                    required: true,
+                    disabled: (__VLS_ctx.isPersonLocked(index)),
+                    ...{ class: "w-full" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_45));
                 if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                         ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
@@ -1568,9 +1578,9 @@ else {
         if (__VLS_ctx.currentStep === 3) {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_45 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_46 = __VLS_45({}, ...__VLS_functionalComponentArgsRest(__VLS_45));
-            __VLS_47.slots.default;
+            const __VLS_48 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+            const __VLS_49 = __VLS_48({}, ...__VLS_functionalComponentArgsRest(__VLS_48));
+            __VLS_50.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-6" },
             });
@@ -1757,14 +1767,14 @@ else {
                 });
                 (__VLS_ctx.errorMessage);
             }
-            var __VLS_47;
+            var __VLS_50;
         }
         if (__VLS_ctx.currentStep === 4 && __VLS_ctx.inlinePayment) {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_48 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_49 = __VLS_48({}, ...__VLS_functionalComponentArgsRest(__VLS_48));
-            __VLS_50.slots.default;
+            const __VLS_51 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+            const __VLS_52 = __VLS_51({}, ...__VLS_functionalComponentArgsRest(__VLS_51));
+            __VLS_53.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "flex flex-col gap-6 md:flex-row md:items-start" },
             });
@@ -1939,15 +1949,15 @@ else {
                     });
                 }
             }
-            var __VLS_50;
+            var __VLS_53;
         }
     }
     else {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_51 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-        const __VLS_52 = __VLS_51({}, ...__VLS_functionalComponentArgsRest(__VLS_51));
-        __VLS_53.slots.default;
+        const __VLS_54 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+        const __VLS_55 = __VLS_54({}, ...__VLS_functionalComponentArgsRest(__VLS_54));
+        __VLS_56.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-neutral-500" },
         });
@@ -1962,7 +1972,7 @@ else {
         else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         }
-        var __VLS_53;
+        var __VLS_56;
     }
 }
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
@@ -2226,6 +2236,12 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -2288,14 +2304,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
@@ -2768,6 +2776,7 @@ var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            DateField: DateField,
             ResponsibleCpfForm: ResponsibleCpfForm,
             BaseCard: BaseCard,
             LoadingSpinner: LoadingSpinner,

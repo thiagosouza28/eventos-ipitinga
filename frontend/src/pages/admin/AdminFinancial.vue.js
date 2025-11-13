@@ -1,6 +1,7 @@
 /// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, reactive, onMounted } from "vue";
 import { RouterLink } from "vue-router";
+import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
@@ -677,12 +678,18 @@ if (!__VLS_ctx.loading && __VLS_ctx.showExpenseForm && __VLS_ctx.selectedEventId
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        type: "date",
+    /** @type {[typeof DateField, ]} */ ;
+    // @ts-ignore
+    const __VLS_32 = __VLS_asFunctionalComponent(DateField, new DateField({
+        modelValue: (__VLS_ctx.expenseForm.date),
         required: true,
-        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
-    });
-    (__VLS_ctx.expenseForm.date);
+        ...{ class: "mt-1" },
+    }));
+    const __VLS_33 = __VLS_32({
+        modelValue: (__VLS_ctx.expenseForm.date),
+        required: true,
+        ...{ class: "mt-1" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_32));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
@@ -752,7 +759,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.showExpenseForm && __VLS_ctx.selectedEventId
 }
 /** @type {[typeof ConfirmDialog, ]} */ ;
 // @ts-ignore
-const __VLS_32 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
+const __VLS_35 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
     ...{ 'onUpdate:modelValue': {} },
     ...{ 'onConfirm': {} },
     ...{ 'onCancel': {} },
@@ -763,7 +770,7 @@ const __VLS_32 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
     cancelLabel: "Cancelar",
     type: "danger",
 }));
-const __VLS_33 = __VLS_32({
+const __VLS_36 = __VLS_35({
     ...{ 'onUpdate:modelValue': {} },
     ...{ 'onConfirm': {} },
     ...{ 'onCancel': {} },
@@ -773,34 +780,34 @@ const __VLS_33 = __VLS_32({
     confirmLabel: "Excluir",
     cancelLabel: "Cancelar",
     type: "danger",
-}, ...__VLS_functionalComponentArgsRest(__VLS_32));
-let __VLS_35;
-let __VLS_36;
-let __VLS_37;
-const __VLS_38 = {
+}, ...__VLS_functionalComponentArgsRest(__VLS_35));
+let __VLS_38;
+let __VLS_39;
+let __VLS_40;
+const __VLS_41 = {
     'onUpdate:modelValue': (...[$event]) => {
         __VLS_ctx.confirmDelete.open = $event;
     }
 };
-const __VLS_39 = {
+const __VLS_42 = {
     onConfirm: (__VLS_ctx.deleteExpense)
 };
-const __VLS_40 = {
+const __VLS_43 = {
     onCancel: (...[$event]) => {
         __VLS_ctx.confirmDelete.open = false;
     }
 };
-var __VLS_34;
+var __VLS_37;
 if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.open) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_41 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-    const __VLS_42 = __VLS_41({}, ...__VLS_functionalComponentArgsRest(__VLS_41));
-    __VLS_43.slots.default;
+    const __VLS_44 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+    const __VLS_45 = __VLS_44({}, ...__VLS_functionalComponentArgsRest(__VLS_44));
+    __VLS_46.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-center text-neutral-500" },
     });
-    var __VLS_43;
+    var __VLS_46;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -1264,15 +1271,6 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
@@ -1365,6 +1363,7 @@ const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             RouterLink: RouterLink,
+            DateField: DateField,
             BaseCard: BaseCard,
             ErrorDialog: ErrorDialog,
             ConfirmDialog: ConfirmDialog,
