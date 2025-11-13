@@ -90,13 +90,13 @@ export const registrationsReportHandler = async (request: Request, response: Res
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return response.status(400).json({
-        message: \"Parametros invalidos\",
+        message: "Parametros invalidos",
         issues: error.flatten()
       });
     }
-    logger.error({ error }, \"Erro ao carregar relatorio de inscricoes\");
+    logger.error({ error }, "Erro ao carregar relatorio de inscricoes");
     return response.status(500).json({
-      message: \"Erro ao carregar relatorio\",
+      message: "Erro ao carregar relatorio",
       error: error.message
     });
   }
