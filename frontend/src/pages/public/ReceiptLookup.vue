@@ -31,12 +31,7 @@
               <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
                 Data de nascimento
               </label>
-              <input
-                v-model="birthDate"
-                type="date"
-                required
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-              />
+              <DateField v-model="birthDate" required class="mt-1" />
             </div>
           </div>
           <div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-end">
@@ -84,6 +79,7 @@
               :href="resolveReceiptUrl(receipt.receiptUrl)"
               target="_blank"
               rel="noopener"
+              :download="`comprovante-${receipt.registrationId}.pdf`"
               class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500"
             >
               Baixar PDF
@@ -105,6 +101,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 
+import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useApi } from "../../composables/useApi";
 import { formatCPF, normalizeCPF } from "../../utils/cpf";
@@ -220,5 +217,6 @@ const search = async () => {
   }
 };
 </script>
+
 
 

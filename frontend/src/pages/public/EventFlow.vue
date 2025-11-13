@@ -4,7 +4,7 @@
   </div>
   <div v-else-if="!eventStore.event">
     <BaseCard>
-      <p class="text-neutral-500">Evento nao encontrado.</p>
+      <p class="text-neutral-500">Evento não encontrado.</p>
     </BaseCard>
   </div>
   <div v-else class="space-y-6">
@@ -92,7 +92,7 @@
           class="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
         >
           <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
-          <p>VocÃª pode ver e pagar as pendÃªncias existentes ou seguir com uma nova inscriÃ§Ã£o.</p>
+          <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
           <div class="mt-3 space-y-2">
             <div
               v-for="order in pendingOrders"
@@ -246,7 +246,7 @@
         <BaseCard>
           <div class="grid gap-2 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2">
             <p>
-              <span class="font-semibold text-neutral-700 dark:text-neutral-100">CPF responsavel:</span>
+              <span class="font-semibold text-neutral-700 dark:text-neutral-100">CPF responsável:</span>
               {{ buyerCpf }}
             </p>
             <p>
@@ -264,12 +264,16 @@
           </div>
         </BaseCard>
 
-        <BaseCard v-for="(person, index) in people" :key="index">
+        <BaseCard
+          v-for="(person, index) in people"
+          :key="index"
+          class="rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40"
+        >
           <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
               Participante {{ index + 1 }}
             </h2>
-            <span class="text-sm text-neutral-400">Preencha todos os campos obrigatorios</span>
+            <span class="text-sm text-neutral-400">Preencha todos os campos obrigatórios</span>
           </div>
           <div class="mt-4 grid gap-4 lg:grid-cols-2">
             <div>
@@ -316,12 +320,11 @@
                 Data de nascimento
               </label>
               <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <input
+                <DateField
                   v-model="person.birthDate"
-                  type="date"
                   required
                   :disabled="isPersonLocked(index)"
-                  class="w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+                  class="w-full"
                 />
                 <span
                   v-if="calculateAgeYears(person.birthDate) !== null"
@@ -427,7 +430,7 @@
         <div class="space-y-6">
           <div>
             <h2 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">
-              Revisao dos dados
+              Revisão dos dados
             </h2>
             <p class="text-sm text-neutral-500">
               {{
@@ -474,13 +477,13 @@
               v-if="isManualPaymentSelected"
               class="text-xs text-primary-600 dark:text-primary-200"
             >
-              Pagamentos manuais serao confirmados pela tesouraria. Guarde o comprovante para quitar a pendencia.
+              Pagamentos manuais serão confirmados pela tesouraria. Guarde o comprovante para quitar a pendância.
             </p>
             <p
               v-if="isFreePaymentSelected"
               class="text-xs text-primary-500 dark:text-primary-200"
             >
-              âœ“ Esta inscriÃ§Ã£o serÃ¡ marcada como paga automaticamente, sem gerar cobranÃ§a.
+              Esta inscrição será marcada como paga automaticamente, sem gerar cobrança.
             </p>
           </div>
           <div class="grid gap-4">
@@ -672,13 +675,13 @@
 
     <BaseCard v-else>
       <p class="text-neutral-500">
-        As inscricoes deste evento estao liberadas pelo sistema, mas dependem da abertura do proximo lote.
+        As inscrições deste evento estão liberadas pelo sistema, mas dependem da abertura do próximo lote.
         <span v-if="nextLotInfo">
           O lote <strong>{{ nextLotInfo.name }}</strong> com valor de
           <strong>{{ nextLotInfo.price }}</strong> inicia em {{ nextLotInfo.startsAt }}.
         </span>
         <span v-else>
-          Aguarde a liberacao do proximo lote para prosseguir.
+          Aguarde a liberação do próximo lote para prosseguir.
         </span>
       </p>
     </BaseCard>
@@ -688,6 +691,7 @@
   import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
   import { useRouter } from "vue-router";
 
+  import DateField from "../../components/forms/DateField.vue";
   import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
   import BaseCard from "../../components/ui/BaseCard.vue";
   import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
@@ -936,12 +940,12 @@ const disableStatePersistence = () => {
   const cpfAvailabilityCache = new Map<string, CpfCheckResult>();
 
   const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
-  const REGISTERED_ERROR = "CPF ja possui inscricao confirmada para este evento";
+  const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento";
   const DUPLICATE_GLOBAL_ERROR =
     "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
   const REGISTERED_GLOBAL_ERROR =
-    "Um ou mais CPFs ja possuem inscricao confirmada neste evento.";
-  const REMOTE_ERROR_MESSAGE = "Nao foi possivel verificar CPF agora. Tente novamente.";
+    "Um ou mais CPFs já possuem inscricão confirmada neste evento.";
+  const REMOTE_ERROR_MESSAGE = "Não foi possível verificar CPF agora. Tente novamente.";
   const CPF_GLOBAL_MESSAGES = [
     DUPLICATE_GLOBAL_ERROR,
     REGISTERED_GLOBAL_ERROR,
@@ -1018,9 +1022,9 @@ const disableStatePersistence = () => {
   const getPersonChurchOptions = (districtId: string) =>
     churchesByDistrict.value.get(districtId) ?? [];
   const getDistrictName = (id: string) =>
-    catalog.districts.find((district) => district.id === id)?.name ?? "Nao informado";
+    catalog.districts.find((district) => district.id === id)?.name ?? "Não informado";
   const getChurchName = (id: string) =>
-    catalog.churches.find((church) => church.id === id)?.name ?? "Nao informado";
+    catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
   const getGenderLabel = (value: string) =>
     genderOptions.find((option) => option.value === value)?.label ?? value;
 
@@ -1139,7 +1143,7 @@ const disableStatePersistence = () => {
   const getCpfError = (value: string) => {
     const digits = normalizeCPF(value);
     if (!digits.length) return "";
-    return validateCPF(value) ? "" : "CPF invalido";
+    return validateCPF(value) ? "" : "CPF inválido";
   };
 
   const updateParticipantGlobalError = () => {
@@ -1446,7 +1450,7 @@ const disableStatePersistence = () => {
     errorMessage.value = "";
 
     if (!cpfDigits || !validateCPF(cpfDigits)) {
-      errorMessage.value = "CPF invÃ¡lido";
+      errorMessage.value = "CPF inválido";
       checkingCpf.value = false;
       return;
     }
@@ -1470,7 +1474,7 @@ const disableStatePersistence = () => {
       }
       currentStep.value = 1;
     } catch (error: any) {
-      errorMessage.value = error.response?.data?.message ?? "NÃ£o foi possÃ­vel verificar.";
+      errorMessage.value = error.response?.data?.message ?? "Não foi possível verificar.";
     } finally {
       checkingCpf.value = false;
     }
@@ -1533,7 +1537,7 @@ const disableStatePersistence = () => {
         !person.churchId
     );
     if (hasMissing) {
-      errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+      errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
       return;
     }
 
@@ -1579,13 +1583,13 @@ const disableStatePersistence = () => {
           !person.churchId
       );
       if (hasMissing) {
-        errorMessage.value = "Preencha todos os dados obrigatorios dos participantes.";
+        errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
         currentStep.value = 2;
         return;
       }
     } catch (error: any) {
-      if (error?.response?.data?.message?.includes("CPF jÃ¡ registrado")) {
-        errorMessage.value = "CPF ja possui inscricao confirmada para este evento";
+      if (error?.response?.data?.message?.includes("CPF já registrado")) {
+        errorMessage.value = "CPF já possui inscrição confirmada para este evento";
         currentStep.value = 2;
         return;
       }
@@ -1624,7 +1628,7 @@ const disableStatePersistence = () => {
         startInlinePolling();
       }
     } catch (error: any) {
-      const message = error.response?.data?.message ?? "Erro ao criar inscricoes.";
+      const message = error.response?.data?.message ?? "Erro ao criar inscrições.";
       errorMessage.value = message;
       if (error.response?.status === 409) {
         await handleConflictError(message);
@@ -1771,4 +1775,5 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
+
 

@@ -175,6 +175,7 @@ model User {
   name            String
   cpf             String?    @unique
   phone           String?
+  photoUrl        String?    @db.LongText
   email           String     @unique
   passwordHash    String
   role            String

@@ -20,18 +20,18 @@ const statusBadge = computed(() => {
     }
     if (result.value.status === "CONFIRMED") {
         return {
-            text: "Presenca confirmada!",
+            text: "Preseça confirmada!",
             class: "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100"
         };
     }
     if (result.value.status === "READY") {
         return {
-            text: "Pagamento confirmado. Solicite a senha para registrar presenca.",
+            text: "Pagamento confirmado. Solicite a senha para registrar presença.",
             class: "bg-primary-200 text-primary-900 dark:bg-primary-500/30 dark:text-primary-50"
         };
     }
     return {
-        text: "Presenca ja havia sido confirmada",
+        text: "Presença já havia sido confirmada",
         class: "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100"
     };
 });
@@ -57,7 +57,7 @@ const validateLink = async () => {
     const rid = extractQueryParam(route.query.rid);
     const sig = extractQueryParam(route.query.sig);
     if (!rid || !sig) {
-        errorMessage.value = "Link de check-in invalido. Escaneie novamente o QR Code do comprovante.";
+        errorMessage.value = "Link de check-in inválido. Escaneie novamente o QR Code do comprovante.";
         loading.value = false;
         return;
     }
@@ -72,7 +72,7 @@ const validateLink = async () => {
     catch (error) {
         errorMessage.value =
             error?.response?.data?.message ??
-                "Nao foi possivel validar o check-in. Procure a equipe de recepcao.";
+                "Não foi possivel validar o check-in. Procure a equipe de recepção.";
     }
     finally {
         loading.value = false;
@@ -94,7 +94,7 @@ const confirmPresence = async () => {
     }
     catch (error) {
         confirmError.value =
-            error?.response?.data?.message ?? "Nao foi possivel confirmar o check-in. Verifique a senha.";
+            error?.response?.data?.message ?? "Não foi possivel confirmar o check-in. Verifique a senha.";
     }
     finally {
         confirming.value = false;

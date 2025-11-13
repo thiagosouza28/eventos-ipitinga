@@ -116,11 +116,24 @@ export class CheckinService {
     birthDate: string;
   }) {
     const sanitizedCpf = sanitizeCpf(cpf);
+    const parsedBirth = new Date(birthDate);
+    if (Number.isNaN(parsedBirth.getTime())) {
+      throw new AppError("Data de nascimento invalida", 400);
+    }
+    const start = new Date(parsedBirth);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
     const registration = await prisma.registration.findFirst({
       where: {
         cpf: sanitizedCpf,
-        birthDate: new Date(birthDate)
+        birthDate: {
+          gte: start,
+          lt: end
+        }
       },
+      orderBy: { createdAt: "desc" },
       include: registrationInclude
     });
     if (!registration) {

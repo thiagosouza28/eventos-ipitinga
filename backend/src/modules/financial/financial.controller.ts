@@ -22,17 +22,31 @@ export const getEventSummaryHandler = async (request: Request, response: Respons
 };
 
 export const getDistrictSummaryHandler = async (request: Request, response: Response) => {
-  const { eventId, districtId } = request.params;
-  await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
-  const summary = await financialService.getDistrictSummary(eventId, districtId);
-  return response.json(summary);
+  try {
+    const { eventId, districtId } = request.params;
+    await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
+    const summary = await financialService.getDistrictSummary(eventId, districtId);
+    return response.json(summary);
+  } catch (error: any) {
+    console.error("Erro ao obter resumo do distrito:", error);
+    return response.status(error.statusCode ?? 500).json({
+      message: error.message ?? "Erro ao obter dados do distrito"
+    });
+  }
 };
 
 export const getChurchSummaryHandler = async (request: Request, response: Response) => {
-  const { eventId, churchId } = request.params;
-  await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
-  const summary = await financialService.getChurchSummary(eventId, churchId);
-  return response.json(summary);
+  try {
+    const { eventId, churchId } = request.params;
+    await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
+    const summary = await financialService.getChurchSummary(eventId, churchId);
+    return response.json(summary);
+  } catch (error: any) {
+    console.error("Erro ao obter resumo da igreja:", error);
+    return response.status(error.statusCode ?? 500).json({
+      message: error.message ?? "Erro ao obter dados da igreja"
+    });
+  }
 };
 
 export const getGeneralSummaryHandler = async (request: Request, response: Response) => {

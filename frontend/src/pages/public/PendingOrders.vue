@@ -94,7 +94,7 @@
                   {{ order.event?.title || "Evento" }}
                 </h3>
                 <p class="text-sm text-neutral-600 dark:text-neutral-400">
-                  Comprador: {{ formatCPF(order.buyerCpf) }}
+                  Responsável: {{ formatCPF(order.buyerCpf) }}
                 </p>
               </div>
               <span class="font-medium">{{ formatCurrency(order.totalCents) }}</span>

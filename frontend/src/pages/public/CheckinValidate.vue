@@ -5,7 +5,7 @@
         <div class="space-y-5 text-center">
           <div>
             <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-              Confirmacao de presenca
+              Confirmacão de presença
             </h1>
             <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
               Validamos o link gerado no comprovante para registrar a sua chegada ao evento.
@@ -78,8 +78,8 @@
 
       <BaseCard class="w-full text-sm text-neutral-500 dark:text-neutral-400">
         <p>
-          Este link funciona apenas uma vez e deve ser apresentado pela equipe de recepcao. Se houver
-          qualquer divergencia, procure imediatamente a equipe de organizacao do evento.
+          Este link funciona apenas uma vez e deve ser apresentado pela equipe de recepcão. Se houver
+          qualquer divergência, procure imediatamente a equipe de organização do evento.
         </p>
       </BaseCard>
     </div>
@@ -130,18 +130,18 @@ const statusBadge = computed(() => {
   }
   if (result.value.status === "CONFIRMED") {
     return {
-      text: "Presenca confirmada!",
+      text: "Presença confirmada!",
       class: "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100"
     };
   }
   if (result.value.status === "READY") {
     return {
-      text: "Pagamento confirmado. Solicite a senha para registrar presenca.",
+      text: "Pagamento confirmado. Solicite a senha para registrar presença.",
       class: "bg-primary-200 text-primary-900 dark:bg-primary-500/30 dark:text-primary-50"
     };
   }
   return {
-    text: "Presenca ja havia sido confirmada",
+    text: "Presença já havia sido confirmada",
     class: "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100"
   };
 });

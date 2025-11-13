@@ -375,6 +375,10 @@ export class OrderService {
       throw new AppError("Pedido expirado ou cancelado", 400);
     }
     const participantCount = order.registrations.length;
+    let receipts: Array<{ registrationId: string; fullName: string; receiptUrl: string }> = [];
+    if (order.status === OrderStatus.PAID) {
+      receipts = await registrationService.listReceiptLinksByOrder(orderId);
+    }
     const fallbackPriceCents = order.event?.priceCents ?? 0;
     const paymentRule = isPendingPaymentValueRule(order.event?.pendingPaymentValueRule)
       ? (order.event?.pendingPaymentValueRule as PendingPaymentValueRule)
@@ -425,7 +429,8 @@ export class OrderService {
         participants,
         totalCents,
         paidAt: order.paidAt,
-        isFree: true
+        isFree: true,
+        receipts
       };
     }
 
@@ -438,7 +443,8 @@ export class OrderService {
         participants,
         totalCents,
         isManual: true,
-        paidAt: order.paidAt
+        paidAt: order.paidAt,
+        receipts
       };
     }
 
@@ -450,7 +456,8 @@ export class OrderService {
         participantCount,
         participants,
         totalCents,
-        paidAt: order.paidAt
+        paidAt: order.paidAt,
+        receipts
       };
     }
 
@@ -476,6 +483,7 @@ export class OrderService {
         }
       );
       if (updated.status === OrderStatus.PAID) {
+        const updatedReceipts = await registrationService.listReceiptLinksByOrder(orderId);
         return {
           status: updated.status,
           paymentId: updated.mpPaymentId,
@@ -483,7 +491,8 @@ export class OrderService {
           participantCount,
           participants,
           totalCents,
-          paidAt: updated.paidAt
+          paidAt: updated.paidAt,
+          receipts: updatedReceipts
         };
       }
     }
@@ -533,7 +542,8 @@ export class OrderService {
       paymentMethod,
       participantCount,
       participants,
-      totalCents
+      totalCents,
+      receipts: []
     };
   }
 

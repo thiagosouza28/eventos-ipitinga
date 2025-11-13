@@ -91,6 +91,7 @@ export interface AdminUser {
   role: Role;
   cpf?: string | null;
   phone?: string | null;
+  photoUrl?: string | null;
   districtScopeId?: string | null;
   churchScopeId?: string | null;
   mustChangePassword?: boolean;

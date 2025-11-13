@@ -52,7 +52,7 @@
         <footer
           class="mt-auto border-t border-black/5 bg-white/80 py-6 text-center text-sm text-neutral-500 dark:border-white/10 dark:bg-black/60"
         >
-          &copy; {{ new Date().getFullYear() }} CATRE Ipitinga. Sistema de inscricoes e check-in.
+          &copy; {{ new Date().getFullYear() }} CATRE Ipitinga. Sistema de inscrições e check-in.
         </footer>
       </div>
     </div>

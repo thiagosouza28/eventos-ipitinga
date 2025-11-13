@@ -155,6 +155,7 @@ CREATE TABLE `User` (
     `name` VARCHAR(191) NOT NULL,
     `cpf` VARCHAR(191) NULL,
     `phone` VARCHAR(191) NULL,
+    `photoUrl` LONGTEXT NULL,
     `email` VARCHAR(191) NOT NULL,
     `passwordHash` VARCHAR(191) NOT NULL,
     `role` VARCHAR(191) NOT NULL,

@@ -83,9 +83,23 @@ export const listRegistrationsHandler = async (request: Request, response: Respo
 };
 
 export const registrationsReportHandler = async (request: Request, response: Response) => {
-  const { groupBy, ...filters } = reportSchema.parse(request.query);
-  const report = await registrationService.report(filters, groupBy, request.user?.ministryIds);
-  return response.json(report);
+  try {
+    const { groupBy, ...filters } = reportSchema.parse(request.query);
+    const report = await registrationService.report(filters, groupBy, request.user?.ministryIds);
+    return response.json(report);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return response.status(400).json({
+        message: \"Parametros invalidos\",
+        issues: error.flatten()
+      });
+    }
+    logger.error({ error }, \"Erro ao carregar relatorio de inscricoes\");
+    return response.status(500).json({
+      message: \"Erro ao carregar relatorio\",
+      error: error.message
+    });
+  }
 };
 
 export const downloadRegistrationsReportHandler = async (request: Request, response: Response) => {
@@ -231,3 +245,6 @@ export const getRegistrationHistoryHandler = async (request: Request, response: 
   const history = await registrationService.getHistory(id);
   return response.json(history);
 };
+
+
+

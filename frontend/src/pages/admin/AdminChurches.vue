@@ -75,16 +75,11 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Data de nascimento <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="churchForm.directorBirthDate"
-              type="date"
-              required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-            />
-          </div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Data de nascimento <span class="text-red-500">*</span>
+          </label>
+          <DateField v-model="churchForm.directorBirthDate" required class="mt-1" />
+        </div>
         </div>
         <div class="grid gap-4 md:grid-cols-2">
           <div>
@@ -248,6 +243,7 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 
+import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";

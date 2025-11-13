@@ -294,12 +294,22 @@ export const useAdminStore = defineStore("admin", () => {
     districtScopeId?: string | null;
     churchScopeId?: string | null;
     ministryIds?: string[];
+    photoUrl?: string | null;
   };
 
   const createUser = async (payload: CreateUserPayload) => {
     const response = await api.post("/admin/users", payload);
     await loadUsers();
     return response.data as { user: AdminUser; temporaryPassword: string };
+  };
+
+  const updateUser = async (
+    userId: string,
+    payload: Partial<CreateUserPayload> & { photoUrl?: string | null }
+  ) => {
+    const response = await api.patch(`/admin/users/${userId}`, payload);
+    await loadUsers();
+    return response.data as AdminUser;
   };
 
   const resetUserPassword = async (userId: string) => {
@@ -343,6 +353,7 @@ export const useAdminStore = defineStore("admin", () => {
     uploadAsset,
     loadUsers,
     createUser,
+    updateUser,
     resetUserPassword
   };
 });

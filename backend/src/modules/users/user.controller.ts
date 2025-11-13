@@ -4,6 +4,14 @@ import { z } from "zod";
 import { Roles } from "../../config/roles";
 import { userService } from "./user.service";
 
+const photoSchema = z
+  .union([z.string().min(10), z.literal(null), z.literal("")])
+  .optional()
+  .transform((value) => {
+    if (value === "") return null;
+    return value ?? undefined;
+  });
+
 const baseSchema = z.object({
   name: z.string().min(3),
   email: z.string().email(),
@@ -12,7 +20,8 @@ const baseSchema = z.object({
   role: z.enum(Roles),
   districtScopeId: z.string().cuid().optional().or(z.literal("")).transform((value) => value || undefined),
   churchScopeId: z.string().cuid().optional().or(z.literal("")).transform((value) => value || undefined),
-  ministryIds: z.array(z.string().cuid()).optional()
+  ministryIds: z.array(z.string().cuid()).optional(),
+  photoUrl: photoSchema
 });
 
 const createSchema = baseSchema;

@@ -313,7 +313,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nascimento</label>
-            <input v-model="addForm.birthDate" type="date" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+            <DateField v-model="addForm.birthDate" required class="mt-1" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF do participante</label>
@@ -431,7 +431,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase text-neutral-500">Nascimento</label>
-            <input v-model="editForm.birthDate" type="date" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
+            <DateField v-model="editForm.birthDate" required class="mt-1" />
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase text-neutral-500">CPF</label>
@@ -499,6 +499,7 @@
 import { reactive, ref, onMounted, watch, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 
+import DateField from '../../components/forms/DateField.vue'
 import BaseCard from '../../components/ui/BaseCard.vue'
 import ErrorDialog from '../../components/ui/ErrorDialog.vue'
 import { useAdminStore } from '../../stores/admin'

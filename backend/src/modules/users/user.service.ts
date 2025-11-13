@@ -5,6 +5,7 @@ import { prisma } from "../../lib/prisma";
 import { ConflictError, NotFoundError, AppError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { env } from "../../config/env";
+import { storageService } from "../../storage/storage.service";
 
 const generateTemporaryPassword = () => {
   const candidate = randomBytes(8).toString("base64url");
@@ -20,6 +21,7 @@ type UserInput = {
   districtScopeId?: string | null;
   churchScopeId?: string | null;
   ministryIds?: string[];
+  photoUrl?: string | null;
 };
 
 const normalizeCpf = (value?: string | null) => {
@@ -88,6 +90,10 @@ export class UserService {
     const temporaryPassword = generateTemporaryPassword();
     const passwordHash = await bcrypt.hash(temporaryPassword, Number(env.PASSWORD_SALT_ROUNDS));
 
+    const storedPhoto = payload.photoUrl
+      ? await storageService.saveBase64Image(payload.photoUrl)
+      : null;
+
     const user = await prisma.user.create({
       data: {
         name: payload.name.trim(),
@@ -97,6 +103,7 @@ export class UserService {
         role: payload.role,
         districtScopeId: payload.districtScopeId ?? null,
         churchScopeId: payload.churchScopeId ?? null,
+        photoUrl: storedPhoto,
         passwordHash,
         mustChangePassword: true
       },
@@ -154,6 +161,20 @@ export class UserService {
       throw new AppError("Selecione ao menos um ministerio para o usuario", 400);
     }
 
+    let photoUrlUpdate: string | null | undefined;
+    if (payload.photoUrl !== undefined) {
+      if (payload.photoUrl === null) {
+        await storageService.deleteByUrl(user.photoUrl);
+        photoUrlUpdate = null;
+      } else {
+        const stored = await storageService.saveBase64Image(payload.photoUrl);
+        if (stored && stored !== user.photoUrl) {
+          await storageService.deleteByUrl(user.photoUrl);
+        }
+        photoUrlUpdate = stored;
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id },
       data: {
@@ -163,7 +184,8 @@ export class UserService {
         phone: payload.phone !== undefined ? payload.phone?.trim() ?? null : undefined,
         role: payload.role,
         districtScopeId: payload.districtScopeId ?? undefined,
-        churchScopeId: payload.churchScopeId ?? undefined
+        churchScopeId: payload.churchScopeId ?? undefined,
+        photoUrl: photoUrlUpdate
       }
     });
 

@@ -632,21 +632,45 @@ export class RegistrationService {
     const paymentStatusLabel = resolvePaymentStatusLabel(registration.status);
     const paymentMethodLabel = PAYMENT_METHOD_LABELS[paymentMethod] ?? paymentMethod;
 
+    const eventTitle = registration.event?.title ?? "Evento";
+    const eventLocation = registration.event?.location ?? "Local a definir";
+    const eventPeriod = (() => {
+      const start = registration.event?.startDate;
+      const end = registration.event?.endDate;
+      if (start && end) {
+        return `${formatDateBr(start)} - ${formatDateBr(end)}`;
+      }
+      if (start) return formatDateBr(start);
+      if (end) return formatDateBr(end);
+      return formatDateBr(registration.createdAt);
+    })();
+
+    const birthDateLabel = formatBirthDateBr(registration.birthDate);
+    const computedAge =
+      typeof registration.ageYears === "number" && Number.isFinite(registration.ageYears)
+        ? registration.ageYears
+        : registration.birthDate
+          ? calculateAge(registration.birthDate)
+          : 0;
+    const districtName = registration.district?.name ?? "Nao informado";
+    const churchName = registration.church?.name ?? "Nao informado";
+    const paymentDate = registration.paidAt ?? registration.createdAt;
+
     const { pdfBuffer, validationUrl } = await generateReceiptPdf({
-      eventTitle: registration.event.title,
-      eventLocation: registration.event.location,
-      eventPeriod: `${formatDateBr(registration.event.startDate)} - ${formatDateBr(registration.event.endDate)}`,
+      eventTitle,
+      eventLocation,
+      eventPeriod,
       fullName: registration.fullName,
       cpf: registration.cpf,
-      birthDate: formatBirthDateBr(registration.birthDate),
-      ageYears: registration.ageYears,
-      districtName: registration.district.name,
-      churchName: registration.church.name,
+      birthDate: birthDateLabel,
+      ageYears: computedAge,
+      districtName,
+      churchName,
       registrationId: registration.id,
       status: paymentStatusLabel,
       createdAt: registration.createdAt,
       paymentMethod: paymentMethodLabel,
-      paymentDate: registration.paidAt ?? registration.createdAt,
+      paymentDate,
       photoUrl: resolvePhotoUrl(registration.photoUrl)
     });
 
@@ -702,6 +726,31 @@ export class RegistrationService {
         eventTitle: registration.event.title,
         status: registration.status,
         issuedAt: registration.createdAt,
+        receiptUrl
+      };
+    });
+  }
+
+  async listReceiptLinksByOrder(orderId: string) {
+    const registrations = await prisma.registration.findMany({
+      where: {
+        orderId,
+        status: {
+          in: [RegistrationStatus.PAID, RegistrationStatus.CHECKED_IN, RegistrationStatus.REFUNDED]
+        }
+      },
+      select: {
+        id: true,
+        fullName: true,
+        receiptPdfUrl: true
+      }
+    });
+
+    return registrations.map((registration) => {
+      const { url: receiptUrl } = buildReceiptLink(registration.id, registration.receiptPdfUrl);
+      return {
+        registrationId: registration.id,
+        fullName: registration.fullName,
         receiptUrl
       };
     });

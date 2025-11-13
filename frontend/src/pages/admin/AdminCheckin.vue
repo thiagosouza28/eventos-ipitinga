@@ -17,6 +17,27 @@
           <- Dashboard
         </RouterLink>
       </div>
+      <div v-if="summaryCards.length" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="card in summaryCards"
+          :key="card.key"
+          class="rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/30"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500">{{ card.title }}</p>
+              <p class="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">{{ card.value }}</p>
+            </div>
+            <span
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white"
+              :class="card.accent"
+            >
+              {{ card.icon }}
+            </span>
+          </div>
+          <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
+        </div>
+      </div>
     </BaseCard>
 
     <BaseCard>
@@ -74,25 +95,21 @@
               </label>
               <input
                 v-model="cpf"
-                v-maska="cpfMask"
                 type="text"
                 placeholder="000.000.000-00"
                 inputmode="numeric"
+                maxlength="14"
                 autocomplete="off"
                 class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
                 required
+                @input="handleCpfInputChange"
               />
             </div>
             <div>
               <label class="block text-xs font-semibold uppercase text-neutral-500">
                 Data de nascimento
               </label>
-              <input
-                v-model="birthDate"
-                type="date"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-                required
-              />
+              <DateField v-model="birthDate" required class="mt-1" />
             </div>
             <button
               type="submit"
@@ -153,6 +170,29 @@
           </p>
         </div>
       </div>
+      <div
+        class="rounded-xl border border-neutral-200 bg-white/80 p-4 dark:border-neutral-700 dark:bg-neutral-900/40"
+      >
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Historico recente</p>
+          <span v-if="historyLoading" class="text-xs text-neutral-400 dark:text-neutral-500">Atualizando...</span>
+        </div>
+        <ul v-if="latestHistory.length" class="mt-3 space-y-3">
+          <li
+            v-for="item in latestHistory"
+            :key="item.type + item.at"
+            class="border-l-2 border-neutral-200 pl-3 text-sm text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"
+          >
+            <p class="font-medium text-neutral-800 dark:text-neutral-100">{{ formatHistoryLabel(item) }}</p>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">
+              {{ formatDateTime(item.at) }}
+            </p>
+          </li>
+        </ul>
+        <p v-else class="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+          Nenhum evento registrado para esta inscricao.
+        </p>
+      </div>
       <div class="flex flex-wrap gap-3">
         <button
           v-if="pendingCheckin.status === 'READY'"
@@ -195,6 +235,7 @@ import { QrcodeStream } from "vue-qrcode-reader";
 import { formatCPF } from "../../utils/cpf";
 
 import BaseCard from "../../components/ui/BaseCard.vue";
+import DateField from "../../components/forms/DateField.vue";
 import { useAdminStore } from "../../stores/admin";
 
 const route = useRoute();
@@ -237,11 +278,18 @@ type CheckinConfirmResponse = {
   registration: CheckinRegistration;
 };
 
+type CheckinHistoryEvent = {
+  type: string;
+  at: string;
+  label?: string;
+  actor?: { id: string; name?: string | null } | null;
+  details?: Record<string, unknown>;
+};
+
 const cpf = ref("");
 const birthDate = ref("");
 const feedback = ref("");
 const feedbackClass = ref("");
-const cpfMask = { mask: "###.###.###-##" };
 const facingMode = ref<"environment" | "user">("environment");
 const streamKey = ref(0);
 const cameraReady = ref(false);
@@ -252,6 +300,8 @@ const lastScanned = ref<{ value: string; timestamp: number } | null>(null);
 const manualLoading = ref(false);
 const confirming = ref(false);
 const pendingCheckin = ref<PendingCheckin | null>(null);
+const pendingHistory = ref<CheckinHistoryEvent[]>([]);
+const historyLoading = ref(false);
 let feedbackTimer: number | null = null;
 
 const cameraConstraints = computed<MediaTrackConstraints>(() => ({
@@ -274,6 +324,36 @@ const cameraStatus = computed(() => {
   if (awaitingScanConfirmation.value) return "Confirme os dados do participante.";
   if (isProcessing.value) return "Processando QR Code...";
   return "";
+});
+
+const summaryCards = computed(() => {
+  const totals = (admin.dashboard?.totals as Record<string, number>) ?? {};
+  return [
+    {
+      key: "CHECKED_IN",
+      title: "Check-ins",
+      label: "Presencas confirmadas",
+      value: totals.CHECKED_IN ?? 0,
+      accent: "from-emerald-500 to-teal-500",
+      icon: "✓"
+    },
+    {
+      key: "PAID",
+      title: "Pagos",
+      label: "Prontos para check-in",
+      value: totals.PAID ?? 0,
+      accent: "from-sky-500 to-blue-600",
+      icon: "★"
+    },
+    {
+      key: "PENDING_PAYMENT",
+      title: "Pendentes",
+      label: "Aguardando pagamento",
+      value: totals.PENDING_PAYMENT ?? 0,
+      accent: "from-amber-400 to-orange-500",
+      icon: "…"
+    }
+  ];
 });
 
 const formatDateTime = (value: string) =>
@@ -305,7 +385,30 @@ const pendingStatusInfo = computed(() => {
   };
 });
 
+const historyLabelMap: Record<string, string> = {
+  REGISTRATION_CREATED: "Inscricao criada",
+  PAYMENT_METHOD_SELECTED: "Forma de pagamento escolhida",
+  PAYMENT_CONFIRMED: "Pagamento confirmado",
+  ORDER_PAID: "Pedido pago",
+  CHECKIN_COMPLETED: "Check-in confirmado",
+  REGISTRATION_UPDATED: "Dados atualizados",
+  REGISTRATION_CANCELED: "Inscricao cancelada",
+  REGISTRATION_DELETED: "Inscricao excluida",
+  PAYMENT_REFUNDED: "Estorno registrado"
+};
+
+const latestHistory = computed(() => pendingHistory.value.slice(0, 5));
+
+const formatHistoryLabel = (entry: CheckinHistoryEvent) =>
+  entry.label ?? historyLabelMap[entry.type] ?? entry.type.replace(/_/g, " ");
+
 const displayCpf = (value: string) => formatCPF(value);
+
+const handleCpfInputChange = (event: Event) => {
+  const input = event.target as HTMLInputElement | null;
+  if (!input) return;
+  cpf.value = formatCPF(input.value);
+};
 
 const applyPendingResult = (
   result: AdminCheckinResponse,
@@ -326,17 +429,52 @@ const applyPendingResult = (
     source,
     confirmation
   };
+  pendingHistory.value = [];
+  void loadPendingHistory(result.registration.id);
 };
 
 const clearPending = () => {
   pendingCheckin.value = null;
   confirming.value = false;
   isProcessing.value = false;
+  pendingHistory.value = [];
+  historyLoading.value = false;
 };
 
 const cancelPending = () => {
   clearPending();
   lastScanned.value = null;
+};
+
+const normalizeHistoryEvent = (input: any): CheckinHistoryEvent => ({
+  type: String(input?.type ?? "EVENT"),
+  at:
+    typeof input?.at === "string"
+      ? input.at
+      : new Date(input?.at ?? input?.createdAt ?? Date.now()).toISOString(),
+  label: typeof input?.label === "string" ? input.label : undefined,
+  actor: input?.actor ?? null,
+  details: input?.details ?? undefined
+});
+
+const loadPendingHistory = async (registrationId: string) => {
+  historyLoading.value = true;
+  try {
+    const history = await admin.getRegistrationHistory(registrationId);
+    const events = Array.isArray((history as any)?.events) ? (history as any).events : [];
+    const normalized = events
+      .map((event: any) => normalizeHistoryEvent(event))
+      .sort(
+        (a: CheckinHistoryEvent, b: CheckinHistoryEvent) =>
+          new Date(b.at).getTime() - new Date(a.at).getTime()
+      );
+    pendingHistory.value = normalized;
+  } catch (error) {
+    console.error("Erro ao carregar historico de check-in", error);
+    pendingHistory.value = [];
+  } finally {
+    historyLoading.value = false;
+  }
 };
 
 const loadDashboard = async () => {

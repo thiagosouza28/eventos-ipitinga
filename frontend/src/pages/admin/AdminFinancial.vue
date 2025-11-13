@@ -288,12 +288,7 @@
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
               Data *
             </label>
-            <input
-              v-model="expenseForm.date"
-              type="date"
-              required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-            />
+            <DateField v-model="expenseForm.date" required class="mt-1" />
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
@@ -388,6 +383,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
+import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";

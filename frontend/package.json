@@ -17,6 +17,7 @@
     "@vueuse/core": "^11.1.0",
     "axios": "^1.7.7",
     "dayjs": "^1.11.13",
+    "jszip": "^3.10.1",
     "maska": "^2.1.0",
     "pinia": "^2.2.4",
     "tailwindcss-animate": "^1.0.7",

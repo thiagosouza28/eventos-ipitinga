@@ -17,6 +17,163 @@
       @confirm="handleConfirmReset"
       @cancel="passwordDialog.open = false"
     />
+    <Modal
+      :model-value="editDialog.open"
+      title="Editar usuario"
+      @update:modelValue="(value) => {
+        editDialog.open = value;
+        if (!value) closeEditDialog();
+      }"
+    >
+      <form class="space-y-4" @submit.prevent="handleUpdateUser">
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nome completo</label>
+            <input
+              v-model="editDialog.form.name"
+              type="text"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Email</label>
+            <input
+              v-model="editDialog.form.email"
+              type="email"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF</label>
+            <input
+              v-model="editDialog.form.cpf"
+              type="text"
+              maxlength="14"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Telefone</label>
+            <input
+              v-model="editDialog.form.phone"
+              type="text"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Perfil</label>
+            <select
+              v-model="editDialog.form.role"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <option v-for="option in roleOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div v-if="editRequiresDistrict">
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Distrito</label>
+            <select
+              v-model="editDialog.form.districtScopeId"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <option value="">Selecione</option>
+              <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                {{ district.name }}
+              </option>
+            </select>
+          </div>
+          <div v-if="editRequiresChurch">
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Igreja</label>
+            <select
+              v-model="editDialog.form.churchScopeId"
+              required
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <option value="">Selecione</option>
+              <option v-for="church in catalog.churches" :key="church.id" :value="church.id">
+                {{ church.name }}
+              </option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Foto de perfil</label>
+            <div class="mt-2 flex items-center gap-4">
+              <div class="h-14 w-14 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800">
+                <img
+                  v-if="editDialog.photoPreview"
+                  :src="editDialog.photoPreview"
+                  alt="Foto do usuario"
+                  class="h-full w-full object-cover"
+                />
+                <span v-else class="flex h-full w-full items-center justify-center text-sm text-neutral-500">
+                  {{ userInitials(editDialog.form.name) }}
+                </span>
+              </div>
+              <div class="flex flex-col gap-2">
+                <label
+                  class="inline-flex cursor-pointer items-center rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                >
+                  <input type="file" accept="image/*" class="hidden" @change="handleEditPhotoChange" />
+                  Selecionar foto
+                </label>
+                <button
+                  v-if="editDialog.photoPreview"
+                  type="button"
+                  class="text-xs text-red-500 hover:text-red-400"
+                  @click="clearEditPhoto"
+                >
+                  Remover foto
+                </button>
+              </div>
+            </div>
+          </div>
+          <div v-if="editRequiresMinistry" class="md:col-span-2">
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Ministerios</label>
+            <div class="mt-2 grid gap-2 sm:grid-cols-2">
+              <label
+                v-for="ministry in catalog.ministries"
+                :key="ministry.id"
+                class="flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-neutral-700"
+              >
+                <input
+                  v-model="editDialog.form.ministryIds"
+                  type="checkbox"
+                  :value="ministry.id"
+                  class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                />
+                <span>{{ ministry.name }}</span>
+              </label>
+            </div>
+            <p v-if="editMinistryError" class="mt-1 text-xs text-red-500">{{ editMinistryError }}</p>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="closeEditDialog"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            :disabled="editDialog.loading"
+            class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-60"
+          >
+            <span
+              v-if="editDialog.loading"
+              class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
+            />
+            <span>{{ editDialog.loading ? "Salvando..." : "Salvar alteracoes" }}</span>
+          </button>
+        </div>
+      </form>
+    </Modal>
 
     <BaseCard>
       <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -205,8 +362,26 @@
           <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
             <tr v-for="user in admin.users" :key="user.id">
               <td class="py-3">
-                <div class="font-medium text-neutral-800 dark:text-neutral-100">{{ user.name }}</div>
-                <div v-if="user.cpf" class="text-xs text-neutral-500">CPF: {{ maskCpf(user.cpf) }}</div>
+                <div class="flex items-center gap-3">
+                  <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                    <img
+                      v-if="user.photoUrl"
+                      :src="user.photoUrl"
+                      alt="Foto do usuario"
+                      class="h-full w-full object-cover"
+                    />
+                    <span
+                      v-else
+                      class="flex h-full w-full items-center justify-center text-xs font-semibold text-neutral-500 dark:text-neutral-300"
+                    >
+                      {{ userInitials(user.name) }}
+                    </span>
+                  </div>
+                  <div>
+                    <div class="font-medium text-neutral-800 dark:text-neutral-100">{{ user.name }}</div>
+                    <div v-if="user.cpf" class="text-xs text-neutral-500">CPF: {{ maskCpf(user.cpf) }}</div>
+                  </div>
+                </div>
               </td>
               <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">{{ user.email }}</td>
               <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">{{ roleLabel(user.role) }}</td>
@@ -223,13 +398,22 @@
                 </span>
               </td>
               <td class="py-3 text-right">
-                <button
-                  type="button"
-                  class="text-sm text-primary-600 hover:text-primary-500"
-                  @click="openResetDialog(user)"
-                >
-                  Resetar senha
-                </button>
+                <div class="flex flex-wrap justify-end gap-3 text-sm">
+                  <button
+                    type="button"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openEditDialog(user)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openResetDialog(user)"
+                  >
+                    Resetar senha
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="!admin.users.length">
@@ -251,6 +435,7 @@ import { RouterLink } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
+import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
 import type { AdminUser, Role } from "../../types/api";
@@ -281,6 +466,24 @@ const form = reactive<{
   churchScopeId: "",
   ministryIds: []
 });
+const editDialog = reactive({
+  open: false,
+  loading: false,
+  userId: "",
+  photoPreview: "",
+  photoPayload: undefined as string | null | undefined,
+  form: {
+    name: "",
+    email: "",
+    cpf: "",
+    phone: "",
+    role: "AdminGeral" as Role,
+    districtScopeId: "",
+    churchScopeId: "",
+    ministryIds: [] as string[]
+  }
+});
+const editMinistryError = ref("");
 
 const errorDialog = reactive({
   open: false,
@@ -307,15 +510,31 @@ const roleOptions: Array<{ value: Role; label: string }> = [
   { value: "CoordenadorMinisterio", label: "Coordenador de ministerio" }
 ];
 
-const requiresDistrict = computed(() => form.role === "AdminDistrital");
-const requiresChurch = computed(() => form.role === "DiretorLocal" || form.role === "Tesoureiro");
-const requiresMinistry = computed(() => form.role === "CoordenadorMinisterio");
+const roleRequiresDistrict = (role: Role) => role === "AdminDistrital";
+const roleRequiresChurch = (role: Role) => role === "DiretorLocal" || role === "Tesoureiro";
+const roleRequiresMinistry = (role: Role) => role === "CoordenadorMinisterio";
+
+const requiresDistrict = computed(() => roleRequiresDistrict(form.role));
+const requiresChurch = computed(() => roleRequiresChurch(form.role));
+const requiresMinistry = computed(() => roleRequiresMinistry(form.role));
+const editRequiresDistrict = computed(() => roleRequiresDistrict(editDialog.form.role));
+const editRequiresChurch = computed(() => roleRequiresChurch(editDialog.form.role));
+const editRequiresMinistry = computed(() => roleRequiresMinistry(editDialog.form.role));
 const ministryError = ref("");
 
 const maskCpf = (value?: string | null) => {
   if (!value) return "--";
   const digits = value.replace(/\D/g, "");
   return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
+
+const userInitials = (value: string) => {
+  if (!value) return "US";
+  const parts = value.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const second = parts[1]?.[0] ?? "";
+  const initials = `${first}${second}`.trim();
+  return (initials || value.slice(0, 2)).toUpperCase();
 };
 
 const roleLabel = (role: Role) => {
@@ -367,6 +586,14 @@ const validateForm = () => {
 
 const normalizeCpf = (value: string) => value.replace(/\D/g, "") || undefined;
 
+const fileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
 const handleCreateUser = async () => {
   if (!validateForm()) return;
   savingUser.value = true;
@@ -393,6 +620,100 @@ const handleCreateUser = async () => {
     showError("Erro ao criar usuario", message);
   } finally {
     savingUser.value = false;
+  }
+};
+
+const openEditDialog = (user: AdminUser) => {
+  editDialog.userId = user.id;
+  editDialog.form.name = user.name;
+  editDialog.form.email = user.email;
+  editDialog.form.cpf = user.cpf ?? "";
+  editDialog.form.phone = user.phone ?? "";
+  editDialog.form.role = user.role;
+  editDialog.form.districtScopeId = user.districtScopeId ?? "";
+  editDialog.form.churchScopeId = user.churchScopeId ?? "";
+  editDialog.form.ministryIds = user.ministries?.map((ministry) => ministry.id) ?? [];
+  editDialog.photoPreview = user.photoUrl ?? "";
+  editDialog.photoPayload = undefined;
+  editMinistryError.value = "";
+  editDialog.open = true;
+};
+
+const closeEditDialog = () => {
+  editDialog.open = false;
+  editDialog.loading = false;
+  editDialog.userId = "";
+  editDialog.photoPreview = "";
+  editDialog.photoPayload = undefined;
+  editMinistryError.value = "";
+};
+
+const handleEditPhotoChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement | null;
+  const file = input?.files?.[0];
+  if (!file) return;
+  if (file.size > 4 * 1024 * 1024) {
+    showError("Imagem muito grande", "Selecione um arquivo de ate 4 MB.");
+    if (input) input.value = "";
+    return;
+  }
+  try {
+    const base64 = await fileToBase64(file);
+    editDialog.photoPayload = base64;
+    editDialog.photoPreview = base64;
+  } catch (error) {
+    showError("Erro ao processar imagem", "Tente novamente.");
+  } finally {
+    if (input) input.value = "";
+  }
+};
+
+const clearEditPhoto = () => {
+  editDialog.photoPayload = null;
+  editDialog.photoPreview = "";
+};
+
+const handleUpdateUser = async () => {
+  if (!editDialog.userId) return;
+  editMinistryError.value = "";
+  if (editRequiresMinistry.value && !editDialog.form.ministryIds.length) {
+    editMinistryError.value = "Selecione ao menos um ministerio.";
+    return;
+  }
+  if (editRequiresDistrict.value && !editDialog.form.districtScopeId) {
+    showError("Campos obrigatorios", "Selecione um distrito para este perfil.");
+    return;
+  }
+  if (editRequiresChurch.value && !editDialog.form.churchScopeId) {
+    showError("Campos obrigatorios", "Selecione uma igreja para este perfil.");
+    return;
+  }
+  editDialog.loading = true;
+  try {
+    const payload: Record<string, unknown> = {
+      name: editDialog.form.name.trim(),
+      email: editDialog.form.email.trim(),
+      role: editDialog.form.role,
+      districtScopeId: editDialog.form.districtScopeId || undefined,
+      churchScopeId: editDialog.form.churchScopeId || undefined,
+      ministryIds: editDialog.form.ministryIds.length ? [...editDialog.form.ministryIds] : []
+    };
+    if (editDialog.form.cpf.trim()) {
+      payload.cpf = normalizeCpf(editDialog.form.cpf) ?? undefined;
+    } else {
+      payload.cpf = null;
+    }
+    payload.phone = editDialog.form.phone.trim() || null;
+    if (editDialog.photoPayload !== undefined) {
+      payload.photoUrl = editDialog.photoPayload;
+    }
+    await admin.updateUser(editDialog.userId, payload);
+    closeEditDialog();
+  } catch (error: any) {
+    const message = error.response?.data?.message ?? "Nao foi possivel atualizar o usuario.";
+    showError("Erro ao atualizar usuario", message);
+  } finally {
+    editDialog.loading = false;
   }
 };
 
@@ -447,6 +768,15 @@ watch(
     if (!requiresDistrict.value) form.districtScopeId = "";
     if (!requiresChurch.value) form.churchScopeId = "";
     if (!requiresMinistry.value) form.ministryIds = [];
+  }
+);
+
+watch(
+  () => editDialog.form.role,
+  () => {
+    if (!editRequiresDistrict.value) editDialog.form.districtScopeId = "";
+    if (!editRequiresChurch.value) editDialog.form.churchScopeId = "";
+    if (!editRequiresMinistry.value) editDialog.form.ministryIds = [];
   }
 );
 </script>
