@@ -10,7 +10,7 @@
     "build": "npm run prisma:generate && tsc -p tsconfig.build.json && node scripts/post-build.js",
     "playwright:install": "playwright install chromium",
     "postinstall": "npm run playwright:install && npm run prisma:generate",
-    "start": "node dist/main.js",
+    "start": "prisma migrate deploy && node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
