@@ -3,19 +3,23 @@ import { ref, computed } from "vue";
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
-import type { Role } from "../types/api";
+import type { Role, AdminProfile, PermissionState, PermissionAction, UserStatus } from "../types/api";
 
 type AuthUser = {
   id: string;
   name: string;
   email: string;
   role: Role;
+  status: UserStatus;
+  photoUrl?: string | null;
   districtScopeId?: string | null;
   churchScopeId?: string | null;
   cpf?: string | null;
   phone?: string | null;
   mustChangePassword?: boolean;
   ministries?: Array<{ id: string; name: string }>;
+  profile?: AdminProfile | null;
+  permissions?: Record<string, PermissionState>;
 };
 
 const STORAGE_KEY = "catre-auth";
@@ -74,10 +78,22 @@ export const useAuthStore = defineStore("auth", () => {
   loadFromStorage();
 
   const role = computed<Role | null>(() => user.value?.role ?? null);
+  const permissionMap = computed<Record<string, PermissionState>>(
+    () => user.value?.permissions ?? {}
+  );
+
+  const hasPermission = (module: string, action: PermissionAction = "view") => {
+    const entry = permissionMap.value[module];
+    if (!entry) {
+      return false;
+    }
+    return Boolean(entry[action]);
+  };
+
   const isAdminGeral = computed(() => role.value === "AdminGeral");
   const isAdminDistrital = computed(() => role.value === "AdminDistrital");
   const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
-  const canManageUsers = computed(() => isAdminGeral.value);
+  const canManageUsers = computed(() => isAdminGeral.value || hasPermission("users", "view"));
 
   return {
     token,
@@ -87,7 +103,8 @@ export const useAuthStore = defineStore("auth", () => {
     isAdminGeral,
     isAdminDistrital,
     canCreateFree,
-     canManageUsers,
+    canManageUsers,
+    hasPermission,
     signIn,
     signOut
   };

@@ -20,12 +20,17 @@ const baseSchema = z.object({
   role: z.enum(Roles),
   districtScopeId: z.string().cuid().optional().or(z.literal("")).transform((value) => value || undefined),
   churchScopeId: z.string().cuid().optional().or(z.literal("")).transform((value) => value || undefined),
+  profileId: z.string().cuid().optional().or(z.literal("")).transform((value) => value || undefined),
+  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   ministryIds: z.array(z.string().cuid()).optional(),
   photoUrl: photoSchema
 });
 
 const createSchema = baseSchema;
 const updateSchema = baseSchema.partial();
+const statusSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE"])
+});
 
 export const listUsersHandler = async (_request: Request, response: Response) => {
   const users = await userService.list();
@@ -47,4 +52,15 @@ export const updateUserHandler = async (request: Request, response: Response) =>
 export const resetUserPasswordHandler = async (request: Request, response: Response) => {
   const result = await userService.resetPassword(request.params.id, request.user?.id);
   return response.json(result);
+};
+
+export const updateUserStatusHandler = async (request: Request, response: Response) => {
+  const { status } = statusSchema.parse(request.body);
+  const user = await userService.updateStatus(request.params.id, status, request.user?.id);
+  return response.json(user);
+};
+
+export const deleteUserHandler = async (request: Request, response: Response) => {
+  await userService.delete(request.params.id, request.user?.id);
+  return response.status(204).send();
 };

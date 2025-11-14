@@ -93,8 +93,17 @@ import {
   listUsersHandler,
   createUserHandler,
   updateUserHandler,
-  resetUserPasswordHandler
+  resetUserPasswordHandler,
+  updateUserStatusHandler,
+  deleteUserHandler
 } from "../../modules/users/user.controller";
+import {
+  listProfilesHandler,
+  createProfileHandler,
+  updateProfileHandler,
+  updateProfileStatusHandler,
+  deleteProfileHandler
+} from "../../modules/profiles/profile.controller";
 
 export const router = Router();
 
@@ -159,6 +168,14 @@ router.post(
   authorize("AdminGeral"),
   resetUserPasswordHandler
 );
+router.patch("/admin/users/:id/status", authorize("AdminGeral"), updateUserStatusHandler);
+router.delete("/admin/users/:id", authorize("AdminGeral"), deleteUserHandler);
+
+router.get("/admin/profiles", authorize("AdminGeral"), listProfilesHandler);
+router.post("/admin/profiles", authorize("AdminGeral"), createProfileHandler);
+router.patch("/admin/profiles/:id", authorize("AdminGeral"), updateProfileHandler);
+router.patch("/admin/profiles/:id/status", authorize("AdminGeral"), updateProfileStatusHandler);
+router.delete("/admin/profiles/:id", authorize("AdminGeral"), deleteProfileHandler);
 
 router.get("/admin/churches", authorize("AdminGeral", "AdminDistrital"), listChurchesHandler);
 router.post("/admin/churches", authorize("AdminGeral", "AdminDistrital"), createChurchHandler);

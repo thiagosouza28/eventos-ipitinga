@@ -5,6 +5,42 @@ export type Role =
   | "Tesoureiro"
   | "CoordenadorMinisterio";
 
+export type UserStatus = "ACTIVE" | "INACTIVE";
+
+export type PermissionAction =
+  | "view"
+  | "create"
+  | "edit"
+  | "delete"
+  | "approve"
+  | "deactivate"
+  | "reports"
+  | "financial";
+
+export type PermissionState = Record<PermissionAction, boolean>;
+
+export interface ProfilePermissionEntry {
+  module: string;
+  canView: boolean;
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canApprove: boolean;
+  canDeactivate: boolean;
+  canReport: boolean;
+  canFinancial: boolean;
+}
+
+export interface AdminProfile {
+  id: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  permissions: ProfilePermissionEntry[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type OrderStatus = "PENDING" | "PAID" | "PARTIALLY_REFUNDED" | "CANCELED" | "EXPIRED";
 
 export type RegistrationStatus =
@@ -97,6 +133,9 @@ export interface AdminUser {
   mustChangePassword?: boolean;
   ministries?: Array<{ id: string; name: string }>;
   createdAt?: string;
+  status: UserStatus;
+  profile?: AdminProfile | null;
+  permissions?: Record<string, PermissionState>;
 }
 
 export interface Registration {

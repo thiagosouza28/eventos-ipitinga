@@ -10,6 +10,7 @@ export const useAdminStore = defineStore("admin", () => {
     const orders = ref([]);
     const dashboard = ref(null);
     const users = ref([]);
+    const profiles = ref([]);
     const extractArray = (input, fallbackKeys = []) => {
         if (Array.isArray(input)) {
             return input;
@@ -219,6 +220,39 @@ export const useAdminStore = defineStore("admin", () => {
         const response = await api.post(`/admin/users/${userId}/reset-password`);
         return response.data;
     };
+    const updateUserStatus = async (userId, status) => {
+        const response = await api.patch(`/admin/users/${userId}/status`, { status });
+        await loadUsers();
+        return response.data;
+    };
+    const deleteUser = async (userId) => {
+        await api.delete(`/admin/users/${userId}`);
+        await loadUsers();
+    };
+    const loadProfiles = async () => {
+        const response = await api.get("/admin/profiles");
+        profiles.value = response.data;
+        return profiles.value;
+    };
+    const createProfile = async (payload) => {
+        const response = await api.post("/admin/profiles", payload);
+        await loadProfiles();
+        return response.data;
+    };
+    const updateProfile = async (profileId, payload) => {
+        const response = await api.patch(`/admin/profiles/${profileId}`, payload);
+        await loadProfiles();
+        return response.data;
+    };
+    const updateProfileStatus = async (profileId, isActive) => {
+        const response = await api.patch(`/admin/profiles/${profileId}/status`, { isActive });
+        await loadProfiles();
+        return response.data;
+    };
+    const deleteProfile = async (profileId) => {
+        await api.delete(`/admin/profiles/${profileId}`);
+        await loadProfiles();
+    };
     return {
         events,
         eventLots,
@@ -226,6 +260,7 @@ export const useAdminStore = defineStore("admin", () => {
         orders,
         dashboard,
         users,
+        profiles,
         loadEvents,
         saveEvent,
         deleteEvent,
@@ -256,7 +291,14 @@ export const useAdminStore = defineStore("admin", () => {
         loadUsers,
         createUser,
         updateUser,
-        resetUserPassword
+        resetUserPassword,
+        updateUserStatus,
+        deleteUser,
+        loadProfiles,
+        createProfile,
+        updateProfile,
+        updateProfileStatus,
+        deleteProfile
     };
 });
 //# sourceMappingURL=admin.js.map

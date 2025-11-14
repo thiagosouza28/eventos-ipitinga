@@ -19,6 +19,7 @@ const AdminMinistries = () => import("../pages/admin/AdminMinistries.vue");
 const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
 const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
+const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -40,13 +41,19 @@ export const router = createRouter({
             path: "/admin/dashboard",
             name: "admin-dashboard",
             component: AdminDashboard,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, requiresPermission: { module: "dashboard", action: "view" } }
         },
         {
             path: "/admin/users",
             name: "admin-users",
             component: AdminUsers,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, requiresPermission: { module: "users", action: "view" } }
+        },
+        {
+            path: "/admin/profiles",
+            name: "admin-profiles",
+            component: AdminProfiles,
+            meta: { requiresAuth: true, requiresPermission: { module: "profiles", action: "view" } }
         },
         {
             path: "/admin/catalog",
@@ -94,7 +101,7 @@ export const router = createRouter({
             path: "/admin/financial",
             name: "admin-financial",
             component: AdminFinancial,
-            meta: { requiresAuth: true }
+            meta: { requiresAuth: true, requiresPermission: { module: "financial", action: "view" } }
         },
         {
             path: "/admin/events/:eventId/financial",
@@ -126,6 +133,18 @@ router.beforeEach((to, _from, next) => {
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         next({ name: "admin-login", query: { redirect: to.fullPath } });
         return;
+    }
+    if (to.meta.requiresPermission && auth.isAuthenticated) {
+        const requirement = to.meta.requiresPermission;
+        if (!auth.hasPermission(requirement.module, requirement.action ?? "view")) {
+            if (auth.hasPermission("dashboard", "view")) {
+                next({ name: "admin-dashboard" });
+            }
+            else {
+                next({ name: "admin-login" });
+            }
+            return;
+        }
     }
     next();
 });

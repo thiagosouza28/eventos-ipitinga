@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import type { Role } from "../config/roles";
 import { UnauthorizedError } from "../utils/errors";
+import type { PermissionMap } from "../utils/permissions";
 
 type TokenPayload = {
   sub: string;
@@ -11,6 +12,8 @@ type TokenPayload = {
   districtScopeId?: string | null;
   churchScopeId?: string | null;
   ministryIds?: string[];
+  profileId?: string | null;
+  permissions?: PermissionMap;
 };
 
 export const authenticate = (request: Request, _response: Response, next: NextFunction) => {
@@ -31,7 +34,9 @@ export const authenticate = (request: Request, _response: Response, next: NextFu
       role: decoded.role,
       districtScopeId: decoded.districtScopeId,
       churchScopeId: decoded.churchScopeId,
-      ministryIds: decoded.ministryIds ?? []
+      ministryIds: decoded.ministryIds ?? [],
+      profileId: decoded.profileId,
+      permissions: decoded.permissions
     };
     return next();
   } catch (error) {

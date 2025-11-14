@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
+import { UserStatus } from "@prisma/client";
 
 import { prisma } from "../../lib/prisma";
 import { ConflictError, NotFoundError, AppError } from "../../utils/errors";
@@ -22,6 +23,8 @@ type UserInput = {
   churchScopeId?: string | null;
   ministryIds?: string[];
   photoUrl?: string | null;
+  profileId?: string | null;
+  status?: UserStatus;
 };
 
 const normalizeCpf = (value?: string | null) => {
@@ -40,26 +43,46 @@ const syncMinistries = async (userId: string, ministryIds?: string[]) => {
   }
 };
 
+const userIncludes = {
+  districtScope: true,
+  churchScope: true,
+  ministries: {
+    include: { ministry: true }
+  },
+  profile: {
+    include: { permissions: true }
+  }
+} as const;
+
+const ensureActiveProfile = async (profileId?: string | null) => {
+  if (!profileId) {
+    return null;
+  }
+  const profile = await prisma.profile.findFirst({
+    where: { id: profileId, isActive: true }
+  });
+  if (!profile) {
+    throw new AppError("Perfil informado nao encontrado ou inativo", 400);
+  }
+  return profile.id;
+};
+
+const serializeUser = (user: any) => ({
+  ...user,
+  ministries: user.ministries?.map((relation: any) => ({
+    id: relation.ministryId,
+    name: relation.ministry?.name ?? ""
+  })) ?? []
+});
+
 export class UserService {
   async list() {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
-      include: {
-        districtScope: true,
-        churchScope: true,
-        ministries: {
-          include: { ministry: true }
-        }
-      }
+      include: userIncludes
     });
 
-    return users.map((user) => ({
-      ...user,
-      ministries: user.ministries.map((relation) => ({
-        id: relation.ministryId,
-        name: relation.ministry?.name ?? ""
-      }))
-    }));
+    return users.map(serializeUser);
   }
 
   async create(payload: UserInput, actorUserId?: string) {
@@ -93,6 +116,7 @@ export class UserService {
     const storedPhoto = payload.photoUrl
       ? await storageService.saveBase64Image(payload.photoUrl)
       : null;
+    const profileId = await ensureActiveProfile(payload.profileId ?? null);
 
     const user = await prisma.user.create({
       data: {
@@ -104,14 +128,12 @@ export class UserService {
         districtScopeId: payload.districtScopeId ?? null,
         churchScopeId: payload.churchScopeId ?? null,
         photoUrl: storedPhoto,
+        profileId,
+        status: payload.status ?? UserStatus.ACTIVE,
         passwordHash,
         mustChangePassword: true
       },
-      include: {
-        ministries: {
-          include: { ministry: true }
-        }
-      }
+      include: userIncludes
     });
 
     await syncMinistries(user.id, payload.ministryIds);
@@ -125,10 +147,7 @@ export class UserService {
     });
 
     return {
-      user: {
-        ...user,
-        ministries: payload.ministryIds ?? []
-      },
+      user: serializeUser(user),
       temporaryPassword
     };
   }
@@ -175,6 +194,11 @@ export class UserService {
       }
     }
 
+    let profileIdUpdate: string | null | undefined;
+    if (payload.profileId !== undefined) {
+      profileIdUpdate = await ensureActiveProfile(payload.profileId);
+    }
+
     const updated = await prisma.user.update({
       where: { id },
       data: {
@@ -185,8 +209,11 @@ export class UserService {
         role: payload.role,
         districtScopeId: payload.districtScopeId ?? undefined,
         churchScopeId: payload.churchScopeId ?? undefined,
-        photoUrl: photoUrlUpdate
-      }
+        photoUrl: photoUrlUpdate,
+        profileId: profileIdUpdate,
+        status: payload.status ?? undefined
+      },
+      include: userIncludes
     });
 
     if (payload.ministryIds) {
@@ -201,7 +228,51 @@ export class UserService {
       metadata: payload
     });
 
-    return updated;
+    return serializeUser(updated);
+  }
+
+  async updateStatus(id: string, status: UserStatus, actorUserId?: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundError("Usuario nao encontrado");
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { status },
+      include: userIncludes
+    });
+
+    await auditService.log({
+      actorUserId,
+      action: "USER_STATUS_UPDATED",
+      entity: "user",
+      entityId: id,
+      metadata: { status }
+    });
+
+    return serializeUser(updated);
+  }
+
+  async delete(id: string, actorUserId?: string) {
+    if (actorUserId && actorUserId === id) {
+      throw new AppError("Nao e possivel excluir o proprio usuario", 400);
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundError("Usuario nao encontrado");
+    }
+
+    await prisma.ministryUser.deleteMany({ where: { userId: id } });
+    await prisma.user.delete({ where: { id } });
+
+    await auditService.log({
+      actorUserId,
+      action: "USER_DELETED",
+      entity: "user",
+      entityId: id
+    });
   }
 
   async resetPassword(id: string, actorUserId?: string) {

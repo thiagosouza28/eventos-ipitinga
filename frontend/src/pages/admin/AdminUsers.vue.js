@@ -20,7 +20,9 @@ const form = reactive({
     role: "CoordenadorMinisterio",
     districtScopeId: "",
     churchScopeId: "",
-    ministryIds: []
+    ministryIds: [],
+    profileId: "",
+    status: "ACTIVE"
 });
 const editDialog = reactive({
     open: false,
@@ -36,7 +38,9 @@ const editDialog = reactive({
         role: "AdminGeral",
         districtScopeId: "",
         churchScopeId: "",
-        ministryIds: []
+        ministryIds: [],
+        profileId: "",
+        status: "ACTIVE"
     }
 });
 const editMinistryError = ref("");
@@ -102,6 +106,8 @@ const resetForm = () => {
     form.districtScopeId = "";
     form.churchScopeId = "";
     form.ministryIds = [];
+    form.profileId = "";
+    form.status = "ACTIVE";
 };
 const toggleCreateForm = () => {
     showCreateForm.value = !showCreateForm.value;
@@ -140,13 +146,22 @@ const handleCreateUser = async () => {
         const payload = {
             name: form.name.trim(),
             email: form.email.trim(),
-            cpf: form.cpf ? normalizeCpf(form.cpf) : undefined,
-            phone: form.phone.trim() || undefined,
             role: form.role,
             districtScopeId: form.districtScopeId || undefined,
             churchScopeId: form.churchScopeId || undefined,
-            ministryIds: form.ministryIds.length ? [...form.ministryIds] : undefined
+            ministryIds: form.ministryIds.length ? [...form.ministryIds] : []
         };
+        if (form.cpf.trim()) {
+            payload.cpf = normalizeCpf(form.cpf) ?? undefined;
+        }
+        else {
+            payload.cpf = null;
+        }
+        payload.phone = form.phone.trim() || null;
+        if (form.profileId) {
+            payload.profileId = form.profileId;
+        }
+        payload.status = form.status;
         const response = await admin.createUser(payload);
         lastTempPassword.value = {
             user: response.user.name,
@@ -173,6 +188,8 @@ const openEditDialog = (user) => {
     editDialog.form.districtScopeId = user.districtScopeId ?? "";
     editDialog.form.churchScopeId = user.churchScopeId ?? "";
     editDialog.form.ministryIds = user.ministries?.map((ministry) => ministry.id) ?? [];
+    editDialog.form.profileId = user.profile?.id ?? "";
+    editDialog.form.status = user.status ?? "ACTIVE";
     editDialog.photoPreview = user.photoUrl ?? "";
     editDialog.photoPayload = undefined;
     editMinistryError.value = "";
@@ -238,7 +255,8 @@ const handleUpdateUser = async () => {
             role: editDialog.form.role,
             districtScopeId: editDialog.form.districtScopeId || undefined,
             churchScopeId: editDialog.form.churchScopeId || undefined,
-            ministryIds: editDialog.form.ministryIds.length ? [...editDialog.form.ministryIds] : []
+            ministryIds: editDialog.form.ministryIds.length ? [...editDialog.form.ministryIds] : [],
+            status: editDialog.form.status
         };
         if (editDialog.form.cpf.trim()) {
             payload.cpf = normalizeCpf(editDialog.form.cpf) ?? undefined;
@@ -247,6 +265,12 @@ const handleUpdateUser = async () => {
             payload.cpf = null;
         }
         payload.phone = editDialog.form.phone.trim() || null;
+        if (editDialog.form.profileId) {
+            payload.profileId = editDialog.form.profileId;
+        }
+        else {
+            payload.profileId = null;
+        }
         if (editDialog.photoPayload !== undefined) {
             payload.photoUrl = editDialog.photoPayload;
         }
@@ -473,6 +497,24 @@ for (const [option] of __VLS_getVForSourceType((__VLS_ctx.roleOptions))) {
         value: (option.value),
     });
     (option.label);
+}
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+    value: (__VLS_ctx.editDialog.form.profileId),
+    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+    value: "",
+});
+for (const [profile] of __VLS_getVForSourceType((__VLS_ctx.admin.profiles))) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        key: (profile.id),
+        value: (profile.id),
+    });
+    (profile.name);
 }
 if (__VLS_ctx.editRequiresDistrict) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
@@ -739,6 +781,24 @@ if (__VLS_ctx.showCreateForm) {
             value: (option.value),
         });
         (option.label);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.form.profileId),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    for (const [profile] of __VLS_getVForSourceType((__VLS_ctx.admin.profiles))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (profile.id),
+            value: (profile.id),
+        });
+        (profile.name);
     }
     if (__VLS_ctx.requiresDistrict) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
@@ -1084,6 +1144,20 @@ var __VLS_37;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -1252,6 +1326,20 @@ var __VLS_37;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;

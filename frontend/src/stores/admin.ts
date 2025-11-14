@@ -2,7 +2,15 @@
 import { ref } from "vue";
 
 import { useApi } from "../composables/useApi";
-import type { Event, EventLot, Order, Registration, AdminUser } from "../types/api";
+import type {
+  Event,
+  EventLot,
+  Order,
+  Registration,
+  AdminUser,
+  AdminProfile,
+  UserStatus
+} from "../types/api";
 
 export const useAdminStore = defineStore("admin", () => {
   const { api } = useApi();
@@ -13,6 +21,7 @@ export const useAdminStore = defineStore("admin", () => {
   const orders = ref<Order[]>([]);
   const dashboard = ref<Record<string, unknown> | null>(null);
   const users = ref<AdminUser[]>([]);
+  const profiles = ref<AdminProfile[]>([]);
 
   const extractArray = <T>(input: unknown, fallbackKeys: string[] = []): T[] => {
     if (Array.isArray(input)) {
@@ -295,6 +304,27 @@ export const useAdminStore = defineStore("admin", () => {
     churchScopeId?: string | null;
     ministryIds?: string[];
     photoUrl?: string | null;
+    profileId?: string | null;
+    status?: UserStatus;
+  };
+
+  type ProfilePermissionPayload = {
+    module: string;
+    canView?: boolean;
+    canCreate?: boolean;
+    canEdit?: boolean;
+    canDelete?: boolean;
+    canApprove?: boolean;
+    canDeactivate?: boolean;
+    canReport?: boolean;
+    canFinancial?: boolean;
+  };
+
+  type ProfilePayload = {
+    name: string;
+    description?: string | null;
+    isActive?: boolean;
+    permissions: ProfilePermissionPayload[];
   };
 
   const createUser = async (payload: CreateUserPayload) => {
@@ -317,6 +347,46 @@ export const useAdminStore = defineStore("admin", () => {
     return response.data as { temporaryPassword: string };
   };
 
+  const updateUserStatus = async (userId: string, status: UserStatus) => {
+    const response = await api.patch(`/admin/users/${userId}/status`, { status });
+    await loadUsers();
+    return response.data as AdminUser;
+  };
+
+  const deleteUser = async (userId: string) => {
+    await api.delete(`/admin/users/${userId}`);
+    await loadUsers();
+  };
+
+  const loadProfiles = async () => {
+    const response = await api.get("/admin/profiles");
+    profiles.value = response.data as AdminProfile[];
+    return profiles.value;
+  };
+
+  const createProfile = async (payload: ProfilePayload) => {
+    const response = await api.post("/admin/profiles", payload);
+    await loadProfiles();
+    return response.data as AdminProfile;
+  };
+
+  const updateProfile = async (profileId: string, payload: Partial<ProfilePayload>) => {
+    const response = await api.patch(`/admin/profiles/${profileId}`, payload);
+    await loadProfiles();
+    return response.data as AdminProfile;
+  };
+
+  const updateProfileStatus = async (profileId: string, isActive: boolean) => {
+    const response = await api.patch(`/admin/profiles/${profileId}/status`, { isActive });
+    await loadProfiles();
+    return response.data as AdminProfile;
+  };
+
+  const deleteProfile = async (profileId: string) => {
+    await api.delete(`/admin/profiles/${profileId}`);
+    await loadProfiles();
+  };
+
   return {
     events,
     eventLots,
@@ -324,6 +394,7 @@ export const useAdminStore = defineStore("admin", () => {
     orders,
     dashboard,
     users,
+    profiles,
     loadEvents,
     saveEvent,
     deleteEvent,
@@ -354,6 +425,13 @@ export const useAdminStore = defineStore("admin", () => {
     loadUsers,
     createUser,
     updateUser,
-    resetUserPassword
+    resetUserPassword,
+    updateUserStatus,
+    deleteUser,
+    loadProfiles,
+    createProfile,
+    updateProfile,
+    updateProfileStatus,
+    deleteProfile
   };
 });

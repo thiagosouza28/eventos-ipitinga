@@ -1,4 +1,5 @@
 import type { Role } from "../config/roles";
+import type { PermissionMap } from "../utils/permissions";
 
 declare global {
   namespace Express {
@@ -9,6 +10,8 @@ declare global {
       districtScopeId?: string | null;
       churchScopeId?: string | null;
       ministryIds?: string[];
+      profileId?: string | null;
+      permissions?: PermissionMap;
     }
 
     interface Request {

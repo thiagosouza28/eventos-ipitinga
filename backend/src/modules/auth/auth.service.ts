@@ -5,6 +5,7 @@ import type { Secret, SignOptions } from "jsonwebtoken";
 import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { UnauthorizedError } from "../../utils/errors";
+import { buildPermissionMap, toPermissionEntry } from "../../utils/permissions";
 
 export class AuthService {
   async login(email: string, password: string) {
@@ -13,11 +14,17 @@ export class AuthService {
       include: {
         ministries: {
           include: { ministry: true }
+        },
+        profile: {
+          include: { permissions: true }
         }
       }
     });
     if (!user) {
       throw new UnauthorizedError("Credenciais invalidas");
+    }
+    if (user.status === "INACTIVE") {
+      throw new UnauthorizedError("Usuario desativado");
     }
 
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
@@ -26,13 +33,16 @@ export class AuthService {
     }
 
     const ministryIds = user.ministries?.map((relation) => relation.ministryId) ?? [];
+    const permissionMap = user.profile ? buildPermissionMap(user.profile.permissions) : undefined;
 
     const token = jwt.sign(
       {
         role: user.role,
         districtScopeId: user.districtScopeId,
         churchScopeId: user.churchScopeId,
-        ministryIds
+        ministryIds,
+        profileId: user.profileId,
+        permissions: permissionMap
       },
       env.JWT_SECRET as Secret,
       {
@@ -53,6 +63,18 @@ export class AuthService {
         cpf: user.cpf,
         phone: user.phone,
         mustChangePassword: user.mustChangePassword,
+        status: user.status,
+        photoUrl: user.photoUrl,
+        profile: user.profile
+          ? {
+              id: user.profile.id,
+              name: user.profile.name,
+              description: user.profile.description,
+              isActive: user.profile.isActive,
+              permissions: user.profile.permissions.map(toPermissionEntry)
+            }
+          : null,
+        permissions: permissionMap,
         ministries: user.ministries?.map((relation) => ({
           id: relation.ministryId,
           name: relation.ministry?.name ?? ""

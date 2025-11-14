@@ -54,10 +54,18 @@ export const useAuthStore = defineStore("auth", () => {
     };
     loadFromStorage();
     const role = computed(() => user.value?.role ?? null);
+    const permissionMap = computed(() => user.value?.permissions ?? {});
+    const hasPermission = (module, action = "view") => {
+        const entry = permissionMap.value[module];
+        if (!entry) {
+            return false;
+        }
+        return Boolean(entry[action]);
+    };
     const isAdminGeral = computed(() => role.value === "AdminGeral");
     const isAdminDistrital = computed(() => role.value === "AdminDistrital");
     const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
-    const canManageUsers = computed(() => isAdminGeral.value);
+    const canManageUsers = computed(() => isAdminGeral.value || hasPermission("users", "view"));
     return {
         token,
         user,
@@ -67,6 +75,7 @@ export const useAuthStore = defineStore("auth", () => {
         isAdminDistrital,
         canCreateFree,
         canManageUsers,
+        hasPermission,
         signIn,
         signOut
     };

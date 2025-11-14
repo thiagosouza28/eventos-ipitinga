@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 
 import { env } from "../src/config/env";
 import { Role } from "../src/config/roles";
+import type { PermissionEntry } from "../src/config/permissions";
 import { prisma } from "../src/lib/prisma";
 
 const ensureDistrict = async (name: string) => {
@@ -62,6 +63,76 @@ const ensureEvent = async (ministryId: string) => {
   });
 };
 
+const makePermission = (
+  module: string,
+  flags: Partial<Omit<PermissionEntry, "module">> = {}
+): PermissionEntry => ({
+  module,
+  canView: flags.canView ?? false,
+  canCreate: flags.canCreate ?? false,
+  canEdit: flags.canEdit ?? false,
+  canDelete: flags.canDelete ?? false,
+  canApprove: flags.canApprove ?? false,
+  canDeactivate: flags.canDeactivate ?? false,
+  canReport: flags.canReport ?? false,
+  canFinancial: flags.canFinancial ?? false
+});
+
+const fullAccess = (module: string) =>
+  makePermission(module, {
+    canView: true,
+    canCreate: true,
+    canEdit: true,
+    canDelete: true,
+    canApprove: true,
+    canDeactivate: true,
+    canReport: true,
+    canFinancial: true
+  });
+
+const viewAccess = (module: string, flags?: Partial<Omit<PermissionEntry, "module">>) =>
+  makePermission(module, { canView: true, ...(flags ?? {}) });
+
+const ensureProfile = async (
+  name: string,
+  description: string,
+  permissions: PermissionEntry[],
+  isActive = true
+) => {
+  const existing = await prisma.profile.findUnique({ where: { name } });
+  if (existing) {
+    await prisma.profilePermission.deleteMany({ where: { profileId: existing.id } });
+    if (permissions.length) {
+      await prisma.profilePermission.createMany({
+        data: permissions.map((permission) => ({
+          profileId: existing.id,
+          ...permission
+        }))
+      });
+    }
+    return existing;
+  }
+
+  const profile = await prisma.profile.create({
+    data: {
+      name,
+      description,
+      isActive
+    }
+  });
+
+  if (permissions.length) {
+    await prisma.profilePermission.createMany({
+      data: permissions.map((permission) => ({
+        profileId: profile.id,
+        ...permission
+      }))
+    });
+  }
+
+  return profile;
+};
+
 type EnsureUserInput = {
   name: string;
   email: string;
@@ -69,6 +140,7 @@ type EnsureUserInput = {
   role: Role;
   districtScopeId?: string | null;
   churchScopeId?: string | null;
+  profileId?: string | null;
 };
 
 const ensureUser = async ({
@@ -77,7 +149,8 @@ const ensureUser = async ({
   password,
   role,
   districtScopeId,
-  churchScopeId
+  churchScopeId,
+  profileId
 }: EnsureUserInput) => {
   const passwordHash = await bcrypt.hash(password, env.PASSWORD_SALT_ROUNDS);
   return prisma.user.upsert({
@@ -88,14 +161,16 @@ const ensureUser = async ({
       passwordHash,
       role,
       districtScopeId: districtScopeId ?? null,
-      churchScopeId: churchScopeId ?? null
+      churchScopeId: churchScopeId ?? null,
+      profileId: profileId ?? null
     },
     update: {
       name,
       role,
       passwordHash,
       districtScopeId: districtScopeId ?? null,
-      churchScopeId: churchScopeId ?? null
+      churchScopeId: churchScopeId ?? null,
+      profileId: profileId ?? null
     }
   });
 };
@@ -114,46 +189,127 @@ const run = async () => {
 
   const event = await ensureEvent(youthMinistry.id);
 
+  const adminGeneralProfile = await ensureProfile(
+    "Administrador Geral",
+    "Acesso completo ao painel.",
+    [
+      "dashboard",
+      "users",
+      "profiles",
+      "registrations",
+      "events",
+      "financial",
+      "reports",
+      "checkin"
+    ].map((module) => fullAccess(module))
+  );
+
+  const districtProfile = await ensureProfile(
+    "Administrador Distrital",
+    "Gerencia eventos e registros do distrito.",
+    [
+      viewAccess("dashboard"),
+      viewAccess("events", { canEdit: true, canCreate: true }),
+      viewAccess("registrations", {
+        canCreate: true,
+        canEdit: true,
+        canApprove: true,
+        canDeactivate: true,
+        canReport: true
+      }),
+      viewAccess("financial", { canReport: true, canFinancial: true }),
+      viewAccess("reports", { canReport: true }),
+      viewAccess("checkin", { canApprove: true })
+    ]
+  );
+
+  const directorProfile = await ensureProfile(
+    "Diretor Local",
+    "Acompanha registros da igreja local.",
+    [
+      viewAccess("dashboard"),
+      viewAccess("registrations", { canCreate: true, canEdit: true }),
+      viewAccess("reports", { canReport: true }),
+      viewAccess("checkin", { canApprove: true })
+    ]
+  );
+
+  const financeProfile = await ensureProfile(
+    "Tesoureiro",
+    "Responsável pelo caixa e relatórios financeiros.",
+    [
+      viewAccess("dashboard"),
+      viewAccess("financial", { canReport: true, canFinancial: true }),
+      viewAccess("registrations", { canReport: true }),
+      viewAccess("reports", { canReport: true })
+    ]
+  );
+
+  const ministryCoordinatorProfile = await ensureProfile(
+    "Coordenador de Ministério",
+    "Gere inscrições do seu ministério.",
+    [
+      viewAccess("dashboard"),
+      viewAccess("registrations", { canCreate: true, canEdit: true, canApprove: true }),
+      viewAccess("events"),
+      viewAccess("reports", { canReport: true })
+    ]
+  );
+
+  const profileMap: Record<Role, string> = {
+    AdminGeral: adminGeneralProfile.id,
+    AdminDistrital: districtProfile.id,
+    DiretorLocal: directorProfile.id,
+    Tesoureiro: financeProfile.id,
+    CoordenadorMinisterio: ministryCoordinatorProfile.id
+  };
+
   const seededUsers: EnsureUserInput[] = [
     {
       name: "Admin Geral",
       email: env.ADMIN_EMAIL,
       password: env.ADMIN_PASSWORD,
-      role: "AdminGeral"
+      role: "AdminGeral",
+      profileId: profileMap.AdminGeral
     },
     {
       name: "Helena Rocha",
       email: "distrital.norte@catre.local",
       password: env.ADMIN_PASSWORD,
       role: "AdminDistrital",
-      districtScopeId: north.id
+      districtScopeId: north.id,
+      profileId: profileMap.AdminDistrital
     },
     {
       name: "Ricardo Lima",
       email: "distrital.sul@catre.local",
       password: env.ADMIN_PASSWORD,
       role: "AdminDistrital",
-      districtScopeId: south.id
+      districtScopeId: south.id,
+      profileId: profileMap.AdminDistrital
     },
     {
       name: "Daniela Carvalho",
       email: "diretora.central@catre.local",
       password: env.ADMIN_PASSWORD,
       role: "DiretorLocal",
-      churchScopeId: centralChurch.id
+      churchScopeId: centralChurch.id,
+      profileId: profileMap.DiretorLocal
     },
     {
       name: "Juliana Araujo",
       email: "diretora.esperanca@catre.local",
       password: env.ADMIN_PASSWORD,
       role: "DiretorLocal",
-      churchScopeId: hopeChurch.id
+      churchScopeId: hopeChurch.id,
+      profileId: profileMap.DiretorLocal
     },
     {
       name: "Tesouraria CATRE",
       email: "tesouraria@catre.local",
       password: env.ADMIN_PASSWORD,
-      role: "Tesoureiro"
+      role: "Tesoureiro",
+      profileId: profileMap.Tesoureiro
     }
   ];
 

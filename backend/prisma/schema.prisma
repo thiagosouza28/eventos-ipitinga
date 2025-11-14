@@ -171,23 +171,27 @@ model AuditLog {
 
 
 model User {
-  id              String     @id @default(cuid())
-  name            String
-  cpf             String?    @unique
-  phone           String?
-  photoUrl        String?    @db.LongText
-  email           String     @unique
-  passwordHash    String
-  role            String
-  districtScopeId String?
-  mustChangePassword Boolean @default(false)
-  churchScopeId   String?
-  createdAt       DateTime   @default(now())
-  districtScope   District?  @relation("DistrictUsers", fields: [districtScopeId], references: [id])
-  churchScope     Church?    @relation("ChurchUsers", fields: [churchScopeId], references: [id])
-  auditLogs       AuditLog[]
-  ministries      MinistryUser[]
+  id                 String         @id @default(cuid())
+  name               String
+  cpf                String?        @unique
+  phone              String?
+  photoUrl           String?        @db.LongText
+  email              String         @unique
+  passwordHash       String
+  role               String
+  districtScopeId    String?
+  mustChangePassword Boolean        @default(false)
+  churchScopeId      String?
+  profileId          String?
+  status             UserStatus     @default(ACTIVE)
+  createdAt          DateTime       @default(now())
+  districtScope      District?      @relation("DistrictUsers", fields: [districtScopeId], references: [id])
+  churchScope        Church?        @relation("ChurchUsers", fields: [churchScopeId], references: [id])
+  auditLogs          AuditLog[]
+  ministries         MinistryUser[]
+  profile            Profile?       @relation(fields: [profileId], references: [id])
 
+  @@index([profileId])
 }
 
 model EventLot {
@@ -248,6 +252,42 @@ model MinistryUser {
 
   @@id([userId, ministryId])
   @@index([ministryId])
+}
+
+model Profile {
+  id          String              @id @default(cuid())
+  name        String              @unique
+  description String?
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  permissions ProfilePermission[]
+  users       User[]
+}
+
+model ProfilePermission {
+  id            String   @id @default(cuid())
+  profileId     String
+  module        String
+  canView       Boolean  @default(false)
+  canCreate     Boolean  @default(false)
+  canEdit       Boolean  @default(false)
+  canDelete     Boolean  @default(false)
+  canApprove    Boolean  @default(false)
+  canDeactivate Boolean  @default(false)
+  canReport     Boolean  @default(false)
+  canFinancial  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  profile       Profile  @relation(fields: [profileId], references: [id])
+
+  @@unique([profileId, module])
+  @@index([profileId])
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
 }
 
 
