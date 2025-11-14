@@ -102,8 +102,13 @@ const resolveBannerUrl = (value) => {
     }
     return `${uploadsBaseUrl}/${sanitized}`;
 };
-const resolvedBannerUrl = computed(() => resolveBannerUrl(eventStore.event?.bannerUrl));
-const eventHasBanner = computed(() => Boolean(resolvedBannerUrl.value) && !eventBannerError.value);
+const resolvedBannerUrl = computed(() => {
+    if (eventBannerError.value) {
+        return "";
+    }
+    return resolveBannerUrl(eventStore.event?.bannerUrl);
+});
+const hasBannerImage = computed(() => Boolean(resolvedBannerUrl.value));
 const registrationOpen = computed(() => {
     if (!eventStore.event)
         return false;
@@ -969,29 +974,29 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "self-start w-full lg:w-auto" },
     });
-    if (__VLS_ctx.eventHasBanner) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700" },
-        });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700" },
+    });
+    if (__VLS_ctx.hasBannerImage) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
             ...{ onError: (...[$event]) => {
                     if (!!(__VLS_ctx.eventStore.loading))
                         return;
                     if (!!(!__VLS_ctx.eventStore.event))
                         return;
-                    if (!(__VLS_ctx.eventHasBanner))
+                    if (!(__VLS_ctx.hasBannerImage))
                         return;
                     __VLS_ctx.eventBannerError = true;
                 } },
-            src: (__VLS_ctx.resolvedBannerUrl || ''),
+            src: (__VLS_ctx.resolvedBannerUrl),
             alt: "Banner do evento",
             ...{ class: "w-full max-h-60 object-contain" },
             loading: "lazy",
         });
     }
-    else if (__VLS_ctx.eventStore.event?.bannerUrl) {
+    else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex h-40 w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500" },
+            ...{ class: "flex h-40 w-full items-center justify-center border border-dashed border-neutral-300 px-6 py-4 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -2008,10 +2013,11 @@ else {
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:h-40']} */ ;
@@ -2795,7 +2801,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             nextLotInfo: nextLotInfo,
             eventBannerError: eventBannerError,
             resolvedBannerUrl: resolvedBannerUrl,
-            eventHasBanner: eventHasBanner,
+            hasBannerImage: hasBannerImage,
             registrationOpen: registrationOpen,
             currentStep: currentStep,
             buyerCpf: buyerCpf,

@@ -83,7 +83,18 @@ export const useAuthStore = defineStore("auth", () => {
   );
 
   const hasPermission = (module: string, action: PermissionAction = "view") => {
-    const entry = permissionMap.value[module];
+    if (!user.value) {
+      return false;
+    }
+    if (user.value.role === "AdminGeral") {
+      return true;
+    }
+    const map = user.value.permissions ?? {};
+    // Se ainda não houver mapa calculado, mantemos compatibilidade liberando acesso
+    if (!map || Object.keys(map).length === 0) {
+      return true;
+    }
+    const entry = map[module];
     if (!entry) {
       return false;
     }

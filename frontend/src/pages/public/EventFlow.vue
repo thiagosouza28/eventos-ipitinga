@@ -20,23 +20,21 @@
             </p>
           </div>
           <div class="self-start w-full lg:w-auto">
-            <div
-              v-if="eventHasBanner"
-              class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700"
-            >
+            <div class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700">
               <img
-                :src="resolvedBannerUrl || ''"
+                v-if="hasBannerImage"
+                :src="resolvedBannerUrl"
                 alt="Banner do evento"
                 class="w-full max-h-60 object-contain"
                 loading="lazy"
                 @error="eventBannerError = true"
               />
-            </div>
-            <div
-              v-else-if="eventStore.event?.bannerUrl"
-              class="flex h-40 w-full items-center justify-center rounded-xl border border-dashed border-neutral-300 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500"
-            >
-              Imagem indisponivel
+              <div
+                v-else
+                class="flex h-40 w-full items-center justify-center border border-dashed border-neutral-300 px-6 py-4 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500"
+              >
+                Imagem indisponivel
+              </div>
             </div>
           </div>
           <div class="text-left sm:text-right">
@@ -832,10 +830,13 @@ const nextLotInfo = computed(() => {
     }
     return `${uploadsBaseUrl}/${sanitized}`;
   };
-  const resolvedBannerUrl = computed(() => resolveBannerUrl(eventStore.event?.bannerUrl));
-  const eventHasBanner = computed(
-    () => Boolean(resolvedBannerUrl.value) && !eventBannerError.value
-  );
+  const resolvedBannerUrl = computed(() => {
+    if (eventBannerError.value) {
+      return "";
+    }
+    return resolveBannerUrl(eventStore.event?.bannerUrl);
+  });
+  const hasBannerImage = computed(() => Boolean(resolvedBannerUrl.value));
 
   const registrationOpen = computed(() => {
     if (!eventStore.event) return false;
