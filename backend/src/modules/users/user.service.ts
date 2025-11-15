@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
-import { UserStatus } from "@prisma/client";
+import { UserStatus } from "@/prisma/generated/client";
 
 import { prisma } from "../../lib/prisma";
 import { ConflictError, NotFoundError, AppError } from "../../utils/errors";

@@ -1,65 +1,66 @@
-# CATRE Ipitinga — Sistema de Inscrições
+﻿# CATRE Ipitinga ÔÇö Sistema de Inscri├º├Áes
 
-Aplicação completa (backend + frontend) para gerenciar inscrições de eventos da igreja CATRE Ipitinga com pagamentos Mercado Pago, recibos em PDF com QR Code e check-in presencial.
+Aplica├º├úo completa (backend + frontend) para gerenciar inscri├º├Áes de eventos da igreja CATRE Ipitinga com pagamentos Mercado Pago, recibos em PDF com QR Code e check-in presencial.
 
-## Sumário
+## Sum├írio
 
 - [Principais recursos](#principais-recursos)
 - [Arquitetura](#arquitetura)
 - [Estrutura de pastas](#estrutura-de-pastas)
-- [Configuração inicial](#configuração-inicial)
-- [Variáveis de ambiente](#variáveis-de-ambiente)
-- [Executando a aplicação](#executando-a-aplicação)
+- [Configura├º├úo inicial](#configura├º├úo-inicial)
+- [Vari├íveis de ambiente](#vari├íveis-de-ambiente)
+- [Executando a aplica├º├úo](#executando-a-aplica├º├úo)
 - [Banco de dados & Prisma](#banco-de-dados--prisma)
 - [Pagamentos com Mercado Pago](#pagamentos-com-mercado-pago)
-- [Fluxos críticos](#fluxos-críticos)
+- [Fluxos cr├¡ticos](#fluxos-cr├¡ticos)
 - [Testes](#testes)
-- [Documentação da API](#documentação-da-api)
+- [Documenta├º├úo da API](#documenta├º├úo-da-api)
 - [Seeds de exemplo](#seeds-de-exemplo)
+- [Deploy na AWS (EC2)](#deploy-na-aws-ec2)
 - [Deploy no Render](#deploy-no-render)
-- [Pr�ximos passos sugeridos](#pr�ximos-passos-sugeridos)
+- [Próximos passos sugeridos](#próximos-passos-sugeridos)
 
 ## Principais recursos
 
-- Inscrições em lote com um único pagamento (PIX ou Cartão via Mercado Pago).
-- Recuperação automática de pedidos pendentes pelo CPF do comprador.
+- Inscri├º├Áes em lote com um ├║nico pagamento (PIX ou Cart├úo via Mercado Pago).
+- Recupera├º├úo autom├ítica de pedidos pendentes pelo CPF do comprador.
 - Painel administrativo com RBAC (`AdminGeral`, `AdminDistrital`, `DiretorLocal`, `Tesoureiro`).
-- CRUD de eventos, distritos, igrejas e gestão de inscrições/pedidos.
-- Estorno parcial por inscrição mantendo o restante do pedido ativo.
-- Recibos individuais em PDF com QR Code para check-in e verificação por token.
-- Página pública para consulta de comprovantes (CPF + data de nascimento).
+- CRUD de eventos, distritos, igrejas e gest├úo de inscri├º├Áes/pedidos.
+- Estorno parcial por inscri├º├úo mantendo o restante do pedido ativo.
+- Recibos individuais em PDF com QR Code para check-in e verifica├º├úo por token.
+- P├ígina p├║blica para consulta de comprovantes (CPF + data de nascimento).
 - Check-in via leitura de QR Code ou busca manual.
 - Webhook Mercado Pago idempotente com trilha de auditoria.
-- Job automático para expiração/cancelamento de pedidos vencidos.
+- Job autom├ítico para expira├º├úo/cancelamento de pedidos vencidos.
 - Logs com mascaramento de CPF e registros de auditoria.
 
 ## Arquitetura
 
 - **Frontend**: Vue 3 + Vite + TypeScript + TailwindCSS.
 - **Backend**: Node.js + Express + TypeScript + Prisma ORM.
-- **Banco de dados**: PostgreSQL (Docker incluso).
-- **Pagamentos**: Mercado Pago (Preferências, webhook, estorno parcial).
+- **Banco de dados**: MySQL 8 (Docker incluso ou RDS).
+- **Pagamentos**: Mercado Pago (Prefer├¬ncias, webhook, estorno parcial).
 - **PDF/QR**: Playwright + `qrcode`.
-- **Armazenamento de fotos**: Serviço abstrato (Supabase/S3 simulados em disco local).
-- **Autenticação**: JWT + RBAC baseado em roles.
+- **Armazenamento de fotos**: Servi├ºo abstrato (Supabase/S3 simulados em disco local).
+- **Autentica├º├úo**: JWT + RBAC baseado em roles.
 - **Logs/observabilidade**: Pino + auditoria em tabela dedicada.
 
 ## Estrutura de pastas
 
 ```
-├── backend            # API Express + Prisma
-│   ├── prisma         # Schema, migração e seed
-│   └── src            # Código-fonte (módulos, serviços, jobs, pdf etc.)
-├── frontend           # Aplicação Vue 3 + Tailwind
-│   └── src            # Páginas públicas/admin, stores e componentes
-├── docker-compose.yml # Postgres local
-├── .env.example
-└── README.md
+Ôö£ÔöÇÔöÇ backend            # API Express + Prisma
+Ôöé   Ôö£ÔöÇÔöÇ prisma         # Schema, migra├º├úo e seed
+Ôöé   ÔööÔöÇÔöÇ src            # C├│digo-fonte (m├│dulos, servi├ºos, jobs, pdf etc.)
+Ôö£ÔöÇÔöÇ frontend           # Aplica├º├úo Vue 3 + Tailwind
+Ôöé   ÔööÔöÇÔöÇ src            # P├íginas p├║blicas/admin, stores e componentes
+Ôö£ÔöÇÔöÇ docker-compose.yml # MySQL local
+Ôö£ÔöÇÔöÇ .env.example
+ÔööÔöÇÔöÇ README.md
 ```
 
-## Configuração inicial
+## Configura├º├úo inicial
 
-1. **Instale dependências** (necessário ter Node 18+):
+1. **Instale depend├¬ncias** (necess├írio ter Node 18+):
 
    ```bash
    npm install
@@ -74,13 +75,13 @@ Aplicação completa (backend + frontend) para gerenciar inscrições de eventos
    cp backend/test/.env.test backend/.env.test   # opcional para rodar testes locais
    ```
 
-3. **Inicie o PostgreSQL via Docker**:
+3. **Inicie o MySQL via Docker**:
 
    ```bash
-   docker compose up -d
+   docker compose up -d db
    ```
 
-4. **Rode as migrações e gere o Prisma Client**:
+4. **Rode as migra├º├Áes e gere o Prisma Client**:
 
    ```bash
    npm --workspace backend run prisma:generate
@@ -88,20 +89,20 @@ Aplicação completa (backend + frontend) para gerenciar inscrições de eventos
    npm --workspace backend run prisma:seed
    ```
 
-   > A seed cria usuários de exemplo (Admin geral, distrital, diretores locais e tesouraria) usando o email/senha configurados em `.env`, além dos dados básicos.
+   > A seed cria usu├írios de exemplo (Admin geral, distrital, diretores locais e tesouraria) usando o email/senha configurados em `.env`, al├®m dos dados b├ísicos.
 
-## Variáveis de ambiente
+## Vari├íveis de ambiente
 
-O arquivo `.env.example` traz todos os valores necessários com descrições. Ajuste os seguintes pontos antes de colocar em produção:
+O arquivo `.env.example` traz todos os valores necess├írios com descri├º├Áes. Ajuste os seguintes pontos antes de colocar em produ├º├úo:
 
-- `DATABASE_URL`: URL do PostgreSQL.
-- `JWT_SECRET`: mínimo 32 caracteres.
+- `DATABASE_URL`: URL do MySQL (RDS, PlanetScale, Render etc.).
+- `JWT_SECRET`: m├¡nimo 32 caracteres.
 - `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `MP_INTEGRATOR_ID`: credenciais da conta Mercado Pago.
 - `SUPABASE_...` ou `S3_...`: credenciais do provedor de armazenamento (caso substitua o driver local).
 - `PDF_SIGN_SECRET`, `HMAC_SECRET`: usados na assinatura de recibos e QR Code.
-- `APP_URL`, `API_URL`: apontam para o endereço público das aplicações.
+- `APP_URL`, `API_URL`: apontam para o endere├ºo p├║blico das aplica├º├Áes.
 
-## Executando a aplicação
+## Executando a aplica├º├úo
 
 ### Ambiente de desenvolvimento (hot reload completo)
 
@@ -109,72 +110,72 @@ O arquivo `.env.example` traz todos os valores necessários com descrições. Aj
 npm run dev
 ```
 
-- API: http://localhost:3001 (Swagger disponível em `backend/openapi.json`).
+- API: http://localhost:3001 (Swagger dispon├¡vel em `backend/openapi.json`).
 - Frontend: http://localhost:5173
 
 > Rodar via `npm run dev` executa backend + frontend em paralelo (usar `npm run dev:backend` ou `npm run dev:frontend` para processos isolados).
 
-### Build de produção
+### Build de produ├º├úo
 
 ```bash
 npm run build
 ```
 
-Os artefatos são gerados em `backend/dist` e `frontend/dist`.
+Os artefatos s├úo gerados em `backend/dist` e `frontend/dist`.
 
 ## Banco de dados & Prisma
 
-- Schema: `backend/prisma/schema.prisma`
-- Migração inicial: `backend/prisma/migrations/0001_init/migration.sql`
-- Seed: `backend/prisma/seed.ts`
+- Schema: `backend/src/prisma/schema.prisma`
+- Migra├º├úo inicial: `backend/src/prisma/migrations/0001_init/migration.sql`
+- Seed: `backend/src/prisma/seed.ts`
 
-Comandos úteis:
+Comandos ├║teis:
 
 ```bash
 npm --workspace backend run prisma:generate   # gerar Prisma Client
-npm --workspace backend run prisma:migrate   # aplicar migrações localmente
-npm --workspace backend run prisma:deploy    # aplicar migrações em produção
+npm --workspace backend run prisma:migrate   # aplicar migra├º├Áes localmente
+npm --workspace backend run prisma:deploy    # aplicar migra├º├Áes em produ├º├úo
 npm --workspace backend run prisma:seed      # inserir dados iniciais
 ```
 
 ## Pagamentos com Mercado Pago
 
-1. Crie uma aplicação no Mercado Pago e configure:
-   - Access token de teste ou produção (`MP_ACCESS_TOKEN`).
+1. Crie uma aplica├º├úo no Mercado Pago e configure:
+   - Access token de teste ou produ├º├úo (`MP_ACCESS_TOKEN`).
    - Webhook apontando para `https://SEU_DOMINIO/api/webhooks/mercadopago`.
    - Assinatura secreta (`MP_WEBHOOK_SECRET`) para validar requests.
-2. O backend cria uma **Preferência** com um item por inscrição, o que permite estornos parciais.
+2. O backend cria uma **Prefer├¬ncia** com um item por inscri├º├úo, o que permite estornos parciais.
 3. Metadados enviados ao MP: `orderId`, `registrationIds`, `buyerCpf`.
 4. O webhook busca o pagamento pela `external_reference` (ID do pedido) e atualiza status localmente.
-5. Estornos parciais são disparados via `POST /api/admin/registrations/:id/refund`.
+5. Estornos parciais s├úo disparados via `POST /api/admin/registrations/:id/refund`.
 
-## Fluxos críticos
+## Fluxos cr├¡ticos
 
-### Inscrição pública
+### Inscri├º├úo p├║blica
 
-1. Usuário acessa `/evento/:slug`.
-2. Informa CPF do comprador → sistema verifica pedidos pendentes e redireciona se existir.
-3. Informa número de inscrições e preenche dados (foto opcional, distrito/igreja filtrados).
-4. Pedido é criado como `PENDING` e preferência Mercado Pago gerada.
-5. Webhook confirma `PAID` e recibos PDF são gerados automaticamente (armazenados em `tmp/receipts`).
+1. Usu├írio acessa `/evento/:slug`.
+2. Informa CPF do comprador ÔåÆ sistema verifica pedidos pendentes e redireciona se existir.
+3. Informa n├║mero de inscri├º├Áes e preenche dados (foto opcional, distrito/igreja filtrados).
+4. Pedido ├® criado como `PENDING` e prefer├¬ncia Mercado Pago gerada.
+5. Webhook confirma `PAID` e recibos PDF s├úo gerados automaticamente (armazenados em `tmp/receipts`).
 
 ### Retomada de pedido pendente
 
 - Endpoint `POST /api/inscriptions/start` retorna `orderPending` com dados do pagamento.
 - O frontend redireciona para `/evento/:slug/pagamento/:orderId`.
-- Se a preferência expirar, o backend gera uma nova mantendo `external_reference`.
+- Se a prefer├¬ncia expirar, o backend gera uma nova mantendo `external_reference`.
 
 ### Estorno parcial
 
 1. Admin (role Tesoureiro ou AdminGeral) aciona `POST /api/admin/registrations/:id/refund`.
-2. O backend chama `paymentService.refundRegistration` com o valor da inscrição.
-3. Registro muda para `REFUNDED` e pedido para `PARTIALLY_REFUNDED`. Auditoria é registrada.
+2. O backend chama `paymentService.refundRegistration` com o valor da inscri├º├úo.
+3. Registro muda para `REFUNDED` e pedido para `PARTIALLY_REFUNDED`. Auditoria ├® registrada.
 
 ### Check-in
 
 - Recibos possuem QR Code com URL assinada (`/checkin/validate?rid=...&sig=...`).
 - Check-in pode ser realizado via QR Code (webcam) ou busca manual (CPF + nascimento).
-- Apenas inscrições `PAID` são aceitas; ao confirmar, status vai para `CHECKED_IN`.
+- Apenas inscri├º├Áes `PAID` s├úo aceitas; ao confirmar, status vai para `CHECKED_IN`.
 
 ## Testes
 
@@ -184,8 +185,8 @@ Backend:
 npm --workspace backend run test
 ```
 
-- **Integração**: `test/integration/fullflow.spec.ts` cobre criação de pedido, pagamento, check-in e estorno parcial (dependências externas mockadas).
-- **Unitários**: utilitários de CPF/HMAC e idempotência de webhook.
+- **Integra├º├úo**: `test/integration/fullflow.spec.ts` cobre cria├º├úo de pedido, pagamento, check-in e estorno parcial (depend├¬ncias externas mockadas).
+- **Unit├írios**: utilit├írios de CPF/HMAC e idempot├¬ncia de webhook.
 
 Frontend:
 
@@ -193,12 +194,12 @@ Frontend:
 npm --workspace frontend run test
 ```
 
-- Teste de utilitário (`src/utils/__tests__/format.spec.ts`) garante formatos básicos.
+- Teste de utilit├írio (`src/utils/__tests__/format.spec.ts`) garante formatos b├ísicos.
 
-## Documentação da API
+## Documenta├º├úo da API
 
 - Arquivo OpenAPI em `backend/src/openapi/openapi.json`.
-- Geração rápida para distribuição:
+- Gera├º├úo r├ípida para distribui├º├úo:
 
   ```bash
   npm --workspace backend run openapi
@@ -206,36 +207,46 @@ npm --workspace frontend run test
   ```
 
 ## Seeds de exemplo
+- [Deploy na AWS (EC2)](#deploy-na-aws-ec2)
 
-Após rodar `npm --workspace backend run prisma:seed` você terá:
+Ap├│s rodar `npm --workspace backend run prisma:seed` voc├¬ ter├í:
 
-- Usuários admin/Distrital/Diretor/Tesouraria (todos usam a senha `ADMIN_PASSWORD` do `.env`):
+- Usu├írios admin/Distrital/Diretor/Tesouraria (todos usam a senha `ADMIN_PASSWORD` do `.env`):
   - `Admin Geral` (`AdminGeral`): email definido em `ADMIN_EMAIL`.
   - `distrital.norte@catre.local` (`AdminDistrital`) - associado ao Distrito Norte.
   - `distrital.sul@catre.local` (`AdminDistrital`) - associado ao Distrito Sul.
-  - `diretora.central@catre.local` (`DiretorLocal`) - associado à Igreja Central.
-  - `diretora.esperanca@catre.local` (`DiretorLocal`) - associado à Igreja Esperança.
+  - `diretora.central@catre.local` (`DiretorLocal`) - associado ├á Igreja Central.
+  - `diretora.esperanca@catre.local` (`DiretorLocal`) - associado ├á Igreja Esperan├ºa.
   - `tesouraria@catre.local` (`Tesoureiro`).
 - Distritos: "Distrito Norte", "Distrito Sul"
-- Igrejas: "Igreja Central", "Igreja Esperança"
-- Ministérios: "Ministerio Jovem" (ativo) e "Ministerio de Musica" (ativo)
-- Evento: "Retiro Espiritual 2025" (`slug: retiro-espiritual-2025`) vinculado ao Ministério Jovem
+- Igrejas: "Igreja Central", "Igreja Esperan├ºa"
+- Minist├®rios: "Ministerio Jovem" (ativo) e "Ministerio de Musica" (ativo)
+- Evento: "Retiro Espiritual 2025" (`slug: retiro-espiritual-2025`) vinculado ao Minist├®rio Jovem
 
-> Em desenvolvimento, faça login com esse usuário via `/admin`.
+> Em desenvolvimento, fa├ºa login com esse usu├írio via `/admin`.
+
+## Deploy na AWS (EC2)
+
+- O documento `docs/aws-ec2-backend.md` detalha como preparar uma instancia EC2/Ubuntu, instalar Node 20, conectar no MySQL/RDS e liberar o backend via `systemd`.
+- O guia lista os comandos de console (apt, git clone, npm ci, npm run build) e traz um exemplo de unit file pronto.
+- O script `scripts/aws/deploy-backend.sh` automatiza a atualizacao (deps + build + restart) via `SERVICE_NAME=catre-backend ./scripts/aws/deploy-backend.sh`.
+- Apos gerar o build execute `pm2 start dist/main.js --name api` (ou habilite o servico systemd sugerido).
 
 ## Deploy no Render
 
-- O arquivo `render.yaml` j� configura o servi�o `CATRE Ipitinga Backend` com Node/Express e um banco PostgreSQL Starter. O Render respeita o `root: backend` e usa os comandos `npm run build` e `npm run start`.
-- As etapas completas (vari�veis de ambiente, URLs, webhook e rotinas de observabilidade) est�o documentadas em `docs/render-backend.md`. Mantenha segredos (JWT, Mercado Pago, Supabase/S3) apenas no painel do Render e sincronize o `API_URL` com `https://<seu-backend>.onrender.com/api`.
+- O arquivo `render.yaml` j´┐¢ configura o servi´┐¢o `CATRE Ipitinga Backend` com Node/Express e um banco MySQL Starter. O Render respeita o `root: backend` e usa os comandos `npm run build` e `npm run start`.
+- As etapas completas (vari´┐¢veis de ambiente, URLs, webhook e rotinas de observabilidade) est´┐¢o documentadas em `docs/render-backend.md`. Mantenha segredos (JWT, Mercado Pago, Supabase/S3) apenas no painel do Render e sincronize o `API_URL` com `https://<seu-backend>.onrender.com/api`.
 
-## Próximos passos sugeridos
+## Pr├│ximos passos sugeridos
 
 1. Configurar armazenamento real de fotos (Supabase Storage ou S3) e atualizar `STORAGE_DRIVER`.
-2. Hospedar o backend atrás de HTTPS (necessário para Playwright + captura da webcam).
-3. Publicar frontend estático e apontar `VITE_API_URL`.
-4. Automatizar deploy (CI/CD) executando testes, lint e migrações.
-5. Habilitar monitoramento/log centralizado (ex.: Logflare, Datadog) se for rodar em produção.
+2. Hospedar o backend atr├ís de HTTPS (necess├írio para Playwright + captura da webcam).
+3. Publicar frontend est├ítico e apontar `VITE_API_URL`.
+4. Automatizar deploy (CI/CD) executando testes, lint e migra├º├Áes.
+5. Habilitar monitoramento/log centralizado (ex.: Logflare, Datadog) se for rodar em produ├º├úo.
 
 ---
 
-Feito com ❤️ para agilizar a gestão dos retiros do CATRE Ipitinga. Qualquer dúvida ou melhoria, abra uma issue ou contribua!
+Feito com ÔØñ´©Å para agilizar a gest├úo dos retiros do CATRE Ipitinga. Qualquer d├║vida ou melhoria, abra uma issue ou contribua!
+
+

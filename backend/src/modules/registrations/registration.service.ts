@@ -1,7 +1,7 @@
 ﻿import { promises as fs } from "fs";
 import path from "path";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/prisma/generated/client";
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { calculateAge } from "../../utils/cpf";

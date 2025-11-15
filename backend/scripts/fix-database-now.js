@@ -5,7 +5,7 @@
   - Pode ser executado quantas vezes for necessário
 */
 
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("../src/prisma/generated/client");
 const prisma = new PrismaClient();
 
 async function addColumnIfMissing(table, column, type) {
@@ -136,4 +136,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 

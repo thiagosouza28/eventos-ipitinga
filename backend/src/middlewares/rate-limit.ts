@@ -1,4 +1,4 @@
-import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
+import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
 
 import { env } from "../config/env";
 

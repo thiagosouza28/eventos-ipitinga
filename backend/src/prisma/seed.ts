@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
 
-import { env } from "../src/config/env";
-import { Role } from "../src/config/roles";
-import type { PermissionEntry } from "../src/config/permissions";
-import { prisma } from "../src/lib/prisma";
+import { env } from "../config/env";
+import { Role } from "../config/roles";
+import type { PermissionEntry } from "../config/permissions";
+import { prisma } from "../lib/prisma";
 
 const ensureDistrict = async (name: string) => {
   const existing = await prisma.district.findUnique({ where: { name } });

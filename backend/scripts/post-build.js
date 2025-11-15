@@ -1,14 +1,14 @@
-const { copyFileSync, existsSync, mkdirSync } = require("fs");
+const { copyFileSync, cpSync, existsSync, mkdirSync } = require("fs");
 const { resolve, dirname } = require("path");
 
 const rootDir = resolve(__dirname, "..");
 const openApiSource = resolve(rootDir, "src", "openapi", "openapi.json");
-const targets = [
+const openApiTargets = [
   resolve(rootDir, "openapi.json"),
   resolve(rootDir, "dist", "openapi.json")
 ];
 
-targets.forEach((target) => {
+openApiTargets.forEach((target) => {
   const targetDir = dirname(target);
   if (!existsSync(targetDir)) {
     mkdirSync(targetDir, { recursive: true });
@@ -16,4 +16,10 @@ targets.forEach((target) => {
   copyFileSync(openApiSource, target);
 });
 
-console.log("OpenAPI JSON exportado para dist e diretório raiz.");
+const prismaClientSource = resolve(rootDir, "src", "prisma", "generated");
+const prismaClientTarget = resolve(rootDir, "dist", "prisma", "generated");
+if (existsSync(prismaClientSource)) {
+  cpSync(prismaClientSource, prismaClientTarget, { recursive: true });
+}
+
+console.log("OpenAPI exportado e Prisma Client copiado para dist.");

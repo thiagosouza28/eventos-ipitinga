@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("../src/prisma/generated/client");
 const prisma = new PrismaClient();
 
 async function checkAndCreateExpenseTable() {
@@ -56,4 +56,5 @@ async function checkAndCreateExpenseTable() {
 }
 
 checkAndCreateExpenseTable();
+
 

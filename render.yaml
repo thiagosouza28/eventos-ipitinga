@@ -13,6 +13,6 @@ services:
 
 databases:
   - name: catre-ipitinga-db
-    engine: postgresql
+    engine: mysql
     plan: starter
-    version: 16
+    version: 8

@@ -1,21 +1,21 @@
 ﻿import { Router } from "express";
 
-import { authenticate } from "../../middlewares/auth-middleware";
-import { authorize } from "../../middlewares/rbac-middleware";
-import { loginHandler, changePasswordHandler } from "../../modules/auth/auth.controller";
+import { authenticate } from "../middlewares/auth-middleware";
+import { authorize } from "../middlewares/rbac-middleware";
+import { loginHandler, changePasswordHandler } from "../controllers/auth.controller";
 import {
   createChurchHandler,
   listChurchesHandler,
   updateChurchHandler,
   deleteChurchHandler,
   findChurchByDirectorCpfHandler
-} from "../../modules/churches/church.controller";
+} from "../controllers/church.controller";
 import {
   createDistrictHandler,
   listDistrictsHandler,
   updateDistrictHandler,
   deleteDistrictHandler
-} from "../../modules/districts/district.controller";
+} from "../controllers/district.controller";
 import {
   createEventHandler,
   listPublicEventsHandler,
@@ -23,19 +23,19 @@ import {
   listEventsAdminHandler,
   updateEventHandler,
   deleteEventHandler
-} from "../../modules/events/event.controller";
+} from "../controllers/event.controller";
 import {
   listEventLotsHandler,
   createEventLotHandler,
   updateEventLotHandler,
   deleteEventLotHandler
-} from "../../modules/events/event-lot.controller";
+} from "../controllers/event-lot.controller";
 import {
   listMinistriesHandler,
   createMinistryHandler,
   updateMinistryHandler,
   deleteMinistryHandler
-} from "../../modules/ministries/ministry.controller";
+} from "../controllers/ministry.controller";
 import {
   getOrderPaymentHandler,
   getPaymentByPreferenceIdHandler,
@@ -46,7 +46,7 @@ import {
   markOrderPaidHandler,
   listPendingOrdersHandler,
   bulkPaymentHandler
-} from "../../modules/orders/order.controller";
+} from "../controllers/order.controller";
 import {
   cancelRegistrationHandler,
   deleteRegistrationHandler,
@@ -59,12 +59,12 @@ import {
   markRegistrationsPaidHandler,
   regenerateRegistrationPaymentLinkHandler,
   getRegistrationHistoryHandler
-} from "../../modules/registrations/registration.controller";
+} from "../controllers/registration.controller";
 import {
   downloadReceiptHandler,
   lookupReceiptsHandler
-} from "../../modules/receipts/receipt.controller";
-import { mercadoPagoWebhookHandler } from "../../modules/webhooks/webhook.controller";
+} from "../controllers/receipt.controller";
+import { mercadoPagoWebhookHandler } from "../controllers/webhook.controller";
 import {
   getCheckinDashboardHandler,
   scanCheckinHandler,
@@ -72,23 +72,23 @@ import {
   confirmAdminCheckinHandler,
   validateCheckinLinkHandler,
   confirmCheckinLinkHandler
-} from "../../modules/checkin/checkin.controller";
+} from "../controllers/checkin.controller";
 import {
   createExpenseHandler,
   updateExpenseHandler,
   deleteExpenseHandler,
   listExpensesByEventHandler,
   getExpenseHandler
-} from "../../modules/expenses/expense.controller";
+} from "../controllers/expense.controller";
 import {
   getEventSummaryHandler,
   getDistrictSummaryHandler,
   getChurchSummaryHandler,
   getGeneralSummaryHandler,
   downloadEventFinancialReportHandler
-} from "../../modules/financial/financial.controller";
-import { uploadMiddleware } from "../../config/upload";
-import { uploadImageHandler } from "../../modules/uploads/upload.controller";
+} from "../controllers/financial.controller";
+import { uploadMiddleware } from "../config/upload";
+import { uploadImageHandler } from "../controllers/upload.controller";
 import {
   listUsersHandler,
   createUserHandler,
@@ -96,14 +96,14 @@ import {
   resetUserPasswordHandler,
   updateUserStatusHandler,
   deleteUserHandler
-} from "../../modules/users/user.controller";
+} from "../controllers/user.controller";
 import {
   listProfilesHandler,
   createProfileHandler,
   updateProfileHandler,
   updateProfileStatusHandler,
   deleteProfileHandler
-} from "../../modules/profiles/profile.controller";
+} from "../controllers/profile.controller";
 
 export const router = Router();
 
@@ -336,6 +336,9 @@ router.get(
 );
 
 export default router;
+
+
+
 
 
 

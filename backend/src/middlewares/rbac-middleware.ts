@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response, type RequestHandler } from "express";
 
 import { RoleHierarchy } from "../config/roles";
 import type { PermissionAction, PermissionModule } from "../config/permissions";
@@ -6,7 +6,7 @@ import { ForbiddenError, UnauthorizedError } from "../utils/errors";
 import { hasPermission } from "../utils/permissions";
 
 export const authorize =
-  (...roles: string[]) =>
+  (...roles: string[]): RequestHandler =>
   (request: Request, _response: Response, next: NextFunction) => {
     if (!request.user) {
       throw new UnauthorizedError();
@@ -24,7 +24,7 @@ export const authorize =
   };
 
 export const authorizePermission =
-  (module: PermissionModule | string, action: PermissionAction) =>
+  (module: PermissionModule | string, action: PermissionAction): RequestHandler =>
   (request: Request, _response: Response, next: NextFunction) => {
     if (!request.user) {
       throw new UnauthorizedError();

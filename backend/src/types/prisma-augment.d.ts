@@ -1,6 +1,6 @@
-import "@prisma/client";
+import "@/prisma/generated/client";
 
-declare module "@prisma/client" {
+declare module "@/prisma/generated/client" {
   interface Event {
     isFree: boolean;
   }

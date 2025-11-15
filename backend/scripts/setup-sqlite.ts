@@ -5,7 +5,7 @@ import path from "path";
 
 import { prisma } from "../src/lib/prisma";
 
-const migrationFile = path.resolve(__dirname, "..", "prisma", "migrations", "0001_init", "migration.sql");
+const migrationFile = path.resolve(__dirname, "..", "src", "prisma", "migrations", "0001_init", "migration.sql");
 
 const sql = fs
   .readFileSync(migrationFile, "utf-8")

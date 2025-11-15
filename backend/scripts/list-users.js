@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('../src/prisma/generated/client');
 const prisma = new PrismaClient();
 
 (async () => {
@@ -11,4 +11,5 @@ const prisma = new PrismaClient();
     await prisma.$disconnect();
   }
 })();
+
 

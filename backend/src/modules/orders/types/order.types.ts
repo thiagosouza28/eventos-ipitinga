@@ -1,4 +1,4 @@
-import type { Order } from "@prisma/client";
+import type { Order } from "@/prisma/generated/client";
 
 export interface OrderWithDetails extends Order {
   event: {

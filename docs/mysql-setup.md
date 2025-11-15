@@ -19,11 +19,11 @@ This creates the `catre_ipitinga` database, every table, the indexes, and the FK
 
 ## Prisma migrations
 
-The repository now keeps a fresh MySQL migration in `backend/prisma/migrations/20251110120000_init`. Once your MySQL instance is available and pointed by `backend/.env`, run:
+The repository now keeps a fresh MySQL migration in `backend/src/prisma/migrations/20251110120000_init`. Once your MySQL instance is available and pointed by `backend/.env`, run:
 
 ```bash
 npm --workspace backend run prisma:generate
-npm --workspace backend run prisma migrate deploy
+npm --workspace backend run prisma:deploy
 ```
 
 This ensures Prisma can load the client and apply the tracked migration so the backend’s `ensureDatabaseSchema` logic finds all tables in place. You only need to run `migrate deploy` after the schema SQL has executed (or when you add new migrations in the future).

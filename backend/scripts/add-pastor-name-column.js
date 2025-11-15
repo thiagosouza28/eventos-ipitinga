@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('../src/prisma/generated/client');
 const prisma = new PrismaClient();
 
 async function addColumnIfNotExists(table, column, type) {
@@ -53,4 +53,5 @@ main()
     console.error(error);
     process.exit(1);
   });
+
 

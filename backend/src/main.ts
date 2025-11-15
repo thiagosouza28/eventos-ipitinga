@@ -1,9 +1,8 @@
-import { createServer } from "http";
 import { spawn } from "child_process";
 import { existsSync } from "fs";
 import path from "path";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/prisma/generated/client";
 
 import { createApp } from "./app";
 import { env } from "./config/env";
@@ -27,17 +26,18 @@ const REQUIRED_TABLES = [
 ];
 
 const backendRoot = path.resolve(__dirname, "..");
+const schemaPath = "src/prisma/schema.prisma";
 
 const resolvePrismaBinary = () => {
   const binaryName = process.platform === "win32" ? "prisma.cmd" : "prisma";
   const candidate = path.resolve(backendRoot, "node_modules", ".bin", binaryName);
   if (existsSync(candidate)) {
-    return { command: candidate, args: ["migrate", "deploy", "--schema", "prisma/schema.prisma"], shell: false };
+    return { command: candidate, args: ["migrate", "deploy", "--schema", schemaPath], shell: false };
   }
   const fallback = process.platform === "win32" ? "npx.cmd" : "npx";
   return {
     command: fallback,
-    args: ["prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"],
+    args: ["prisma", "migrate", "deploy", "--schema", schemaPath],
     shell: process.platform === "win32"
   };
 };
@@ -76,10 +76,7 @@ const ensureDatabaseSchema = async () => {
     const missing = REQUIRED_TABLES.filter((table) => !existing.has(table));
 
     if (missing.length) {
-      logger.warn(
-        { missing },
-        "Detectado schema incompleto. Executando prisma migrate deploy..."
-      );
+      logger.warn({ missing }, "Detectado schema incompleto. Executando prisma migrate deploy...");
       await runMigrations();
       logger.info("Migrations aplicadas com sucesso.");
     }
@@ -89,16 +86,19 @@ const ensureDatabaseSchema = async () => {
   }
 };
 
-const start = async () => {
+const bootstrap = async () => {
   try {
+    console.log("🔌 Testando conexão com o banco...");
+    await prisma.$queryRaw`SELECT 1`;
+    console.log("✅ Banco conectado");
+
     await ensureDatabaseSchema();
 
     const app = createApp();
-    const server = createServer(app);
-    const port = env.PORT;
-
-    server.listen(port, () => {
+    const port = process.env.PORT ? Number(process.env.PORT) : env.PORT;
+    const server = app.listen(port, "0.0.0.0", () => {
       logger.info(`API disponível em ${env.API_URL}`);
+      console.log(`🚀 Server running on port ${port}`);
       startOrderExpirationJob();
     });
 
@@ -115,10 +115,10 @@ const start = async () => {
     process.on("SIGINT", shutdown);
     process.on("SIGTERM", shutdown);
   } catch (error) {
-        logger.fatal({ error }, "Não foi possível iniciar o servidor.");
+    console.error("❌ Erro ao conectar no banco:", error);
+    logger.fatal({ error }, "Não foi possível iniciar o servidor.");
     process.exit(1);
   }
 };
 
-void start();
-
+void bootstrap();
