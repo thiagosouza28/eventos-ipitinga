@@ -1,3 +1,16 @@
-const DEFAULT_API_URL = "https://18.231.250.231:3333/api";
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? DEFAULT_API_URL;
+const normalizeBaseUrl = (value) => (value ? value.replace(/\/+$/, "") : undefined);
+const buildApiUrl = (value) => {
+    const base = normalizeBaseUrl(value);
+    return base ? `${base}/api` : undefined;
+};
+const envApiUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL);
+const appUrlFallback = buildApiUrl(import.meta.env.VITE_APP_URL);
+const runtimeFallback = typeof window !== "undefined" && (window === null || window === void 0 ? void 0 : window.location.origin)
+    ? buildApiUrl(window.location.origin)
+    : undefined;
+const resolvedApiUrl = envApiUrl ?? (appUrlFallback ?? (runtimeFallback ?? undefined));
+if (!resolvedApiUrl) {
+    throw new Error("API_BASE_URL could not be resolved. Configure VITE_API_URL or VITE_APP_URL in the frontend environment variables.");
+}
+export const API_BASE_URL = resolvedApiUrl;
 //# sourceMappingURL=api.js.map

@@ -39,7 +39,11 @@ const apiBase = (() => {
         if (typeof window !== "undefined") {
             return new URL(window.location.origin);
         }
-        return new URL("http://localhost");
+        const fallbackOrigin = import.meta.env.VITE_APP_URL ?? import.meta.env.VITE_API_URL;
+        if (fallbackOrigin) {
+            return new URL(fallbackOrigin);
+        }
+        throw new Error("Failed to resolve API base URL. Configure VITE_API_URL or VITE_APP_URL in the frontend .env.");
     }
 })();
 const resolveReceiptUrl = (target) => {

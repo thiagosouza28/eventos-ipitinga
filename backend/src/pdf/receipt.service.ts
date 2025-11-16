@@ -97,11 +97,11 @@ export const generateReceiptPdf = async (payload: ReceiptPayload) => {
     districtName: payload.districtName,
     churchName: payload.churchName,
     registrationId: payload.registrationId,
-    status: payload.status,
-  paymentMethod: payload.paymentMethod,
-  registrationDate: formatDate(payload.createdAt),
-  paymentDate: formatDate(payload.paymentDate),
-  photoUrl: payload.photoUrl,
+    status: payload.status.toUpperCase(),
+    paymentMethod: payload.paymentMethod,
+    registrationDate: formatDate(payload.createdAt),
+    paymentDate: formatDate(payload.paymentDate),
+    photoUrl: payload.photoUrl,
     generatedAt: new Date().toLocaleString("pt-BR"),
     validationUrl,
     qrDataUrl
@@ -116,10 +116,10 @@ export const generateReceiptPdf = async (payload: ReceiptPayload) => {
   const page = await browserInstance.newPage();
   await page.setContent(compiledHtml, { waitUntil: "networkidle" });
   const pdfBuffer = await page.pdf({
-    width: "105mm",
-    height: "148mm",
+    width: "120mm",
+    height: "200mm",
     printBackground: true,
-    margin: { top: "6mm", bottom: "6mm", left: "6mm", right: "6mm" }
+    margin: { top: "8mm", bottom: "8mm", left: "8mm", right: "8mm" }
   });
   await page.close();
   return { pdfBuffer, validationUrl };

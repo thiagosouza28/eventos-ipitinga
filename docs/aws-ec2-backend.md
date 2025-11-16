@@ -1,18 +1,18 @@
-# Deploy do backend em maquina virtual (AWS EC2)
+# Deploy do backend no AWS (EC2 + RDS)
 
-Este guia cobre todas as etapas para executar o backend do CATRE Ipitinga em uma instancia EC2 (Ubuntu 22.04) usando um banco MySQL hospedado na AWS (RDS ou Aurora). Inclui os comandos para provisionar dependencias, construir o projeto, aplicar migracoes Prisma e expor o servico via `systemd`.
+Este guia mostra como preparar uma instância EC2 (Ubuntu 22.04) para executar o backend do CATRE Ipitinga conectado a um banco MySQL hospedado na AWS (RDS/Aurora). Inclui pré‑requisitos, configuração do `.env`, build e automação de deploy.
 
-> Adapte nomes de usuario, caminhos e portas conforme o padrao da sua infraestrutura. Os exemplos abaixo assumem que os arquivos estao clonados em `/opt/catre-ipitinga`.
+> Adapte caminhos e usuários conforme sua infraestrutura. Os exemplos assumem que o código foi clonado em `/opt/eventos-ipitinga`.
 
 ---
 
 ## 1. Provisionar infraestrutura
 
-- **Banco de dados**: crie um MySQL 8.0 (RDS/Aurora) com collation `utf8mb4_unicode_ci`. Autorize a porta 3306 a partir do security group da EC2.
-- **Instancia EC2**: Ubuntu 22.04 LTS t3.small (ou superior), disco de pelo menos 20 GB e security group liberando 22 (SSH), 80/443 (HTTP/HTTPS) e 3001 (API direta, opcional).
-- Associe um Elastic IP e configure registros DNS para apontar para o IP publico.
+- **Banco de dados**: MySQL 8.0 (RDS/Aurora) com collation `utf8mb4_unicode_ci`. Libere a porta 3306 para o security group da EC2.
+- **EC2**: Ubuntu 22.04 LTS (t3.small ou superior), disco ≥ 20 GB, security group liberando 22 (SSH), 80/443 (HTTP/HTTPS) e 9001 (porta interna da API, caso queira expor diretamente).
+- Associe Elastic IP e configure o DNS (`api.seudominio.com`, por exemplo).
 
-## 2. Preparar o sistema operacional
+## 2. Preparar a instância
 
 ```bash
 sudo apt-get update
@@ -22,67 +22,60 @@ sudo apt-get install -y ca-certificates curl gnupg git build-essential unzip mys
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-node -v
+node -v   # 20.x
 npm -v
 ```
 
-Opcional: instale utilitarios como `nginx` (reverse proxy) e `certbot` para HTTPS.
+Opcional: instale `nginx` + `certbot` para TLS.
 
-## 3. Clonar o projeto e configurar variaveis
+## 3. Clonar o projeto e configurar o `.env`
 
 ```bash
-sudo mkdir -p /opt/catre-ipitinga
-sudo chown $USER:$USER /opt/catre-ipitinga
-cd /opt/catre-ipitinga
+sudo mkdir -p /opt/eventos-ipitinga
+sudo chown $USER:$USER /opt/eventos-ipitinga
+cd /opt/eventos-ipitinga
 
-git clone https://github.com/<sua-org>/catre-ipitinga.git .
+git clone https://github.com/<sua-org>/eventos-ipitinga.git .
 
-# Copie o template e ajuste as variaveis
-cp .env.example backend/.env
-nano backend/.env
+cp backend/.env backend/.env.backup.$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
+cp backend/.env backend/.env.sample 2>/dev/null || true
 ```
 
-Valores indispensaveis:
+Edite `backend/.env` com valores reais:
 
-| Variavel | Descricao |
+| Variável | Descrição |
 | --- | --- |
-| `DATABASE_URL` | `mysql://usuario:senha@host:3306/catre_db?sslaccept=strict` (use `sslaccept=strict` para RDS). |
-| `APP_URL` / `API_URL` | URLs publicas (ex.: `https://eventos.catredominio.com` e `https://api.catredominio.com/api`). |
-| `JWT_SECRET`, `PDF_SIGN_SECRET`, `HMAC_SECRET` | Segredos fortes (>= 32 caracteres). |
+| `APP_URL` | URL pública do frontend (ex.: `https://eventos.seudominio.com`). |
+| `API_URL` | URL pública da API (`https://api.seudominio.com/api`). |
+| `PORT` | Porta interna (ex.: `9001`). |
+| `DATABASE_URL` | `mysql://usuario:senha@host:3306/banco?sslaccept=strict`. |
+| `JWT_SECRET`, `PDF_SIGN_SECRET`, `HMAC_SECRET` | Segredos com ≥32 caracteres. |
 | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | Credenciais do Mercado Pago. |
 | `STORAGE_DRIVER` + credenciais (`supabase` ou `s3`). |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Primeiro usuario administrador. |
-| `MP_WEBHOOK_PUBLIC_URL` | `https://api.catredominio.com/api/webhooks/mercadopago`. |
+| `CORS_ORIGINS` | URLs autorizadas (frontend, Admin, etc.). |
+| `MP_WEBHOOK_PUBLIC_URL` | `https://api.seudominio.com/api/webhooks/mercadopago`. |
 
-> Em ambientes de producao mantenha o arquivo `backend/.env` fora de commits (ja esta no `.gitignore`).
+> Nunca faça commit do `.env`. Ele já está no `.gitignore`.
 
-## 4. Construir e aplicar migracoes
+## 4. Build e migrações
 
 ```bash
-cd /opt/catre-ipitinga/backend
-
+cd /opt/eventos-ipitinga/backend
 npm ci
 npm run build
 ```
 
-O `npm run build` executa automaticamente `prisma generate` e `prisma migrate deploy`, gerando `dist/` pronto para produção.
+O `build` executa `prisma generate`, `prisma migrate deploy` e copia o Prisma Client para `dist/`.
 
-## 5. Subir o backend manualmente (teste rapido)
-
-```bash
-cd /opt/catre-ipitinga/backend
-PORT=3001 NODE_ENV=production npm run start:prod
-```
-
-A API ficara disponivel em `http://0.0.0.0:3001/api`. Interrompa com `Ctrl+C` apos validar.
-
-Para processos em segundo plano/PM2:
+## 5. Teste manual
 
 ```bash
-pm2 start dist/main.js --name api
+PORT=9001 NODE_ENV=production npm run start:prod
 ```
 
-## 6. Configurar servico systemd
+A API responderá em `http://<ip>:9001/api`. Use `Ctrl+C` ao finalizar.
+
+## 6. Configurar systemd
 
 Crie `/etc/systemd/system/catre-backend.service`:
 
@@ -95,10 +88,10 @@ After=network.target
 Type=simple
 User=ubuntu
 Group=ubuntu
-WorkingDirectory=/opt/catre-ipitinga/backend
+WorkingDirectory=/opt/eventos-ipitinga/backend
 Environment=NODE_ENV=production
-Environment=PORT=3001
-EnvironmentFile=/opt/catre-ipitinga/backend/.env
+Environment=PORT=9001
+EnvironmentFile=/opt/eventos-ipitinga/backend/.env
 ExecStart=/usr/bin/npm run start:prod
 Restart=always
 RestartSec=5
@@ -107,38 +100,32 @@ RestartSec=5
 WantedBy=multi-user.target
 ```
 
-Ative o servico:
+Ative e monitore:
 
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now catre-backend
 sudo systemctl status catre-backend
+sudo journalctl -fu catre-backend
 ```
 
-Logs em tempo real:
+## 7. Script de deploy
+
+O repositório inclui `scripts/aws/deploy-backend.sh` que automatiza `npm ci`, `npm run build` e reinicia o serviço:
 
 ```bash
-sudo journalctl -u catre-backend -f
-```
-
-## 7. Script de deploy e atualizacao
-
-O repositorio inclui `scripts/aws/deploy-backend.sh`, que aplica as etapas de build/migracao e reinicia o servico:
-
-```bash
-cd /opt/catre-ipitinga
+cd /opt/eventos-ipitinga
 chmod +x scripts/aws/deploy-backend.sh
-
 SERVICE_NAME=catre-backend ./scripts/aws/deploy-backend.sh
 ```
 
-O script assume que `backend/.env` existe e reinicia o servico via `systemctl`. Use-o apos `git pull` para atualizar o backend em segundos (ou reinicie com `pm2 restart api` se estiver usando o process manager).
+Use sempre após `git pull` para atualizar o backend. Caso não utilize systemd, adapte o trecho final (o script mostra instruções para PM2 ou execução manual).
 
-## 8. Checklist pos-deploy
+## 8. Checklist pós-deploy
 
-- Abra a porta 443 no security group e configure HTTPS (Nginx + Certbot).
-- Atualize o webhook do Mercado Pago com a URL publica exposta pelo proxy/reverso.
-- Execute `npm run prisma:seed` apenas no primeiro deploy se quiser dados de demonstracao.
-- Monitore `journalctl` e os alarmes da AWS (CPU, disco, memoria) para detectar gargalos.
+- Configure `nginx` como proxy reverso (80/443 → porta interna 9001) e gere certificados com `certbot`.
+- Atualize o webhook do Mercado Pago para a URL HTTPS definitiva.
+- Execute `npm run prisma:seed` apenas se precisar de dados de exemplo.
+- Habilite monitoração (CloudWatch, alarms de CPU/disco, uptime) e backups do RDS.
 
-Com esses comandos o backend estara pronto para operar em uma maquina virtual da AWS com atualizacoes rapidas diretamente no console.
+Seguindo estes passos o backend estará pronto para produção em uma instância EC2 com banco na AWS.

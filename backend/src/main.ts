@@ -95,7 +95,7 @@ const bootstrap = async () => {
     await ensureDatabaseSchema();
 
     const app = createApp();
-    const port = process.env.PORT ? Number(process.env.PORT) : env.PORT;
+    const port = env.PORT;
     const server = app.listen(port, "0.0.0.0", () => {
       logger.info(`API disponível em ${env.API_URL}`);
       console.log(`🚀 Server running on port ${port}`);

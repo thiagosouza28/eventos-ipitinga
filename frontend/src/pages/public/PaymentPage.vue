@@ -86,22 +86,22 @@
             </div>
             <div
               v-if="receiptsReady"
-              class="mt-4 space-y-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-900 dark:border-green-500/30 dark:bg-green-500/10 dark:text-green-50"
+              class="mt-4 space-y-5 rounded-2xl border border-emerald-200/70 bg-emerald-50/80 p-5 text-sm text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-50"
             >
-              <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p class="text-sm font-semibold">Comprovantes disponiveis</p>
-                  <p class="text-sm text-green-800 dark:text-green-100/80">
+                  <p class="text-base font-semibold">Comprovantes disponiveis</p>
+                  <p class="text-sm text-emerald-800 dark:text-emerald-100/80">
                     {{
                       autoReceiptDownloadState === "done"
-                        ? "Os arquivos foram enviados automaticamente. Use o botao caso precise baixar novamente."
-                        : "Os comprovantes estao prontos para download."
+                        ? "Download automatico concluido. Se precisar novamente, clique abaixo."
+                        : "Escolha um comprovante individual ou baixe todos de uma vez."
                     }}
                   </p>
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-green-500 dark:hover:bg-green-400"
+                  class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400"
                   :disabled="downloadingReceipts"
                   @click="handleManualReceiptDownload"
                 >
@@ -109,8 +109,42 @@
                     <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Baixando...
                   </span>
-                  <span v-else>Baixar comprovantes</span>
+                  <span v-else>Baixar todos</span>
                 </button>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
+                <article
+                  v-for="(receipt, index) in receiptLinks"
+                  :key="receipt.registrationId"
+                  class="rounded-2xl border border-white/70 bg-white/90 p-4 text-neutral-700 shadow dark:border-emerald-500/20 dark:bg-emerald-900/40 dark:text-emerald-50"
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-semibold text-neutral-900 dark:text-white">{{ receipt.fullName }}</p>
+                      <p class="text-xs text-neutral-500 dark:text-emerald-100/70">
+                        Inscricao {{ receipt.registrationId.slice(0, 8).toUpperCase() }}
+                      </p>
+                    </div>
+                    <span
+                      class="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide"
+                      :class="receiptStatusClass(receipt.registrationId)"
+                    >
+                      {{ receiptStatusLabel(receipt.registrationId) }}
+                    </span>
+                  </div>
+                  <p class="mt-3 text-xs text-neutral-500 dark:text-emerald-100/70">
+                    Gere o PDF deste participante para apresentar no check-in ou compartilhar por mensagem.
+                  </p>
+                  <button
+                    type="button"
+                    class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-emerald-500/40 dark:text-emerald-50"
+                    :disabled="downloadingReceipts"
+                    @click="handleSingleReceiptDownload(receipt.registrationId)"
+                  >
+                    <span class="h-4 w-4" aria-hidden="true">↓</span>
+                    Baixar comprovante
+                  </button>
+                </article>
               </div>
               <p v-if="receiptDownloadError" class="text-sm text-red-600 dark:text-red-300">
                 {{ receiptDownloadError }}
@@ -324,6 +358,9 @@ const payment = ref<PaymentResponse | null>(null);
 const loadingStatus = ref(false);
 const pollHandle = ref<number | null>(null);
 
+const PAID_STATUSES = new Set(["PAID", "APPROVED"]);
+const isPaidStatus = (status?: string | null) => (status ? PAID_STATUSES.has(status) : false);
+
 const receiptDownloadStorageKey = `order:${props.orderId}:receipts-downloaded`;
 const readStoredReceiptState = (): DownloadState => {
   if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") {
@@ -345,7 +382,11 @@ const apiBase = (() => {
     if (typeof window !== "undefined") {
       return new URL(window.location.origin);
     }
-    return new URL("http://localhost");
+    const fallbackOrigin = import.meta.env.VITE_APP_URL ?? import.meta.env.VITE_API_URL;
+    if (fallbackOrigin) {
+      return new URL(fallbackOrigin);
+    }
+    throw new Error("Failed to resolve API base URL. Configure VITE_API_URL or VITE_APP_URL in the frontend .env.");
   }
 })();
 
@@ -365,6 +406,22 @@ const receiptLinks = computed(() =>
   }))
 );
 const hasReceiptLinks = computed(() => receiptLinks.value.length > 0);
+
+const participantStatusMap = computed(() => {
+  const map = new Map<string, string>();
+  payment.value?.participants?.forEach((participant) => {
+    map.set(participant.id, participant.status);
+  });
+  return map;
+});
+
+const receiptStatusLabel = (registrationId: string) =>
+  formatParticipantStatus(participantStatusMap.value.get(registrationId) ?? "PAID");
+
+const receiptStatusClass = (registrationId: string) =>
+  participantStatusMap.value.get(registrationId) === "PAID"
+    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/30 dark:text-emerald-50"
+    : "bg-amber-100 text-amber-700 dark:bg-amber-400/30 dark:text-amber-50";
 
 const clearRegistrationDraftState = () => {
   if (typeof window === "undefined" || typeof window.localStorage === "undefined") return;
@@ -387,7 +444,7 @@ const ticketPriceCents = computed(() => {
   }
   return eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0;
 });
-const isPaid = computed(() => payment.value?.status === "PAID");
+const isPaid = computed(() => isPaidStatus(payment.value?.status));
 const isFreeEvent = computed(() => Boolean(payment.value?.isFree || eventStore.event?.isFree));
 
 const statusLabels: Record<string, string> = {
@@ -514,13 +571,32 @@ const triggerAutoReceiptDownload = () => {
 
 const handleManualReceiptDownload = () => downloadReceipts("manual");
 
+const handleSingleReceiptDownload = async (registrationId: string) => {
+  if (!hasReceiptLinks.value || downloadingReceipts.value) return;
+  const index = receiptLinks.value.findIndex((receipt) => receipt.registrationId === registrationId);
+  if (index < 0) {
+    receiptDownloadError.value = "Nao encontramos este comprovante. Atualize a pagina e tente novamente.";
+    return;
+  }
+  downloadingReceipts.value = true;
+  receiptDownloadError.value = "";
+  try {
+    await downloadSingleReceipt(receiptLinks.value[index], index);
+  } catch (error) {
+    console.error("Erro ao baixar comprovante individual", error);
+    receiptDownloadError.value = "Nao foi possivel baixar este comprovante. Tente novamente.";
+  } finally {
+    downloadingReceipts.value = false;
+  }
+};
+
 const statusTitle = computed(() => {
   if (isFreeEvent.value) return "Inscricoes confirmadas";
   if (isManualPayment.value) {
-    if (payment.value?.status === "PAID") return "Pagamento registrado";
+    if (isPaid.value) return "Pagamento registrado";
     return "Pagamento pendente de confirmação";
   }
-  if (payment.value?.status === "PAID") return "Pagamento aprovado";
+  if (isPaid.value) return "Pagamento aprovado";
   if (payment.value?.status === "CANCELED") return "Pagamento cancelado";
   return "Aguardando confirmação";
 });
@@ -530,12 +606,12 @@ const statusMessage = computed(() => {
     return "Este evento e gratuito. Suas inscricoes foram confirmadas automaticamente, sem necessidade de pagamento.";
   }
   if (isManualPayment.value) {
-    if (payment.value?.status === "PAID") {
+    if (isPaid.value) {
       return "Pagamento registrado pela tesouraria. As inscricoes estao confirmadas.";
     }
     return "Apresente este comprovante na tesouraria para concluir o pagamento. Assim que o recebimento for registrado, atualizaremos automaticamente.";
   }
-  if (payment.value?.status === "PAID") {
+  if (isPaid.value) {
     return "Tudo certo! As inscricoes foram confirmadas e os recibos serao disponibilizados em instantes.";
   }
   if (payment.value?.status === "CANCELED") {
@@ -547,14 +623,14 @@ const statusMessage = computed(() => {
 const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
 
 const statusIcon = computed(() => {
-  if (isFreeEvent.value || payment.value?.status === "PAID") return "OK";
+  if (isFreeEvent.value || isPaid.value) return "OK";
   if (isManualPayment.value) return "..";
   if (payment.value?.status === "CANCELED") return "X";
   return "..";
 });
 
 const statusStyles = computed(() => {
-  if (isFreeEvent.value || payment.value?.status === "PAID") {
+  if (isFreeEvent.value || isPaid.value) {
     return {
       container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
       badge: "bg-primary-600"
@@ -600,7 +676,7 @@ const loadPayment = async (force = false) => {
     console.error("Erro ao carregar pagamento", error);
   } finally {
     loadingStatus.value = false;
-    if (force && payment.value?.status !== "PAID") {
+    if (force && !isPaid.value) {
       startPolling();
     }
   }
@@ -632,10 +708,10 @@ const startPolling = () => {
   stopPolling();
   pollHandle.value = window.setInterval(async () => {
     await loadPayment();
-    if (payment.value?.status === "PAID" || payment.value?.status === "CANCELED") {
+    if (isPaid.value || payment.value?.status === "CANCELED") {
       stopPolling();
       // Se foi pago, recarregar a página após 2 segundos para mostrar confirmação
-      if (payment.value?.status === "PAID") {
+      if (isPaid.value) {
         setTimeout(() => {
           window.location.reload();
         }, 2000);
@@ -657,7 +733,7 @@ watch(
     receiptCount: receiptLinks.value.length
   }),
   ({ status, receiptCount }) => {
-    if (status === "PAID" && receiptCount > 0) {
+    if (isPaidStatus(status) && receiptCount > 0) {
       triggerAutoReceiptDownload();
     }
   },
@@ -670,7 +746,7 @@ onMounted(async () => {
     await eventStore.fetchEvent(props.slug);
   }
   await loadPayment();
-  if (!payment.value || payment.value.status !== "PAID") {
+  if (!payment.value || !isPaidStatus(payment.value.status)) {
     startPolling();
   }
   if (route.query.fresh) {
@@ -682,3 +758,4 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+

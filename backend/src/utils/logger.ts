@@ -1,13 +1,16 @@
 import pino from "pino";
 
+import { env } from "../config/env";
 import { maskCpf } from "./mask";
 
 const redactPaths = ["req.headers.authorization", "req.body.password", "req.body.buyerCpf"];
 
+const isProduction = env.NODE_ENV === "production";
+
 export const logger = pino({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  level: isProduction ? "info" : "debug",
   transport:
-    process.env.NODE_ENV === "production"
+    isProduction
       ? undefined
       : {
           target: "pino-pretty",

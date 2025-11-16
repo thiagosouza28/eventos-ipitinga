@@ -9,7 +9,7 @@ const isTestRuntime =
 
 const testDefaults = isTestRuntime
   ? {
-      APP_URL: "http://localhost:5173",
+      APP_URL: "http://localhost:3001",
       API_URL: "http://localhost:3001/api",
       DATABASE_URL: "file:./dev.db",
       JWT_SECRET: "test-secret-should-be-32-chars-long",
