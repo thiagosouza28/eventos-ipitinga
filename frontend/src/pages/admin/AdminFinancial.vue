@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -8,102 +8,116 @@
       @update:modelValue="errorDialog.open = $event"
     />
 
-    <BaseCard>
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-            Dashboard Financeiro
-          </h1>
-          <p class="text-sm text-neutral-500">
-            Visualize receitas, despesas e saldo do caixa por evento
+    <BaseCard
+      class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+    >
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
+            Controle financeiro
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Dashboard Financeiro</h1>
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+            Visualize receitas, despesas e o saldo consolidado dos eventos.
           </p>
         </div>
         <RouterLink
           to="/admin/dashboard"
-          class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
         >
-          â† Dashboard
+          Voltar ao painel
         </RouterLink>
       </div>
     </BaseCard>
-
     <div v-if="loading" class="flex justify-center py-8">
       <LoadingSpinner />
     </div>
 
     <!-- Resumo Geral -->
-    <BaseCard v-if="!loading && generalSummary">
-      <h2 class="mb-4 text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-        Resumo Geral
-      </h2>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Receita Bruta</p>
-          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(generalSummary.totals.grossCents) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Taxas MP</p>
-          <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency((generalSummary.totals.pix?.feesCents || (generalSummary.totals.grossCents - generalSummary.totals.netCents) || generalSummary.totals.feesCents) || 0) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Receita LÃ­quida</p>
-          <p class="mt-1 text-2xl font-bold text-primary-600 dark:text-primary-300">
-            {{ formatCurrency(generalSummary.totals.netCents) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Despesas</p>
-          <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency(generalSummary.totals.expensesCents) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Recebido em Dinheiro</p>
-          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(generalSummary.totals.cashCents || 0) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">PIX LÃ­quido</p>
-          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Taxas PIX</p>
-          <p class="mt-1 text-2xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency(generalSummary.totals.pix?.feesCents || 0) }}
-          </p>
-        </div>
-        <div class="rounded-lg border-2 border-primary-500 bg-primary-50 p-4 dark:bg-primary-900/20">
-          <p class="text-xs font-medium uppercase text-primary-600 dark:text-primary-400">Saldo do Caixa</p>
-          <p class="mt-1 text-2xl font-bold text-primary-600 dark:text-primary-400">
-            {{ formatCurrency(generalSummary.totals.cashBalanceCents) }}
-          </p>
-        </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (LÃ­quido)</p>
-          <p class="mt-1 text-2xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
-          </p>
-        </div>
-      </div>
-    </BaseCard>
+    <BaseCard
+  v-if="!loading && generalSummary"
+  class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+>
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">Resumo geral</p>
+      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">Vis�o consolidada</h2>
+    </div>
+    <p class="text-xs text-neutral-500 dark:text-neutral-400">
+      Atualizado automaticamente conforme as movimenta��es dos eventos.
+    </p>
+  </div>
+  <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita bruta</p>
+      <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
+        {{ formatCurrency(generalSummary.totals.grossCents) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas MP</p>
+      <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
+        -{{ formatCurrency((generalSummary.totals.pix?.feesCents || (generalSummary.totals.grossCents - generalSummary.totals.netCents) || generalSummary.totals.feesCents) || 0) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita l�quida</p>
+      <p class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300">
+        {{ formatCurrency(generalSummary.totals.netCents) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Despesas</p>
+      <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
+        -{{ formatCurrency(generalSummary.totals.expensesCents) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Recebido em dinheiro</p>
+      <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
+        {{ formatCurrency(generalSummary.totals.cashCents || 0) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">PIX l�quido</p>
+      <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
+        {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas PIX</p>
+      <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
+        -{{ formatCurrency(generalSummary.totals.pix?.feesCents || 0) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-primary-400/60 bg-gradient-to-br from-primary-600/10 to-primary-400/10 p-4 shadow-lg shadow-primary-300/30 dark:border-primary-500/30 dark:from-primary-900/30 dark:to-primary-700/20">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-300">Saldo do caixa</p>
+      <p class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300">
+        {{ formatCurrency(generalSummary.totals.cashBalanceCents) }}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Total geral (l�quido)</p>
+      <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
+        {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
+      </p>
+    </div>
+  </div>
+</BaseCard>
 
-    <!-- Filtro por Evento -->
-    <BaseCard v-if="!loading">
+        <!-- Filtro por Evento -->
+    <BaseCard
+      v-if="!loading"
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
       <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div class="flex-1">
-          <label class="block text-xs font-semibold uppercase text-neutral-500">
-            Filtrar por Evento
+          <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">
+            Filtrar por evento
           </label>
           <select
             v-model="selectedEventId"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             @change="loadEventSummary"
           >
             <option value="">Todos os eventos</option>
@@ -115,31 +129,37 @@
         <button
           v-if="selectedEventId"
           type="button"
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+          class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5"
           @click="showExpenseForm = true"
         >
-          + Adicionar Despesa
+          + Adicionar despesa
         </button>
       </div>
     </BaseCard>
 
     <!-- Resumo do Evento Selecionado -->
-    <BaseCard v-if="!loading && eventSummary && selectedEventId">
-      <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-          {{ eventSummary.event.title }}
-        </h2>
-        <div class="flex flex-wrap gap-2">
+        <BaseCard
+      v-if="!loading && eventSummary && selectedEventId"
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">Evento selecionado</p>
+          <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">
+            {{ eventSummary.event.title }}
+          </h2>
+        </div>
+        <div class="flex flex-wrap gap-3">
           <button
             type="button"
-            class="text-sm text-primary-600 hover:underline"
+            class="text-sm font-semibold text-primary-600 transition hover:-translate-y-0.5 dark:text-primary-300"
             @click="loadEventDetails"
           >
             Ver detalhes
           </button>
           <button
             type="button"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
             :disabled="downloadingReport"
             @click="downloadEventReport"
           >
@@ -147,79 +167,67 @@
           </button>
         </div>
       </div>
-      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Receita Bruta</p>
-          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(eventSummary.totals.grossCents) }}
-          </p>
+      <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Receita bruta</p>
+          <strong>{{ formatCurrency(eventSummary.totals.grossCents) }}</strong>
         </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Taxas MP</p>
-          <p class="mt-1 text-xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency((eventSummary.totals.pix?.feesCents || (eventSummary.totals.grossCents - eventSummary.totals.netCents) || eventSummary.totals.feesCents) || 0) }}
-          </p>
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Taxas MP</p>
+          <strong class="text-red-600 dark:text-red-400">-{{ formatCurrency((eventSummary.totals.pix?.feesCents || (eventSummary.totals.grossCents - eventSummary.totals.netCents) || eventSummary.totals.feesCents) || 0) }}</strong>
         </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Receita LÃ­quida</p>
-          <p class="mt-1 text-xl font-bold text-primary-600 dark:text-primary-300">
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Receita l�quida</p>
+          <strong class="text-primary-600 dark:text-primary-300">
             {{ formatCurrency(eventSummary.totals.netCents) }}
-          </p>
+          </strong>
         </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Despesas</p>
-          <p class="mt-1 text-xl font-bold text-red-600 dark:text-red-400">
-            -{{ formatCurrency(eventSummary.totals.expensesCents) }}
-          </p>
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Despesas</p>
+          <strong class="text-red-600 dark:text-red-400">-{{ formatCurrency(eventSummary.totals.expensesCents) }}</strong>
         </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Recebido em Dinheiro</p>
-          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(eventSummary.totals.cashCents || 0) }}
-          </p>
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Recebido em dinheiro</p>
+          <strong>{{ formatCurrency(eventSummary.totals.cashCents || 0) }}</strong>
         </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">PIX LÃ­quido</p>
-          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(eventSummary.totals.pix?.netCents || 0) }}
-          </p>
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>PIX l�quido</p>
+          <strong>{{ formatCurrency(eventSummary.totals.pix?.netCents || 0) }}</strong>
         </div>
-        <div class="rounded-lg border-2 border-primary-500 bg-primary-50 p-4 dark:bg-primary-900/20">
-          <p class="text-xs font-medium uppercase text-primary-600 dark:text-primary-400">Saldo</p>
-          <p class="mt-1 text-xl font-bold text-primary-600 dark:text-primary-400">
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Saldo</p>
+          <strong class="text-primary-600 dark:text-primary-300">
             {{ formatCurrency(eventSummary.totals.cashBalanceCents) }}
-          </p>
+          </strong>
         </div>
-        <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60">
-          <p class="text-xs font-medium uppercase text-neutral-500">Total Geral (LÃ­quido)</p>
-          <p class="mt-1 text-xl font-bold text-neutral-800 dark:text-neutral-50">
-            {{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}
-          </p>
+        <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
+          <p>Total geral (l�quido)</p>
+          <strong>{{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}</strong>
         </div>
       </div>
       <div class="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-        <p>{{ eventSummary.paidRegistrationsCount }} inscriÃ§Ãµes pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
+        <p>{{ eventSummary.paidRegistrationsCount }} inscri��es pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
       </div>
     </BaseCard>
 
     <!-- Lista de Despesas -->
-    <BaseCard v-if="!loading && selectedEventId && expenses.length > 0">
+    <BaseCard v-if="!loading && selectedEventId && expenses.length > 0" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
       <h2 class="mb-4 text-lg font-semibold text-neutral-700 dark:text-neutral-100">
         Despesas do Evento
       </h2>
       <div class="overflow-x-auto">
-        <table class="w-full table-auto text-left text-sm">
-          <thead class="text-xs uppercase tracking-wide text-neutral-500">
+        <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
+          <thead class="bg-white/60 text-[11px] uppercase tracking-[0.3em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
               <th class="pb-2">Data</th>
-              <th class="pb-2">DescriÃ§Ã£o</th>
-              <th class="pb-2">ResponsÃ¡vel</th>
+              <th class="pb-2">Descrição</th>
+              <th class="pb-2">Responsável</th>
               <th class="pb-2">Itens</th>
               <th class="pb-2 text-right">Valor</th>
-              <th class="pb-2 text-right">AÃ§Ãµes</th>
+              <th class="pb-2 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+          <tbody class="divide-y divide-neutral-100 dark:divide-white/5">
             <tr v-for="expense in expenses" :key="expense.id">
               <td class="py-2 text-neutral-700 dark:text-neutral-100">
                 {{ formatDate(expense.date) }}
@@ -231,7 +239,7 @@
                 {{ expense.madeBy }}
               </td>
               <td class="py-2 text-sm text-neutral-600 dark:text-neutral-400">
-                {{ expense.items || "â€”" }}
+                {{ expense.items || "—" }}
               </td>
               <td class="py-2 text-right font-medium text-red-600 dark:text-red-400">
                 -{{ formatCurrency(expense.amountCents) }}
@@ -266,8 +274,8 @@
       </div>
     </BaseCard>
 
-    <!-- FormulÃ¡rio de Despesa -->
-    <BaseCard v-if="!loading && showExpenseForm && selectedEventId">
+    <!-- Formulário de Despesa -->
+    <BaseCard v-if="!loading && showExpenseForm && selectedEventId" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
       <h2 class="mb-4 text-lg font-semibold text-neutral-700 dark:text-neutral-100">
         {{ editingExpense ? "Editar Despesa" : "Nova Despesa" }}
       </h2>
@@ -275,13 +283,13 @@
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              DescriÃ§Ã£o *
+              Descrição *
             </label>
             <input
               v-model="expenseForm.description"
               type="text"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              class="mt-1 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
           <div>
@@ -292,13 +300,13 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              ResponsÃ¡vel *
+              Responsável *
             </label>
             <input
               v-model="expenseForm.madeBy"
               type="text"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              class="mt-1 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
           <div>
@@ -311,19 +319,19 @@
               step="0.01"
               min="0"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              class="mt-1 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
               @input="expenseForm.amountCents = Math.round(parseFloat(($event.target as HTMLInputElement).value || '0') * 100)"
             />
           </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Itens (lista de produtos/serviÃ§os)
+            Itens (lista de produtos/serviços)
           </label>
           <textarea
             v-model="expenseForm.items"
             rows="3"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-1 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           />
         </div>
         <div>
@@ -333,7 +341,7 @@
           <input
             type="file"
             accept="image/*,.pdf"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-1 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             @change="handleReceiptUpload"
           />
           <p v-if="expenseForm.receiptPreview" class="mt-2 text-xs text-neutral-500">
@@ -344,13 +352,13 @@
           <button
             type="submit"
             :disabled="submitting"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-50"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:opacity-60"
           >
             {{ submitting ? "Salvando..." : editingExpense ? "Atualizar" : "Salvar" }}
           </button>
           <button
             type="button"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
             @click="cancelExpenseForm"
           >
             Cancelar
@@ -371,10 +379,10 @@
       @cancel="confirmDelete.open = false"
     />
 
-    <!-- Mensagem de erro se nÃ£o conseguir carregar -->
+    <!-- Mensagem de erro se não conseguir carregar -->
     <BaseCard v-if="!loading && !generalSummary && !errorDialog.open">
       <p class="text-center text-neutral-500">
-        NÃ£o foi possÃ­vel carregar os dados do dashboard financeiro. Verifique sua conexÃ£o e tente novamente.
+        Não foi possível carregar os dados do dashboard financeiro. Verifique sua conexão e tente novamente.
       </p>
     </BaseCard>
   </div>
@@ -461,7 +469,7 @@ const loadEventSummary = async () => {
 };
 
 const loadEventDetails = () => {
-  // TODO: Implementar pÃ¡gina de detalhes do evento
+  // TODO: Implementar página de detalhes do evento
   console.log("Carregar detalhes do evento", selectedEventId.value);
 };
 
@@ -481,7 +489,7 @@ const downloadEventReport = async () => {
     link.remove();
     URL.revokeObjectURL(url);
   } catch (error: any) {
-    showError("Erro ao gerar relatório financeiro", error);
+    showError("Erro ao gerar relat�rio financeiro", error);
   } finally {
     downloadingReport.value = false;
   }
@@ -605,6 +613,18 @@ onMounted(async () => {
   }
 });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

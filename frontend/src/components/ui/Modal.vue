@@ -2,14 +2,14 @@
   <teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 sm:px-6"
       tabindex="-1"
       @keydown.esc="close"
       @click.self="handleOverlay"
       ref="dialogRef"
     >
       <div
-        class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
+        class="w-full max-w-[92vw] xl:max-w-[1800px] max-h-[96vh] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-6 shadow-lg dark:border-neutral-700 dark:bg-neutral-900 sm:p-8"
       >
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">

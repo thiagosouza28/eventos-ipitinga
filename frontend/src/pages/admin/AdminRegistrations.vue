@@ -8,146 +8,222 @@
       @update:modelValue="errorDialog.open = $event"
     />
 
-    <BaseCard>
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-            Inscrições
-          </h1>
-          <p class="text-sm text-neutral-500">
+    <BaseCard
+      class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+    >
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
+            Gestão de inscritos
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Inscrições</h1>
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
             Filtre e gerencie inscrições por evento, distrito, igreja ou status.
           </p>
         </div>
-        <RouterLink
-          to="/admin/dashboard"
-          class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
-        >
-          Dashboard
-        </RouterLink>
-      </div>
-    </BaseCard>
-
-    <BaseCard>
-      <form @submit.prevent="applyFilters" class="grid gap-4 md:grid-cols-6">
-        <div>
-          <label class="block text-xs font-semibold uppercase text-neutral-500">Evento</label>
-          <select v-model="filters.eventId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <option value="">Todos</option>
-            <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase text-neutral-500">Distrito</label>
-          <select v-model="filters.districtId" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <option value="">Todos</option>
-            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase text-neutral-500">Igreja</label>
-          <select
-            v-model="filters.churchId"
-            :disabled="!filters.districtId"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <RouterLink
+            to="/admin/dashboard"
+            class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
           >
-            <option value="">{{ filters.districtId ? 'Todas' : 'Selecione o distrito' }}</option>
-            <option v-for="church in churchesByDistrict(filters.districtId)" :key="church.id" :value="church.id">{{ church.name }}</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase text-neutral-500">Status</label>
-          <select v-model="filters.status" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
-            <option value="">Todos</option>
-            <option v-for="option in registrationStatusOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-          </select>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-xs font-semibold uppercase text-neutral-500">Busca (nome ou CPF)</label>
-          <input
-            v-model="filters.search"
-            type="text"
-            placeholder="Digite nome ou CPF"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-            autocomplete="off"
-          />
-        </div>
-        <div class="md:col-span-6 xl:col-span-51 flex items-end justify-end gap-2 flex-nowrap overflow-x-auto">
-          <button type="button" class="shrink-0 rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="resetFilters">
-            Limpar
-          </button>
-          <button type="submit" class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" :disabled="isApplying">
-            {{ isApplying ? 'Aplicando...' : 'Aplicar' }}
-          </button>
+            Dashboard
+          </RouterLink>
           <button
             type="button"
-            class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
             @click="openAddDialog"
           >
             + Nova inscrição
           </button>
         </div>
+      </div>
+    </BaseCard>
+
+    <BaseCard
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <form @submit.prevent="applyFilters" class="grid gap-5 md:grid-cols-12">
+        <div class="space-y-2 md:col-span-3">
+          <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Evento</label>
+          <select
+            v-model="filters.eventId"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+          >
+            <option value="">Todos</option>
+            <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
+          </select>
+        </div>
+        <div class="space-y-2 md:col-span-3">
+          <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Distrito</label>
+          <select
+            v-model="filters.districtId"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+          >
+            <option value="">Todos</option>
+            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
+          </select>
+        </div>
+        <div class="space-y-2 md:col-span-3">
+          <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Igreja</label>
+          <select
+            v-model="filters.churchId"
+            :disabled="!filters.districtId"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+          >
+            <option value="">{{ filters.districtId ? "Todas" : "Selecione o distrito" }}</option>
+            <option v-for="church in churchesByDistrict(filters.districtId)" :key="church.id" :value="church.id">
+              {{ church.name }}
+            </option>
+          </select>
+        </div>
+        <div class="space-y-2 md:col-span-3">
+          <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Status</label>
+          <select
+            v-model="filters.status"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+          >
+            <option value="">Todos</option>
+            <option v-for="option in registrationStatusOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+        <div class="space-y-2 md:col-span-6">
+          <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+            Busca (nome ou CPF)
+          </label>
+          <input
+            v-model="filters.search"
+            type="text"
+            placeholder="Digite nome ou CPF"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            autocomplete="off"
+          />
+        </div>
+        <div class="md:col-span-12 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+            @click="resetFilters"
+          >
+            Limpar
+          </button>
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            :disabled="isApplying"
+          >
+            <span
+              v-if="isApplying"
+              class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
+            />
+            <span>{{ isApplying ? "Aplicando..." : "Aplicar filtro" }}</span>
+          </button>
+        </div>
       </form>
-    
     </BaseCard>
 
     <!-- Relatório em PDF -->
-    <BaseCard>
-      <div class="flex flex-col gap-3 text-sm md:flex-row md:items-end md:justify-between">
-        <div class="flex flex-col gap-3 md:flex-row md:items-end md:gap-4">
-          <div class="flex flex-col gap-2">
-            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Tipo de relatório</label>
-            <select v-model="reportType" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+    <BaseCard
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div class="space-y-5">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+              Tipo de relatório
+            </label>
+            <select
+              v-model="reportType"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            >
               <option value="event">Por evento</option>
               <option value="church">Por igreja</option>
             </select>
           </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Modelo</label>
-            <select v-model="reportTemplate" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+              Modelo
+            </label>
+            <select
+              v-model="reportTemplate"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            >
               <option value="standard">Gerencial (detalhado)</option>
               <option value="event">Para evento (assinatura)</option>
             </select>
           </div>
-          <div v-if="reportTemplate === 'event'" class="flex flex-col gap-2">
-            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Densidade</label>
-            <select v-model="reportLayout" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+          <div v-if="reportTemplate === 'event'" class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+              Densidade
+            </label>
+            <select
+              v-model="reportLayout"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            >
               <option value="single">1 por página</option>
               <option value="two">2 por página</option>
+              <option value="four">4 por página</option>
             </select>
           </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Modelo</label>
-            <select v-model="reportTemplate" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
-              <option value="standard">Gerencial (detalhado)</option>
-              <option value="event">Para evento (assinatura)</option>
-            </select>
-          </div>
-          <div v-if="reportType === 'event'" class="flex flex-col gap-2">
-            <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Evento</label>
-            <select v-model="reportFilters.eventId" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+          <div v-if="reportType === 'event'" class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+              Evento
+            </label>
+            <select
+              v-model="reportFilters.eventId"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            >
               <option disabled value="">Selecione</option>
               <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
             </select>
           </div>
           <template v-else>
-            <div class="flex flex-col gap-2">
-              <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Distrito</label>
-              <select v-model="reportFilters.districtId" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 md:w-auto">
+            <div class="space-y-2">
+              <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+                Distrito
+              </label>
+              <select
+                v-model="reportFilters.districtId"
+                class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+              >
                 <option disabled value="">Selecione</option>
-                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
+                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                  {{ district.name }}
+                </option>
               </select>
             </div>
-            <div class="flex flex-col gap-2">
-              <label class="text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">Igreja</label>
-              <select v-model="reportFilters.churchId" :disabled="!reportFilters.districtId" class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60 md:w-auto">
-                <option :value="''">{{ reportFilters.districtId ? 'Selecione' : 'Selecione o distrito' }}</option>
-                <option v-for="church in churchesByDistrict(reportFilters.districtId)" :key="church.id" :value="church.id">{{ church.name }}</option>
+            <div class="space-y-2">
+              <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
+                Igreja
+              </label>
+              <select
+                v-model="reportFilters.churchId"
+                :disabled="!reportFilters.districtId"
+                class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+              >
+                <option :value="''">{{ reportFilters.districtId ? "Selecione" : "Selecione o distrito" }}</option>
+                <option
+                  v-for="church in churchesByDistrict(reportFilters.districtId)"
+                  :key="church.id"
+                  :value="church.id"
+                >
+                  {{ church.name }}
+                </option>
               </select>
             </div>
           </template>
         </div>
-        <div class="flex items-center gap-2">
-          <button @click="downloadReportPdf" :disabled="!canDownloadReport" type="button" class="rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-white">
+        <div class="flex flex-col justify-end gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">
+            Gere rapidamente relatórios gerenciais ou listas de assinatura para os eventos.
+          </p>
+          <button
+            @click="downloadReportPdf"
+            :disabled="!canDownloadReport"
+            type="button"
+            class="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+          >
             Baixar PDF
           </button>
         </div>
@@ -155,68 +231,123 @@
     </BaseCard>
 
     <!-- Lista de inscrições -->
-    <BaseCard>
-      <div v-if="displayedRegistrations.length === 0" class="p-4 text-sm text-neutral-500">
+    <BaseCard
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div v-if="displayedRegistrations.length === 0" class="p-6 text-sm text-neutral-500 dark:text-neutral-400">
         Nenhuma inscrição encontrada.
       </div>
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full table-auto text-sm">
-<thead class="bg-neutral-50 text-left text-xs font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+      <div
+        v-else
+        class="overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
+      >
+        <table class="min-w-full table-auto text-sm text-neutral-700 dark:text-neutral-200">
+          <thead
+            class="bg-white/60 text-left text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400"
+          >
             <tr>
-              <th class="px-4 py-3 w-20">Foto</th>
-              <th class="px-4 py-3">Participante</th>
-              <th class="px-4 py-3">Evento</th>
-              <th class="px-4 py-3">Distrito / Igreja</th>
-              <th class="px-4 py-3">Nascimento</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3 text-right">Ações</th>
+              <th class="w-20 px-5 py-3">Foto</th>
+              <th class="px-5 py-3">Participante</th>
+              <th class="px-5 py-3">Evento</th>
+              <th class="px-5 py-3">Distrito / Igreja</th>
+              <th class="px-5 py-3">Nascimento</th>
+              <th class="px-5 py-3">Status</th>
+              <th class="px-5 py-3 text-right">Ações</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="registration in displayedRegistrations" :key="registration.id" class="border-t border-neutral-200 dark:border-neutral-800">
-              <td class="px-4 py-3 align-top">
+          <tbody class="divide-y divide-neutral-100 dark:divide-white/5">
+            <tr
+              v-for="registration in displayedRegistrations"
+              :key="registration.id"
+              class="transition hover:bg-white/80 dark:hover:bg-white/5"
+            >
+              <td class="px-5 py-4 align-top">
                 <img
                   :src="resolvePhotoUrl(registration.photoUrl)"
-                  class="h-12 w-12 rounded-full border border-neutral-200 object-cover dark:border-neutral-700"
+                  class="h-12 w-12 rounded-full border border-white/70 object-cover dark:border-white/10"
                   :alt="`Foto de ${registration.fullName}`"
                 />
               </td>
-              <td class="px-4 py-3 align-top">
-                <div class="font-medium text-neutral-800 dark:text-neutral-100">{{ registration.fullName }}</div>
-                <div class="text-xs text-neutral-500">CPF: {{ formatCPF(registration.cpf) }}</div>
-              </td>
-              <td class="px-4 py-3 align-top">
-                <div>{{ findEventTitle(registration.eventId) }}</div>
-                <div class="text-xs text-neutral-500">{{ formatCurrency((registration.priceCents ?? 0)) }}</div>
-              </td>
-              <td class="px-4 py-3 align-top">
-                <div>{{ findDistrictName(registration.districtId) }}</div>
-                <div class="text-xs text-neutral-500">{{ findChurchName(registration.churchId) }}</div>
-              </td>
-              <td class="px-4 py-3 align-top">
-                <div>{{ formatBirthDate(registration.birthDate) }}</div>
-                <div v-if="registration.ageYears" class="text-xs text-neutral-500">{{ registration.ageYears }} anos</div>
-              </td>
-              <td class="px-4 py-3 align-top">
-                <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold" :class="statusBadgeClass(registration.status)">{{ translateStatus(registration.status) }}</span>
-                <div class="mt-1 text-xs text-neutral-500">
-                  <span v-if="registration.paymentMethod">Forma: {{ paymentMethodShort(registration.paymentMethod) }}</span>
+              <td class="px-5 py-4 align-top">
+                <div class="font-semibold text-neutral-900 dark:text-white">{{ registration.fullName }}</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">CPF: {{ formatCPF(registration.cpf) }}</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  Inscrição: {{ registrationCode(registration) }}
                 </div>
-                <div v-if="registration.paidAt" class="mt-1 text-xs text-neutral-500">Pago em {{ new Date(registration.paidAt).toLocaleString('pt-BR') }}</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  Criado em: {{ formatDateTime(registration.createdAt) }}
+                </div>
               </td>
-              <td class="px-4 py-3 align-top text-right">
-                <div class="flex flex-wrap justify-end gap-3 text-xs font-semibold uppercase tracking-wide">
+              <td class="px-5 py-4 align-top">
+                <div class="font-medium text-neutral-800 dark:text-neutral-200">{{ findEventTitle(registration.eventId) }}</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  {{ formatCurrency(registration.priceCents ?? findEventPriceCents(registration.eventId)) }}
+                </div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  Pagamento: {{ paymentMethodLabel(registration.paymentMethod) }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-top">
+                <div class="text-sm text-neutral-700 dark:text-neutral-300">
+                  {{ findDistrictName(registration.districtId) }}
+                </div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  {{ findChurchName(registration.churchId) }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-top">
+                <div class="text-sm text-neutral-700 dark:text-neutral-300">{{ formatBirthDate(registration.birthDate) }}</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  {{ calculateAge(registration.birthDate) }} anos
+                </div>
+              </td>
+              <td class="px-5 py-4 align-top">
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
+                  :class="statusBadgeClass(registration.status)"
+                >
+                  {{ translateStatus(registration.status) }}
+                </span>
+                <div class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  <span v-if="registration.paymentMethod">
+                    Forma: {{ paymentMethodShort(registration.paymentMethod) }}
+                  </span>
+                </div>
+                <div v-if="registration.paidAt" class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  Pago em {{ new Date(registration.paidAt).toLocaleString("pt-BR") }}
+                </div>
+              </td>
+              <td class="px-5 py-4 align-top text-right">
+                <div class="inline-flex flex-wrap justify-end gap-2 text-xs font-semibold uppercase tracking-wide">
                   <button class="text-primary-600 hover:text-primary-500" @click="openEdit(registration)">Editar</button>
-                  <button v-if="isPaymentLinkVisible(registration)" class="text-primary-600 hover:text-primary-500" @click="copyPaymentLink(registration)">Link pagamento</button>
-                  <button v-if="registration.paymentMethod === 'CASH' && registration.status === 'PENDING_PAYMENT' && registration.orderId" class="text-primary-600 hover:text-primary-500" @click="openConfirm('confirm-cash', registration)">Confirmar pagamento</button>
-                  <button v-if="canCancelRegistration(registration.status) && registration.status === 'PENDING_PAYMENT'" class="text-red-600 hover:text-red-500" @click="openConfirm('cancel', registration)">Cancelar</button>
-                    <button
-                      v-if="registration.status === 'PAID'"
-                      class="text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200"
-                      @click="openConfirm('refund', registration)"
-                    >
-                      Estornar
-                    </button>
+                  <button
+                    v-if="isPaymentLinkVisible(registration)"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="copyPaymentLink(registration)"
+                  >
+                    Link pagamento
+                  </button>
+                  <button
+                    v-if="registration.paymentMethod === 'CASH' && registration.status === 'PENDING_PAYMENT' && registration.orderId"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openConfirm('confirm-cash', registration)"
+                  >
+                    Confirmar pagamento
+                  </button>
+                  <button
+                    v-if="canCancelRegistration(registration.status) && registration.status === 'PENDING_PAYMENT'"
+                    class="text-red-600 hover:text-red-500"
+                    @click="openConfirm('cancel', registration)"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    v-if="registration.status === 'PAID'"
+                    class="text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200"
+                    @click="openConfirm('refund', registration)"
+                  >
+                    Estornar
+                  </button>
                   <button
                     v-if="registration.status === 'CANCELED'"
                     class="text-primary-600 hover:text-primary-500"
@@ -224,7 +355,13 @@
                   >
                     Reativar
                   </button>
-                  <button v-if="canDeleteRegistration(registration.status)" class="text-red-600 hover:text-red-500" @click="openConfirm('delete', registration)">Excluir</button>
+                  <button
+                    v-if="canDeleteRegistration(registration.status)"
+                    class="text-red-600 hover:text-red-500"
+                    @click="openConfirm('delete', registration)"
+                  >
+                    Excluir
+                  </button>
                 </div>
               </td>
             </tr>
@@ -618,7 +755,7 @@ watch(() => filters.status, () => { if (filtersReady.value) scheduleApply() })
 // Relatório PDF
 const reportType = ref<'event' | 'church'>('event')
 const reportTemplate = ref<'standard' | 'event'>('standard')
-const reportLayout = ref<'single' | 'two'>('single')
+const reportLayout = ref<'single' | 'two' | 'four'>('single')
 const reportFilters = reactive({ eventId: '', districtId: '', churchId: '' })
 const canDownloadReport = computed(() => {
   if (reportType.value === 'event') return !!reportFilters.eventId
@@ -680,12 +817,32 @@ const findDistrictName = (id: string) => catalog.districts.find((d) => d.id === 
 const findChurchName = (id: string) => catalog.churches.find((c) => c.id === id)?.name ?? 'Nao informado'
 
 const brDateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
-const formatBirthDate = (value: string | Date | null | undefined) => {
+function formatBirthDate(value: string | Date | null | undefined) {
   if (!value) return 'Nao informado'
   const src = value instanceof Date ? value : new Date(value)
   if (Number.isNaN(src.getTime())) return 'Nao informado'
   const d = new Date(src.getUTCFullYear(), src.getUTCMonth(), src.getUTCDate())
   return brDateFormatter.format(d)
+}
+
+function calculateAge(value?: string | Date | null) {
+  if (!value) return '--'
+  const source = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(source.getTime())) return '--'
+  const today = new Date()
+  let age = today.getFullYear() - source.getFullYear()
+  const monthDiff = today.getMonth() - source.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < source.getDate())) {
+    age -= 1
+  }
+  return String(age)
+}
+
+function formatDateTime(value?: string | Date | null) {
+  if (!value) return '-'
+  const source = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(source.getTime())) return '-'
+  return source.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
 const translateStatus = (s: string) => statusLabels[s] ?? s
@@ -719,6 +876,16 @@ const displayedRegistrations = computed(() => {
     return nameMatch || cpfMatch
   })
 })
+
+function registrationCode(registration: Registration | null | undefined) {
+  if (!registration) return ''
+  if (registration.orderId) return registration.orderId
+  if (registration.id) {
+    const suffix = registration.id.slice(-8)
+    return suffix.toUpperCase()
+  }
+  return ''
+}
 
 // Nova inscrição (PIX, Dinheiro ou Gratuita)
 const addDialog = reactive({ open: false, paymentMethod: 'PIX_MP' as 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR' })

@@ -1,20 +1,30 @@
 <template>
-  <div class="flex flex-1 flex-col items-center">
-    <div class="w-full max-w-3xl space-y-6 px-4 py-8 sm:px-0 lg:py-12">
-      <BaseCard class="w-full">
+  <div class="flex flex-1 flex-col px-4 py-10 lg:py-16">
+    <div class="mx-auto w-full max-w-4xl space-y-6">
+      <BaseCard
+        class="border border-white/30 bg-gradient-to-br from-white/85 via-primary-50/40 to-primary-100/40 shadow-xl dark:border-white/10 dark:from-neutral-900/70 dark:via-neutral-900/40 dark:to-primary-950/30"
+      >
+        <div class="flex flex-col gap-3 text-center sm:text-left">
+          <p class="text-xs uppercase tracking-[0.4em] text-primary-600 dark:text-primary-300">
+            Consulta rápida
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">
+            Encontre comprovantes emitidos
+          </h1>
+          <p class="text-sm text-neutral-600 dark:text-neutral-300">
+            Informe CPF e data de nascimento do participante para acessar os recibos e baixar seus PDFs em segundos.
+          </p>
+        </div>
+      </BaseCard>
+
+      <BaseCard
+        class="border border-white/40 bg-white/90 shadow-2xl shadow-primary-900/5 backdrop-blur dark:border-white/10 dark:bg-white/5"
+      >
         <form @submit.prevent="search" class="space-y-6">
-          <div class="text-center sm:text-left">
-            <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-              Consulta de comprovantes
-            </h1>
-            <p class="mt-1 text-sm text-neutral-500">
-              Informe CPF e data de nascimento do participante para acessar os recibos.
-            </p>
-          </div>
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                CPF
+          <div class="grid gap-5 md:grid-cols-2">
+            <div class="space-y-2">
+              <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-300">
+                CPF do participante
               </label>
               <input
                 v-model="cpf"
@@ -23,24 +33,31 @@
                 inputmode="numeric"
                 autocomplete="off"
                 required
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                class="w-full rounded-2xl border border-neutral-200/70 bg-white/90 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900/60 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
                 @input="onCpfInput"
               />
             </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            <div class="space-y-2">
+              <label class="block text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-300">
                 Data de nascimento
               </label>
-              <DateField v-model="birthDate" required class="mt-1" />
+              <DateField
+                v-model="birthDate"
+                required
+                class="w-full rounded-2xl border border-neutral-200/70 bg-white/90 px-4 py-3 text-sm text-neutral-900 shadow-inner focus:border-primary-400 focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900/60 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+              />
             </div>
           </div>
-          <div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-end">
-            <span v-if="hasSearched && !loading && showResultSummary" class="text-xs text-neutral-500">
+          <div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+            <span
+              v-if="hasSearched && !loading && showResultSummary"
+              class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400"
+            >
               {{ results.length }} comprovante(s) listado(s)
             </span>
             <button
               type="submit"
-              class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              :class="[primaryButtonClass, 'w-full sm:w-auto px-6 py-2']"
               :disabled="loading"
             >
               {{ loading ? "Buscando..." : "Buscar comprovantes" }}
@@ -49,10 +66,13 @@
         </form>
       </BaseCard>
 
-      <BaseCard v-if="showFeedbackCard" class="w-full">
+      <BaseCard
+        v-if="showFeedbackCard"
+        class="border border-white/20 bg-white/80 shadow-xl dark:border-white/10 dark:bg-neutral-900/60"
+      >
         <div
           v-if="errorMessage"
-          class="rounded-lg border border-red-400 bg-red-50 p-4 text-sm text-red-600 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
+          class="rounded-2xl border border-red-200/60 bg-red-50/80 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-100"
           role="alert"
         >
           {{ errorMessage }}
@@ -65,7 +85,7 @@
           <div
             v-for="receipt in results"
             :key="receipt.registrationId"
-            class="flex flex-col gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm transition hover:border-primary-200 hover:bg-primary-50/30 dark:border-neutral-700 dark:bg-neutral-900/60 dark:hover:border-primary-400/60 dark:hover:bg-primary-500/10 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-3 rounded-2xl border border-white/30 bg-white/80 px-4 py-3 text-sm transition hover:border-primary-200 hover:bg-primary-50/60 dark:border-white/5 dark:bg-neutral-900/60 dark:hover:border-primary-400/60 dark:hover:bg-primary-500/10 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
               <p class="font-medium text-neutral-700 dark:text-neutral-100">
@@ -80,7 +100,7 @@
               target="_blank"
               rel="noopener"
               :download="`comprovante-${receipt.registrationId}.pdf`"
-              class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500"
+              :class="[primaryButtonClass, 'px-5 py-2 text-xs uppercase tracking-[0.3em]']"
             >
               Baixar PDF
             </a>
@@ -120,6 +140,9 @@ const statusLabels: Record<string, string> = {
   CHECKED_IN: "Check-in realizado",
   REFUNDED: "Estornado"
 };
+
+const primaryButtonClass =
+  "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
 
 const resetFeedback = () => {
   errorMessage.value = "";

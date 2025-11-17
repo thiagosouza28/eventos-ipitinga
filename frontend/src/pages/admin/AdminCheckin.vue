@@ -1,98 +1,104 @@
 <template>
   <div class="space-y-6">
-    <BaseCard>
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
+    <BaseCard
+      class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+    >
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
             Check-in de participantes
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">
+            {{ currentEventTitle }}
           </h1>
-          <p class="text-sm text-neutral-500">
-            Use o leitor de QR Code ou busque por CPF/data de nascimento.
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+            Use o leitor de QR Code ou busque manualmente para confirmar presença.
+          </p>
+          <p v-if="currentEventDetails" class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+            {{ currentEventDetails }}
           </p>
         </div>
         <RouterLink
           to="/admin/dashboard"
-          class="inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+          class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
         >
-          <- Dashboard
+          Voltar ao painel
         </RouterLink>
       </div>
-      <div v-if="summaryCards.length" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div v-if="summaryCards.length" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div
           v-for="card in summaryCards"
           :key="card.key"
-          class="rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/30"
+          class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5"
         >
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500">{{ card.title }}</p>
-              <p class="text-2xl font-semibold text-neutral-900 dark:text-neutral-50">{{ card.value }}</p>
-            </div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">
+              {{ card.title }}
+            </p>
             <span
-              class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white"
               :class="card.accent"
             >
               {{ card.icon }}
             </span>
           </div>
-          <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
+          <p class="mt-2 text-2xl font-bold" :class="card.emphasisClass">
+            {{ card.value }}
+          </p>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
         </div>
       </div>
     </BaseCard>
 
-    <BaseCard>
-      <div class="grid gap-6 md:grid-cols-2">
-        <div class="space-y-4">
-          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
-            Leitor de QR Code
-          </h2>
-          <div class="rounded-xl border border-dashed border-neutral-300 p-3 dark:border-neutral-700">
-            <QrcodeStream
-              :key="streamKey"
-              @decode="onDecode"
-              @init="onInit"
-              :constraints="cameraConstraints"
-              :paused="cameraPaused"
-            >
-              <div
-                v-if="cameraStatus"
-                class="flex h-full min-h-[220px] items-center justify-center text-sm text-neutral-500"
-              >
-                {{ cameraStatus }}
-              </div>
-            </QrcodeStream>
+    <BaseCard
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div class="grid gap-6 lg:grid-cols-12">
+        <div class="space-y-4 lg:col-span-7">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Leitor de QR Code</h2>
+            <span class="text-xs text-neutral-500 dark:text-neutral-400">Aponte para o QR do comprovante</span>
           </div>
-          <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+          <div class="rounded-2xl border border-dashed border-neutral-300/70 bg-white/70 p-3 shadow-inner dark:border-white/20 dark:bg-white/5">
+            <div class="relative w-full overflow-hidden rounded-2xl bg-black/40">
+              <QrcodeStream
+                class="h-[200px] w-full sm:h-[260px]"
+                :key="streamKey"
+                @decode="onDecode"
+                @init="onInit"
+                :constraints="cameraConstraints"
+                :paused="cameraPaused"
+              >
+                <div v-if="cameraStatus" class="flex h-full min-h-[180px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400 sm:min-h-[220px]">
+                  {{ cameraStatus }}
+                </div>
+              </QrcodeStream>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400">
             <button
               type="button"
-              class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+              class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5"
               @click="restartCamera"
               :disabled="isRestarting"
             >
-              {{ isRestarting ? "Reiniciando..." : "Recarregar camera" }}
+              {{ isRestarting ? "Reiniciando..." : "Recarregar c�mera" }}
             </button>
             <button
               type="button"
-              class="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto"
+              class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5"
               @click="toggleFacingMode"
               :disabled="isProcessing"
             >
-              Usar camera {{ facingMode === "environment" ? "frontal" : "traseira" }}
+              Usar c�mera {{ facingMode === "environment" ? "frontal" : "traseira" }}
             </button>
-            <span class="text-xs text-neutral-400">
-              Aponte a camera traseira para o QR Code do comprovante.
-            </span>
           </div>
         </div>
-        <div class="space-y-4">
-          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
-            Busca manual
-          </h2>
-          <form @submit.prevent="manualLookup" class="grid gap-3">
+        <div class="space-y-4 lg:col-span-5">
+          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Busca manual</h2>
+          <form @submit.prevent="manualLookup" class="grid gap-4">
             <div>
-              <label class="block text-xs font-semibold uppercase text-neutral-500">
-                CPF
-              </label>
+              <label class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">CPF</label>
               <input
                 v-model="cpf"
                 type="text"
@@ -100,33 +106,31 @@
                 inputmode="numeric"
                 maxlength="14"
                 autocomplete="off"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+                class="mt-2 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
                 required
                 @input="handleCpfInputChange"
               />
             </div>
             <div>
-              <label class="block text-xs font-semibold uppercase text-neutral-500">
-                Data de nascimento
-              </label>
-              <DateField v-model="birthDate" required class="mt-1" />
+              <label class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Data de nascimento</label>
+              <DateField v-model="birthDate" required class="mt-2" />
             </div>
             <button
               type="submit"
-              class="w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="manualLoading || isProcessing || confirming"
             >
               {{ manualLoading ? "Buscando..." : "Buscar participante" }}
             </button>
           </form>
-          <div v-if="feedback" :class="feedbackClass" class="rounded-lg px-4 py-3 text-sm">
+          <div v-if="feedback" class="rounded-2xl px-4 py-3 text-sm" :class="feedbackClass">
             {{ feedback }}
           </div>
         </div>
       </div>
     </BaseCard>
 
-    <BaseCard v-if="pendingCheckin" class="space-y-4">
+    <BaseCard v-if="pendingCheckin" class="space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
       <div class="flex flex-col gap-4 md:flex-row md:items-start">
         <div class="flex w-full max-w-[160px] items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800">
           <img
@@ -197,7 +201,7 @@
         <button
           v-if="pendingCheckin.status === 'READY'"
           type="button"
-          class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
+          class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           :disabled="confirming"
           @click="confirmPending"
         >
@@ -205,7 +209,7 @@
         </button>
         <button
           type="button"
-          class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
           :disabled="confirming"
           @click="cancelPending"
         >
@@ -214,7 +218,7 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="admin.dashboard">
+    <BaseCard v-if="admin.dashboard" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
       <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
         Ultimos check-ins
       </h2>
@@ -229,7 +233,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { QrcodeStream } from "vue-qrcode-reader";
 import { formatCPF } from "../../utils/cpf";
@@ -240,9 +244,15 @@ import { useAdminStore } from "../../stores/admin";
 
 const route = useRoute();
 const admin = useAdminStore() as any;
+const initialRouteEvent =
+  typeof route.params.eventId === "string" && route.params.eventId.length
+    ? String(route.params.eventId)
+    : null;
+const activeEventId = ref<string | null>(initialRouteEvent);
 
 type CheckinRegistration = {
   id: string;
+  eventId: string;
   fullName: string;
   cpf: string;
   eventTitle: string;
@@ -305,15 +315,16 @@ const historyLoading = ref(false);
 let feedbackTimer: number | null = null;
 
 const cameraConstraints = computed<MediaTrackConstraints>(() => ({
-  facingMode: { ideal: facingMode.value },
-  aspectRatio: { ideal: 1.777 }
+  facingMode:
+    facingMode.value === "environment"
+      ? { ideal: "environment" }
+      : { ideal: "user" }
 }));
 const awaitingScanConfirmation = computed(
   () => pendingCheckin.value?.source === "scan" && pendingCheckin.value.status === "READY"
 );
 const cameraPaused = computed(
   () =>
-    !cameraReady.value ||
     isProcessing.value ||
     confirming.value ||
     awaitingScanConfirmation.value
@@ -326,16 +337,49 @@ const cameraStatus = computed(() => {
   return "";
 });
 
+const fallbackEventInfo = computed(() => {
+  const registration = pendingCheckin.value?.registration;
+  if (!registration) return null;
+  const details = [registration.eventLocation, registration.eventPeriod]
+    .filter((value) => value && value !== "Nao informado")
+    .join(" - ");
+  return {
+    title: registration.eventTitle || "Evento",
+    details
+  };
+});
+const currentEvent = computed(() => admin.dashboard?.event ?? null);
+const currentEventTitle = computed(
+  () =>
+    currentEvent.value?.title ?? fallbackEventInfo.value?.title ?? "Check-in de participantes"
+);
+const currentEventDetails = computed(() => {
+  if (currentEvent.value) {
+    const start = currentEvent.value.startDate
+      ? new Date(currentEvent.value.startDate).toLocaleDateString("pt-BR")
+      : null;
+    const end = currentEvent.value.endDate
+      ? new Date(currentEvent.value.endDate).toLocaleDateString("pt-BR")
+      : null;
+    const period = start && end ? `${start} - ${end}` : start ?? end;
+    const location = currentEvent.value.location ?? null;
+    return [location, period].filter(Boolean).join(" - ");
+  }
+  return fallbackEventInfo.value?.details ?? "";
+});
 const summaryCards = computed(() => {
-  const totals = (admin.dashboard?.totals as Record<string, number>) ?? {};
+  const totals = admin.dashboard?.totals as Record<string, number> | undefined;
+  if (!totals) return [];
+  const total = (totals.CHECKED_IN ?? 0) + (totals.PAID ?? 0) + (totals.PENDING_PAYMENT ?? 0);
   return [
     {
       key: "CHECKED_IN",
-      title: "Check-ins",
-      label: "Presencas confirmadas",
+      title: "Check-ins confirmados",
+      label: "Presencas registradas",
       value: totals.CHECKED_IN ?? 0,
       accent: "from-emerald-500 to-teal-500",
-      icon: "✓"
+      icon: "?",
+      emphasisClass: "text-emerald-600 dark:text-emerald-300"
     },
     {
       key: "PAID",
@@ -343,7 +387,8 @@ const summaryCards = computed(() => {
       label: "Prontos para check-in",
       value: totals.PAID ?? 0,
       accent: "from-sky-500 to-blue-600",
-      icon: "★"
+      icon: "?",
+      emphasisClass: "text-primary-600 dark:text-primary-300"
     },
     {
       key: "PENDING_PAYMENT",
@@ -351,10 +396,21 @@ const summaryCards = computed(() => {
       label: "Aguardando pagamento",
       value: totals.PENDING_PAYMENT ?? 0,
       accent: "from-amber-400 to-orange-500",
-      icon: "…"
+      icon: ".",
+      emphasisClass: "text-amber-600 dark:text-amber-300"
+    },
+    {
+      key: "TOTAL",
+      title: "Inscricoes",
+      label: "Total encontradas",
+      value: total,
+      accent: "from-neutral-600 to-neutral-800",
+      icon: "#",
+      emphasisClass: "text-neutral-900 dark:text-white"
     }
   ];
 });
+
 
 const formatDateTime = (value: string) =>
   new Date(value).toLocaleString("pt-BR", {
@@ -429,6 +485,9 @@ const applyPendingResult = (
     source,
     confirmation
   };
+  if (result.registration.eventId) {
+    activeEventId.value = result.registration.eventId;
+  }
   pendingHistory.value = [];
   void loadPendingHistory(result.registration.id);
 };
@@ -477,10 +536,28 @@ const loadPendingHistory = async (registrationId: string) => {
   }
 };
 
-const loadDashboard = async () => {
-  const eventId = route.params.eventId as string;
-  if (!eventId) return;
-  await admin.loadDashboard(eventId);
+const loadDashboard = async (eventIdParam?: string | null) => {
+  if (eventIdParam === null) {
+    activeEventId.value = null;
+    admin.dashboard = null;
+    return;
+  }
+  const routeEvent =
+    typeof route.params.eventId === "string" && route.params.eventId.length
+      ? String(route.params.eventId)
+      : null;
+  const resolved = eventIdParam ?? activeEventId.value ?? routeEvent;
+  if (!resolved) {
+    activeEventId.value = null;
+    admin.dashboard = null;
+    return;
+  }
+  activeEventId.value = resolved;
+  try {
+    await admin.loadDashboard(resolved);
+  } catch (error) {
+    console.error("Erro ao carregar painel de check-in", error);
+  }
 };
 
 const restartCamera = () => {
@@ -503,12 +580,15 @@ const showFeedback = (message: string, variant: "success" | "error") => {
   feedback.value = message;
   feedbackClass.value =
     variant === "success"
-      ? "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100"
-      : "bg-neutral-900 text-white dark:bg-black/80 dark:text-white";
+      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100"
+      : "bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-100";
   if (feedbackTimer) window.clearTimeout(feedbackTimer);
   feedbackTimer = window.setTimeout(() => {
     feedback.value = "";
-    feedbackClass.value = "";
+    feedbackClass.value =
+    variant === "success"
+      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100"
+      : "bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-100";
   }, 3500);
 };
 
@@ -539,7 +619,7 @@ const onDecode = async (decoded: string) => {
     } else {
       showFeedback("Este participante ja realizou check-in anteriormente.", "success");
     }
-    await loadDashboard();
+    await loadDashboard(result.registration.eventId ?? undefined);
     lastScanned.value = { value: decoded, timestamp: now };
   } catch (error: any) {
     showFeedback(error.response?.data?.message ?? "Erro ao processar QR Code.", "error");
@@ -588,6 +668,7 @@ const manualLookup = async () => {
     } else {
       showFeedback("Este participante ja realizou check-in anteriormente.", "success");
     }
+    await loadDashboard(result.registration.eventId ?? undefined);
   } catch (error: any) {
     showFeedback(
       error.response?.data?.message ?? "Não foi possível localizar a inscrição.",
@@ -598,6 +679,16 @@ const manualLookup = async () => {
   manualLoading.value = false;
   isProcessing.value = false;
 };
+
+watch(
+  () => route.params.eventId,
+  (value) => {
+    const normalized = typeof value === "string" && value.length ? String(value) : null;
+    clearPending();
+    void loadDashboard(normalized);
+  },
+  { immediate: true }
+);
 
 const confirmPending = async () => {
   if (
@@ -610,13 +701,14 @@ const confirmPending = async () => {
   }
   confirming.value = true;
   isProcessing.value = true;
-  const { confirmation, source } = pendingCheckin.value;
+  const { confirmation, source, registration } = pendingCheckin.value;
   const payload: { registrationId: string; signature?: string } = {
     registrationId: confirmation.registrationId
   };
   if (confirmation.signature) {
     payload.signature = confirmation.signature;
   }
+  const dashboardEventId = registration.eventId ?? activeEventId.value;
   try {
     const result = (await admin.confirmCheckin(payload)) as CheckinConfirmResponse;
     const successMessage =
@@ -624,7 +716,7 @@ const confirmPending = async () => {
         ? "Este participante ja possuia check-in registrado."
         : "Check-in confirmado com sucesso!";
     showFeedback(successMessage, "success");
-    await loadDashboard();
+    await loadDashboard(dashboardEventId ?? undefined);
     if (source === "manual") {
       cpf.value = "";
       birthDate.value = "";
@@ -646,3 +738,17 @@ onMounted(async () => {
   await loadDashboard();
 });
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

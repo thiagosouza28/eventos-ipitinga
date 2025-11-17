@@ -45,6 +45,7 @@ CREATE TABLE `Event` (
     `pendingPaymentValueRule` VARCHAR(191) NOT NULL DEFAULT 'KEEP_ORIGINAL',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `ministryId` VARCHAR(191) NULL,
+    `createdById` VARCHAR(191) NULL,
 
     UNIQUE INDEX `Event_slug_key`(`slug`),
     INDEX `Event_ministryId_idx`(`ministryId`),
@@ -230,6 +231,9 @@ ALTER TABLE `Church` ADD CONSTRAINT `Church_districtId_fkey` FOREIGN KEY (`distr
 
 -- AddForeignKey
 ALTER TABLE `Event` ADD CONSTRAINT `Event_ministryId_fkey` FOREIGN KEY (`ministryId`) REFERENCES `Ministry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Event` ADD CONSTRAINT `Event_createdById_fkey` FOREIGN KEY (`createdById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Order` ADD CONSTRAINT `Order_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

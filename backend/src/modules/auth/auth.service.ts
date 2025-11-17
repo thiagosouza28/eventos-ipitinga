@@ -3,9 +3,10 @@ import jwt from "jsonwebtoken";
 import type { Secret, SignOptions } from "jsonwebtoken";
 
 import { env } from "../../config/env";
+import { RolePermissionPresets } from "../../config/permissions";
 import { prisma } from "../../lib/prisma";
 import { UnauthorizedError } from "../../utils/errors";
-import { buildPermissionMap, toPermissionEntry } from "../../utils/permissions";
+import { buildPermissionMap, mergePermissionMap, toPermissionEntry } from "../../utils/permissions";
 
 export class AuthService {
   async login(email: string, password: string) {
@@ -17,7 +18,8 @@ export class AuthService {
         },
         profile: {
           include: { permissions: true }
-        }
+        },
+        permissionsOverride: true
       }
     });
     if (!user) {
@@ -33,7 +35,13 @@ export class AuthService {
     }
 
     const ministryIds = user.ministries?.map((relation) => relation.ministryId) ?? [];
-    const permissionMap = user.profile ? buildPermissionMap(user.profile.permissions) : undefined;
+    const profilePermissions = user.profile?.permissions ?? [];
+    const basePermissions =
+      profilePermissions.length > 0 ? profilePermissions : RolePermissionPresets[user.role] ?? [];
+    const permissionMap = buildPermissionMap(basePermissions);
+    const overrideEntries = user.permissionsOverride?.map(toPermissionEntry) ?? [];
+    const resolvedPermissions =
+      overrideEntries.length > 0 ? mergePermissionMap(permissionMap, overrideEntries) : permissionMap;
 
     const token = jwt.sign(
       {
@@ -42,7 +50,7 @@ export class AuthService {
         churchScopeId: user.churchScopeId,
         ministryIds,
         profileId: user.profileId,
-        permissions: permissionMap
+        permissions: resolvedPermissions
       },
       env.JWT_SECRET as Secret,
       {
@@ -74,7 +82,8 @@ export class AuthService {
               permissions: user.profile.permissions.map(toPermissionEntry)
             }
           : null,
-        permissions: permissionMap,
+        permissions: resolvedPermissions,
+        permissionOverrides: overrideEntries,
         ministries: user.ministries?.map((relation) => ({
           id: relation.ministryId,
           name: relation.ministry?.name ?? ""

@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 
+import { PermissionModules } from "../../config/permissions";
 import { Roles } from "../../config/roles";
 import { userService } from "./user.service";
+import { userPermissionService } from "./user-permission.service";
+import { normalizePermissionPayload } from "../../utils/permissions";
 
 const photoSchema = z
   .union([z.string().min(10), z.literal(null), z.literal("")])
@@ -30,6 +33,22 @@ const createSchema = baseSchema;
 const updateSchema = baseSchema.partial();
 const statusSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE"])
+});
+
+const permissionEntrySchema = z.object({
+  module: z.enum(PermissionModules),
+  canView: z.boolean().optional(),
+  canCreate: z.boolean().optional(),
+  canEdit: z.boolean().optional(),
+  canDelete: z.boolean().optional(),
+  canApprove: z.boolean().optional(),
+  canDeactivate: z.boolean().optional(),
+  canReport: z.boolean().optional(),
+  canFinancial: z.boolean().optional()
+});
+
+const userPermissionsSchema = z.object({
+  permissions: z.array(permissionEntrySchema)
 });
 
 export const listUsersHandler = async (_request: Request, response: Response) => {
@@ -63,4 +82,18 @@ export const updateUserStatusHandler = async (request: Request, response: Respon
 export const deleteUserHandler = async (request: Request, response: Response) => {
   await userService.delete(request.params.id, request.user?.id);
   return response.status(204).send();
+};
+
+export const listUserPermissionsHandler = async (request: Request, response: Response) => {
+  const permissions = await userPermissionService.list(request.params.id);
+  return response.json(permissions);
+};
+
+export const updateUserPermissionsHandler = async (request: Request, response: Response) => {
+  const { permissions } = userPermissionsSchema.parse(request.body);
+  const normalized = permissions.map((entry) =>
+    normalizePermissionPayload(entry.module, entry)
+  );
+  const result = await userPermissionService.upsert(request.params.id, normalized, request.user?.id);
+  return response.json(result);
 };

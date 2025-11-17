@@ -31,12 +31,16 @@ export const listEventLotsHandler = async (request: Request, response: Response)
 export const createEventLotHandler = async (request: Request, response: Response) => {
   const { eventId } = eventParamSchema.parse(request.params);
   const payload = createSchema.parse(request.body);
-  const lot = await eventLotService.create(eventId, {
-    name: payload.name,
-    priceCents: payload.priceCents,
-    startsAt: new Date(payload.startsAt),
-    endsAt: payload.endsAt == null ? null : new Date(payload.endsAt)
-  });
+  const lot = await eventLotService.create(
+    eventId,
+    {
+      name: payload.name,
+      priceCents: payload.priceCents,
+      startsAt: new Date(payload.startsAt),
+      endsAt: payload.endsAt == null ? null : new Date(payload.endsAt)
+    },
+    request.user
+  );
   return response.status(201).json(lot);
 };
 
@@ -44,22 +48,26 @@ export const updateEventLotHandler = async (request: Request, response: Response
   lotParamSchema.parse(request.params);
   const lotId = request.params.lotId;
   const payload = updateSchema.parse(request.body);
-  const lot = await eventLotService.update(lotId, {
-    name: payload.name,
-    priceCents: payload.priceCents,
-    startsAt: payload.startsAt ? new Date(payload.startsAt) : undefined,
-    endsAt:
-      payload.endsAt === undefined
-        ? undefined
-        : payload.endsAt === null
-          ? null
-          : new Date(payload.endsAt)
-  });
+  const lot = await eventLotService.update(
+    lotId,
+    {
+      name: payload.name,
+      priceCents: payload.priceCents,
+      startsAt: payload.startsAt ? new Date(payload.startsAt) : undefined,
+      endsAt:
+        payload.endsAt === undefined
+          ? undefined
+          : payload.endsAt === null
+            ? null
+            : new Date(payload.endsAt)
+    },
+    request.user
+  );
   return response.json(lot);
 };
 
 export const deleteEventLotHandler = async (request: Request, response: Response) => {
   lotParamSchema.parse(request.params);
-  await eventLotService.delete(request.params.lotId);
+  await eventLotService.delete(request.params.lotId, request.user);
   return response.status(204).send();
 };

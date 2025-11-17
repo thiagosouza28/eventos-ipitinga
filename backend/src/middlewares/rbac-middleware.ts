@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, type RequestHandler } from "express";
 
 import { RoleHierarchy } from "../config/roles";
 import type { PermissionAction, PermissionModule } from "../config/permissions";
+import { auditService } from "../services/audit.service";
 import { ForbiddenError, UnauthorizedError } from "../utils/errors";
 import { hasPermission } from "../utils/permissions";
 
@@ -25,12 +26,23 @@ export const authorize =
 
 export const authorizePermission =
   (module: PermissionModule | string, action: PermissionAction): RequestHandler =>
-  (request: Request, _response: Response, next: NextFunction) => {
+  async (request: Request, _response: Response, next: NextFunction) => {
     if (!request.user) {
       throw new UnauthorizedError();
     }
     if (!hasPermission(request.user.permissions, module, action)) {
-      throw new ForbiddenError();
+      await auditService.log({
+        actorUserId: request.user.id,
+        action: "ACCESS_DENIED",
+        entity: "permission",
+        entityId: module,
+        metadata: {
+          attemptedAction: action,
+          role: request.user.role,
+          path: request.originalUrl
+        }
+      });
+      throw new ForbiddenError("Acesso negado. Você não possui permissão para este módulo ou ação.");
     }
     return next();
   };

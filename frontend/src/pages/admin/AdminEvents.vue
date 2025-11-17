@@ -7,108 +7,120 @@
       :details="errorDialog.details"
       @update:modelValue="errorDialog.open = $event"
     />
-    <BaseCard>
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-            Eventos
-          </h1>
-          <p class="text-sm text-neutral-500">
-            Cadastre novos eventos, edite os existentes e controle o status público.
+    <BaseCard class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/20">
+      <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div class="max-w-3xl">
+          <p class="text-xs uppercase tracking-[0.3em] text-primary-500 dark:text-primary-300">
+            Gestao de eventos
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Eventos</h1>
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+            Cadastre novos eventos, edite os existentes e controle o status publico e financeiro.
           </p>
         </div>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
             type="button"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-            @click="toggleCreateForm"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
+            @click="openCreateModal"
           >
-            {{ showCreateForm ? "Fechar novo evento" : "Novo evento" }}
+            <PlusIcon class="h-5 w-5" aria-hidden="true" />
+            <span>Novo evento</span>
           </button>
           <RouterLink
             to="/admin/dashboard"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
           >
-            Voltar
+            <ArrowUturnLeftIcon class="h-5 w-5" aria-hidden="true" />
+            <span>Voltar</span>
           </RouterLink>
         </div>
       </div>
     </BaseCard>
-
-    <BaseCard>
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-          Eventos cadastrados
-        </h2>
-        <p class="text-xs text-neutral-500">
-          Clique em editar para ajustar dados ou em excluir para remover um evento sem inscricoes.
+    <BaseCard class="border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-[0.3em] text-primary-500 dark:text-primary-300">
+            Eventos cadastrados
+          </p>
+          <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">
+            Controle em tempo real
+          </h2>
+        </div>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400">
+          Clique em editar para ajustar dados ou exclua eventos sem inscricoes.
         </p>
       </div>
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full table-auto text-left text-sm">
-          <thead class="text-xs uppercase tracking-wide text-neutral-500">
+      <div class="mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40">
+        <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
+          <thead class="bg-white/50 text-[11px] uppercase tracking-wide text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
-              <th class="pb-2">Título</th>
-              <th class="pb-2">Periodo</th>
-              <th class="pb-2">Valor vigente</th>
-              <th class="pb-2">Regra de valor pendente</th>
-              <th class="pb-2">Lote atual</th>
-              <th class="pb-2">Status</th>
-              <th class="pb-2 text-right">Acoes</th>
+              <th class="px-4 py-3">Titulo</th>
+              <th class="px-4 py-3">Periodo</th>
+              <th class="px-4 py-3">Valor vigente</th>
+              <th class="px-4 py-3">Regra de valor pendente</th>
+              <th class="px-4 py-3">Lote atual</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Acoes</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+          <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
             <tr v-for="event in admin.events" :key="event.id">
-              <td class="py-3">
-                <div class="font-medium text-neutral-800 dark:text-neutral-100">
+              <td class="px-4 py-4">
+                <div class="font-semibold text-neutral-900 dark:text-white">
                   {{ event.title }}
                 </div>
                 <div class="text-xs text-neutral-500">Slug: {{ event.slug }}</div>
               </td>
-              <td class="py-3 text-sm">
+              <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
                 {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
               </td>
-              <td class="py-3">
+              <td class="px-4 py-4 font-semibold text-neutral-900 dark:text-neutral-100">
                 {{ event.isFree ? "Gratuito" : formatCurrency(event.currentPriceCents ?? event.priceCents) }}
               </td>
               <td
-                class="py-3 text-sm text-neutral-600 dark:text-neutral-300"
+                class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300"
                 :title="getPendingPaymentValueRuleDescription(event.pendingPaymentValueRule)"
               >
                 {{ getPendingPaymentValueRuleLabel(event.pendingPaymentValueRule) }}
               </td>
-              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">
+              <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
                 {{ event.currentLot?.name ?? "--" }}
               </td>
-            <td class="py-3">
+              <td class="px-4 py-4">
                 <span
                   :class="[
-                    'rounded-full px-3 py-1 text-xs font-semibold uppercase',
-                    event.isActive ? 'bg-primary-100 text-primary-700' : 'bg-neutral-200 text-neutral-600'
+                    'rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-wide',
+                    event.isActive
+                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-primary-500/40'
+                      : 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
                   ]"
                 >
                   {{ event.isActive ? "Ativo" : "Inativo" }}
                 </span>
               </td>
-              <td class="py-3 text-right">
-                <div class="inline-flex items-center gap-3">
+              <td class="px-4 py-4 text-right">
+                <div class="inline-flex flex-wrap items-center justify-end gap-2">
                   <button
-                    class="text-sm text-neutral-600 hover:underline dark:text-neutral-300"
+                    class="inline-flex items-center gap-1 rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-white/10"
                     @click="openDetails(event)"
                   >
                     Detalhes
                   </button>
-                  <button class="text-sm text-primary-600 hover:underline" @click="startEdit(event)">
+                  <button
+                    class="inline-flex items-center gap-1 rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
+                    @click="startEdit(event)"
+                  >
                     Editar
                   </button>
                   <button
-                    class="text-sm text-primary-600 hover:underline"
+                    class="inline-flex items-center gap-1 rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
                     @click="toggleActive(event)"
                   >
                     {{ event.isActive ? "Desativar" : "Ativar" }}
                   </button>
                   <button
-                    class="text-sm text-red-600 hover:underline"
+                    class="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
                     @click="openDelete(event)"
                   >
                     Excluir
@@ -117,7 +129,7 @@
               </td>
             </tr>
             <tr v-if="!admin.events.length">
-              <td class="py-3 text-sm text-neutral-500" colspan="7">
+              <td class="px-4 py-6 text-sm text-neutral-500" colspan="7">
                 Nenhum evento cadastrado ate o momento.
               </td>
             </tr>
@@ -126,15 +138,24 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="showCreateForm">
-      <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-        Criar novo evento
-      </h2>
-      <form
-        ref="createCardRef"
-        @submit.prevent="submitCreate"
-        class="mt-4 grid gap-4 md:grid-cols-2"
-      >
+    <ConfirmDialog
+      :model-value="confirmDelete.open"
+      title="Excluir evento"
+      :description="confirmDeleteDescription"
+      confirm-label="Excluir"
+      cancel-label="Cancelar"
+      type="danger"
+      @update:modelValue="(value) => (confirmDelete.open = value)"
+      @confirm="handleDelete"
+      @cancel="closeDeleteDialog"
+    />
+
+    <Modal
+      :model-value="createModalOpen"
+      title="Criar novo evento"
+      @update:modelValue="handleCreateModalToggle"
+    >
+      <form class="mt-2 grid gap-4 md:grid-cols-2" @submit.prevent="submitCreate">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Titulo
@@ -213,9 +234,6 @@
               {{ createForm.bannerUrl }}
             </span>
           </div>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Use o botão para enviar uma nova imagem ou informe o nome de um arquivo já salvo (ex.: banner.jpg).
-          </p>
           <div v-if="resolveBannerUrl(createForm.bannerUrl)" class="mt-2">
             <img
               :src="resolveBannerUrl(createForm.bannerUrl)"
@@ -227,24 +245,24 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Inicio
+            Data de inicio
           </label>
           <input
             v-model="createForm.startDate"
             type="datetime-local"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Fim
+            Data de termino
           </label>
           <input
             v-model="createForm.endDate"
             type="datetime-local"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
         <div>
@@ -260,113 +278,6 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Ministerio responsavel
-          </label>
-          <select
-            v-model="createForm.ministryId"
-            required
-            :disabled="!activeMinistries.length"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-70"
-          >
-            <option value="">Selecione</option>
-            <option v-for="ministry in activeMinistries" :key="ministry.id" :value="ministry.id">
-              {{ ministry.name }}
-            </option>
-          </select>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Escolha o ministerio que coordenara este evento. Cadastre novos ministerios na pagina de catalogo.
-          </p>
-          <p v-if="!activeMinistries.length" class="text-xs text-red-500 dark:text-red-400">
-            Cadastre ao menos um ministerio ativo para criar eventos.
-          </p>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Tipo de inscricao
-          </label>
-          <div class="mt-2 flex items-center gap-4">
-            <label class="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
-              <input
-                type="radio"
-                :value="false"
-                v-model="createForm.isFree"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-              />
-              <span>Pago</span>
-            </label>
-            <label class="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
-              <input
-                type="radio"
-                :value="true"
-                v-model="createForm.isFree"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-              />
-              <span>Gratuito</span>
-            </label>
-          </div>
-        </div>
-        <div class="md:col-span-2">
-          <div
-            v-if="!createForm.isFree"
-            class="rounded-lg border border-dashed border-primary-300 bg-primary-50/60 px-4 py-3 text-sm text-primary-700 dark:border-primary-400/60 dark:bg-primary-500/10 dark:text-primary-200"
-          >
-            Crie lotes apos o cadastro para liberar inscricoes. Enquanto nao houver um lote ativo, as inscricoes ficarao bloqueadas.
-          </div>
-          <div
-            v-else
-            class="rounded-lg border border-dashed border-primary-300 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-500/10 dark:text-primary-200"
-          >
-            Eventos gratuitos não geram pagamentos e não permitem cadastro de lotes. As inscrições são confirmadas automaticamente.
-          </div>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Formas de pagamento disponiveis
-          </label>
-          <div class="mt-2 grid gap-2 sm:grid-cols-2">
-            <label
-              v-for="option in paymentMethodOptions"
-              :key="option.value"
-              class="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-            >
-              <input
-                v-model="createForm.paymentMethods"
-                type="checkbox"
-                :value="option.value"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-              />
-              <span class="flex flex-col">
-                <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
-                <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</span>
-              </span>
-            </label>
-          </div>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Regra de valor para pagamentos pendentes
-          </label>
-          <div class="mt-2 grid gap-2">
-            <label
-              v-for="option in pendingPaymentValueRuleOptions"
-              :key="option.value"
-              class="flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-            >
-              <div class="flex items-center gap-2">
-                <input
-                  v-model="createForm.pendingPaymentValueRule"
-                  type="radio"
-                  :value="option.value"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-                />
-                <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
-              </div>
-              <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</p>
-            </label>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Idade minima
           </label>
           <input
@@ -376,27 +287,106 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
-        <div class="md:col-span-2 flex justify-end">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Formas de pagamento disponiveis
+          </label>
+          <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label
+              v-for="method in paymentMethodOptions"
+              :key="method.value"
+              class="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-2 text-sm dark:border-neutral-700"
+            >
+              <input
+                v-model="createForm.paymentMethods"
+                type="checkbox"
+                class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                :value="method.value"
+              />
+              <span>{{ method.label }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Regra de valor para pagamentos pendentes
+          </label>
+          <select
+            v-model="createForm.pendingPaymentValueRule"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option
+              v-for="option in pendingPaymentValueRuleOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            {{ getPendingPaymentValueRuleDescription(createForm.pendingPaymentValueRule) }}
+          </p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            <input
+              v-model="createForm.isFree"
+              type="checkbox"
+              class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            />
+            Evento gratuito
+          </label>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Ministerio responsavel
+          </label>
+          <select
+            v-model="createForm.ministryId"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">Selecione...</option>
+            <option
+              v-for="ministry in allMinistryOptions"
+              :key="ministry.id"
+              :value="ministry.id"
+            >
+              {{ ministry.name }} {{ !ministry.isActive ? "(Inativo)" : "" }}
+            </option>
+          </select>
+        </div>
+        <div class="md:col-span-2 flex justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="handleCreateModalToggle(false)"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            @click="resetCreateForm"
+          >
+            Limpar
+          </button>
           <button
             type="submit"
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-70"
             :disabled="savingCreate"
           >
-            {{ savingCreate ? "Salvando..." : "Criar evento" }}
+            {{ savingCreate ? "Criando..." : "Criar evento" }}
           </button>
         </div>
       </form>
-    </BaseCard>
+    </Modal>
 
-    <BaseCard v-if="editingEventId">
-      <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-        Editar evento
-      </h2>
-      <form
-        ref="editCardRef"
-        @submit.prevent="submitEdit"
-        class="mt-4 grid gap-4 md:grid-cols-2"
-      >
+    <Modal
+      :model-value="editModalOpen"
+      title="Editar evento"
+      @update:modelValue="handleEditModalToggle"
+    >
+      <form class="mt-2 grid gap-4 md:grid-cols-2" @submit.prevent="submitEdit">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Titulo
@@ -417,7 +407,6 @@
               v-model="editForm.slug"
               type="text"
               class="w-full rounded-lg border border-neutral-300 px-4 py-2 lowercase dark:border-neutral-700 dark:bg-neutral-800"
-              placeholder="ex: encontro-2026"
             />
             <button
               type="button"
@@ -427,9 +416,6 @@
               Gerar
             </button>
           </div>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Atualize o identificador público do evento (acesso em /evento/{{ editForm.slug || 'meu-evento' }}).
-          </p>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
@@ -468,13 +454,13 @@
             >
               {{ bannerUploading.edit ? "Enviando..." : "Selecionar nos arquivos" }}
             </button>
-            <span v-if="editForm.bannerUrl" class="text-xs text-neutral-500 dark:text-neutral-400">
+            <span
+              v-if="editForm.bannerUrl"
+              class="text-xs text-neutral-500 dark:text-neutral-400"
+            >
               {{ editForm.bannerUrl }}
             </span>
           </div>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Envie um novo arquivo ou aponte para um nome já existente na pasta de uploads do sistema.
-          </p>
           <div v-if="resolveBannerUrl(editForm.bannerUrl)" class="mt-2">
             <img
               :src="resolveBannerUrl(editForm.bannerUrl)"
@@ -486,24 +472,24 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Inicio
+            Data de inicio
           </label>
           <input
             v-model="editForm.startDate"
             type="datetime-local"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Fim
+            Data de termino
           </label>
           <input
             v-model="editForm.endDate"
             type="datetime-local"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
         <div>
@@ -519,110 +505,6 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Ministerio responsavel
-          </label>
-          <select
-            v-model="editForm.ministryId"
-            required
-            :disabled="!allMinistryOptions.length"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-70"
-          >
-            <option value="">Selecione</option>
-            <option v-for="ministry in allMinistryOptions" :key="ministry.id" :value="ministry.id">
-              {{ ministry.name }}{{ ministry.isActive ? "" : " (inativo)" }}
-            </option>
-          </select>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Apenas ministerios ativos podem ser usados em novos eventos.
-          </p>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Tipo de inscricao
-          </label>
-          <div class="mt-2 flex items-center gap-4">
-            <label class="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
-              <input
-                type="radio"
-                :value="false"
-                v-model="editForm.isFree"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-              />
-              <span>Pago</span>
-            </label>
-            <label class="inline-flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
-              <input
-                type="radio"
-                :value="true"
-                v-model="editForm.isFree"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-              />
-              <span>Gratuito</span>
-            </label>
-          </div>
-        </div>
-        <div class="md:col-span-2">
-          <div
-            v-if="!editForm.isFree"
-            class="rounded-lg border border-dashed border-primary-300 bg-primary-50/60 px-4 py-3 text-sm text-primary-700 dark:border-primary-400/60 dark:bg-primary-500/10 dark:text-primary-200"
-          >
-            Utilize os lotes para controlar valores e liberar inscricoes apenas nos periodos desejados.
-          </div>
-          <div
-            v-else
-            class="rounded-lg border border-dashed border-primary-300 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-500/50 dark:bg-primary-500/10 dark:text-primary-200"
-          >
-            Eventos gratuitos não geram pagamentos e não permitem cadastro de lotes. Qualquer inscrição será confirmada automaticamente.
-          </div>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Formas de pagamento disponiveis
-          </label>
-          <div class="mt-2 grid gap-2 sm:grid-cols-2">
-            <label
-              v-for="option in paymentMethodOptions"
-              :key="option.value"
-              class="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-            >
-              <input
-                v-model="editForm.paymentMethods"
-                type="checkbox"
-                :value="option.value"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-              />
-              <span class="flex flex-col">
-                <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
-                <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</span>
-              </span>
-            </label>
-          </div>
-        </div>
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Regra de valor para pagamentos pendentes
-          </label>
-          <div class="mt-2 grid gap-2">
-            <label
-              v-for="option in pendingPaymentValueRuleOptions"
-              :key="option.value"
-              class="flex flex-col gap-1 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-600 shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300"
-            >
-              <div class="flex items-center gap-2">
-                <input
-                  v-model="editForm.pendingPaymentValueRule"
-                  type="radio"
-                  :value="option.value"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500"
-                />
-                <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
-              </div>
-              <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</p>
-            </label>
-          </div>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Idade minima
           </label>
           <input
@@ -631,6 +513,74 @@
             min="0"
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Formas de pagamento disponiveis
+          </label>
+          <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label
+              v-for="method in paymentMethodOptions"
+              :key="method.value"
+              class="flex items-center gap-3 rounded-lg border border-neutral-200 px-4 py-2 text-sm dark:border-neutral-700"
+            >
+              <input
+                v-model="editForm.paymentMethods"
+                type="checkbox"
+                class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                :value="method.value"
+              />
+              <span>{{ method.label }}</span>
+            </label>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Regra de valor para pagamentos pendentes
+          </label>
+          <select
+            v-model="editForm.pendingPaymentValueRule"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option
+              v-for="option in pendingPaymentValueRuleOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            {{ getPendingPaymentValueRuleDescription(editForm.pendingPaymentValueRule) }}
+          </p>
+        </div>
+        <div class="md:col-span-2">
+          <label class="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            <input
+              v-model="editForm.isFree"
+              type="checkbox"
+              class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            />
+            Evento gratuito
+          </label>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Ministerio responsavel
+          </label>
+          <select
+            v-model="editForm.ministryId"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">Selecione...</option>
+            <option
+              v-for="ministry in allMinistryOptions"
+              :key="ministry.id"
+              :value="ministry.id"
+            >
+              {{ ministry.name }} {{ !ministry.isActive ? "(Inativo)" : "" }}
+            </option>
+          </select>
         </div>
         <div class="md:col-span-2 flex justify-end gap-3">
           <button
@@ -649,47 +599,44 @@
           </button>
         </div>
       </form>
-    </BaseCard>
-
-    <ConfirmDialog
-      :model-value="confirmDelete.open"
-      title="Excluir evento"
-      :description="confirmDeleteDescription"
-      confirm-label="Excluir"
-      cancel-label="Cancelar"
-      type="danger"
-      @update:modelValue="(value) => (confirmDelete.open = value)"
-      @confirm="handleDelete"
-      @cancel="closeDeleteDialog"
-    />
+    </Modal>
 
     <teleport to="body">
       <div
         v-if="details.open"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 py-6"
         @click.self="closeDetails"
       >
-        <div class="w-full max-w-3xl rounded-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900">
-          <header class="flex items-start justify-between gap-4">
+        <div
+          class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[32px] border border-white/15 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950/90 p-6 text-white shadow-[0_20px_80px_rgba(0,0,0,0.6)] sm:p-8"
+        >
+          <header class="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">
+              <p class="text-xs uppercase tracking-[0.4em] text-primary-300">Evento selecionado</p>
+              <h2 class="text-2xl font-semibold text-white">
                 {{ details.event?.title }}
               </h2>
-              <p class="text-xs text-neutral-500">
+              <p class="text-sm text-white/70">
                 Slug: {{ details.event?.slug }}
               </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-col gap-2 text-sm sm:flex-row sm:items-center">
+              <span
+                class="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em]"
+                :class="details.event?.isActive ? 'bg-white/10 text-white' : 'bg-red-500/20 text-red-100'"
+              >
+                {{ details.event?.isActive ? 'Ativo' : 'Inativo' }}
+              </span>
               <RouterLink
                 v-if="details.event?.id"
                 :to="{ name: 'admin-event-financial', params: { eventId: details.event.id } }"
-                class="rounded-md border border-primary-200 bg-primary-50 px-3 py-1 text-sm font-medium text-primary-700 transition hover:bg-primary-100 dark:border-primary-900/40 dark:bg-primary-900/10 dark:text-primary-400"
+                class="inline-flex items-center justify-center rounded-full border border-primary-300/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-200 transition hover:bg-primary-500/20"
               >
                 Financeiro
               </RouterLink>
               <button
                 type="button"
-                class="rounded-md border border-neutral-200 px-3 py-1 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                class="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white/10"
                 @click="closeDetails"
               >
                 Fechar
@@ -697,123 +644,111 @@
             </div>
           </header>
 
-          <dl class="mt-4 space-y-3 text-sm text-neutral-600 dark:text-neutral-300">
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Periodo</dt>
-              <dd>{{ formatDate(details.event?.startDate ?? "") }} - {{ formatDate(details.event?.endDate ?? "") }}</dd>
+          <dl class="mt-6 grid gap-4 text-sm text-white/80 sm:grid-cols-2">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Periodo</dt>
+              <dd class="mt-1 font-semibold text-white">
+                {{ formatDate(details.event?.startDate ?? '') }} - {{ formatDate(details.event?.endDate ?? '') }}
+              </dd>
             </div>
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Local</dt>
-              <dd>{{ details.event?.location }}</dd>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Local</dt>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.location }}</dd>
             </div>
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Ministerio</dt>
-              <dd>{{ details.event?.ministry?.name ?? "Nao vinculado" }}</dd>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Ministerio</dt>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? 'Nao vinculado' }}</dd>
             </div>
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Status</dt>
-              <dd>{{ details.event?.isActive ? "Ativo" : "Inativo" }}</dd>
-            </div>
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Valor atual</dt>
-              <dd class="text-right">
-                <div class="font-semibold text-neutral-800 dark:text-neutral-100">
-                  {{ currentPriceDisplay }}
-                </div>
-                <div class="text-xs text-neutral-400">
-                  Base: {{ basePriceDisplay }}
-                </div>
-                <div v-if="details.event?.currentLot?.name" class="text-xs text-neutral-400">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Valor atual</dt>
+              <dd class="mt-2 space-y-1 text-sm text-white">
+                <div class="text-lg font-semibold">{{ currentPriceDisplay }}</div>
+                <div class="text-xs text-white/70">Base: {{ basePriceDisplay }}</div>
+                <div v-if="details.event?.currentLot?.name" class="text-xs text-white/70">
                   Lote vigente: {{ details.event?.currentLot?.name }}
                 </div>
               </dd>
             </div>
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Regra de valor pendente</dt>
-              <dd class="text-right">
-                <div class="font-semibold text-neutral-800 dark:text-neutral-100">
-                  {{ getPendingPaymentValueRuleLabel(details.event?.pendingPaymentValueRule) }}
-                </div>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Regra de valor pendente</dt>
+              <dd class="mt-2 text-sm">
+                <p class="font-semibold text-white">{{ getPendingPaymentValueRuleLabel(details.event?.pendingPaymentValueRule) }}</p>
+                <p class="text-white/70">
                   {{ getPendingPaymentValueRuleDescription(details.event?.pendingPaymentValueRule) }}
                 </p>
               </dd>
             </div>
-            <div class="flex justify-between gap-4">
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Idade minima</dt>
-              <dd>{{ details.event?.minAgeYears ?? "Nao informada" }}</dd>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Idade minima</dt>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? 'Nao informada' }}</dd>
             </div>
-            <div>
-              <dt class="font-medium text-neutral-500 dark:text-neutral-400">Descrição</dt>
-              <dd class="mt-1 whitespace-pre-line">
-                {{ details.event?.description }}
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Descricao</dt>
+              <dd class="mt-1 whitespace-pre-line text-white/80">
+                {{ details.event?.description ?? 'Nenhuma descricao fornecida' }}
               </dd>
             </div>
           </dl>
 
-          <div v-if="!details.event?.isFree" class="mt-6 space-y-4">
+          <div v-if="!details.event?.isFree" class="mt-8 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <h3 class="text-base font-semibold text-neutral-700 dark:text-neutral-100">
-                Lotes de inscricao
-              </h3>
-              <div class="flex items-center gap-3">
-                <div class="text-xs text-neutral-500 dark:text-neutral-400">
-                  Valor vigente: <span class="font-semibold text-neutral-700 dark:text-neutral-100">{{ currentPriceDisplay }}</span>
-                  <span class="ml-1">(base: {{ basePriceDisplay }})</span>
-                </div>
-                <button
-                  type="button"
-                  class="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500"
-                  @click="openLotCreateModal"
-                >
-                  Novo lote
-                </button>
+              <div>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/60">Lotes de inscricao</p>
+                <p class="text-sm text-white/70">
+                  Valor vigente: <span class="font-semibold text-white">{{ currentPriceDisplay }}</span>
+                  <span class="ml-1 text-white/60">(base: {{ basePriceDisplay }})</span>
+                </p>
               </div>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
+                @click="openLotCreateModal"
+              >
+                <PlusIcon class="h-4 w-4" />
+                Novo lote
+              </button>
             </div>
 
-            <div v-if="loadingLots" class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+            <div v-if="loadingLots" class="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
               Carregando lotes...
             </div>
 
             <div v-else>
-              <ul v-if="lotsForDetails.length" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+              <ul v-if="lotsForDetails.length" class="space-y-3 max-h-60 overflow-y-auto pr-2">
                 <li
                   v-for="lot in lotsForDetails"
                   :key="lot.id"
-                  class="rounded-lg border border-neutral-200 bg-white px-4 py-3 shadow-sm transition dark:border-neutral-700 dark:bg-neutral-900/60"
+                  class="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80"
                 >
-                  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-                        {{ lot.name }}
-                      </p>
-                      <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                      <p class="text-base font-semibold text-white">{{ lot.name }}</p>
+                      <p class="text-xs text-white/70">
                         Valor: {{ formatCurrency(lot.priceCents) }} | Periodo:
                         {{ formatDateTimeBr(lot.startsAt) }}
-                        <span v-if="lot.endsAt">
-                          - {{ formatDateTimeBr(lot.endsAt) }}
-                        </span>
-                        <span v-else>
-                          - sem data final
-                        </span>
+                        <span v-if="lot.endsAt">- {{ formatDateTimeBr(lot.endsAt) }}</span>
+                        <span v-else>- sem data final</span>
                       </p>
                     </div>
-                    <div class="flex flex-col items-end gap-2 sm:items-end">
+                    <div class="flex flex-col items-end gap-2">
                       <span
-                        :class="['inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide', lotBadgeClass(lot)]"
+                        :class="[
+                          'inline-flex rounded-full px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]',
+                          lotBadgeClass(lot)
+                        ]"
                       >
                         {{ lotStatusLabel(lot) }}
                       </span>
                       <span
                         v-if="isCurrentLot(lot)"
-                        class="text-[10px] font-semibold uppercase tracking-wide text-primary-600 dark:text-primary-300"
+                        class="text-[10px] font-semibold uppercase tracking-[0.3em] text-primary-200"
                       >
                         Lote vigente
                       </span>
-                      <div class="flex gap-2">
+                      <div class="flex flex-wrap gap-2">
                         <button
                           type="button"
-                          class="text-xs font-semibold uppercase tracking-wide text-primary-600 transition hover:text-primary-500 disabled:cursor-not-allowed disabled:text-neutral-400"
+                          class="rounded-full border border-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed"
                           :disabled="lotDeletingId === lot.id || editingLotId === lot.id"
                           @click="startLotEdit(lot)"
                         >
@@ -822,7 +757,7 @@
                         </button>
                         <button
                           type="button"
-                          class="text-xs font-semibold uppercase tracking-wide text-red-600 transition hover:text-red-500 disabled:cursor-not-allowed disabled:text-neutral-400"
+                          class="rounded-full border border-red-300/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed"
                           :disabled="lotDeletingId === lot.id || isLotActive(lot)"
                           @click="deleteLot(lot)"
                         >
@@ -835,117 +770,29 @@
                   </div>
                 </li>
               </ul>
-              <p v-else class="text-sm text-neutral-500 dark:text-neutral-400">
+              <p v-else class="text-sm text-white/70">
                 Nenhum lote cadastrado. O sistema utiliza o valor base do evento.
               </p>
             </div>
-
-            <form v-if="false"
-              class="space-y-3 rounded-lg border border-dashed border-neutral-300 p-4 text-sm dark:border-neutral-700"
-              @submit.prevent="submitLot"
-            >
-              <h4 class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-                {{ editingLotId ? "Editar lote" : "Criar novo lote" }}
-              </h4>
-              <div v-if="editingLotId" class="flex justify-end">
-                <button
-                  type="button"
-                  class="text-xs text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
-                  @click="cancelLotEdit"
-                >
-                  Cancelar edição
-                </button>
-              </div>
-              <div class="grid gap-3 sm:grid-cols-2">
-                <div class="sm:col-span-2">
-                  <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-                    Nome do lote
-                  </label>
-                  <input
-                    v-model="lotForm.name"
-                    type="text"
-                    required
-                    class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-                    Valor
-                  </label>
-                  <input
-                    v-model="lotForm.price"
-                    type="text"
-                    class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-                    placeholder="0,00"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-                    Inicio
-                  </label>
-                  <input
-                    v-model="lotForm.startsAt"
-                    type="datetime-local"
-                    required
-                    class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-                    Fim (opcional)
-                  </label>
-                  <input
-                    v-model="lotForm.endsAt"
-                    type="datetime-local"
-                    class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
-                  />
-                </div>
-              </div>
-              <div class="flex items-center justify-end gap-3">
-                <button
-                  v-if="editingLotId"
-                  type="button"
-                  class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                  @click="cancelLotEdit"
-                  :disabled="lotSaving"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  class="rounded-lg border border-neutral-300 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-neutral-600 transition hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                  @click="resetLotForm"
-                  :disabled="lotSaving"
-                >
-                  Limpar
-                </button>
-                <button
-                  type="submit"
-                  class="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
-                  :disabled="lotSaving"
-                >
-                  {{ lotSaving ? "Salvando..." : editingLotId ? "Salvar alterações" : "Adicionar lote" }}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div v-else class="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
-            Este evento é gratuito. Não há lotes cadastrados e todas as inscrições são confirmadas automaticamente.
           </div>
 
-          <div class="mt-6 flex flex-wrap justify-end gap-3 text-sm">
+          <div v-else class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
+            Este evento e gratuito. Nao ha lotes cadastrados e todas as inscricoes sao confirmadas automaticamente.
+          </div>
+
+          <div class="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:justify-between">
             <RouterLink
               v-if="details.event"
               :to="`/evento/${details.event.slug}`"
               target="_blank"
               rel="noopener"
-              class="rounded-lg border border-primary-500 px-4 py-2 text-primary-600 transition hover:bg-primary-50 dark:border-primary-400 dark:text-primary-200 dark:hover:bg-primary-500/20"
+              class="inline-flex items-center justify-center rounded-full border border-primary-300/50 px-5 py-2 text-sm font-semibold text-primary-200 transition hover:bg-primary-500/20"
             >
-              Ver página pública
+              Ver pagina publica
             </RouterLink>
             <button
               type="button"
-              class="rounded-lg border border-neutral-300 px-4 py-2 transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              class="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
               @click="closeDetails"
             >
               Fechar
@@ -1039,6 +886,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
+import { ArrowUturnLeftIcon, PlusIcon } from "@heroicons/vue/24/outline";
 
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -1170,9 +1018,8 @@ const editForm = reactive<EventForm>({
 const editingEventId = ref<string | null>(null);
 const savingCreate = ref(false);
 const savingEdit = ref(false);
-const showCreateForm = ref(false);
-const createCardRef = ref<HTMLFormElement | null>(null);
-const editCardRef = ref<HTMLFormElement | null>(null);
+const createModalOpen = ref(false);
+const editModalOpen = ref(false);
 
 const confirmDelete = reactive({
   open: false,
@@ -1469,6 +1316,26 @@ const resetEditForm = () => {
   editForm.ministryId = pickDefaultMinistryId();
 };
 
+const openCreateModal = () => {
+  resetCreateForm();
+  createModalOpen.value = true;
+};
+
+const handleCreateModalToggle = (value: boolean) => {
+  createModalOpen.value = value;
+  if (!value) {
+    resetCreateForm();
+  }
+};
+
+const handleEditModalToggle = (value: boolean) => {
+  if (!value) {
+    cancelEdit();
+  } else {
+    editModalOpen.value = true;
+  }
+};
+
 const submitLot = async () => {
   if (!details.event) return;
   if (!lotForm.name.trim()) {
@@ -1593,7 +1460,7 @@ const submitCreate = async () => {
       ministryId: createForm.ministryId
     } as Partial<ApiEvent>);
     resetCreateForm();
-    showCreateForm.value = false;
+    createModalOpen.value = false;
   } catch (error) {
     showError("Falha ao criar evento", error);
   } finally {
@@ -1656,23 +1523,13 @@ const startEdit = (event: ApiEvent) => {
   editForm.pendingPaymentValueRule =
     event.pendingPaymentValueRule ?? defaultPendingPaymentValueRule;
   editForm.ministryId = event.ministryId ?? "";
-  nextTick(() => {
-    editCardRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  editModalOpen.value = true;
 };
 
 const cancelEdit = () => {
   editingEventId.value = null;
   resetEditForm();
-};
-
-const toggleCreateForm = () => {
-  showCreateForm.value = !showCreateForm.value;
-  if (showCreateForm.value) {
-    nextTick(() => {
-      createCardRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }
+  editModalOpen.value = false;
 };
 
 const toggleActive = async (event: ApiEvent) => {
@@ -1745,11 +1602,14 @@ onMounted(async () => {
       createForm.ministryId = pickDefaultMinistryId();
     }
     if (!admin.events.length) {
-      showCreateForm.value = true;
+      createModalOpen.value = true;
     }
   } catch (error) {
     showError("Falha ao carregar eventos ou ministerios", error);
   }
 });
 </script>
+
+
+
 

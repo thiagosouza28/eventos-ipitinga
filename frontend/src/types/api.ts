@@ -136,6 +136,7 @@ export interface AdminUser {
   status: UserStatus;
   profile?: AdminProfile | null;
   permissions?: Record<string, PermissionState>;
+  permissionOverrides?: ProfilePermissionEntry[];
 }
 
 export interface Registration {

@@ -23,6 +23,7 @@ const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
 const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
 const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
+const AdminAccessDenied = () => import("../pages/admin/AdminAccessDenied.vue");
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -63,43 +64,43 @@ export const router = createRouter({
       path: "/admin/catalog",
       name: "admin-catalog",
       component: AdminCatalog,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "catalog", action: "view" } }
     },
     {
       path: "/admin/districts",
       name: "admin-districts",
       component: AdminDistricts,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "districts", action: "view" } }
     },
     {
       path: "/admin/churches",
       name: "admin-churches",
       component: AdminChurches,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "churches", action: "view" } }
     },
     {
       path: "/admin/ministries",
       name: "admin-ministries",
       component: AdminMinistries,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "ministries", action: "view" } }
     },
     {
       path: "/admin/events",
       name: "admin-events",
       component: AdminEvents,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "events", action: "view" } }
     },
     {
       path: "/admin/registrations",
       name: "admin-registrations",
       component: AdminRegistrations,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "registrations", action: "view" } }
     },
     {
       path: "/admin/orders",
       name: "admin-orders",
       component: AdminOrders,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "orders", action: "view" } }
     },
     {
       path: "/admin/financial",
@@ -112,13 +113,19 @@ export const router = createRouter({
       name: "admin-event-financial",
       component: AdminEventFinancial,
       props: true,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresPermission: { module: "financial", action: "view" } }
     },
     {
-      path: "/admin/checkin/:eventId",
+      path: "/admin/checkin/:eventId?",
       name: "admin-checkin",
       component: AdminCheckin,
       props: true,
+      meta: { requiresAuth: true, requiresPermission: { module: "checkin", action: "view" } }
+    },
+    {
+      path: "/admin/acesso-negado",
+      name: "admin-access-denied",
+      component: AdminAccessDenied,
       meta: { requiresAuth: true }
     },
     {
@@ -144,13 +151,17 @@ router.beforeEach((to, _from, next) => {
   if (to.meta.requiresPermission && auth.isAuthenticated) {
     const requirement = to.meta.requiresPermission as { module: string; action?: PermissionAction };
     if (!auth.hasPermission(requirement.module, requirement.action ?? "view")) {
-      if (auth.hasPermission("dashboard", "view")) {
-        next({ name: "admin-dashboard" });
-      } else {
-        next({ name: "admin-login" });
-      }
+      next({
+        name: "admin-access-denied",
+        query: {
+          module: requirement.module,
+          action: requirement.action ?? "view",
+          from: to.fullPath
+        }
+      });
       return;
     }
   }
   next();
 });
+

@@ -24,6 +24,7 @@ const buildRegistrationPayload = (registration: any) => {
   const district = registration.district ?? church.district ?? {};
   return {
     id: registration.id,
+    eventId: registration.eventId,
     fullName: registration.fullName,
     cpf: registration.cpf,
     eventTitle: event.title ?? "Nao informado",

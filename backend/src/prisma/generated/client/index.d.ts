@@ -88,6 +88,11 @@ export type Profile = $Result.DefaultSelection<Prisma.$ProfilePayload>
  * 
  */
 export type ProfilePermission = $Result.DefaultSelection<Prisma.$ProfilePermissionPayload>
+/**
+ * Model UserPermission
+ * 
+ */
+export type UserPermission = $Result.DefaultSelection<Prisma.$UserPermissionPayload>
 
 /**
  * Enums
@@ -378,6 +383,16 @@ export class PrismaClient<
     * ```
     */
   get profilePermission(): Prisma.ProfilePermissionDelegate<ExtArgs>;
+
+  /**
+   * `prisma.userPermission`: Exposes CRUD operations for the **UserPermission** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserPermissions
+    * const userPermissions = await prisma.userPermission.findMany()
+    * ```
+    */
+  get userPermission(): Prisma.UserPermissionDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -833,7 +848,8 @@ export namespace Prisma {
     Ministry: 'Ministry',
     MinistryUser: 'MinistryUser',
     Profile: 'Profile',
-    ProfilePermission: 'ProfilePermission'
+    ProfilePermission: 'ProfilePermission',
+    UserPermission: 'UserPermission'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -849,7 +865,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission"
+      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1843,6 +1859,72 @@ export namespace Prisma {
           }
         }
       }
+      UserPermission: {
+        payload: Prisma.$UserPermissionPayload<ExtArgs>
+        fields: Prisma.UserPermissionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserPermissionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserPermissionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>
+          }
+          findFirst: {
+            args: Prisma.UserPermissionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserPermissionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>
+          }
+          findMany: {
+            args: Prisma.UserPermissionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>[]
+          }
+          create: {
+            args: Prisma.UserPermissionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>
+          }
+          createMany: {
+            args: Prisma.UserPermissionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.UserPermissionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>
+          }
+          update: {
+            args: Prisma.UserPermissionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserPermissionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserPermissionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.UserPermissionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPermissionPayload>
+          }
+          aggregate: {
+            args: Prisma.UserPermissionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserPermission>
+          }
+          groupBy: {
+            args: Prisma.UserPermissionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserPermissionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserPermissionCountArgs<ExtArgs>
+            result: $Utils.Optional<UserPermissionCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2233,11 +2315,15 @@ export namespace Prisma {
   export type UserCountOutputType = {
     auditLogs: number
     ministries: number
+    eventsCreated: number
+    permissionsOverride: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
     ministries?: boolean | UserCountOutputTypeCountMinistriesArgs
+    eventsCreated?: boolean | UserCountOutputTypeCountEventsCreatedArgs
+    permissionsOverride?: boolean | UserCountOutputTypeCountPermissionsOverrideArgs
   }
 
   // Custom InputTypes
@@ -2263,6 +2349,20 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountMinistriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: MinistryUserWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountEventsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountPermissionsOverrideArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPermissionWhereInput
   }
 
 
@@ -4351,6 +4451,7 @@ export namespace Prisma {
     pendingPaymentValueRule: string | null
     createdAt: Date | null
     ministryId: string | null
+    createdById: string | null
   }
 
   export type EventMaxAggregateOutputType = {
@@ -4370,6 +4471,7 @@ export namespace Prisma {
     pendingPaymentValueRule: string | null
     createdAt: Date | null
     ministryId: string | null
+    createdById: string | null
   }
 
   export type EventCountAggregateOutputType = {
@@ -4389,6 +4491,7 @@ export namespace Prisma {
     pendingPaymentValueRule: number
     createdAt: number
     ministryId: number
+    createdById: number
     _all: number
   }
 
@@ -4420,6 +4523,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: true
     createdAt?: true
     ministryId?: true
+    createdById?: true
   }
 
   export type EventMaxAggregateInputType = {
@@ -4439,6 +4543,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: true
     createdAt?: true
     ministryId?: true
+    createdById?: true
   }
 
   export type EventCountAggregateInputType = {
@@ -4458,6 +4563,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: true
     createdAt?: true
     ministryId?: true
+    createdById?: true
     _all?: true
   }
 
@@ -4564,6 +4670,7 @@ export namespace Prisma {
     pendingPaymentValueRule: string
     createdAt: Date
     ministryId: string | null
+    createdById: string | null
     _count: EventCountAggregateOutputType | null
     _avg: EventAvgAggregateOutputType | null
     _sum: EventSumAggregateOutputType | null
@@ -4602,11 +4709,13 @@ export namespace Prisma {
     pendingPaymentValueRule?: boolean
     createdAt?: boolean
     ministryId?: boolean
+    createdById?: boolean
     orders?: boolean | Event$ordersArgs<ExtArgs>
     registrations?: boolean | Event$registrationsArgs<ExtArgs>
     lots?: boolean | Event$lotsArgs<ExtArgs>
     expenses?: boolean | Event$expensesArgs<ExtArgs>
     ministry?: boolean | Event$ministryArgs<ExtArgs>
+    createdBy?: boolean | Event$createdByArgs<ExtArgs>
     _count?: boolean | EventCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["event"]>
 
@@ -4628,6 +4737,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: boolean
     createdAt?: boolean
     ministryId?: boolean
+    createdById?: boolean
   }
 
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4636,6 +4746,7 @@ export namespace Prisma {
     lots?: boolean | Event$lotsArgs<ExtArgs>
     expenses?: boolean | Event$expensesArgs<ExtArgs>
     ministry?: boolean | Event$ministryArgs<ExtArgs>
+    createdBy?: boolean | Event$createdByArgs<ExtArgs>
     _count?: boolean | EventCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -4647,6 +4758,7 @@ export namespace Prisma {
       lots: Prisma.$EventLotPayload<ExtArgs>[]
       expenses: Prisma.$ExpensePayload<ExtArgs>[]
       ministry: Prisma.$MinistryPayload<ExtArgs> | null
+      createdBy: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4665,6 +4777,7 @@ export namespace Prisma {
       pendingPaymentValueRule: string
       createdAt: Date
       ministryId: string | null
+      createdById: string | null
     }, ExtArgs["result"]["event"]>
     composites: {}
   }
@@ -5010,6 +5123,7 @@ export namespace Prisma {
     lots<T extends Event$lotsArgs<ExtArgs> = {}>(args?: Subset<T, Event$lotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventLotPayload<ExtArgs>, T, "findMany"> | Null>
     expenses<T extends Event$expensesArgs<ExtArgs> = {}>(args?: Subset<T, Event$expensesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExpensePayload<ExtArgs>, T, "findMany"> | Null>
     ministry<T extends Event$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Event$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    createdBy<T extends Event$createdByArgs<ExtArgs> = {}>(args?: Subset<T, Event$createdByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5055,6 +5169,7 @@ export namespace Prisma {
     readonly pendingPaymentValueRule: FieldRef<"Event", 'String'>
     readonly createdAt: FieldRef<"Event", 'DateTime'>
     readonly ministryId: FieldRef<"Event", 'String'>
+    readonly createdById: FieldRef<"Event", 'String'>
   }
     
 
@@ -5446,6 +5561,21 @@ export namespace Prisma {
      */
     include?: MinistryInclude<ExtArgs> | null
     where?: MinistryWhereInput
+  }
+
+  /**
+   * Event.createdBy
+   */
+  export type Event$createdByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -10764,6 +10894,8 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     ministries?: boolean | User$ministriesArgs<ExtArgs>
     profile?: boolean | User$profileArgs<ExtArgs>
+    eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
+    permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -10791,6 +10923,8 @@ export namespace Prisma {
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     ministries?: boolean | User$ministriesArgs<ExtArgs>
     profile?: boolean | User$profileArgs<ExtArgs>
+    eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
+    permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -10802,6 +10936,8 @@ export namespace Prisma {
       auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
       ministries: Prisma.$MinistryUserPayload<ExtArgs>[]
       profile: Prisma.$ProfilePayload<ExtArgs> | null
+      eventsCreated: Prisma.$EventPayload<ExtArgs>[]
+      permissionsOverride: Prisma.$UserPermissionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -11163,6 +11299,8 @@ export namespace Prisma {
     auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany"> | Null>
     ministries<T extends User$ministriesArgs<ExtArgs> = {}>(args?: Subset<T, User$ministriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MinistryUserPayload<ExtArgs>, T, "findMany"> | Null>
     profile<T extends User$profileArgs<ExtArgs> = {}>(args?: Subset<T, User$profileArgs<ExtArgs>>): Prisma__ProfileClient<$Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    eventsCreated<T extends User$eventsCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$eventsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
+    permissionsOverride<T extends User$permissionsOverrideArgs<ExtArgs> = {}>(args?: Subset<T, User$permissionsOverrideArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11587,6 +11725,46 @@ export namespace Prisma {
      */
     include?: ProfileInclude<ExtArgs> | null
     where?: ProfileWhereInput
+  }
+
+  /**
+   * User.eventsCreated
+   */
+  export type User$eventsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Event
+     */
+    select?: EventSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventInclude<ExtArgs> | null
+    where?: EventWhereInput
+    orderBy?: EventOrderByWithRelationInput | EventOrderByWithRelationInput[]
+    cursor?: EventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EventScalarFieldEnum | EventScalarFieldEnum[]
+  }
+
+  /**
+   * User.permissionsOverride
+   */
+  export type User$permissionsOverrideArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    where?: UserPermissionWhereInput
+    orderBy?: UserPermissionOrderByWithRelationInput | UserPermissionOrderByWithRelationInput[]
+    cursor?: UserPermissionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserPermissionScalarFieldEnum | UserPermissionScalarFieldEnum[]
   }
 
   /**
@@ -17258,6 +17436,973 @@ export namespace Prisma {
 
 
   /**
+   * Model UserPermission
+   */
+
+  export type AggregateUserPermission = {
+    _count: UserPermissionCountAggregateOutputType | null
+    _min: UserPermissionMinAggregateOutputType | null
+    _max: UserPermissionMaxAggregateOutputType | null
+  }
+
+  export type UserPermissionMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    module: string | null
+    canView: boolean | null
+    canCreate: boolean | null
+    canEdit: boolean | null
+    canDelete: boolean | null
+    canApprove: boolean | null
+    canDeactivate: boolean | null
+    canReport: boolean | null
+    canFinancial: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserPermissionMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    module: string | null
+    canView: boolean | null
+    canCreate: boolean | null
+    canEdit: boolean | null
+    canDelete: boolean | null
+    canApprove: boolean | null
+    canDeactivate: boolean | null
+    canReport: boolean | null
+    canFinancial: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserPermissionCountAggregateOutputType = {
+    id: number
+    userId: number
+    module: number
+    canView: number
+    canCreate: number
+    canEdit: number
+    canDelete: number
+    canApprove: number
+    canDeactivate: number
+    canReport: number
+    canFinancial: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserPermissionMinAggregateInputType = {
+    id?: true
+    userId?: true
+    module?: true
+    canView?: true
+    canCreate?: true
+    canEdit?: true
+    canDelete?: true
+    canApprove?: true
+    canDeactivate?: true
+    canReport?: true
+    canFinancial?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserPermissionMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    module?: true
+    canView?: true
+    canCreate?: true
+    canEdit?: true
+    canDelete?: true
+    canApprove?: true
+    canDeactivate?: true
+    canReport?: true
+    canFinancial?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserPermissionCountAggregateInputType = {
+    id?: true
+    userId?: true
+    module?: true
+    canView?: true
+    canCreate?: true
+    canEdit?: true
+    canDelete?: true
+    canApprove?: true
+    canDeactivate?: true
+    canReport?: true
+    canFinancial?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserPermissionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserPermission to aggregate.
+     */
+    where?: UserPermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPermissions to fetch.
+     */
+    orderBy?: UserPermissionOrderByWithRelationInput | UserPermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserPermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserPermissions
+    **/
+    _count?: true | UserPermissionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserPermissionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserPermissionMaxAggregateInputType
+  }
+
+  export type GetUserPermissionAggregateType<T extends UserPermissionAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserPermission]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserPermission[P]>
+      : GetScalarType<T[P], AggregateUserPermission[P]>
+  }
+
+
+
+
+  export type UserPermissionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPermissionWhereInput
+    orderBy?: UserPermissionOrderByWithAggregationInput | UserPermissionOrderByWithAggregationInput[]
+    by: UserPermissionScalarFieldEnum[] | UserPermissionScalarFieldEnum
+    having?: UserPermissionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserPermissionCountAggregateInputType | true
+    _min?: UserPermissionMinAggregateInputType
+    _max?: UserPermissionMaxAggregateInputType
+  }
+
+  export type UserPermissionGroupByOutputType = {
+    id: string
+    userId: string
+    module: string
+    canView: boolean
+    canCreate: boolean
+    canEdit: boolean
+    canDelete: boolean
+    canApprove: boolean
+    canDeactivate: boolean
+    canReport: boolean
+    canFinancial: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: UserPermissionCountAggregateOutputType | null
+    _min: UserPermissionMinAggregateOutputType | null
+    _max: UserPermissionMaxAggregateOutputType | null
+  }
+
+  type GetUserPermissionGroupByPayload<T extends UserPermissionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserPermissionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserPermissionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserPermissionGroupByOutputType[P]>
+            : GetScalarType<T[P], UserPermissionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserPermissionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    module?: boolean
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPermission"]>
+
+
+  export type UserPermissionSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    module?: boolean
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserPermissionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $UserPermissionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserPermission"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      module: string
+      canView: boolean
+      canCreate: boolean
+      canEdit: boolean
+      canDelete: boolean
+      canApprove: boolean
+      canDeactivate: boolean
+      canReport: boolean
+      canFinancial: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["userPermission"]>
+    composites: {}
+  }
+
+  type UserPermissionGetPayload<S extends boolean | null | undefined | UserPermissionDefaultArgs> = $Result.GetResult<Prisma.$UserPermissionPayload, S>
+
+  type UserPermissionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<UserPermissionFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: UserPermissionCountAggregateInputType | true
+    }
+
+  export interface UserPermissionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserPermission'], meta: { name: 'UserPermission' } }
+    /**
+     * Find zero or one UserPermission that matches the filter.
+     * @param {UserPermissionFindUniqueArgs} args - Arguments to find a UserPermission
+     * @example
+     * // Get one UserPermission
+     * const userPermission = await prisma.userPermission.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserPermissionFindUniqueArgs>(args: SelectSubset<T, UserPermissionFindUniqueArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one UserPermission that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {UserPermissionFindUniqueOrThrowArgs} args - Arguments to find a UserPermission
+     * @example
+     * // Get one UserPermission
+     * const userPermission = await prisma.userPermission.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserPermissionFindUniqueOrThrowArgs>(args: SelectSubset<T, UserPermissionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first UserPermission that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionFindFirstArgs} args - Arguments to find a UserPermission
+     * @example
+     * // Get one UserPermission
+     * const userPermission = await prisma.userPermission.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserPermissionFindFirstArgs>(args?: SelectSubset<T, UserPermissionFindFirstArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first UserPermission that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionFindFirstOrThrowArgs} args - Arguments to find a UserPermission
+     * @example
+     * // Get one UserPermission
+     * const userPermission = await prisma.userPermission.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserPermissionFindFirstOrThrowArgs>(args?: SelectSubset<T, UserPermissionFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more UserPermissions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserPermissions
+     * const userPermissions = await prisma.userPermission.findMany()
+     * 
+     * // Get first 10 UserPermissions
+     * const userPermissions = await prisma.userPermission.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userPermissionWithIdOnly = await prisma.userPermission.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserPermissionFindManyArgs>(args?: SelectSubset<T, UserPermissionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a UserPermission.
+     * @param {UserPermissionCreateArgs} args - Arguments to create a UserPermission.
+     * @example
+     * // Create one UserPermission
+     * const UserPermission = await prisma.userPermission.create({
+     *   data: {
+     *     // ... data to create a UserPermission
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserPermissionCreateArgs>(args: SelectSubset<T, UserPermissionCreateArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many UserPermissions.
+     * @param {UserPermissionCreateManyArgs} args - Arguments to create many UserPermissions.
+     * @example
+     * // Create many UserPermissions
+     * const userPermission = await prisma.userPermission.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserPermissionCreateManyArgs>(args?: SelectSubset<T, UserPermissionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a UserPermission.
+     * @param {UserPermissionDeleteArgs} args - Arguments to delete one UserPermission.
+     * @example
+     * // Delete one UserPermission
+     * const UserPermission = await prisma.userPermission.delete({
+     *   where: {
+     *     // ... filter to delete one UserPermission
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserPermissionDeleteArgs>(args: SelectSubset<T, UserPermissionDeleteArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one UserPermission.
+     * @param {UserPermissionUpdateArgs} args - Arguments to update one UserPermission.
+     * @example
+     * // Update one UserPermission
+     * const userPermission = await prisma.userPermission.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserPermissionUpdateArgs>(args: SelectSubset<T, UserPermissionUpdateArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more UserPermissions.
+     * @param {UserPermissionDeleteManyArgs} args - Arguments to filter UserPermissions to delete.
+     * @example
+     * // Delete a few UserPermissions
+     * const { count } = await prisma.userPermission.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserPermissionDeleteManyArgs>(args?: SelectSubset<T, UserPermissionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserPermissions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserPermissions
+     * const userPermission = await prisma.userPermission.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserPermissionUpdateManyArgs>(args: SelectSubset<T, UserPermissionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one UserPermission.
+     * @param {UserPermissionUpsertArgs} args - Arguments to update or create a UserPermission.
+     * @example
+     * // Update or create a UserPermission
+     * const userPermission = await prisma.userPermission.upsert({
+     *   create: {
+     *     // ... data to create a UserPermission
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserPermission we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserPermissionUpsertArgs>(args: SelectSubset<T, UserPermissionUpsertArgs<ExtArgs>>): Prisma__UserPermissionClient<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of UserPermissions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionCountArgs} args - Arguments to filter UserPermissions to count.
+     * @example
+     * // Count the number of UserPermissions
+     * const count = await prisma.userPermission.count({
+     *   where: {
+     *     // ... the filter for the UserPermissions we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserPermissionCountArgs>(
+      args?: Subset<T, UserPermissionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserPermissionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserPermission.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserPermissionAggregateArgs>(args: Subset<T, UserPermissionAggregateArgs>): Prisma.PrismaPromise<GetUserPermissionAggregateType<T>>
+
+    /**
+     * Group by UserPermission.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPermissionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserPermissionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserPermissionGroupByArgs['orderBy'] }
+        : { orderBy?: UserPermissionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserPermissionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserPermissionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserPermission model
+   */
+  readonly fields: UserPermissionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserPermission.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserPermissionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserPermission model
+   */ 
+  interface UserPermissionFieldRefs {
+    readonly id: FieldRef<"UserPermission", 'String'>
+    readonly userId: FieldRef<"UserPermission", 'String'>
+    readonly module: FieldRef<"UserPermission", 'String'>
+    readonly canView: FieldRef<"UserPermission", 'Boolean'>
+    readonly canCreate: FieldRef<"UserPermission", 'Boolean'>
+    readonly canEdit: FieldRef<"UserPermission", 'Boolean'>
+    readonly canDelete: FieldRef<"UserPermission", 'Boolean'>
+    readonly canApprove: FieldRef<"UserPermission", 'Boolean'>
+    readonly canDeactivate: FieldRef<"UserPermission", 'Boolean'>
+    readonly canReport: FieldRef<"UserPermission", 'Boolean'>
+    readonly canFinancial: FieldRef<"UserPermission", 'Boolean'>
+    readonly createdAt: FieldRef<"UserPermission", 'DateTime'>
+    readonly updatedAt: FieldRef<"UserPermission", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserPermission findUnique
+   */
+  export type UserPermissionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPermission to fetch.
+     */
+    where: UserPermissionWhereUniqueInput
+  }
+
+  /**
+   * UserPermission findUniqueOrThrow
+   */
+  export type UserPermissionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPermission to fetch.
+     */
+    where: UserPermissionWhereUniqueInput
+  }
+
+  /**
+   * UserPermission findFirst
+   */
+  export type UserPermissionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPermission to fetch.
+     */
+    where?: UserPermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPermissions to fetch.
+     */
+    orderBy?: UserPermissionOrderByWithRelationInput | UserPermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserPermissions.
+     */
+    cursor?: UserPermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserPermissions.
+     */
+    distinct?: UserPermissionScalarFieldEnum | UserPermissionScalarFieldEnum[]
+  }
+
+  /**
+   * UserPermission findFirstOrThrow
+   */
+  export type UserPermissionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPermission to fetch.
+     */
+    where?: UserPermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPermissions to fetch.
+     */
+    orderBy?: UserPermissionOrderByWithRelationInput | UserPermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserPermissions.
+     */
+    cursor?: UserPermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserPermissions.
+     */
+    distinct?: UserPermissionScalarFieldEnum | UserPermissionScalarFieldEnum[]
+  }
+
+  /**
+   * UserPermission findMany
+   */
+  export type UserPermissionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPermissions to fetch.
+     */
+    where?: UserPermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPermissions to fetch.
+     */
+    orderBy?: UserPermissionOrderByWithRelationInput | UserPermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserPermissions.
+     */
+    cursor?: UserPermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPermissions.
+     */
+    skip?: number
+    distinct?: UserPermissionScalarFieldEnum | UserPermissionScalarFieldEnum[]
+  }
+
+  /**
+   * UserPermission create
+   */
+  export type UserPermissionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserPermission.
+     */
+    data: XOR<UserPermissionCreateInput, UserPermissionUncheckedCreateInput>
+  }
+
+  /**
+   * UserPermission createMany
+   */
+  export type UserPermissionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserPermissions.
+     */
+    data: UserPermissionCreateManyInput | UserPermissionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserPermission update
+   */
+  export type UserPermissionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserPermission.
+     */
+    data: XOR<UserPermissionUpdateInput, UserPermissionUncheckedUpdateInput>
+    /**
+     * Choose, which UserPermission to update.
+     */
+    where: UserPermissionWhereUniqueInput
+  }
+
+  /**
+   * UserPermission updateMany
+   */
+  export type UserPermissionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserPermissions.
+     */
+    data: XOR<UserPermissionUpdateManyMutationInput, UserPermissionUncheckedUpdateManyInput>
+    /**
+     * Filter which UserPermissions to update
+     */
+    where?: UserPermissionWhereInput
+  }
+
+  /**
+   * UserPermission upsert
+   */
+  export type UserPermissionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserPermission to update in case it exists.
+     */
+    where: UserPermissionWhereUniqueInput
+    /**
+     * In case the UserPermission found by the `where` argument doesn't exist, create a new UserPermission with this data.
+     */
+    create: XOR<UserPermissionCreateInput, UserPermissionUncheckedCreateInput>
+    /**
+     * In case the UserPermission was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserPermissionUpdateInput, UserPermissionUncheckedUpdateInput>
+  }
+
+  /**
+   * UserPermission delete
+   */
+  export type UserPermissionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+    /**
+     * Filter which UserPermission to delete.
+     */
+    where: UserPermissionWhereUniqueInput
+  }
+
+  /**
+   * UserPermission deleteMany
+   */
+  export type UserPermissionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserPermissions to delete
+     */
+    where?: UserPermissionWhereInput
+  }
+
+  /**
+   * UserPermission without action
+   */
+  export type UserPermissionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPermission
+     */
+    select?: UserPermissionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPermissionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -17313,7 +18458,8 @@ export namespace Prisma {
     paymentMethods: 'paymentMethods',
     pendingPaymentValueRule: 'pendingPaymentValueRule',
     createdAt: 'createdAt',
-    ministryId: 'ministryId'
+    ministryId: 'ministryId',
+    createdById: 'createdById'
   };
 
   export type EventScalarFieldEnum = (typeof EventScalarFieldEnum)[keyof typeof EventScalarFieldEnum]
@@ -17506,6 +18652,25 @@ export namespace Prisma {
   };
 
   export type ProfilePermissionScalarFieldEnum = (typeof ProfilePermissionScalarFieldEnum)[keyof typeof ProfilePermissionScalarFieldEnum]
+
+
+  export const UserPermissionScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    module: 'module',
+    canView: 'canView',
+    canCreate: 'canCreate',
+    canEdit: 'canEdit',
+    canDelete: 'canDelete',
+    canApprove: 'canApprove',
+    canDeactivate: 'canDeactivate',
+    canReport: 'canReport',
+    canFinancial: 'canFinancial',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserPermissionScalarFieldEnum = (typeof UserPermissionScalarFieldEnum)[keyof typeof UserPermissionScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -17737,11 +18902,13 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFilter<"Event"> | string
     createdAt?: DateTimeFilter<"Event"> | Date | string
     ministryId?: StringNullableFilter<"Event"> | string | null
+    createdById?: StringNullableFilter<"Event"> | string | null
     orders?: OrderListRelationFilter
     registrations?: RegistrationListRelationFilter
     lots?: EventLotListRelationFilter
     expenses?: ExpenseListRelationFilter
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
+    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
   }
 
   export type EventOrderByWithRelationInput = {
@@ -17761,11 +18928,13 @@ export namespace Prisma {
     pendingPaymentValueRule?: SortOrder
     createdAt?: SortOrder
     ministryId?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
     orders?: OrderOrderByRelationAggregateInput
     registrations?: RegistrationOrderByRelationAggregateInput
     lots?: EventLotOrderByRelationAggregateInput
     expenses?: ExpenseOrderByRelationAggregateInput
     ministry?: MinistryOrderByWithRelationInput
+    createdBy?: UserOrderByWithRelationInput
   }
 
   export type EventWhereUniqueInput = Prisma.AtLeast<{
@@ -17788,11 +18957,13 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFilter<"Event"> | string
     createdAt?: DateTimeFilter<"Event"> | Date | string
     ministryId?: StringNullableFilter<"Event"> | string | null
+    createdById?: StringNullableFilter<"Event"> | string | null
     orders?: OrderListRelationFilter
     registrations?: RegistrationListRelationFilter
     lots?: EventLotListRelationFilter
     expenses?: ExpenseListRelationFilter
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
+    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
   }, "id" | "slug">
 
   export type EventOrderByWithAggregationInput = {
@@ -17812,6 +18983,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: SortOrder
     createdAt?: SortOrder
     ministryId?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
     _count?: EventCountOrderByAggregateInput
     _avg?: EventAvgOrderByAggregateInput
     _max?: EventMaxOrderByAggregateInput
@@ -17839,6 +19011,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringWithAggregatesFilter<"Event"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     ministryId?: StringNullableWithAggregatesFilter<"Event"> | string | null
+    createdById?: StringNullableWithAggregatesFilter<"Event"> | string | null
   }
 
   export type OrderWhereInput = {
@@ -18341,6 +19514,8 @@ export namespace Prisma {
     auditLogs?: AuditLogListRelationFilter
     ministries?: MinistryUserListRelationFilter
     profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
+    eventsCreated?: EventListRelationFilter
+    permissionsOverride?: UserPermissionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -18363,6 +19538,8 @@ export namespace Prisma {
     auditLogs?: AuditLogOrderByRelationAggregateInput
     ministries?: MinistryUserOrderByRelationAggregateInput
     profile?: ProfileOrderByWithRelationInput
+    eventsCreated?: EventOrderByRelationAggregateInput
+    permissionsOverride?: UserPermissionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -18388,6 +19565,8 @@ export namespace Prisma {
     auditLogs?: AuditLogListRelationFilter
     ministries?: MinistryUserListRelationFilter
     profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
+    eventsCreated?: EventListRelationFilter
+    permissionsOverride?: UserPermissionListRelationFilter
   }, "id" | "cpf" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -18857,6 +20036,102 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"ProfilePermission"> | Date | string
   }
 
+  export type UserPermissionWhereInput = {
+    AND?: UserPermissionWhereInput | UserPermissionWhereInput[]
+    OR?: UserPermissionWhereInput[]
+    NOT?: UserPermissionWhereInput | UserPermissionWhereInput[]
+    id?: StringFilter<"UserPermission"> | string
+    userId?: StringFilter<"UserPermission"> | string
+    module?: StringFilter<"UserPermission"> | string
+    canView?: BoolFilter<"UserPermission"> | boolean
+    canCreate?: BoolFilter<"UserPermission"> | boolean
+    canEdit?: BoolFilter<"UserPermission"> | boolean
+    canDelete?: BoolFilter<"UserPermission"> | boolean
+    canApprove?: BoolFilter<"UserPermission"> | boolean
+    canDeactivate?: BoolFilter<"UserPermission"> | boolean
+    canReport?: BoolFilter<"UserPermission"> | boolean
+    canFinancial?: BoolFilter<"UserPermission"> | boolean
+    createdAt?: DateTimeFilter<"UserPermission"> | Date | string
+    updatedAt?: DateTimeFilter<"UserPermission"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type UserPermissionOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    module?: SortOrder
+    canView?: SortOrder
+    canCreate?: SortOrder
+    canEdit?: SortOrder
+    canDelete?: SortOrder
+    canApprove?: SortOrder
+    canDeactivate?: SortOrder
+    canReport?: SortOrder
+    canFinancial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type UserPermissionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_module?: UserPermissionUserIdModuleCompoundUniqueInput
+    AND?: UserPermissionWhereInput | UserPermissionWhereInput[]
+    OR?: UserPermissionWhereInput[]
+    NOT?: UserPermissionWhereInput | UserPermissionWhereInput[]
+    userId?: StringFilter<"UserPermission"> | string
+    module?: StringFilter<"UserPermission"> | string
+    canView?: BoolFilter<"UserPermission"> | boolean
+    canCreate?: BoolFilter<"UserPermission"> | boolean
+    canEdit?: BoolFilter<"UserPermission"> | boolean
+    canDelete?: BoolFilter<"UserPermission"> | boolean
+    canApprove?: BoolFilter<"UserPermission"> | boolean
+    canDeactivate?: BoolFilter<"UserPermission"> | boolean
+    canReport?: BoolFilter<"UserPermission"> | boolean
+    canFinancial?: BoolFilter<"UserPermission"> | boolean
+    createdAt?: DateTimeFilter<"UserPermission"> | Date | string
+    updatedAt?: DateTimeFilter<"UserPermission"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id" | "userId_module">
+
+  export type UserPermissionOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    module?: SortOrder
+    canView?: SortOrder
+    canCreate?: SortOrder
+    canEdit?: SortOrder
+    canDelete?: SortOrder
+    canApprove?: SortOrder
+    canDeactivate?: SortOrder
+    canReport?: SortOrder
+    canFinancial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserPermissionCountOrderByAggregateInput
+    _max?: UserPermissionMaxOrderByAggregateInput
+    _min?: UserPermissionMinOrderByAggregateInput
+  }
+
+  export type UserPermissionScalarWhereWithAggregatesInput = {
+    AND?: UserPermissionScalarWhereWithAggregatesInput | UserPermissionScalarWhereWithAggregatesInput[]
+    OR?: UserPermissionScalarWhereWithAggregatesInput[]
+    NOT?: UserPermissionScalarWhereWithAggregatesInput | UserPermissionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserPermission"> | string
+    userId?: StringWithAggregatesFilter<"UserPermission"> | string
+    module?: StringWithAggregatesFilter<"UserPermission"> | string
+    canView?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canCreate?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canEdit?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canDelete?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canApprove?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canDeactivate?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canReport?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    canFinancial?: BoolWithAggregatesFilter<"UserPermission"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"UserPermission"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"UserPermission"> | Date | string
+  }
+
   export type DistrictCreateInput = {
     id?: string
     name: string
@@ -19037,6 +20312,7 @@ export namespace Prisma {
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateInput = {
@@ -19056,6 +20332,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    createdById?: string | null
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
@@ -19083,6 +20360,7 @@ export namespace Prisma {
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateInput = {
@@ -19102,6 +20380,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
@@ -19125,6 +20404,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    createdById?: string | null
   }
 
   export type EventUpdateManyMutationInput = {
@@ -19162,6 +20442,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrderCreateInput = {
@@ -19697,6 +20978,8 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -19716,6 +20999,8 @@ export namespace Prisma {
     createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -19735,6 +21020,8 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -19754,6 +21041,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -20264,6 +21553,117 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type UserPermissionCreateInput = {
+    id?: string
+    module: string
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutPermissionsOverrideInput
+  }
+
+  export type UserPermissionUncheckedCreateInput = {
+    id?: string
+    userId: string
+    module: string
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPermissionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutPermissionsOverrideNestedInput
+  }
+
+  export type UserPermissionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPermissionCreateManyInput = {
+    id?: string
+    userId: string
+    module: string
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPermissionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPermissionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -20531,6 +21931,11 @@ export namespace Prisma {
     isNot?: MinistryWhereInput | null
   }
 
+  export type UserNullableRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
   export type OrderOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -20560,6 +21965,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: SortOrder
     createdAt?: SortOrder
     ministryId?: SortOrder
+    createdById?: SortOrder
   }
 
   export type EventAvgOrderByAggregateInput = {
@@ -20584,6 +21990,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: SortOrder
     createdAt?: SortOrder
     ministryId?: SortOrder
+    createdById?: SortOrder
   }
 
   export type EventMinOrderByAggregateInput = {
@@ -20603,6 +22010,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: SortOrder
     createdAt?: SortOrder
     ministryId?: SortOrder
+    createdById?: SortOrder
   }
 
   export type EventSumOrderByAggregateInput = {
@@ -20926,11 +22334,6 @@ export namespace Prisma {
     orderId?: SortOrder
   }
 
-  export type UserNullableRelationFilter = {
-    is?: UserWhereInput | null
-    isNot?: UserWhereInput | null
-  }
-
   export type AuditLogCountOrderByAggregateInput = {
     id?: SortOrder
     actorUserId?: SortOrder
@@ -20995,11 +22398,31 @@ export namespace Prisma {
     isNot?: ProfileWhereInput | null
   }
 
+  export type EventListRelationFilter = {
+    every?: EventWhereInput
+    some?: EventWhereInput
+    none?: EventWhereInput
+  }
+
+  export type UserPermissionListRelationFilter = {
+    every?: UserPermissionWhereInput
+    some?: UserPermissionWhereInput
+    none?: UserPermissionWhereInput
+  }
+
   export type AuditLogOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type MinistryUserOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserPermissionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -21154,16 +22577,6 @@ export namespace Prisma {
     amountCents?: SortOrder
   }
 
-  export type EventListRelationFilter = {
-    every?: EventWhereInput
-    some?: EventWhereInput
-    none?: EventWhereInput
-  }
-
-  export type EventOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
   export type MinistryCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -21306,6 +22719,59 @@ export namespace Prisma {
   export type ProfilePermissionMinOrderByAggregateInput = {
     id?: SortOrder
     profileId?: SortOrder
+    module?: SortOrder
+    canView?: SortOrder
+    canCreate?: SortOrder
+    canEdit?: SortOrder
+    canDelete?: SortOrder
+    canApprove?: SortOrder
+    canDeactivate?: SortOrder
+    canReport?: SortOrder
+    canFinancial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserPermissionUserIdModuleCompoundUniqueInput = {
+    userId: string
+    module: string
+  }
+
+  export type UserPermissionCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    module?: SortOrder
+    canView?: SortOrder
+    canCreate?: SortOrder
+    canEdit?: SortOrder
+    canDelete?: SortOrder
+    canApprove?: SortOrder
+    canDeactivate?: SortOrder
+    canReport?: SortOrder
+    canFinancial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserPermissionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    module?: SortOrder
+    canView?: SortOrder
+    canCreate?: SortOrder
+    canEdit?: SortOrder
+    canDelete?: SortOrder
+    canApprove?: SortOrder
+    canDeactivate?: SortOrder
+    canReport?: SortOrder
+    canFinancial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserPermissionMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
     module?: SortOrder
     canView?: SortOrder
     canCreate?: SortOrder
@@ -21593,6 +23059,12 @@ export namespace Prisma {
     connect?: MinistryWhereUniqueInput
   }
 
+  export type UserCreateNestedOneWithoutEventsCreatedInput = {
+    create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
+    connect?: UserWhereUniqueInput
+  }
+
   export type OrderUncheckedCreateNestedManyWithoutEventInput = {
     create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
     connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
@@ -21705,6 +23177,16 @@ export namespace Prisma {
     delete?: MinistryWhereInput | boolean
     connect?: MinistryWhereUniqueInput
     update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutEventsInput, MinistryUpdateWithoutEventsInput>, MinistryUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type UserUpdateOneWithoutEventsCreatedNestedInput = {
+    create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
+    upsert?: UserUpsertWithoutEventsCreatedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEventsCreatedInput, UserUpdateWithoutEventsCreatedInput>, UserUncheckedUpdateWithoutEventsCreatedInput>
   }
 
   export type OrderUncheckedUpdateManyWithoutEventNestedInput = {
@@ -22125,6 +23607,20 @@ export namespace Prisma {
     connect?: ProfileWhereUniqueInput
   }
 
+  export type EventCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+  }
+
+  export type UserPermissionCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput> | UserPermissionCreateWithoutUserInput[] | UserPermissionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPermissionCreateOrConnectWithoutUserInput | UserPermissionCreateOrConnectWithoutUserInput[]
+    createMany?: UserPermissionCreateManyUserInputEnvelope
+    connect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+  }
+
   export type AuditLogUncheckedCreateNestedManyWithoutActorInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
@@ -22137,6 +23633,20 @@ export namespace Prisma {
     connectOrCreate?: MinistryUserCreateOrConnectWithoutUserInput | MinistryUserCreateOrConnectWithoutUserInput[]
     createMany?: MinistryUserCreateManyUserInputEnvelope
     connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+  }
+
+  export type EventUncheckedCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+  }
+
+  export type UserPermissionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput> | UserPermissionCreateWithoutUserInput[] | UserPermissionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPermissionCreateOrConnectWithoutUserInput | UserPermissionCreateOrConnectWithoutUserInput[]
+    createMany?: UserPermissionCreateManyUserInputEnvelope
+    connect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
   }
 
   export type EnumUserStatusFieldUpdateOperationsInput = {
@@ -22201,6 +23711,34 @@ export namespace Prisma {
     update?: XOR<XOR<ProfileUpdateToOneWithWhereWithoutUsersInput, ProfileUpdateWithoutUsersInput>, ProfileUncheckedUpdateWithoutUsersInput>
   }
 
+  export type EventUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutCreatedByInput | EventUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutCreatedByInput | EventUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutCreatedByInput | EventUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
+  }
+
+  export type UserPermissionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput> | UserPermissionCreateWithoutUserInput[] | UserPermissionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPermissionCreateOrConnectWithoutUserInput | UserPermissionCreateOrConnectWithoutUserInput[]
+    upsert?: UserPermissionUpsertWithWhereUniqueWithoutUserInput | UserPermissionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserPermissionCreateManyUserInputEnvelope
+    set?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    disconnect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    delete?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    connect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    update?: UserPermissionUpdateWithWhereUniqueWithoutUserInput | UserPermissionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserPermissionUpdateManyWithWhereWithoutUserInput | UserPermissionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
+  }
+
   export type AuditLogUncheckedUpdateManyWithoutActorNestedInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
@@ -22227,6 +23765,34 @@ export namespace Prisma {
     update?: MinistryUserUpdateWithWhereUniqueWithoutUserInput | MinistryUserUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: MinistryUserUpdateManyWithWhereWithoutUserInput | MinistryUserUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
+  }
+
+  export type EventUncheckedUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutCreatedByInput | EventUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutCreatedByInput | EventUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutCreatedByInput | EventUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
+  }
+
+  export type UserPermissionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput> | UserPermissionCreateWithoutUserInput[] | UserPermissionUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPermissionCreateOrConnectWithoutUserInput | UserPermissionCreateOrConnectWithoutUserInput[]
+    upsert?: UserPermissionUpsertWithWhereUniqueWithoutUserInput | UserPermissionUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserPermissionCreateManyUserInputEnvelope
+    set?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    disconnect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    delete?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    connect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+    update?: UserPermissionUpdateWithWhereUniqueWithoutUserInput | UserPermissionUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserPermissionUpdateManyWithWhereWithoutUserInput | UserPermissionUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
   }
 
   export type EventCreateNestedOneWithoutLotsInput = {
@@ -22551,6 +24117,20 @@ export namespace Prisma {
     update?: XOR<XOR<ProfileUpdateToOneWithWhereWithoutPermissionsInput, ProfileUpdateWithoutPermissionsInput>, ProfileUncheckedUpdateWithoutPermissionsInput>
   }
 
+  export type UserCreateNestedOneWithoutPermissionsOverrideInput = {
+    create?: XOR<UserCreateWithoutPermissionsOverrideInput, UserUncheckedCreateWithoutPermissionsOverrideInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPermissionsOverrideInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutPermissionsOverrideNestedInput = {
+    create?: XOR<UserCreateWithoutPermissionsOverrideInput, UserUncheckedCreateWithoutPermissionsOverrideInput>
+    connectOrCreate?: UserCreateOrConnectWithoutPermissionsOverrideInput
+    upsert?: UserUpsertWithoutPermissionsOverrideInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPermissionsOverrideInput, UserUpdateWithoutPermissionsOverrideInput>, UserUncheckedUpdateWithoutPermissionsOverrideInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -22823,6 +24403,8 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutDistrictScopeInput = {
@@ -22841,6 +24423,8 @@ export namespace Prisma {
     createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutDistrictScopeInput = {
@@ -23055,6 +24639,8 @@ export namespace Prisma {
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutChurchScopeInput = {
@@ -23073,6 +24659,8 @@ export namespace Prisma {
     createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutChurchScopeInput = {
@@ -23399,6 +24987,51 @@ export namespace Prisma {
     create: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
   }
 
+  export type UserCreateWithoutEventsCreatedInput = {
+    id?: string
+    name: string
+    cpf?: string | null
+    phone?: string | null
+    photoUrl?: string | null
+    email: string
+    passwordHash: string
+    role: string
+    mustChangePassword?: boolean
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutEventsCreatedInput = {
+    id?: string
+    name: string
+    cpf?: string | null
+    phone?: string | null
+    photoUrl?: string | null
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    mustChangePassword?: boolean
+    churchScopeId?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutEventsCreatedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+  }
+
   export type OrderUpsertWithWhereUniqueWithoutEventInput = {
     where: OrderWhereUniqueInput
     update: XOR<OrderUpdateWithoutEventInput, OrderUncheckedUpdateWithoutEventInput>
@@ -23548,6 +25181,57 @@ export namespace Prisma {
     users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
   }
 
+  export type UserUpsertWithoutEventsCreatedInput = {
+    update: XOR<UserUpdateWithoutEventsCreatedInput, UserUncheckedUpdateWithoutEventsCreatedInput>
+    create: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutEventsCreatedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutEventsCreatedInput, UserUncheckedUpdateWithoutEventsCreatedInput>
+  }
+
+  export type UserUpdateWithoutEventsCreatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutEventsCreatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type EventCreateWithoutOrdersInput = {
     id?: string
     title: string
@@ -23568,6 +25252,7 @@ export namespace Prisma {
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutOrdersInput = {
@@ -23587,6 +25272,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    createdById?: string | null
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
@@ -23765,6 +25451,7 @@ export namespace Prisma {
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutOrdersInput = {
@@ -23784,6 +25471,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
@@ -23964,6 +25652,7 @@ export namespace Prisma {
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutRegistrationsInput = {
@@ -23983,6 +25672,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    createdById?: string | null
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
@@ -24190,6 +25880,7 @@ export namespace Prisma {
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutRegistrationsInput = {
@@ -24209,6 +25900,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
@@ -24659,6 +26351,8 @@ export namespace Prisma {
     churchScope?: ChurchCreateNestedOneWithoutUsersInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -24677,6 +26371,8 @@ export namespace Prisma {
     status?: $Enums.UserStatus
     createdAt?: Date | string
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -24711,6 +26407,8 @@ export namespace Prisma {
     churchScope?: ChurchUpdateOneWithoutUsersNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -24729,6 +26427,8 @@ export namespace Prisma {
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type DistrictCreateWithoutUsersInput = {
@@ -24858,6 +26558,102 @@ export namespace Prisma {
   export type ProfileCreateOrConnectWithoutUsersInput = {
     where: ProfileWhereUniqueInput
     create: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
+  }
+
+  export type EventCreateWithoutCreatedByInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    orders?: OrderCreateNestedManyWithoutEventInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
+    lots?: EventLotCreateNestedManyWithoutEventInput
+    expenses?: ExpenseCreateNestedManyWithoutEventInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+  }
+
+  export type EventUncheckedCreateWithoutCreatedByInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
+    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+  }
+
+  export type EventCreateOrConnectWithoutCreatedByInput = {
+    where: EventWhereUniqueInput
+    create: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type EventCreateManyCreatedByInputEnvelope = {
+    data: EventCreateManyCreatedByInput | EventCreateManyCreatedByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserPermissionCreateWithoutUserInput = {
+    id?: string
+    module: string
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPermissionUncheckedCreateWithoutUserInput = {
+    id?: string
+    module: string
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserPermissionCreateOrConnectWithoutUserInput = {
+    where: UserPermissionWhereUniqueInput
+    create: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserPermissionCreateManyUserInputEnvelope = {
+    data: UserPermissionCreateManyUserInput | UserPermissionCreateManyUserInput[]
+    skipDuplicates?: boolean
   }
 
   export type DistrictUpsertWithoutUsersInput = {
@@ -25013,6 +26809,80 @@ export namespace Prisma {
     permissions?: ProfilePermissionUncheckedUpdateManyWithoutProfileNestedInput
   }
 
+  export type EventUpsertWithWhereUniqueWithoutCreatedByInput = {
+    where: EventWhereUniqueInput
+    update: XOR<EventUpdateWithoutCreatedByInput, EventUncheckedUpdateWithoutCreatedByInput>
+    create: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type EventUpdateWithWhereUniqueWithoutCreatedByInput = {
+    where: EventWhereUniqueInput
+    data: XOR<EventUpdateWithoutCreatedByInput, EventUncheckedUpdateWithoutCreatedByInput>
+  }
+
+  export type EventUpdateManyWithWhereWithoutCreatedByInput = {
+    where: EventScalarWhereInput
+    data: XOR<EventUpdateManyMutationInput, EventUncheckedUpdateManyWithoutCreatedByInput>
+  }
+
+  export type EventScalarWhereInput = {
+    AND?: EventScalarWhereInput | EventScalarWhereInput[]
+    OR?: EventScalarWhereInput[]
+    NOT?: EventScalarWhereInput | EventScalarWhereInput[]
+    id?: StringFilter<"Event"> | string
+    title?: StringFilter<"Event"> | string
+    description?: StringFilter<"Event"> | string
+    startDate?: DateTimeFilter<"Event"> | Date | string
+    endDate?: DateTimeFilter<"Event"> | Date | string
+    location?: StringFilter<"Event"> | string
+    bannerUrl?: StringNullableFilter<"Event"> | string | null
+    priceCents?: IntFilter<"Event"> | number
+    minAgeYears?: IntNullableFilter<"Event"> | number | null
+    isFree?: BoolFilter<"Event"> | boolean
+    isActive?: BoolFilter<"Event"> | boolean
+    slug?: StringFilter<"Event"> | string
+    paymentMethods?: StringFilter<"Event"> | string
+    pendingPaymentValueRule?: StringFilter<"Event"> | string
+    createdAt?: DateTimeFilter<"Event"> | Date | string
+    ministryId?: StringNullableFilter<"Event"> | string | null
+    createdById?: StringNullableFilter<"Event"> | string | null
+  }
+
+  export type UserPermissionUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserPermissionWhereUniqueInput
+    update: XOR<UserPermissionUpdateWithoutUserInput, UserPermissionUncheckedUpdateWithoutUserInput>
+    create: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserPermissionUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserPermissionWhereUniqueInput
+    data: XOR<UserPermissionUpdateWithoutUserInput, UserPermissionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserPermissionUpdateManyWithWhereWithoutUserInput = {
+    where: UserPermissionScalarWhereInput
+    data: XOR<UserPermissionUpdateManyMutationInput, UserPermissionUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type UserPermissionScalarWhereInput = {
+    AND?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
+    OR?: UserPermissionScalarWhereInput[]
+    NOT?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
+    id?: StringFilter<"UserPermission"> | string
+    userId?: StringFilter<"UserPermission"> | string
+    module?: StringFilter<"UserPermission"> | string
+    canView?: BoolFilter<"UserPermission"> | boolean
+    canCreate?: BoolFilter<"UserPermission"> | boolean
+    canEdit?: BoolFilter<"UserPermission"> | boolean
+    canDelete?: BoolFilter<"UserPermission"> | boolean
+    canApprove?: BoolFilter<"UserPermission"> | boolean
+    canDeactivate?: BoolFilter<"UserPermission"> | boolean
+    canReport?: BoolFilter<"UserPermission"> | boolean
+    canFinancial?: BoolFilter<"UserPermission"> | boolean
+    createdAt?: DateTimeFilter<"UserPermission"> | Date | string
+    updatedAt?: DateTimeFilter<"UserPermission"> | Date | string
+  }
+
   export type EventCreateWithoutLotsInput = {
     id?: string
     title: string
@@ -25033,6 +26903,7 @@ export namespace Prisma {
     registrations?: RegistrationCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutLotsInput = {
@@ -25052,6 +26923,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    createdById?: string | null
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
@@ -25147,6 +27019,7 @@ export namespace Prisma {
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutLotsInput = {
@@ -25166,6 +27039,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
@@ -25207,6 +27081,7 @@ export namespace Prisma {
     registrations?: RegistrationCreateNestedManyWithoutEventInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutExpensesInput = {
@@ -25226,6 +27101,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    createdById?: string | null
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
@@ -25267,6 +27143,7 @@ export namespace Prisma {
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutExpensesInput = {
@@ -25286,6 +27163,7 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
@@ -25311,6 +27189,7 @@ export namespace Prisma {
     registrations?: RegistrationCreateNestedManyWithoutEventInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutMinistryInput = {
@@ -25329,6 +27208,7 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
+    createdById?: string | null
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
@@ -25435,28 +27315,6 @@ export namespace Prisma {
     data: XOR<EventUpdateManyMutationInput, EventUncheckedUpdateManyWithoutMinistryInput>
   }
 
-  export type EventScalarWhereInput = {
-    AND?: EventScalarWhereInput | EventScalarWhereInput[]
-    OR?: EventScalarWhereInput[]
-    NOT?: EventScalarWhereInput | EventScalarWhereInput[]
-    id?: StringFilter<"Event"> | string
-    title?: StringFilter<"Event"> | string
-    description?: StringFilter<"Event"> | string
-    startDate?: DateTimeFilter<"Event"> | Date | string
-    endDate?: DateTimeFilter<"Event"> | Date | string
-    location?: StringFilter<"Event"> | string
-    bannerUrl?: StringNullableFilter<"Event"> | string | null
-    priceCents?: IntFilter<"Event"> | number
-    minAgeYears?: IntNullableFilter<"Event"> | number | null
-    isFree?: BoolFilter<"Event"> | boolean
-    isActive?: BoolFilter<"Event"> | boolean
-    slug?: StringFilter<"Event"> | string
-    paymentMethods?: StringFilter<"Event"> | string
-    pendingPaymentValueRule?: StringFilter<"Event"> | string
-    createdAt?: DateTimeFilter<"Event"> | Date | string
-    ministryId?: StringNullableFilter<"Event"> | string | null
-  }
-
   export type RegistrationUpsertWithWhereUniqueWithoutMinistryInput = {
     where: RegistrationWhereUniqueInput
     update: XOR<RegistrationUpdateWithoutMinistryInput, RegistrationUncheckedUpdateWithoutMinistryInput>
@@ -25505,6 +27363,8 @@ export namespace Prisma {
     churchScope?: ChurchCreateNestedOneWithoutUsersInput
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutMinistriesInput = {
@@ -25523,6 +27383,8 @@ export namespace Prisma {
     status?: $Enums.UserStatus
     createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutMinistriesInput = {
@@ -25584,6 +27446,8 @@ export namespace Prisma {
     churchScope?: ChurchUpdateOneWithoutUsersNestedInput
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMinistriesInput = {
@@ -25602,6 +27466,8 @@ export namespace Prisma {
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MinistryUpsertWithoutUsersInput = {
@@ -25693,6 +27559,8 @@ export namespace Prisma {
     churchScope?: ChurchCreateNestedOneWithoutUsersInput
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutProfileInput = {
@@ -25711,6 +27579,8 @@ export namespace Prisma {
     createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutProfileInput = {
@@ -25830,6 +27700,102 @@ export namespace Prisma {
     users?: UserUncheckedUpdateManyWithoutProfileNestedInput
   }
 
+  export type UserCreateWithoutPermissionsOverrideInput = {
+    id?: string
+    name: string
+    cpf?: string | null
+    phone?: string | null
+    photoUrl?: string | null
+    email: string
+    passwordHash: string
+    role: string
+    mustChangePassword?: boolean
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+  }
+
+  export type UserUncheckedCreateWithoutPermissionsOverrideInput = {
+    id?: string
+    name: string
+    cpf?: string | null
+    phone?: string | null
+    photoUrl?: string | null
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    mustChangePassword?: boolean
+    churchScopeId?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    createdAt?: Date | string
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+  }
+
+  export type UserCreateOrConnectWithoutPermissionsOverrideInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPermissionsOverrideInput, UserUncheckedCreateWithoutPermissionsOverrideInput>
+  }
+
+  export type UserUpsertWithoutPermissionsOverrideInput = {
+    update: XOR<UserUpdateWithoutPermissionsOverrideInput, UserUncheckedUpdateWithoutPermissionsOverrideInput>
+    create: XOR<UserCreateWithoutPermissionsOverrideInput, UserUncheckedCreateWithoutPermissionsOverrideInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutPermissionsOverrideInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutPermissionsOverrideInput, UserUncheckedUpdateWithoutPermissionsOverrideInput>
+  }
+
+  export type UserUpdateWithoutPermissionsOverrideInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPermissionsOverrideInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+  }
+
   export type ChurchCreateManyDistrictInput = {
     id?: string
     name: string
@@ -25935,6 +27901,8 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutDistrictScopeInput = {
@@ -25953,6 +27921,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutDistrictScopeInput = {
@@ -26089,6 +28059,8 @@ export namespace Prisma {
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChurchScopeInput = {
@@ -26107,6 +28079,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutChurchScopeInput = {
@@ -26656,6 +28630,40 @@ export namespace Prisma {
     assignedAt?: Date | string
   }
 
+  export type EventCreateManyCreatedByInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+  }
+
+  export type UserPermissionCreateManyUserInput = {
+    id?: string
+    module: string
+    canView?: boolean
+    canCreate?: boolean
+    canEdit?: boolean
+    canDelete?: boolean
+    canApprove?: boolean
+    canDeactivate?: boolean
+    canReport?: boolean
+    canFinancial?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type AuditLogUpdateWithoutActorInput = {
     id?: StringFieldUpdateOperationsInput | string
     action?: StringFieldUpdateOperationsInput | string
@@ -26696,6 +28704,116 @@ export namespace Prisma {
   export type MinistryUserUncheckedUpdateManyWithoutUserInput = {
     ministryId?: StringFieldUpdateOperationsInput | string
     assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventUpdateWithoutCreatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: OrderUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+    lots?: EventLotUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUpdateManyWithoutEventNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+  }
+
+  export type EventUncheckedUpdateWithoutCreatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
+    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateManyWithoutCreatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type UserPermissionUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPermissionUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserPermissionUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    module?: StringFieldUpdateOperationsInput | string
+    canView?: BoolFieldUpdateOperationsInput | boolean
+    canCreate?: BoolFieldUpdateOperationsInput | boolean
+    canEdit?: BoolFieldUpdateOperationsInput | boolean
+    canDelete?: BoolFieldUpdateOperationsInput | boolean
+    canApprove?: BoolFieldUpdateOperationsInput | boolean
+    canDeactivate?: BoolFieldUpdateOperationsInput | boolean
+    canReport?: BoolFieldUpdateOperationsInput | boolean
+    canFinancial?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrderCreateManyPricingLotInput = {
@@ -26796,6 +28914,7 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
+    createdById?: string | null
   }
 
   export type RegistrationCreateManyMinistryInput = {
@@ -26844,6 +28963,7 @@ export namespace Prisma {
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutMinistryInput = {
@@ -26862,6 +28982,7 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
@@ -26884,6 +29005,7 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RegistrationUpdateWithoutMinistryInput = {
@@ -27058,6 +29180,8 @@ export namespace Prisma {
     churchScope?: ChurchUpdateOneWithoutUsersNestedInput
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProfileInput = {
@@ -27076,6 +29200,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutProfileInput = {
@@ -27195,6 +29321,10 @@ export namespace Prisma {
      * @deprecated Use ProfilePermissionDefaultArgs instead
      */
     export type ProfilePermissionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProfilePermissionDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use UserPermissionDefaultArgs instead
+     */
+    export type UserPermissionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserPermissionDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

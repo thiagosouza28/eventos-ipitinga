@@ -58,11 +58,13 @@ model Event {
   pendingPaymentValueRule String @default("KEEP_ORIGINAL")
   createdAt      DateTime       @default(now())
   ministryId     String?
+  createdById    String?
   orders         Order[]
   registrations  Registration[]
   lots           EventLot[]
   expenses       Expense[]
   ministry       Ministry?      @relation(fields: [ministryId], references: [id])
+  createdBy      User?          @relation("EventCreators", fields: [createdById], references: [id])
 
   @@index([ministryId])
 
@@ -191,6 +193,8 @@ model User {
   auditLogs          AuditLog[]
   ministries         MinistryUser[]
   profile            Profile?       @relation(fields: [profileId], references: [id])
+  eventsCreated      Event[]        @relation("EventCreators")
+  permissionsOverride UserPermission[]
 
   @@index([profileId])
 }
@@ -284,6 +288,26 @@ model ProfilePermission {
 
   @@unique([profileId, module])
   @@index([profileId])
+}
+
+model UserPermission {
+  id            String   @id @default(cuid())
+  userId        String
+  module        String
+  canView       Boolean  @default(false)
+  canCreate     Boolean  @default(false)
+  canEdit       Boolean  @default(false)
+  canDelete     Boolean  @default(false)
+  canApprove    Boolean  @default(false)
+  canDeactivate Boolean  @default(false)
+  canReport     Boolean  @default(false)
+  canFinancial  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, module])
+  @@index([userId])
 }
 
 enum UserStatus {

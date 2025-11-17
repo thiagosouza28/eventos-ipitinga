@@ -460,10 +460,15 @@ export const generateRegistrationEventSheetPdf = async ({
           header p { margin: 0; font-size: 12px; opacity: 0.9; }
           .cards { display: grid; grid-template-columns: 1fr; gap: 12px; }
           .card { background: #fff; border-radius: 12px; padding: 12px; border: 1px solid #e5e7eb; page-break-inside: avoid; }
+          .card.compact { padding: 10px; }
           .card-header { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; margin-bottom: 8px; }
+          .card.compact .card-header { gap: 8px; }
           .avatar { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb; }
+          .card.compact .avatar { width: 56px; height: 56px; }
           .ident .name { font-size: 16px; font-weight: 700; color: #111827; }
+          .card.compact .ident .name { font-size: 14px; }
           .ident .meta { font-size: 12px; color: #374151; margin-top: 2px; }
+          .card.compact .ident .meta { font-size: 11px; }
           .terms { margin-top: 6px; font-size: 12px; color: #1f2937; }
           .terms .title { font-weight: 600; margin-bottom: 4px; }
           .terms .minor { margin-top: 4px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; padding: 6px 8px; border-radius: 6px; }
@@ -471,11 +476,16 @@ export const generateRegistrationEventSheetPdf = async ({
           .sign .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
           .sign .field { display: flex; flex-direction: column; gap: 6px; }
           .sign label { font-size: 11px; color: #6b7280; }
+          .card.compact .sign label { font-size: 10px; }
           .sign .line { height: 28px; border-bottom: 1px dashed #9ca3af; }
+          .card.compact .sign .line { height: 22px; }
           .footer { position: fixed; bottom: 0; left: 12mm; right: 12mm; height: 16mm; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; }
           .pageno:after { content: counter(page) " / " counter(pages); }
-          .page-chunk { display: grid; grid-template-columns: 1fr; gap: 12px; }
-          .page-chunk .card { min-height: 125mm; }
+          .page-chunk { display: grid; gap: 10px; }
+          .page-chunk.chunk-two { grid-template-columns: 1fr; }
+          .page-chunk.chunk-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .page-chunk.chunk-two .card { min-height: 120mm; }
+          .page-chunk.chunk-four .card { min-height: 90mm; }
         </style>
       </head>
       <body>

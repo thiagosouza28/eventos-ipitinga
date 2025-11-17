@@ -9,6 +9,7 @@ import { Gender } from "../../config/gender";
 import { isValidCpf } from "../../utils/cpf";
 import { PaymentMethod } from "../../config/payment-methods";
 import { logger } from "../../utils/logger";
+import { env } from "../../config/env";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 // Aceitar IDs vazios como undefined e ignorar valores inválidos em filtros
@@ -39,7 +40,7 @@ const reportSchema = listSchema.extend({
 });
 const reportDownloadSchema = reportSchema.extend({
   template: z.enum(["standard", "event"]).optional().default("standard"),
-  layout: z.enum(["single", "two"]).optional()
+  layout: z.enum(["single", "two", "four"]).optional()
 });
 
 const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "") : v);
@@ -104,6 +105,14 @@ export const registrationsReportHandler = async (request: Request, response: Res
 
 export const downloadRegistrationsReportHandler = async (request: Request, response: Response) => {
   const { groupBy, template, layout, ...filters } = reportDownloadSchema.parse(request.query);
+
+  const origin = request.headers.origin;
+  if (origin && env.corsOrigins.includes(origin)) {
+    response.setHeader("Access-Control-Allow-Origin", origin);
+    response.setHeader("Vary", "Origin");
+    response.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
   const pdfBuffer =
     template === "event"
       ? await registrationService.generateEventSheetPdf(

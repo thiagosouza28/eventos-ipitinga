@@ -1,7 +1,7 @@
 ﻿import { Router } from "express";
 
 import { authenticate } from "../middlewares/auth-middleware";
-import { authorize } from "../middlewares/rbac-middleware";
+import { authorize, authorizePermission } from "../middlewares/rbac-middleware";
 import { loginHandler, changePasswordHandler } from "../controllers/auth.controller";
 import {
   createChurchHandler,
@@ -95,7 +95,9 @@ import {
   updateUserHandler,
   resetUserPasswordHandler,
   updateUserStatusHandler,
-  deleteUserHandler
+  deleteUserHandler,
+  listUserPermissionsHandler,
+  updateUserPermissionsHandler
 } from "../controllers/user.controller";
 import {
   listProfilesHandler,
@@ -119,7 +121,7 @@ router.post("/inscriptions/batch", createBatchInscriptionHandler);
 router.post(
   "/admin/inscriptions/batch",
   authenticate,
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("registrations", "create"),
   createBatchInscriptionHandler
 );
 router.get("/payments/order/:orderId", getOrderPaymentHandler);
@@ -142,196 +144,184 @@ router.use("/admin", authenticate);
 
 router.post("/admin/profile/change-password", changePasswordHandler);
 
-router.get(
-  "/admin/districts",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  listDistrictsHandler
-);
-router.post("/admin/districts", authorize("AdminGeral"), createDistrictHandler);
-router.patch("/admin/districts/:id", authorize("AdminGeral"), updateDistrictHandler);
-router.delete("/admin/districts/:id", authorize("AdminGeral"), deleteDistrictHandler);
+router.get("/admin/districts", authorizePermission("districts", "view"), listDistrictsHandler);
+router.post("/admin/districts", authorizePermission("districts", "create"), createDistrictHandler);
+router.patch("/admin/districts/:id", authorizePermission("districts", "edit"), updateDistrictHandler);
+router.delete("/admin/districts/:id", authorizePermission("districts", "delete"), deleteDistrictHandler);
 
-router.get(
-  "/admin/ministries",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  listMinistriesHandler
-);
-router.post("/admin/ministries", authorize("AdminGeral"), createMinistryHandler);
-router.patch("/admin/ministries/:id", authorize("AdminGeral"), updateMinistryHandler);
-router.delete("/admin/ministries/:id", authorize("AdminGeral"), deleteMinistryHandler);
+router.get("/admin/ministries", authorizePermission("ministries", "view"), listMinistriesHandler);
+router.post("/admin/ministries", authorizePermission("ministries", "create"), createMinistryHandler);
+router.patch("/admin/ministries/:id", authorizePermission("ministries", "edit"), updateMinistryHandler);
+router.delete("/admin/ministries/:id", authorizePermission("ministries", "delete"), deleteMinistryHandler);
 
-router.get("/admin/users", authorize("AdminGeral"), listUsersHandler);
-router.post("/admin/users", authorize("AdminGeral"), createUserHandler);
-router.patch("/admin/users/:id", authorize("AdminGeral"), updateUserHandler);
+router.get("/admin/users", authorize("AdminGeral"), authorizePermission("users", "view"), listUsersHandler);
+router.post("/admin/users", authorize("AdminGeral"), authorizePermission("users", "create"), createUserHandler);
+router.patch("/admin/users/:id", authorize("AdminGeral"), authorizePermission("users", "edit"), updateUserHandler);
 router.post(
   "/admin/users/:id/reset-password",
   authorize("AdminGeral"),
+  authorizePermission("users", "edit"),
   resetUserPasswordHandler
 );
-router.patch("/admin/users/:id/status", authorize("AdminGeral"), updateUserStatusHandler);
-router.delete("/admin/users/:id", authorize("AdminGeral"), deleteUserHandler);
-
-router.get("/admin/profiles", authorize("AdminGeral"), listProfilesHandler);
-router.post("/admin/profiles", authorize("AdminGeral"), createProfileHandler);
-router.patch("/admin/profiles/:id", authorize("AdminGeral"), updateProfileHandler);
-router.patch("/admin/profiles/:id/status", authorize("AdminGeral"), updateProfileStatusHandler);
-router.delete("/admin/profiles/:id", authorize("AdminGeral"), deleteProfileHandler);
-
-router.get("/admin/churches", authorize("AdminGeral", "AdminDistrital"), listChurchesHandler);
-router.post("/admin/churches", authorize("AdminGeral", "AdminDistrital"), createChurchHandler);
-router.patch("/admin/churches/:id", authorize("AdminGeral", "AdminDistrital"), updateChurchHandler);
-router.delete("/admin/churches/:id", authorize("AdminGeral", "AdminDistrital"), deleteChurchHandler);
-
-router.get(
-  "/admin/events",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  listEventsAdminHandler
+router.patch(
+  "/admin/users/:id/status",
+  authorize("AdminGeral"),
+  authorizePermission("users", "edit"),
+  updateUserStatusHandler
 );
-router.post("/admin/events", authorize("AdminGeral"), createEventHandler);
-router.patch("/admin/events/:id", authorize("AdminGeral"), updateEventHandler);
-router.delete("/admin/events/:id", authorize("AdminGeral"), deleteEventHandler);
+router.delete(
+  "/admin/users/:id",
+  authorize("AdminGeral"),
+  authorizePermission("users", "delete"),
+  deleteUserHandler
+);
+router.get(
+  "/admin/users/:id/permissions",
+  authorize("AdminGeral"),
+  authorizePermission("users", "view"),
+  listUserPermissionsHandler
+);
+router.put(
+  "/admin/users/:id/permissions",
+  authorize("AdminGeral"),
+  authorizePermission("users", "edit"),
+  updateUserPermissionsHandler
+);
+
+router.get("/admin/profiles", authorize("AdminGeral"), authorizePermission("profiles", "view"), listProfilesHandler);
+router.post("/admin/profiles", authorize("AdminGeral"), authorizePermission("profiles", "create"), createProfileHandler);
+router.patch("/admin/profiles/:id", authorize("AdminGeral"), authorizePermission("profiles", "edit"), updateProfileHandler);
+router.patch(
+  "/admin/profiles/:id/status",
+  authorize("AdminGeral"),
+  authorizePermission("profiles", "edit"),
+  updateProfileStatusHandler
+);
+router.delete(
+  "/admin/profiles/:id",
+  authorize("AdminGeral"),
+  authorizePermission("profiles", "delete"),
+  deleteProfileHandler
+);
+
+router.get("/admin/churches", authorizePermission("churches", "view"), listChurchesHandler);
+router.post("/admin/churches", authorizePermission("churches", "create"), createChurchHandler);
+router.patch("/admin/churches/:id", authorizePermission("churches", "edit"), updateChurchHandler);
+router.delete("/admin/churches/:id", authorizePermission("churches", "delete"), deleteChurchHandler);
+
+router.get("/admin/events", authorizePermission("events", "view"), listEventsAdminHandler);
+router.post("/admin/events", authorizePermission("events", "create"), createEventHandler);
+router.patch("/admin/events/:id", authorizePermission("events", "edit"), updateEventHandler);
+router.delete("/admin/events/:id", authorizePermission("events", "delete"), deleteEventHandler);
 router.post(
   "/admin/uploads",
-  authorize("AdminGeral"),
+  authorizePermission("events", "edit"),
   uploadMiddleware.single("file"),
   uploadImageHandler
 );
-router.get(
-  "/admin/events/:eventId/lots",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  listEventLotsHandler
-);
-router.post(
-  "/admin/events/:eventId/lots",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  createEventLotHandler
-);
+router.get("/admin/events/:eventId/lots", authorizePermission("events", "view"), listEventLotsHandler);
+router.post("/admin/events/:eventId/lots", authorizePermission("events", "edit"), createEventLotHandler);
 router.patch(
   "/admin/events/:eventId/lots/:lotId",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("events", "edit"),
   updateEventLotHandler
 );
 router.delete(
   "/admin/events/:eventId/lots/:lotId",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("events", "delete"),
   deleteEventLotHandler
 );
 
-router.get("/admin/orders", authorize("AdminGeral", "Tesoureiro"), listOrdersHandler);
-router.post(
-  "/admin/orders/:id/mark-paid",
-  authorize("AdminGeral", "Tesoureiro"),
-  markOrderPaidHandler
-);
+router.get("/admin/orders", authorizePermission("orders", "view"), listOrdersHandler);
+router.post("/admin/orders/:id/mark-paid", authorizePermission("orders", "financial"), markOrderPaidHandler);
 
-router.get(
-  "/admin/registrations",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
-  listRegistrationsHandler
-);
+router.get("/admin/registrations", authorizePermission("registrations", "view"), listRegistrationsHandler);
 router.get(
   "/admin/registrations/report",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
+  authorizePermission("registrations", "reports"),
   registrationsReportHandler
 );
 router.get(
   "/admin/registrations/report.pdf",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
+  authorizePermission("registrations", "reports"),
   downloadRegistrationsReportHandler
 );
-router.patch(
-  "/admin/registrations/:id",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  updateRegistrationHandler
-);
-router.delete(
-  "/admin/registrations/:id",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
-  deleteRegistrationHandler
-);
+router.patch("/admin/registrations/:id", authorizePermission("registrations", "edit"), updateRegistrationHandler);
+router.delete("/admin/registrations/:id", authorizePermission("registrations", "delete"), deleteRegistrationHandler);
 router.post(
   "/admin/registrations/:id/cancel",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("registrations", "deactivate"),
   cancelRegistrationHandler
 );
 router.post(
   "/admin/registrations/:id/reactivate",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("registrations", "approve"),
   reactivateRegistrationHandler
 );
 router.post(
   "/admin/registrations/:id/refund",
-  authorize("AdminGeral", "Tesoureiro"),
+  authorizePermission("registrations", "financial"),
   refundRegistrationHandler
 );
 router.post(
   "/admin/registrations/mark-paid",
-  authorize("AdminGeral", "Tesoureiro"),
+  authorizePermission("registrations", "financial"),
   markRegistrationsPaidHandler
 );
 
 router.post(
   "/admin/registrations/:id/payment-link",
-  authorize("AdminGeral", "AdminDistrital", "Tesoureiro"),
+  authorizePermission("registrations", "edit"),
   regenerateRegistrationPaymentLinkHandler
 );
 
 // Registration History
 router.get(
   "/admin/registrations/:id/history",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal", "Tesoureiro", "CoordenadorMinisterio"),
+  authorizePermission("registrations", "view"),
   getRegistrationHistoryHandler
 );
 
-router.get(
-  "/admin/checkin/:eventId",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal"),
-  getCheckinDashboardHandler
-);
-router.post(
-  "/admin/checkin/scan",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal"),
-  scanCheckinHandler
-);
-router.post(
-  "/admin/checkin/manual",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal"),
-  manualCheckinHandler
-);
-router.post(
-  "/admin/checkin/confirm",
-  authorize("AdminGeral", "AdminDistrital", "DiretorLocal"),
-  confirmAdminCheckinHandler
-);
+router.get("/admin/checkin/:eventId", authorizePermission("checkin", "view"), getCheckinDashboardHandler);
+router.post("/admin/checkin/scan", authorizePermission("checkin", "approve"), scanCheckinHandler);
+router.post("/admin/checkin/manual", authorizePermission("checkin", "approve"), manualCheckinHandler);
+router.post("/admin/checkin/confirm", authorizePermission("checkin", "approve"), confirmAdminCheckinHandler);
 
 // Expenses
-router.get("/admin/events/:eventId/expenses", authorize("AdminGeral", "AdminDistrital"), listExpensesByEventHandler);
-router.post("/admin/events/:eventId/expenses", authorize("AdminGeral", "AdminDistrital"), createExpenseHandler);
-router.get("/admin/expenses/:id", authorize("AdminGeral", "AdminDistrital"), getExpenseHandler);
-router.patch("/admin/expenses/:id", authorize("AdminGeral", "AdminDistrital"), updateExpenseHandler);
-router.delete("/admin/expenses/:id", authorize("AdminGeral"), deleteExpenseHandler);
+router.get(
+  "/admin/events/:eventId/expenses",
+  authorizePermission("financial", "view"),
+  listExpensesByEventHandler
+);
+router.post(
+  "/admin/events/:eventId/expenses",
+  authorizePermission("financial", "create"),
+  createExpenseHandler
+);
+router.get("/admin/expenses/:id", authorizePermission("financial", "view"), getExpenseHandler);
+router.patch("/admin/expenses/:id", authorizePermission("financial", "edit"), updateExpenseHandler);
+router.delete("/admin/expenses/:id", authorizePermission("financial", "delete"), deleteExpenseHandler);
 
 // Financial Dashboard
-router.get("/admin/financial/summary", authorize("AdminGeral", "AdminDistrital"),
-  getGeneralSummaryHandler);
+router.get("/admin/financial/summary", authorizePermission("financial", "view"), getGeneralSummaryHandler);
 router.get(
   "/admin/financial/events/:eventId",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("financial", "view"),
   getEventSummaryHandler
 );
 router.get(
   "/admin/financial/events/:eventId/districts/:districtId",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("financial", "view"),
   getDistrictSummaryHandler
 );
 router.get(
   "/admin/financial/events/:eventId/churches/:churchId",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("financial", "view"),
   getChurchSummaryHandler
 );
 router.get(
   "/admin/financial/events/:eventId/report.pdf",
-  authorize("AdminGeral", "AdminDistrital", "CoordenadorMinisterio"),
+  authorizePermission("financial", "reports"),
   downloadEventFinancialReportHandler
 );
 

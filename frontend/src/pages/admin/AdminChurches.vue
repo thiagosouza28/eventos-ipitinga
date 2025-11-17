@@ -22,26 +22,26 @@
       :title="editingChurchId ? 'Editar Igreja' : 'Nova Igreja'"
       @update:modelValue="showChurchModal = $event"
     >
-      <form @submit.prevent="submitChurch" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+      <form @submit.prevent="submitChurch" class="space-y-5">
+        <div class="space-y-2">
+          <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
             Nome da igreja <span class="text-red-500">*</span>
           </label>
           <input
             v-model="churchForm.name"
             type="text"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+        <div class="space-y-2">
+          <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
             Distrito <span class="text-red-500">*</span>
           </label>
           <select
             v-model="churchForm.districtId"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           >
             <option value="">Selecione</option>
             <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
@@ -49,20 +49,20 @@
             </option>
           </select>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+        <div class="space-y-2">
+          <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
             Nome do Diretor Jovem <span class="text-red-500">*</span>
           </label>
           <input
             v-model="churchForm.directorName"
             type="text"
             required
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           />
         </div>
-        <div class="grid gap-4 md:grid-cols-2">
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
               CPF do Diretor <span class="text-red-500">*</span>
             </label>
             <input
@@ -70,66 +70,113 @@
               type="text"
               required
               maxlength="14"
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
               v-maska="{ mask: '###.###.###-##' }"
             />
           </div>
-          <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Data de nascimento <span class="text-red-500">*</span>
-          </label>
-          <DateField v-model="churchForm.directorBirthDate" required class="mt-1" />
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+              Data de nascimento <span class="text-red-500">*</span>
+            </label>
+            <DateField
+              v-model="churchForm.directorBirthDate"
+              required
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            />
+          </div>
         </div>
-        </div>
-        <div class="grid gap-4 md:grid-cols-2">
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
               E-mail <span class="text-red-500">*</span>
             </label>
             <input
               v-model="churchForm.directorEmail"
               type="email"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
               WhatsApp <span class="text-red-500">*</span>
             </label>
             <input
               v-model="churchForm.directorWhatsapp"
               type="text"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            URL da foto (opcional)
+        <div class="space-y-3">
+          <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
+            Foto do diretor (opcional)
           </label>
           <input
-            v-model="churchForm.directorPhotoUrl"
-            type="text"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-            placeholder="https://..."
+            ref="directorPhotoInput"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onDirectorPhotoChange"
           />
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              @click="selectDirectorPhoto"
+              :disabled="directorPhotoUploading"
+            >
+              {{
+                directorPhotoUploading
+                  ? "Enviando..."
+                  : churchForm.directorPhotoUrl
+                  ? "Trocar foto"
+                  : "Selecionar imagem"
+              }}
+            </button>
+            <button
+              v-if="churchForm.directorPhotoUrl && !directorPhotoUploading"
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-red-200/70 px-5 py-2.5 text-sm font-medium text-red-600 transition hover:-translate-y-0.5 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/30"
+              @click="removeDirectorPhoto"
+            >
+              Remover
+            </button>
+            <span
+              v-if="churchForm.directorPhotoUrl"
+              class="text-xs text-neutral-600 dark:text-neutral-300 break-all"
+            >
+              {{ churchForm.directorPhotoUrl }}
+            </span>
+          </div>
+          <div
+            class="flex items-center gap-4 rounded-2xl border border-dashed border-neutral-200/80 bg-white/60 p-3 dark:border-white/10 dark:bg-white/5"
+          >
+            <img
+              :src="resolvePhoto(churchForm.directorPhotoUrl)"
+              alt="Pré-visualização da foto do diretor"
+              class="h-16 w-16 rounded-full border border-white/70 object-cover dark:border-white/20"
+            />
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">
+              A imagem será exibida na listagem das igrejas. Prefira arquivos quadrados (até 5 MB).
+            </p>
+          </div>
         </div>
-        <p v-if="churchError" class="text-sm text-red-600 dark:text-red-400">
+        <p v-if="churchError" class="text-sm text-red-500 dark:text-red-400">
           {{ churchError }}
         </p>
-        <div class="flex justify-end gap-3 pt-4">
+        <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
             @click="resetChurchForm"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5"
           >
             {{ editingChurchId ? "Salvar" : "Adicionar" }}
           </button>
@@ -137,24 +184,29 @@
       </form>
     </Modal>
 
-    <BaseCard>
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">Igrejas</h1>
-          <p class="text-sm text-neutral-500">
+    <BaseCard
+      class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+    >
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
+            Mapa congregacional
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Igrejas</h1>
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
             Consulte e mantenha as igrejas cadastradas para cada distrito.
           </p>
         </div>
-        <div class="flex flex-wrap gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
           <RouterLink
             to="/admin/dashboard"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
           >
             Voltar
           </RouterLink>
           <button
             type="button"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
             @click="openNewChurchForm"
           >
             + Nova Igreja
@@ -163,15 +215,17 @@
       </div>
     </BaseCard>
 
-    <BaseCard>
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+    <BaseCard
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div class="w-full space-y-2 sm:max-w-xs">
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
             Filtro por distrito
-          </label>
+          </p>
           <select
             v-model="selectedDistrictId"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           >
             <option value="">Todos os distritos</option>
             <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
@@ -179,61 +233,95 @@
             </option>
           </select>
         </div>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400 sm:max-w-sm">
+          Visualize rapidamente os diretores de juventude associados a cada igreja e distrito.
+        </p>
+      </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full table-auto text-left text-sm">
-            <thead class="text-xs uppercase tracking-wide text-neutral-500">
-              <tr>
-                <th class="pb-2">Diretor (foto)</th>
-                <th class="pb-2">Nome do diretor</th>
-                <th class="pb-2">Igreja</th>
-                <th class="pb-2">Distrito</th>
-                <th class="pb-2">Pastor Distrital</th>
-                <th class="pb-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
-              <tr v-for="church in filteredChurches" :key="church.id">
-                <td class="py-2">
+      <div
+        class="mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
+      >
+        <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
+          <thead
+            class="bg-white/60 text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400"
+          >
+            <tr>
+              <th class="px-5 py-3">Diretor (foto)</th>
+              <th class="px-5 py-3">Nome do diretor</th>
+              <th class="px-5 py-3">CPF</th>
+              <th class="px-5 py-3">Telefone</th>
+              <th class="px-5 py-3">Igreja</th>
+              <th class="px-5 py-3">Distrito</th>
+              <th class="px-5 py-3">Pastor Distrital</th>
+              <th class="px-5 py-3 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-100 dark:divide-white/5">
+            <tr
+              v-for="church in filteredChurches"
+              :key="church.id"
+              class="transition hover:bg-white/80 dark:hover:bg-white/5"
+            >
+              <td class="px-5 py-4">
+                <div
+                  class="h-12 w-12 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/10"
+                >
                   <img
                     :src="resolvePhoto(church.directorPhotoUrl)"
                     :alt="`Foto do diretor jovem da igreja ${church.name}`"
-                    class="h-12 w-12 rounded-full border border-neutral-200 object-cover dark:border-neutral-700"
+                    class="h-full w-full object-cover"
                   />
-                </td>
-                <td class="py-2 text-neutral-700 dark:text-neutral-100">{{ church.directorName ?? "—" }}</td>
-                <td class="py-2 font-medium text-neutral-800 dark:text-neutral-50">{{ church.name }}</td>
-                <td class="py-2 text-neutral-600 dark:text-neutral-300">
-                  {{ findDistrictName(church.districtId) }}
-                </td>
-                <td class="py-2 text-neutral-600 dark:text-neutral-300">
-                  {{ findDistrictPastorName(church.districtId) ?? "—" }}
-                </td>
-                <td class="py-2 text-right">
-                  <div class="flex items-center justify-end gap-3">
-                    <button
-                      class="text-sm text-primary-600 hover:underline"
-                      @click="startChurchEdit(church)"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      class="text-sm text-red-600 hover:underline"
-                      @click="confirmDeleteChurch(church)"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="!filteredChurches.length">
-                <td class="py-3 text-sm text-neutral-500" colspan="6">
-                  Nenhuma igreja encontrada para o filtro selecionado.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                </div>
+              </td>
+              <td class="px-5 py-4">
+                <p class="font-semibold text-neutral-900 dark:text-white">
+                  {{ church.directorName ?? "Não informado" }}
+                </p>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">Contato principal</p>
+              </td>
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">
+                {{ church.directorCpf ? formatCPF(String(church.directorCpf)) : "Não informado" }}
+              </td>
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">
+                {{
+                  church.directorWhatsapp
+                    ? formatPhone(String(church.directorWhatsapp))
+                    : "Não informado"
+                }}
+              </td>
+              <td class="px-5 py-4 font-semibold text-neutral-900 dark:text-white">
+                {{ church.name }}
+              </td>
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">
+                {{ findDistrictName(church.districtId) }}
+              </td>
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">
+                {{ findDistrictPastorName(church.districtId) ?? "Não informado" }}
+              </td>
+              <td class="px-5 py-4 text-right">
+                <div class="inline-flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    class="inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
+                    @click="startChurchEdit(church)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-1 rounded-full border border-red-200/70 px-4 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
+                    @click="confirmDeleteChurch(church)"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!filteredChurches.length">
+              <td class="px-5 py-6 text-sm text-neutral-500 dark:text-neutral-400" colspan="8">
+                Nenhuma igreja encontrada para o filtro selecionado.
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </BaseCard>
   </div>
@@ -248,12 +336,19 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
+import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
 import type { Church, District } from "../../types/api";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
+import { formatPhone } from "../../utils/format";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
+import { API_BASE_URL } from "../../config/api";
 
+const admin = useAdminStore();
 const catalog = useCatalogStore();
+const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
+const normalizedApiOrigin = apiOrigin.replace(/\/$/, "");
+const uploadsBaseUrl = `${normalizedApiOrigin}/uploads`;
 
 const editingChurchId = ref<string | null>(null);
 const showChurchModal = ref(false);
@@ -269,6 +364,17 @@ const churchForm = reactive({
   directorPhotoUrl: ""
 });
 const churchError = ref("");
+const directorPhotoInput = ref<HTMLInputElement | null>(null);
+const directorPhotoUploading = ref(false);
+
+const buildUploadUrl = (value: string) => {
+  const sanitized = value.replace(/^\/+/, "");
+  if (!sanitized) return "";
+  if (sanitized.startsWith("uploads/")) {
+    return `${normalizedApiOrigin}/${sanitized}`;
+  }
+  return `${uploadsBaseUrl}/${sanitized}`;
+};
 
 const errorDialog = reactive({
   open: false,
@@ -323,8 +429,18 @@ const findDistrictName = (districtId: string) =>
 const findDistrictPastorName = (districtId: string) =>
   catalog.districts.find((district) => district.id === districtId)?.pastorName ?? null;
 
-const resolvePhoto = (url?: string | null) =>
-  url && url.length ? url : DEFAULT_PHOTO_DATA_URL;
+const resolvePhoto = (url?: string | null) => {
+  if (!url || !url.length) return DEFAULT_PHOTO_DATA_URL;
+  if (/^(https?:|data:|blob:)/i.test(url)) {
+    return url;
+  }
+  const sanitized = url.replace(/^\/+/, "");
+  if (!sanitized) return DEFAULT_PHOTO_DATA_URL;
+  if (sanitized.startsWith("uploads/")) {
+    return `${normalizedApiOrigin}/${sanitized}`;
+  }
+  return `${uploadsBaseUrl}/${sanitized}`;
+};
 
 const openNewChurchForm = () => {
   editingChurchId.value = null;
@@ -352,6 +468,39 @@ const resetChurchForm = () => {
   churchForm.directorPhotoUrl = "";
   churchError.value = "";
   showChurchModal.value = false;
+};
+
+const selectDirectorPhoto = () => {
+  directorPhotoInput.value?.click();
+};
+
+const uploadDirectorPhoto = async (file: File) => {
+  directorPhotoUploading.value = true;
+  try {
+    const result = await admin.uploadAsset(file);
+    const remoteUrl =
+      (result.url && result.url.length ? result.url : undefined) ??
+      (result.fileName ? buildUploadUrl(result.fileName) : "");
+    churchForm.directorPhotoUrl = remoteUrl;
+  } catch (error) {
+    showError("Falha ao enviar foto do diretor", error);
+  } finally {
+    directorPhotoUploading.value = false;
+  }
+};
+
+const onDirectorPhotoChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement | null;
+  const file = input?.files?.[0];
+  if (!file) return;
+  await uploadDirectorPhoto(file);
+  if (input) {
+    input.value = "";
+  }
+};
+
+const removeDirectorPhoto = () => {
+  churchForm.directorPhotoUrl = "";
 };
 
 const submitChurch = async () => {

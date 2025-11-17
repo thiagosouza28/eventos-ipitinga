@@ -1,166 +1,195 @@
 <template>
-  <div class="space-y-6">
-    <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-        Pagamentos pendentes
-      </h1>
-      <button
-        type="button"
-        class="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-md"
-        @click="$router.back()"
+  <div class="px-4 py-10 lg:py-16">
+    <div class="mx-auto w-full max-w-5xl space-y-6">
+      <BaseCard
+        class="border border-white/20 bg-gradient-to-br from-white/90 via-primary-50/40 to-primary-100/30 shadow-xl dark:border-white/10 dark:from-neutral-900/80 dark:via-neutral-900/40 dark:to-primary-950/30"
       >
-        Voltar
-      </button>
-    </div>
-
-    <div v-if="loading" class="flex justify-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary-500 border-t-transparent" />
-    </div>
-
-    <!-- Formulário de CPF - sempre mostrar quando não há dados carregados ou quando há CPF pré-preenchido -->
-    <div v-if="showCpfForm && !loading" class="p-6 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
-      <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100 mb-4">
-        Informe o CPF para consultar pagamentos pendentes
-      </h2>
-      <form @submit.prevent="handleCpfSubmit" class="space-y-4">
-        <div>
-          <label for="cpf-input" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-            CPF
-          </label>
-          <input
-            id="cpf-input"
-            ref="cpfInputRef"
-            :value="cpfInput"
-            type="text"
-            placeholder="000.000.000-00"
-            class="block w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-            :class="{ 'border-red-500': cpfError }"
-            @input="handleCpfInput"
-          />
-          <p v-if="cpfError" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ cpfError }}</p>
-        </div>
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.4em] text-primary-600 dark:text-primary-300">
+              Central do participante
+            </p>
+            <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">
+              Pagamentos pendentes
+            </h1>
+            <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
+              Consulte boletos e links em aberto e quite quantos precisar em uma única etapa.
+            </p>
+          </div>
           <button
-            type="submit"
-            class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50"
-            :disabled="!isCpfInputValid"
-          >
-            Consultar
-          </button>
-          <RouterLink
-            to="/"
-            class="px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-md"
+            type="button"
+            :class="[primaryButtonClass, 'px-5 py-2 text-sm']"
+            @click="$router.back()"
           >
             Voltar
-          </RouterLink>
+          </button>
         </div>
-      </form>
-    </div>
+      </BaseCard>
 
-    <div v-if="error && !loading && !showCpfForm" class="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-      {{ error }}
-    </div>
-
-    <div v-if="!showCpfForm && !loading && !error && pendingOrders.length === 0" class="p-4 text-center">
-      <p class="text-neutral-600 dark:text-neutral-400">
-        Não há pagamentos pendentes no momento.
-      </p>
-    </div>
-
-    <template v-if="!showCpfForm && !loading && pendingOrders.length > 0">
-      <div class="mb-4">
-        <p class="text-sm text-neutral-600 dark:text-neutral-400">
-          Selecione um ou mais pagamentos pendentes para quitar
-        </p>
+      <div v-if="loading" class="flex justify-center py-12">
+        <div class="h-10 w-10 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
       </div>
 
-      <div class="space-y-4">
-        <div
-          v-for="order in pendingOrders"
-          :key="order.orderId"
-          class="flex items-start gap-4 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow-sm"
-        >
-          <input
-            type="checkbox"
-            :checked="selectedOrders.includes(order.orderId)"
-            @change="toggleOrder(order.orderId)"
-            class="mt-1"
-          />
+      <!-- Formulário de CPF -->
+      <BaseCard
+        v-if="showCpfForm && !loading"
+        class="border border-white/30 bg-white/90 shadow-2xl dark:border-white/10 dark:bg-white/5"
+      >
+        <h2 class="text-lg font-semibold text-neutral-800 dark:text-white">
+          Informe o CPF para consultar pagamentos pendentes
+        </h2>
+        <form @submit.prevent="handleCpfSubmit" class="mt-5 space-y-6">
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-300">
+              CPF
+            </label>
+            <input
+              id="cpf-input"
+              ref="cpfInputRef"
+              :value="cpfInput"
+              type="text"
+              placeholder="000.000.000-00"
+              class="w-full rounded-2xl border border-neutral-200/70 bg-white/90 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900/60 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+              :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-200': cpfError }"
+              @input="handleCpfInput"
+            />
+            <p v-if="cpfError" class="text-sm text-red-600 dark:text-red-300">
+              {{ cpfError }}
+            </p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="submit"
+              :class="[primaryButtonClass, 'w-full sm:w-auto px-6 py-2 text-sm']"
+              :disabled="!isCpfInputValid"
+            >
+              Consultar
+            </button>
+            <RouterLink
+              to="/"
+              :class="[primaryButtonClass, 'w-full sm:w-auto px-6 py-2 text-sm text-center']"
+            >
+              Voltar
+            </RouterLink>
+          </div>
+        </form>
+      </BaseCard>
 
-          <div class="flex-1">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-medium text-neutral-800 dark:text-neutral-100">
-                  {{ order.event?.title || "Evento" }}
-                </h3>
-                <p class="text-sm text-neutral-600 dark:text-neutral-400">
-                  Responsável: {{ formatCPF(order.buyerCpf) }}
-                </p>
+      <BaseCard
+        v-if="error && !loading && !showCpfForm"
+        class="border border-red-200/60 bg-red-50/90 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-100"
+      >
+        {{ error }}
+      </BaseCard>
+
+      <BaseCard
+        v-if="!showCpfForm && !loading && !error && pendingOrders.length === 0"
+        class="border border-white/10 bg-white/80 text-center text-neutral-600 dark:border-white/5 dark:bg-neutral-900/60 dark:text-neutral-300"
+      >
+        Não há pagamentos pendentes no momento.
+      </BaseCard>
+
+      <BaseCard
+        v-if="!showCpfForm && !loading && pendingOrders.length > 0"
+        class="border border-white/10 bg-white/85 shadow-xl dark:border-white/5 dark:bg-neutral-900/60"
+      >
+        <p class="text-sm text-neutral-600 dark:text-neutral-300">
+          Selecione um ou mais pagamentos pendentes para quitar
+        </p>
+        <div class="mt-6 space-y-5">
+          <div
+            v-for="order in pendingOrders"
+            :key="order.orderId"
+            class="flex flex-col gap-4 rounded-2xl border border-neutral-200/70 bg-white/90 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-200 dark:border-white/5 dark:bg-neutral-900/80 md:flex-row md:items-start md:gap-5"
+          >
+            <input
+              type="checkbox"
+              :checked="selectedOrders.includes(order.orderId)"
+              @change="toggleOrder(order.orderId)"
+              class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 md:mt-1"
+            />
+
+            <div class="flex-1 space-y-4">
+              <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-50">
+                    {{ order.event?.title || "Evento" }}
+                  </h3>
+                  <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                    Responsável: {{ formatCPF(order.buyerCpf) }}
+                  </p>
+                </div>
+                <span class="text-base font-semibold text-primary-700 dark:text-primary-300">
+                  {{ formatCurrency(order.totalCents) }}
+                </span>
               </div>
-              <span class="font-medium">{{ formatCurrency(order.totalCents) }}</span>
-            </div>
 
-            <div class="mt-4">
-              <p class="text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Participantes
-              </p>
-              <ul class="space-y-2">
-                <li
-                  v-for="reg in order.registrations"
-                  :key="reg.id"
-                  class="text-sm text-neutral-600 dark:text-neutral-400"
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-300 mb-2">
+                  Participantes
+                </p>
+                <ul class="space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
+                  <li
+                    v-for="reg in order.registrations"
+                    :key="reg.id"
+                    class="rounded-xl border border-neutral-200/40 bg-white/80 px-3 py-2 dark:border-white/5 dark:bg-white/5"
+                  >
+                    <p class="font-medium text-neutral-800 dark:text-white">
+                      {{ reg.fullName }} ({{ formatCPF(reg.cpf) }})
+                    </p>
+                    <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                      {{ reg.districtName }} - {{ reg.churchName }}
+                    </p>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="flex flex-wrap gap-3">
+                <button
+                  v-if="order.event?.slug"
+                  type="button"
+                  :class="[primaryButtonClass, 'px-5 py-2 text-sm']"
+                  @click.stop.prevent="handleIndividualPayment(order.orderId, order.event.slug, $event)"
                 >
-                  {{ reg.fullName }} ({{ formatCPF(reg.cpf) }})
-                  <br />
-                  <span class="text-xs">
-                    {{ reg.districtName }} - {{ reg.churchName }}
-                  </span>
-                </li>
-              </ul>
-            </div>
-
-            <div class="mt-4">
-              <button
-                v-if="order.event?.slug"
-                type="button"
-                @click.stop.prevent="handleIndividualPayment(order.orderId, order.event.slug, $event)"
-                class="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-              >
-                Pagar individualmente
-              </button>
-              <span v-else class="text-sm text-neutral-500 dark:text-neutral-400">
-                Carregando informações do evento...
-              </span>
+                  Pagar individualmente
+                </button>
+                <span v-else class="text-sm text-neutral-500 dark:text-neutral-400">
+                  Carregando informações do evento...
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="selectedOrders.length > 0" class="flex justify-between items-center mt-6 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
-        <div>
-          <p class="text-sm font-medium text-primary-900 dark:text-primary-100">
-            {{ selectedOrders.length }} pedido(s) selecionado(s)
-          </p>
-          <p class="text-xs text-primary-700 dark:text-primary-300">
-            Total: {{ formatCurrency(selectedTotal) }}
-          </p>
-        </div>
-        <button
-          type="button"
-          class="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition"
-          :disabled="selectedOrders.length === 0 || processing"
-          @click="handlePayment"
+        <div
+          v-if="selectedOrders.length > 0"
+          class="mt-8 flex flex-col gap-4 rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-500/30 dark:bg-primary-900/20 md:flex-row md:items-center md:justify-between"
         >
-          <span v-if="processing" class="flex items-center gap-2">
-            <span class="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            Processando...
-          </span>
-          <span v-else>
-            {{ selectedOrders.length === 1 ? "Pagar pedido" : "Pagar selecionados" }}
-          </span>
-        </button>
-      </div>
-    </template>
+          <div>
+            <p class="text-sm font-semibold text-primary-900 dark:text-primary-100">
+              {{ selectedOrders.length }} pedido(s) selecionado(s)
+            </p>
+            <p class="text-xs text-primary-700 dark:text-primary-200">
+              Total: {{ formatCurrency(selectedTotal) }}
+            </p>
+          </div>
+          <button
+            type="button"
+            :class="[primaryButtonClass, 'px-6 py-2 text-sm']"
+            :disabled="selectedOrders.length === 0 || processing"
+            @click="handlePayment"
+          >
+            <span v-if="processing" class="flex items-center gap-2">
+              <span class="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              Processando...
+            </span>
+            <span v-else>
+              {{ selectedOrders.length === 1 ? "Pagar pedido" : "Pagar selecionados" }}
+            </span>
+          </button>
+        </div>
+      </BaseCard>
+    </div>
   </div>
 </template>
 
@@ -170,6 +199,7 @@ import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency } from "../../utils/format";
 import { formatCPF, validateCPF, normalizeCPF } from "../../utils/cpf";
+import BaseCard from "../../components/ui/BaseCard.vue";
 
 const props = defineProps<{
   cpf?: string;
@@ -178,6 +208,8 @@ const props = defineProps<{
 const router = useRouter();
 const route = useRoute();
 const { api } = useApi();
+const primaryButtonClass =
+  "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60";
 
 interface Registration {
   id: string;

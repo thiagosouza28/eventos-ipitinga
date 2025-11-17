@@ -3,7 +3,14 @@ import { ref, computed } from "vue";
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
-import type { Role, AdminProfile, PermissionState, PermissionAction, UserStatus } from "../types/api";
+import type {
+  Role,
+  AdminProfile,
+  PermissionState,
+  PermissionAction,
+  UserStatus,
+  ProfilePermissionEntry
+} from "../types/api";
 
 type AuthUser = {
   id: string;
@@ -20,6 +27,7 @@ type AuthUser = {
   ministries?: Array<{ id: string; name: string }>;
   profile?: AdminProfile | null;
   permissions?: Record<string, PermissionState>;
+  permissionOverrides?: ProfilePermissionEntry[];
 };
 
 const STORAGE_KEY = "catre-auth";
@@ -120,3 +128,4 @@ export const useAuthStore = defineStore("auth", () => {
     signOut
   };
 });
+

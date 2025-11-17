@@ -1,7 +1,7 @@
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { toPermissionEntry } from "../../utils/permissions";
-import type { PermissionEntry } from "../../config/permissions";
+import { PermissionModules, type PermissionEntry } from "../../config/permissions";
 
 type ProfileInput = {
   name: string;
@@ -34,7 +34,61 @@ const mapPermissionData = (profileId: string, permission: PermissionEntry) => ({
 });
 
 export class ProfileService {
+  private fullPermission(module: string): PermissionEntry {
+    return {
+      module,
+      canView: true,
+      canCreate: true,
+      canEdit: true,
+      canDelete: true,
+      canApprove: true,
+      canDeactivate: true,
+      canReport: true,
+      canFinancial: true
+    };
+  }
+
+  private async ensureDefaultProfiles() {
+    const defaults = [
+      {
+        name: "Administrador Geral",
+        description: "Perfil com acesso total a todos os módulos.",
+        permissions: PermissionModules.map((module) => this.fullPermission(module)),
+        isActive: true
+      }
+    ];
+
+    for (const preset of defaults) {
+      const existing = await prisma.profile.findUnique({ where: { name: preset.name } });
+      if (!existing) {
+        await prisma.profile.create({
+          data: {
+            name: preset.name,
+            description: preset.description,
+            isActive: preset.isActive,
+            permissions: {
+              createMany: {
+                data: preset.permissions.map((permission) => ({
+                  module: permission.module,
+                  canView: permission.canView,
+                  canCreate: permission.canCreate,
+                  canEdit: permission.canEdit,
+                  canDelete: permission.canDelete,
+                  canApprove: permission.canApprove,
+                  canDeactivate: permission.canDeactivate,
+                  canReport: permission.canReport,
+                  canFinancial: permission.canFinancial
+                }))
+              }
+            }
+          }
+        });
+      }
+    }
+  }
+
   async list() {
+    await this.ensureDefaultProfiles();
     const profiles = await prisma.profile.findMany({
       orderBy: { createdAt: "desc" },
       include: { permissions: true }

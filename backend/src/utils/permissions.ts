@@ -1,9 +1,21 @@
-import type { ProfilePermission } from "@/prisma/generated/client";
+import type { ProfilePermission, UserPermission } from "@/prisma/generated/client";
 
 import type { PermissionAction, PermissionEntry, PermissionModule } from "../config/permissions";
 
 export type PermissionSet = Record<PermissionAction, boolean>;
 export type PermissionMap = Record<string, PermissionSet>;
+type PermissionLike = Pick<
+  ProfilePermission,
+  | "module"
+  | "canView"
+  | "canCreate"
+  | "canEdit"
+  | "canDelete"
+  | "canApprove"
+  | "canDeactivate"
+  | "canReport"
+  | "canFinancial"
+>;
 
 const actionKeys: PermissionAction[] = [
   "view",
@@ -16,7 +28,7 @@ const actionKeys: PermissionAction[] = [
   "financial"
 ];
 
-export const toPermissionEntry = (permission: ProfilePermission): PermissionEntry => ({
+export const toPermissionEntry = (permission: PermissionLike | UserPermission): PermissionEntry => ({
   module: permission.module,
   canView: permission.canView,
   canCreate: permission.canCreate,
@@ -28,7 +40,7 @@ export const toPermissionEntry = (permission: ProfilePermission): PermissionEntr
   canFinancial: permission.canFinancial
 });
 
-export const buildPermissionMap = (permissions: ProfilePermission[]): PermissionMap => {
+export const buildPermissionMap = (permissions: Array<PermissionLike | PermissionEntry>): PermissionMap => {
   const map: PermissionMap = {};
   permissions.forEach((permission) => {
     map[permission.module] = {
@@ -43,6 +55,38 @@ export const buildPermissionMap = (permissions: ProfilePermission[]): Permission
     };
   });
   return map;
+};
+
+export const mergePermissionMap = (
+  base: PermissionMap | undefined,
+  overrides: Array<PermissionLike | PermissionEntry>
+): PermissionMap => {
+  const cloned: PermissionMap = {};
+  if (base) {
+    Object.entries(base).forEach(([module, actions]) => {
+      cloned[module] = { ...actions };
+    });
+  }
+
+  overrides.forEach((permission) => {
+    const moduleKey = permission.module;
+    if (!cloned[moduleKey]) {
+      cloned[moduleKey] = emptyPermissionSet();
+    }
+    cloned[moduleKey] = {
+      ...cloned[moduleKey],
+      view: permission.canView,
+      create: permission.canCreate,
+      edit: permission.canEdit,
+      delete: permission.canDelete,
+      approve: permission.canApprove,
+      deactivate: permission.canDeactivate,
+      reports: permission.canReport,
+      financial: permission.canFinancial
+    };
+  });
+
+  return cloned;
 };
 
 export const hasPermission = (

@@ -56,17 +56,17 @@ export const listPublicEventsHandler = async (_request: Request, response: Respo
 
 export const createEventHandler = async (request: Request, response: Response) => {
   const payload = createSchema.parse(request.body);
-  const event = await eventService.create(payload);
+  const event = await eventService.create(payload, request.user);
   return response.status(201).json(event);
 };
 
 export const updateEventHandler = async (request: Request, response: Response) => {
   const payload = updateSchema.parse(request.body);
-  const event = await eventService.update(request.params.id, payload);
+  const event = await eventService.update(request.params.id, payload, request.user);
   return response.json(event);
 };
 
 export const deleteEventHandler = async (request: Request, response: Response) => {
-  await eventService.delete(request.params.id);
+  await eventService.delete(request.params.id, request.user);
   return response.status(204).send();
 };

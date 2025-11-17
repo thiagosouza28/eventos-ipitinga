@@ -206,64 +206,14 @@ import Modal from "../../components/ui/Modal.vue";
 import { permissionModules } from "../../config/permission-schema";
 import { useAdminStore } from "../../stores/admin";
 import type { AdminProfile, PermissionAction, PermissionState } from "../../types/api";
-
-type PermissionFormEntry = {
-  module: string;
-  actions: PermissionState;
-};
+import {
+  createPermissionMatrix,
+  hydrateMatrixFromEntries,
+  toPermissionPayload,
+  type PermissionFormEntry
+} from "../../utils/permission-matrix";
 
 const admin = useAdminStore();
-
-const makeInitialMatrix = (): PermissionFormEntry[] =>
-  permissionModules.map((module) => ({
-    module: module.key,
-    actions: {
-      view: false,
-      create: false,
-      edit: false,
-      delete: false,
-      approve: false,
-      deactivate: false,
-      reports: false,
-      financial: false
-    }
-  }));
-
-const hydrateMatrix = (profile?: AdminProfile | null) => {
-  const matrix = makeInitialMatrix();
-  if (!profile) return matrix;
-  profile.permissions.forEach((permission) => {
-    const entry = matrix.find((item) => item.module === permission.module);
-    if (entry) {
-      entry.actions = {
-        view: permission.canView,
-        create: permission.canCreate,
-        edit: permission.canEdit,
-        delete: permission.canDelete,
-        approve: permission.canApprove,
-        deactivate: permission.canDeactivate,
-        reports: permission.canReport,
-        financial: permission.canFinancial
-      };
-    }
-  });
-  return matrix;
-};
-
-const normalizePayload = (entries: PermissionFormEntry[]) =>
-  entries
-    .filter((entry) => Object.values(entry.actions).some(Boolean))
-    .map((entry) => ({
-      module: entry.module,
-      canView: entry.actions.view,
-      canCreate: entry.actions.create,
-      canEdit: entry.actions.edit,
-      canDelete: entry.actions.delete,
-      canApprove: entry.actions.approve,
-      canDeactivate: entry.actions.deactivate,
-      canReport: entry.actions.reports,
-      canFinancial: entry.actions.financial
-    }));
 
 const errorDialog = reactive({
   open: false,
@@ -278,7 +228,7 @@ const createDialog = reactive({
   form: {
     name: "",
     description: "",
-    permissions: makeInitialMatrix()
+    permissions: createPermissionMatrix()
   }
 });
 
@@ -290,7 +240,7 @@ const editDialog = reactive({
     name: "",
     description: "",
     isActive: true,
-    permissions: makeInitialMatrix()
+    permissions: createPermissionMatrix()
   }
 });
 
@@ -314,7 +264,7 @@ const showError = (title: string, message: string, details?: string) => {
 const resetCreateForm = () => {
   createDialog.form.name = "";
   createDialog.form.description = "";
-  createDialog.form.permissions = makeInitialMatrix();
+  createDialog.form.permissions = createPermissionMatrix();
   createDialog.loading = false;
 };
 
@@ -324,7 +274,7 @@ const resetEditForm = () => {
     name: "",
     description: "",
     isActive: true,
-    permissions: makeInitialMatrix()
+    permissions: createPermissionMatrix()
   };
   editDialog.loading = false;
 };
@@ -335,7 +285,7 @@ const handleCreateProfile = async () => {
     await admin.createProfile({
       name: createDialog.form.name.trim(),
       description: createDialog.form.description?.trim() || undefined,
-      permissions: normalizePayload(createDialog.form.permissions)
+      permissions: toPermissionPayload(createDialog.form.permissions)
     });
     createDialog.open = false;
     resetCreateForm();
@@ -351,7 +301,7 @@ const openEditDialog = (profile: AdminProfile) => {
   editDialog.form.name = profile.name;
   editDialog.form.description = profile.description ?? "";
   editDialog.form.isActive = profile.isActive;
-  editDialog.form.permissions = hydrateMatrix(profile);
+  editDialog.form.permissions = hydrateMatrixFromEntries(profile.permissions);
   editDialog.open = true;
 };
 
@@ -363,7 +313,7 @@ const handleUpdateProfile = async () => {
       name: editDialog.form.name.trim(),
       description: editDialog.form.description?.trim() || undefined,
       isActive: editDialog.form.isActive,
-      permissions: normalizePayload(editDialog.form.permissions)
+      permissions: toPermissionPayload(editDialog.form.permissions)
     });
     editDialog.open = false;
     resetEditForm();

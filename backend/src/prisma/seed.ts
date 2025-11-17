@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { env } from "../config/env";
 import { Role } from "../config/roles";
 import type { PermissionEntry } from "../config/permissions";
+import { RolePermissionPresets } from "../config/permissions";
 import { prisma } from "../lib/prisma";
 
 const ensureDistrict = async (name: string) => {
@@ -62,36 +63,6 @@ const ensureEvent = async (ministryId: string) => {
     }
   });
 };
-
-const makePermission = (
-  module: string,
-  flags: Partial<Omit<PermissionEntry, "module">> = {}
-): PermissionEntry => ({
-  module,
-  canView: flags.canView ?? false,
-  canCreate: flags.canCreate ?? false,
-  canEdit: flags.canEdit ?? false,
-  canDelete: flags.canDelete ?? false,
-  canApprove: flags.canApprove ?? false,
-  canDeactivate: flags.canDeactivate ?? false,
-  canReport: flags.canReport ?? false,
-  canFinancial: flags.canFinancial ?? false
-});
-
-const fullAccess = (module: string) =>
-  makePermission(module, {
-    canView: true,
-    canCreate: true,
-    canEdit: true,
-    canDelete: true,
-    canApprove: true,
-    canDeactivate: true,
-    canReport: true,
-    canFinancial: true
-  });
-
-const viewAccess = (module: string, flags?: Partial<Omit<PermissionEntry, "module">>) =>
-  makePermission(module, { canView: true, ...(flags ?? {}) });
 
 const ensureProfile = async (
   name: string,
@@ -192,70 +163,31 @@ const run = async () => {
   const adminGeneralProfile = await ensureProfile(
     "Administrador Geral",
     "Acesso completo ao painel.",
-    [
-      "dashboard",
-      "users",
-      "profiles",
-      "registrations",
-      "events",
-      "financial",
-      "reports",
-      "checkin"
-    ].map((module) => fullAccess(module))
+    RolePermissionPresets.AdminGeral
   );
 
   const districtProfile = await ensureProfile(
     "Administrador Distrital",
     "Gerencia eventos e registros do distrito.",
-    [
-      viewAccess("dashboard"),
-      viewAccess("events", { canEdit: true, canCreate: true }),
-      viewAccess("registrations", {
-        canCreate: true,
-        canEdit: true,
-        canApprove: true,
-        canDeactivate: true,
-        canReport: true
-      }),
-      viewAccess("financial", { canReport: true, canFinancial: true }),
-      viewAccess("reports", { canReport: true }),
-      viewAccess("checkin", { canApprove: true })
-    ]
+    RolePermissionPresets.AdminDistrital
   );
 
   const directorProfile = await ensureProfile(
     "Diretor Local",
     "Acompanha registros da igreja local.",
-    [
-      viewAccess("dashboard"),
-      viewAccess("registrations", { canCreate: true, canEdit: true }),
-      viewAccess("reports", { canReport: true }),
-      viewAccess("checkin", { canApprove: true })
-    ]
+    RolePermissionPresets.DiretorLocal
   );
 
   const financeProfile = await ensureProfile(
     "Tesoureiro",
-    "ResponsÃ¡vel pelo caixa e relatÃ³rios financeiros.",
-    [
-      viewAccess("dashboard"),
-      viewAccess("financial", { canReport: true, canFinancial: true }),
-      viewAccess("registrations", { canReport: true }),
-      viewAccess("reports", { canReport: true })
-    ]
+    "Responsável pelo caixa e relatórios financeiros.",
+    RolePermissionPresets.Tesoureiro
   );
-
   const ministryCoordinatorProfile = await ensureProfile(
-    "Coordenador de MinistÃ©rio",
-    "Gere inscriÃ§Ãµes do seu ministÃ©rio.",
-    [
-      viewAccess("dashboard"),
-      viewAccess("registrations", { canCreate: true, canEdit: true, canApprove: true }),
-      viewAccess("events"),
-      viewAccess("reports", { canReport: true })
-    ]
+    "Coordenador de Ministério",
+    "Gere inscrições do seu ministério.",
+    RolePermissionPresets.CoordenadorMinisterio
   );
-
   const profileMap: Record<Role, string> = {
     AdminGeral: adminGeneralProfile.id,
     AdminDistrital: districtProfile.id,
@@ -342,3 +274,5 @@ run()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+

@@ -7,6 +7,7 @@ import { ConflictError, NotFoundError, AppError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { env } from "../../config/env";
 import { storageService } from "../../storage/storage.service";
+import { toPermissionEntry } from "../../utils/permissions";
 
 const generateTemporaryPassword = () => {
   const candidate = randomBytes(8).toString("base64url");
@@ -51,7 +52,8 @@ const userIncludes = {
   },
   profile: {
     include: { permissions: true }
-  }
+  },
+  permissionsOverride: true
 } as const;
 
 const ensureActiveProfile = async (profileId?: string | null) => {
@@ -72,7 +74,8 @@ const serializeUser = (user: any) => ({
   ministries: user.ministries?.map((relation: any) => ({
     id: relation.ministryId,
     name: relation.ministry?.name ?? ""
-  })) ?? []
+  })) ?? [],
+  permissionOverrides: user.permissionsOverride?.map(toPermissionEntry) ?? []
 });
 
 export class UserService {

@@ -109,7 +109,51 @@ sudo systemctl status catre-backend
 sudo journalctl -fu catre-backend
 ```
 
-## 7. Script de deploy
+## 7. Nginx + HTTPS (proxy reverso)
+
+1. **Instale e habilite o Nginx**:
+
+   ```bash
+   sudo apt-get install -y nginx
+   sudo systemctl enable --now nginx
+   ```
+
+2. **Crie o host virtual** `/etc/nginx/sites-available/catre-backend` apontando para o backend interno (ajuste domínio/porta conforme necessidade):
+
+   ```nginx
+   server {
+     listen 80;
+     server_name api.seudominio.com;
+
+     location / {
+       proxy_pass http://127.0.0.1:9001;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+     }
+   }
+   ```
+
+   Ative o site e recarregue o Nginx:
+
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/catre-backend /etc/nginx/sites-enabled/catre-backend
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+3. **Emitir certificados TLS** com Certbot (modo Nginx):
+
+   ```bash
+   sudo apt-get install -y certbot python3-certbot-nginx
+   sudo certbot --nginx -d api.seudominio.com
+   ```
+
+   O Certbot ajusta o bloco para escutar em `443 ssl` e cria o redirecionamento 80 → 443 automaticamente. Verifique se o `proxy_pass` continua em `http://127.0.0.1:9001` ou na porta configurada no `.env`.
+
+4. **Atualize as variáveis** `APP_URL` / `API_URL` (backend) e `VITE_APP_URL` / `VITE_API_URL` (frontend) para `https://api.seudominio.com`. Reinicie o serviço `catre-backend` e o build/servidor do frontend para usar as novas URLs.
+
+## 8. Script de deploy
 
 O repositório inclui `scripts/aws/deploy-backend.sh` que automatiza `npm ci`, `npm run build` e reinicia o serviço:
 
@@ -121,9 +165,9 @@ SERVICE_NAME=catre-backend ./scripts/aws/deploy-backend.sh
 
 Use sempre após `git pull` para atualizar o backend. Caso não utilize systemd, adapte o trecho final (o script mostra instruções para PM2 ou execução manual).
 
-## 8. Checklist pós-deploy
+## 9. Checklist pós-deploy
 
-- Configure `nginx` como proxy reverso (80/443 → porta interna 9001) e gere certificados com `certbot`.
+- Configure `nginx` + Certbot conforme a seção anterior.
 - Atualize o webhook do Mercado Pago para a URL HTTPS definitiva.
 - Execute `npm run prisma:seed` apenas se precisar de dados de exemplo.
 - Habilite monitoração (CloudWatch, alarms de CPU/disco, uptime) e backups do RDS.

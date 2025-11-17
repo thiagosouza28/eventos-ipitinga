@@ -158,7 +158,8 @@ exports.Prisma.EventScalarFieldEnum = {
   paymentMethods: 'paymentMethods',
   pendingPaymentValueRule: 'pendingPaymentValueRule',
   createdAt: 'createdAt',
-  ministryId: 'ministryId'
+  ministryId: 'ministryId',
+  createdById: 'createdById'
 };
 
 exports.Prisma.OrderScalarFieldEnum = {
@@ -314,6 +315,22 @@ exports.Prisma.ProfilePermissionScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.UserPermissionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  module: 'module',
+  canView: 'canView',
+  canCreate: 'canCreate',
+  canEdit: 'canEdit',
+  canDelete: 'canDelete',
+  canApprove: 'canApprove',
+  canDeactivate: 'canDeactivate',
+  canReport: 'canReport',
+  canFinancial: 'canFinancial',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -343,7 +360,8 @@ exports.Prisma.ModelName = {
   Ministry: 'Ministry',
   MinistryUser: 'MinistryUser',
   Profile: 'Profile',
-  ProfilePermission: 'ProfilePermission'
+  ProfilePermission: 'ProfilePermission',
+  UserPermission: 'UserPermission'
 };
 
 /**

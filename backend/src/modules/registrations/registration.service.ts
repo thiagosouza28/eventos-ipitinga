@@ -38,6 +38,20 @@ const brDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short"
 });
 
+const toPublicPhotoUrl = (value?: string | null) => {
+  if (!value) return undefined;
+  if (/^data:/i.test(value) || /^https?:\/\//i.test(value)) {
+    return value;
+  }
+  const sanitized = value.replace(/^\/+/, "");
+  if (!sanitized) return undefined;
+  const base = env.APP_URL.replace(/\/$/, "");
+  if (sanitized.startsWith("uploads/")) {
+    return `${base}/${sanitized}`;
+  }
+  return `${base}/uploads/${sanitized}`;
+};
+
 // FormataÃ§Ã£o de data sem timezone (para datas de nascimento)
 const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -86,9 +100,6 @@ const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => 
     baseUrl: `${baseUrl.origin}${baseUrl.pathname}`
   };
 };
-
-const resolvePhotoUrl = (photoUrl: string | null | undefined) =>
-  photoUrl && photoUrl.trim().length > 0 ? photoUrl : DEFAULT_PHOTO_DATA_URL;
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   PENDING_PAYMENT: "Pendente",
@@ -192,7 +203,7 @@ export class RegistrationService {
       gender: parseGender(registration.gender ?? undefined),
       districtId: registration.districtId,
       churchId: registration.churchId,
-      photoUrl: resolvePhotoUrl(registration.photoUrl)
+      photoUrl: toPublicPhotoUrl(registration.photoUrl)
     };
   }
 
@@ -671,7 +682,7 @@ export class RegistrationService {
       createdAt: registration.createdAt,
       paymentMethod: paymentMethodLabel,
       paymentDate,
-      photoUrl: resolvePhotoUrl(registration.photoUrl)
+      photoUrl: toPublicPhotoUrl(registration.photoUrl)
     });
 
     const filePath = path.join(receiptsDir, `${registrationId}.pdf`);
@@ -879,7 +890,7 @@ export class RegistrationService {
   async generateEventSheetPdf(
     filters: RegistrationFilters,
     groupBy: "event" | "church",
-    layout: "single" | "two" = "single",
+    layout: "single" | "two" | "four" = "single",
     ministryIds?: string[]
   ) {
     const registrations = await prisma.registration.findMany({
@@ -912,7 +923,7 @@ export class RegistrationService {
         ageYears: age,
         churchName: church?.name ?? "Nao informado",
         districtName: district?.name ?? "Nao informado",
-        photoUrl: r.photoUrl ?? undefined,
+        photoUrl: toPublicPhotoUrl(r.photoUrl) ?? DEFAULT_PHOTO_DATA_URL,
         eventTitle: event?.title ?? undefined
       };
     });

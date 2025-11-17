@@ -1,49 +1,9 @@
+import type { PermissionEntry } from "./permissions";
+import { PermissionModules } from "./permissions";
 import type { Role } from "./roles";
 
-export const PermissionModules = [
-  "dashboard",
-  "catalog",
-  "districts",
-  "churches",
-  "ministries",
-  "users",
-  "profiles",
-  "registrations",
-  "events",
-  "orders",
-  "financial",
-  "reports",
-  "checkin"
-] as const;
-
-export const PermissionActions = [
-  "view",
-  "create",
-  "edit",
-  "delete",
-  "approve",
-  "deactivate",
-  "reports",
-  "financial"
-] as const;
-
-export type PermissionModule = (typeof PermissionModules)[number];
-export type PermissionAction = (typeof PermissionActions)[number];
-
-export type PermissionEntry = {
-  module: PermissionModule | string;
-  canView: boolean;
-  canCreate: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-  canApprove: boolean;
-  canDeactivate: boolean;
-  canReport: boolean;
-  canFinancial: boolean;
-};
-
 const makePermission = (
-  module: PermissionModule | string,
+  module: string,
   flags: Partial<Omit<PermissionEntry, "module">> = {}
 ): PermissionEntry => ({
   module,
@@ -57,7 +17,7 @@ const makePermission = (
   canFinancial: flags.canFinancial ?? false
 });
 
-const fullAccess = (module: PermissionModule | string) =>
+const fullAccess = (module: string) =>
   makePermission(module, {
     canView: true,
     canCreate: true,
@@ -69,7 +29,7 @@ const fullAccess = (module: PermissionModule | string) =>
     canFinancial: true
   });
 
-const viewAccess = (module: PermissionModule | string, flags?: Partial<Omit<PermissionEntry, "module">>) =>
+const viewAccess = (module: string, flags?: Partial<Omit<PermissionEntry, "module">>) =>
   makePermission(module, { canView: true, ...(flags ?? {}) });
 
 export const RolePermissionPresets: Record<Role, PermissionEntry[]> = {
@@ -116,3 +76,4 @@ export const RolePermissionPresets: Record<Role, PermissionEntry[]> = {
     viewAccess("reports", { canReport: true })
   ]
 };
+

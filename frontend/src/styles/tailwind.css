@@ -3,10 +3,54 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply font-sans antialiased bg-neutral-50 text-neutral-900 transition-colors duration-300 dark:bg-neutral-950 dark:text-neutral-50;
+  :root {
+    --app-bg: radial-gradient(circle at 15% 15%, #eef2ff 0%, transparent 45%) , linear-gradient(180deg, #fdfcff 0%, #f5f5ff 100%);
+    --app-shell-bg: rgba(255, 255, 255, 0.9);
+    --app-shell-border: rgba(15, 23, 42, 0.08);
+    --surface-card: rgba(255, 255, 255, 0.95);
+    --surface-card-alt: rgba(255, 255, 255, 0.75);
+    --surface-blur: rgba(255, 255, 255, 0.85);
+    --text-base: #0f172a;
+    --text-muted: #475569;
+    --border-card: rgba(15, 23, 42, 0.08);
+    --card-shadow: 0 25px 60px -35px rgba(15, 23, 42, 0.45);
+    --card-shadow-strong: 0 40px 80px -45px rgba(59, 130, 246, 0.25);
   }
+
+  .dark {
+    --app-bg: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 45%), linear-gradient(180deg, #05060b 0%, #050914 35%, #020409 100%);
+    --app-shell-bg: rgba(8, 10, 18, 0.9);
+    --app-shell-border: rgba(255, 255, 255, 0.08);
+    --surface-card: rgba(15, 23, 42, 0.85);
+    --surface-card-alt: rgba(13, 19, 33, 0.65);
+    --surface-blur: rgba(6, 8, 15, 0.85);
+    --text-base: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-card: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 35px 110px -60px rgba(15, 23, 42, 0.95);
+    --card-shadow-strong: 0 45px 110px -60px rgba(14, 165, 233, 0.35);
+  }
+
+  body {
+    @apply font-sans antialiased transition-colors duration-300;
+    color: var(--text-base);
+    background-image: var(--app-bg);
+    background-attachment: fixed;
+    background-color: var(--app-shell-bg);
+  }
+
   ::selection {
     @apply bg-primary-500 text-white;
+  }
+
+  select {
+    @apply rounded-xl border px-3 py-2 text-sm transition;
+    @apply border-[color:var(--border-card)] text-[color:var(--text-base)];
+    background: var(--surface-card);
+  }
+
+  select option {
+    @apply text-sm;
+    color: var(--text-base);
   }
 }

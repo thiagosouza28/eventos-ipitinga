@@ -65,13 +65,23 @@
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Papel</label>
             <select
-              v-model="editDialog.form.role"
+              :value="editRoleSelectValue"
               required
               class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              @change="onEditRoleChange(($event.target as HTMLSelectElement).value)"
             >
-              <option v-for="option in roleOptions" :key="option.value" :value="option.value">
+              <option v-for="option in baseRoleOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
+              <optgroup v-if="catalog.ministries.length" label="Coordenadores por ministério">
+                <option
+                  v-for="ministry in catalog.ministries"
+                  :key="ministry.id"
+                  :value="`CoordenadorMinisterio:${ministry.id}`"
+                >
+                  Coordenador - {{ ministry.name }}
+                </option>
+              </optgroup>
             </select>
           </div>
           <div>
@@ -86,11 +96,16 @@
               </option>
             </select>
           </div>
-          <div v-if="editRequiresDistrict">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Distrito</label>
+          <div>
+            <div class="flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300">
+              <span>Distrito</span>
+              <span v-if="editRequiresDistrict" class="text-[10px] font-medium text-primary-600 dark:text-primary-300">
+                Obrigatório para administradores distritais
+              </span>
+            </div>
             <select
               v-model="editDialog.form.districtScopeId"
-              required
+              :required="editRequiresDistrict"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <option value="">Selecione</option>
@@ -99,11 +114,16 @@
               </option>
             </select>
           </div>
-          <div v-if="editRequiresChurch">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Igreja</label>
+          <div>
+            <div class="flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300">
+              <span>Igreja</span>
+              <span v-if="editRequiresChurch" class="text-[10px] font-medium text-primary-600 dark:text-primary-300">
+                Obrigatório para diretores locais ou tesoureiros
+              </span>
+            </div>
             <select
               v-model="editDialog.form.churchScopeId"
-              required
+              :required="editRequiresChurch"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
             >
               <option value="">Selecione</option>
@@ -187,38 +207,136 @@
       </form>
     </Modal>
 
-    <BaseCard>
-      <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">Usuarios</h1>
-          <p class="text-sm text-neutral-500 dark:text-neutral-400">
+    <Modal
+      :model-value="permissionDialog.open"
+      title="Permissões personalizadas"
+      @update:modelValue="(value) => {
+        permissionDialog.open = value;
+        if (!value) resetPermissionDialog();
+      }"
+    >
+      <div v-if="permissionDialog.loading" class="flex h-24 items-center justify-center text-sm text-neutral-500 dark:text-neutral-300">
+        Carregando permissōes...
+      </div>
+      <div v-else-if="permissionDialog.user" class="space-y-4">
+        <p class="text-sm text-neutral-600 dark:text-neutral-300">
+          Ajuste o que o usuārio <span class="font-semibold text-primary-600 dark:text-primary-200">{{ permissionDialog.user.name }}</span>
+          pode fazer além do perfil
+          <span class="font-semibold">{{ permissionDialog.user.profile?.name ?? "sem perfil definido" }}</span>.
+          Desative um módulo para herdar as permissōes originais.
+        </p>
+        <div v-for="module in permissionModules" :key="module.key" class="rounded-2xl border border-neutral-100 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-neutral-900 dark:text-white">{{ module.label }}</p>
+              <p class="text-[11px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                Perfil: <span class="font-semibold text-neutral-600 dark:text-neutral-300">{{ permissionDialog.user.profile?.name ?? "Padrāo" }}</span>
+              </p>
+            </div>
+            <label class="inline-flex items-center gap-2 text-xs font-semibold text-primary-600 dark:text-primary-300">
+              <input
+                class="h-4 w-4 rounded border-primary-200 text-primary-600 focus:ring-primary-500"
+                type="checkbox"
+                :checked="isModuleOverridden(module.key)"
+                @change="toggleModuleOverride(module.key, ($event.target as HTMLInputElement).checked)"
+              />
+              Personalizar
+            </label>
+          </div>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <label
+              v-for="action in permissionActions"
+              :key="`${module.key}-${action.key}`"
+              class="inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-xs text-neutral-600 dark:border-white/10 dark:text-neutral-200"
+              :class="{ 'opacity-60': !isModuleOverridden(module.key) }"
+            >
+              <input
+                class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                type="checkbox"
+                :disabled="!isModuleOverridden(module.key)"
+                :checked="overrideHasPermission(module.key, action.key)"
+                @change="handlePermissionOverrideChange(module.key, action.key, ($event.target as HTMLInputElement).checked)"
+              />
+              <span>{{ action.label }}</span>
+              <span
+                v-if="profileHasPermission(module.key, action.key)"
+                class="ml-auto inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500 dark:bg-white/10 dark:text-neutral-300"
+              >
+                Perfil
+              </span>
+            </label>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            class="text-xs font-semibold text-neutral-500 underline-offset-2 transition hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white"
+            @click="clearAllOverrides"
+          >
+            Limpar personalizaçōes
+          </button>
+          <div class="flex gap-3">
+            <button
+              type="button"
+              class="rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-white/10 dark:text-neutral-200"
+              @click="resetPermissionDialog"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-50"
+              :disabled="permissionDialog.saving"
+              @click="savePermissionOverrides"
+            >
+              <span v-if="permissionDialog.saving" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+              <span>{{ permissionDialog.saving ? "Salvando..." : "Salvar ajustes" }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+
+    <BaseCard
+      class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+    >
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
+            Central de acesso
+          </p>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Usuarios</h1>
+          <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
             Cadastre usuarios com acesso ao painel administrativo e controle suas permissoes.
           </p>
         </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
-            @click="toggleCreateForm"
-          >
-            {{ showCreateForm ? "Fechar formulario" : "Novo usuario" }}
-          </button>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
           <RouterLink
             to="/admin/dashboard"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
           >
             Voltar
           </RouterLink>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
+            @click="toggleCreateForm"
+          >
+            {{ showCreateForm ? "Fechar formulario" : "+ Novo usuario" }}
+          </button>
         </div>
       </div>
     </BaseCard>
 
-    <BaseCard v-if="lastTempPassword">
-      <div class="space-y-2">
+    <BaseCard
+      v-if="lastTempPassword"
+      class="border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div class="space-y-3">
         <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
           Senha temporaria gerada para {{ lastTempPassword.user }}
         </p>
-        <p class="rounded-lg bg-neutral-900 px-4 py-2 font-mono text-white">
+        <p class="rounded-2xl bg-neutral-900/90 px-5 py-2 font-mono text-base tracking-wide text-white shadow-inner shadow-black/20">
           {{ lastTempPassword.password }}
         </p>
         <p class="text-xs text-neutral-500 dark:text-neutral-400">
@@ -227,61 +345,74 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="showCreateForm">
-      <form class="space-y-4" @submit.prevent="handleCreateUser">
-        <div class="grid gap-4 md:grid-cols-2">
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nome completo</label>
+    <BaseCard
+      v-if="showCreateForm"
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <form class="space-y-5" @submit.prevent="handleCreateUser">
+        <div class="grid gap-5 md:grid-cols-2">
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Nome completo</label>
             <input
               v-model="form.name"
               type="text"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Email</label>
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Email</label>
             <input
               v-model="form.email"
               type="email"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF (opcional)</label>
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">CPF (opcional)</label>
             <input
               v-model="form.cpf"
               type="text"
               maxlength="14"
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Telefone (opcional)</label>
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Telefone (opcional)</label>
             <input
               v-model="form.phone"
               type="text"
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Papel</label>
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Papel</label>
             <select
-              v-model="form.role"
+              :value="createRoleSelectValue"
               required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+              @change="onCreateRoleChange(($event.target as HTMLSelectElement).value)"
             >
-              <option v-for="option in roleOptions" :key="option.value" :value="option.value">
+              <option v-for="option in baseRoleOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
+              <optgroup v-if="catalog.ministries.length" label="Coordenadores por ministério">
+                <option
+                  v-for="ministry in catalog.ministries"
+                  :key="ministry.id"
+                  :value="`CoordenadorMinisterio:${ministry.id}`"
+                >
+                  Coordenador - {{ ministry.name }}
+                </option>
+              </optgroup>
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Perfil de permissão</label>
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Perfil de permissao</label>
             <select
               v-model="form.profileId"
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             >
               <option value="">Selecione</option>
               <option v-for="profile in admin.profiles" :key="profile.id" :value="profile.id">
@@ -289,12 +420,17 @@
               </option>
             </select>
           </div>
-          <div v-if="requiresDistrict">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Distrito</label>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300">
+              <span>Distrito</span>
+              <span v-if="requiresDistrict" class="text-[10px] font-medium text-primary-600 dark:text-primary-300">
+                Obrigatório para administradores distritais
+              </span>
+            </div>
             <select
               v-model="form.districtScopeId"
-              required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              :required="requiresDistrict"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             >
               <option value="">Selecione</option>
               <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
@@ -302,12 +438,17 @@
               </option>
             </select>
           </div>
-          <div v-if="requiresChurch">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Igreja</label>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300">
+              <span>Igreja</span>
+              <span v-if="requiresChurch" class="text-[10px] font-medium text-primary-600 dark:text-primary-300">
+                Obrigatório para diretores locais ou tesoureiros
+              </span>
+            </div>
             <select
               v-model="form.churchScopeId"
-              required
-              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              :required="requiresChurch"
+              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             >
               <option value="">Selecione</option>
               <option v-for="church in catalog.churches" :key="church.id" :value="church.id">
@@ -315,13 +456,13 @@
               </option>
             </select>
           </div>
-          <div v-if="requiresMinistry" class="md:col-span-2">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Ministerios</label>
-            <div class="mt-2 grid gap-2 sm:grid-cols-2">
+          <div v-if="requiresMinistry" class="space-y-2 md:col-span-2">
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Ministerios</label>
+            <div class="mt-1 grid gap-2 sm:grid-cols-2">
               <label
                 v-for="ministry in catalog.ministries"
                 :key="ministry.id"
-                class="flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-neutral-700"
+                class="flex items-center gap-2 rounded-2xl border border-neutral-200/80 bg-white/70 px-4 py-2 text-sm text-neutral-700 shadow-inner transition dark:border-white/10 dark:bg-white/5 dark:text-white"
               >
                 <input
                   v-model="form.ministryIds"
@@ -332,13 +473,13 @@
                 <span>{{ ministry.name }}</span>
               </label>
             </div>
-            <p v-if="ministryError" class="mt-1 text-xs text-red-500">{{ ministryError }}</p>
+            <p v-if="ministryError" class="text-xs text-red-500 dark:text-red-400">{{ ministryError }}</p>
           </div>
         </div>
-        <div class="flex flex-col gap-2 sm:flex-row sm:justify-between">
+        <div class="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
             @click="toggleCreateForm"
           >
             Cancelar
@@ -346,48 +487,65 @@
           <button
             type="submit"
             :disabled="savingUser"
-            class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-60"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:opacity-70"
           >
-            <span v-if="savingUser" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+            <span
+              v-if="savingUser"
+              class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
+            />
             <span>{{ savingUser ? "Salvando..." : "Criar usuario" }}</span>
           </button>
         </div>
       </form>
     </BaseCard>
 
-    <BaseCard>
-      <div class="flex items-center justify-between">
+    <BaseCard
+      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+    >
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Usuarios cadastrados</h2>
-          <p class="text-sm text-neutral-500 dark:text-neutral-400">
-            Total: {{ admin.users.length }}
+          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
+            Usuarios cadastrados
           </p>
+          <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">
+            Painel de credenciais ({{ admin.users.length }})
+          </h2>
         </div>
         <button
           type="button"
-          class="text-sm text-primary-600 hover:text-primary-500"
+          class="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary-600 transition hover:translate-y-0.5 dark:text-primary-300"
           @click="refreshData"
         >
           Atualizar lista
         </button>
       </div>
-      <div class="mt-4 overflow-x-auto">
-        <table class="w-full table-auto text-left text-sm">
-          <thead class="text-xs uppercase tracking-wide text-neutral-500">
+      <div
+        class="mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
+      >
+        <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
+          <thead
+            class="bg-white/60 text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400"
+          >
             <tr>
-              <th class="pb-2">Nome</th>
-              <th class="pb-2">Email</th>
-              <th class="pb-2">Perfil</th>
-              <th class="pb-2">Ministerios</th>
-              <th class="pb-2">Status</th>
-              <th class="pb-2 text-right">Acoes</th>
+              <th class="px-5 py-3">Nome</th>
+              <th class="px-5 py-3">Email</th>
+              <th class="px-5 py-3">Perfil</th>
+              <th class="px-5 py-3">Ministerios</th>
+              <th class="px-5 py-3">Status</th>
+              <th class="px-5 py-3 text-right">Acoes</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
-            <tr v-for="user in admin.users" :key="user.id">
-              <td class="py-3">
+          <tbody class="divide-y divide-neutral-100 dark:divide-white/5">
+            <tr
+              v-for="user in admin.users"
+              :key="user.id"
+              class="transition hover:bg-white/80 dark:hover:bg-white/5"
+            >
+              <td class="px-5 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                  <div
+                    class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/10"
+                  >
                     <img
                       v-if="user.photoUrl"
                       :src="user.photoUrl"
@@ -402,37 +560,50 @@
                     </span>
                   </div>
                   <div>
-                    <div class="font-medium text-neutral-800 dark:text-neutral-100">{{ user.name }}</div>
-                    <div v-if="user.cpf" class="text-xs text-neutral-500">CPF: {{ maskCpf(user.cpf) }}</div>
+                    <p class="font-semibold text-neutral-900 dark:text-white">{{ user.name }}</p>
+                    <p v-if="user.cpf" class="text-xs text-neutral-500 dark:text-neutral-400">
+                      CPF: {{ maskCpf(user.cpf) }}
+                    </p>
                   </div>
                 </div>
               </td>
-              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">{{ user.email }}</td>
-              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">{{ roleLabel(user.role) }}</td>
-              <td class="py-3 text-sm text-neutral-600 dark:text-neutral-300">
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">{{ user.email }}</td>
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">{{ roleLabel(user.role) }}</td>
+              <td class="px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300">
                 <span v-if="user.ministries?.length">{{ user.ministries.map((m) => m.name).join(", ") }}</span>
-                <span v-else class="text-neutral-400">--</span>
+                <span v-else class="text-neutral-400 dark:text-neutral-500">--</span>
               </td>
-              <td class="py-3">
+              <td class="px-5 py-4">
                 <span
-                  class="rounded-full px-3 py-1 text-xs font-semibold uppercase"
-                  :class="user.mustChangePassword ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'"
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase"
+                  :class="
+                    user.mustChangePassword
+                      ? 'bg-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
+                      : 'bg-emerald-200/70 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100'
+                  "
                 >
-                  {{ user.mustChangePassword ? "Trocar senha" : "Ativo" }}
+                  {{ user.mustChangePassword ? 'Trocar senha' : 'Ativo' }}
                 </span>
               </td>
-              <td class="py-3 text-right">
-                <div class="flex flex-wrap justify-end gap-3 text-sm">
+              <td class="px-5 py-4 text-right">
+                <div class="inline-flex flex-wrap items-center justify-end gap-2">
                   <button
                     type="button"
-                    class="text-primary-600 hover:text-primary-500"
+                    class="inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
+                    @click="openPermissionDialog(user)"
+                  >
+                    Permissões
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
                     @click="openEditDialog(user)"
                   >
                     Editar
                   </button>
                   <button
                     type="button"
-                    class="text-primary-600 hover:text-primary-500"
+                    class="inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
                     @click="openResetDialog(user)"
                   >
                     Resetar senha
@@ -441,7 +612,7 @@
               </td>
             </tr>
             <tr v-if="!admin.users.length">
-              <td class="py-4 text-sm text-neutral-500" colspan="6">
+              <td class="px-5 py-6 text-sm text-neutral-500 dark:text-neutral-400" colspan="6">
                 Nenhum usuario cadastrado ate o momento.
               </td>
             </tr>
@@ -460,9 +631,17 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
+import { permissionModules, permissionActions } from "../../config/permission-schema";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
-import type { AdminUser, Role } from "../../types/api";
+import {
+  createPermissionMatrix,
+  hydrateMatrixFromEntries,
+  toPermissionPayload,
+  toggleMatrixPermission,
+  type PermissionFormEntry
+} from "../../utils/permission-matrix";
+import type { AdminUser, Role, PermissionAction } from "../../types/api";
 
 const admin = useAdminStore();
 const catalog = useCatalogStore();
@@ -513,6 +692,15 @@ const editDialog = reactive({
     status: "ACTIVE" as "ACTIVE" | "INACTIVE"
   }
 });
+const permissionDialog = reactive({
+  open: false,
+  loading: false,
+  saving: false,
+  user: null as AdminUser | null,
+  permissions: createPermissionMatrix(),
+  profileMatrix: createPermissionMatrix(),
+  enabledOverrides: {} as Record<string, boolean>
+});
 const editMinistryError = ref("");
 
 const errorDialog = reactive({
@@ -532,7 +720,103 @@ const passwordDialog = reactive<{
   target: null
 });
 
-const roleOptions: Array<{ value: Role; label: string }> = [
+const resetPermissionDialog = () => {
+  permissionDialog.open = false;
+  permissionDialog.loading = false;
+  permissionDialog.saving = false;
+  permissionDialog.user = null;
+  permissionDialog.permissions = createPermissionMatrix();
+  permissionDialog.profileMatrix = createPermissionMatrix();
+  permissionDialog.enabledOverrides = {};
+};
+
+const isModuleOverridden = (moduleKey: string) => Boolean(permissionDialog.enabledOverrides[moduleKey]);
+
+const toggleModuleOverride = (moduleKey: string, enabled: boolean) => {
+  if (enabled) {
+    permissionDialog.enabledOverrides[moduleKey] = true;
+    return;
+  }
+  delete permissionDialog.enabledOverrides[moduleKey];
+  const blank = createPermissionMatrix().find((entry) => entry.module === moduleKey);
+  const target = permissionDialog.permissions.find((entry) => entry.module === moduleKey);
+  if (target && blank) {
+    target.actions = { ...blank.actions };
+  }
+};
+
+const profileHasPermission = (moduleKey: string, action: PermissionAction) => {
+  const entry = permissionDialog.profileMatrix.find((item) => item.module === moduleKey);
+  return entry ? entry.actions[action] : false;
+};
+
+const overrideHasPermission = (moduleKey: string, action: PermissionAction) => {
+  const entry = permissionDialog.permissions.find((item) => item.module === moduleKey);
+  return entry ? entry.actions[action] : false;
+};
+
+const handlePermissionOverrideChange = (
+  moduleKey: string,
+  action: PermissionAction,
+  enabled: boolean
+) => {
+  if (enabled) {
+    permissionDialog.enabledOverrides[moduleKey] = true;
+  }
+  permissionDialog.permissions = toggleMatrixPermission(
+    permissionDialog.permissions,
+    moduleKey,
+    action,
+    enabled
+  );
+};
+
+const clearAllOverrides = () => {
+  permissionDialog.permissions = createPermissionMatrix();
+  permissionDialog.enabledOverrides = {};
+};
+
+const openPermissionDialog = async (user: AdminUser) => {
+  permissionDialog.user = user;
+  permissionDialog.open = true;
+  permissionDialog.loading = true;
+  permissionDialog.profileMatrix = hydrateMatrixFromEntries(user.profile?.permissions ?? []);
+  try {
+    const overrides = await admin.getUserPermissions(user.id);
+    permissionDialog.permissions = hydrateMatrixFromEntries(overrides);
+    permissionDialog.enabledOverrides = overrides.reduce<Record<string, boolean>>((acc, curr) => {
+      acc[curr.module] = true;
+      return acc;
+    }, {});
+  } catch (error: any) {
+    const message = error.response?.data?.message ?? "Nao foi possivel carregar as permissǒes do usuario.";
+    showError("Falha ao carregar permissǒes", message);
+    resetPermissionDialog();
+  } finally {
+    permissionDialog.loading = false;
+  }
+};
+
+const savePermissionOverrides = async () => {
+  if (!permissionDialog.user) return;
+  permissionDialog.saving = true;
+  try {
+    const modules = Object.keys(permissionDialog.enabledOverrides).filter(
+      (moduleKey) => permissionDialog.enabledOverrides[moduleKey]
+    );
+    const entries = permissionDialog.permissions.filter((entry) => modules.includes(entry.module));
+    const payload = toPermissionPayload(entries, { keepEmpty: true });
+    await admin.updateUserPermissions(permissionDialog.user.id, payload);
+    resetPermissionDialog();
+  } catch (error: any) {
+    const message = error.response?.data?.message ?? "Nao foi possivel salvar as permissǒes.";
+    showError("Falha ao salvar permissǒes", message);
+  } finally {
+    permissionDialog.saving = false;
+  }
+};
+
+const baseRoleOptions: Array<{ value: Role; label: string }> = [
   { value: "AdminGeral", label: "Admin geral" },
   { value: "AdminDistrital", label: "Admin distrital" },
   { value: "DiretorLocal", label: "Diretor local" },
@@ -550,6 +834,20 @@ const requiresMinistry = computed(() => roleRequiresMinistry(form.role));
 const editRequiresDistrict = computed(() => roleRequiresDistrict(editDialog.form.role));
 const editRequiresChurch = computed(() => roleRequiresChurch(editDialog.form.role));
 const editRequiresMinistry = computed(() => roleRequiresMinistry(editDialog.form.role));
+const createRoleSelectValue = computed(() => {
+  if (form.role === "CoordenadorMinisterio") {
+    return form.ministryIds[0] ? `CoordenadorMinisterio:${form.ministryIds[0]}` : "CoordenadorMinisterio";
+  }
+  return form.role;
+});
+const editRoleSelectValue = computed(() => {
+  if (editDialog.form.role === "CoordenadorMinisterio") {
+    return editDialog.form.ministryIds[0]
+      ? `CoordenadorMinisterio:${editDialog.form.ministryIds[0]}`
+      : "CoordenadorMinisterio";
+  }
+  return editDialog.form.role;
+});
 const ministryError = ref("");
 
 const maskCpf = (value?: string | null) => {
@@ -568,8 +866,34 @@ const userInitials = (value: string) => {
 };
 
 const roleLabel = (role: Role) => {
-  const option = roleOptions.find((item) => item.value === role);
+  const option = baseRoleOptions.find((item) => item.value === role);
   return option?.label ?? role;
+};
+
+const parseRoleSelection = (value: string) => {
+  if (value?.startsWith("CoordenadorMinisterio:")) {
+    const [, ministryId] = value.split(":");
+    return { role: "CoordenadorMinisterio" as Role, ministryId: ministryId || undefined };
+  }
+  return { role: (value as Role) || "CoordenadorMinisterio", ministryId: undefined };
+};
+
+const applyRoleSelection = (target: { role: Role; ministryIds: string[] }, value: string) => {
+  const { role, ministryId } = parseRoleSelection(value);
+  target.role = role;
+  if (role === "CoordenadorMinisterio") {
+    target.ministryIds = ministryId ? [ministryId] : [];
+  } else {
+    target.ministryIds = [];
+  }
+};
+
+const onCreateRoleChange = (value: string) => {
+  applyRoleSelection(form, value);
+};
+
+const onEditRoleChange = (value: string) => {
+  applyRoleSelection(editDialog.form, value);
 };
 
 const showError = (title: string, message: string, details?: string) => {
@@ -791,7 +1115,7 @@ const handleConfirmReset = async () => {
 
 const refreshData = async () => {
   try {
-    await admin.loadUsers();
+    await Promise.all([admin.loadUsers(), admin.loadProfiles()]);
   } catch (error: any) {
     showError("Falha ao carregar usuarios", error.response?.data?.message ?? "Tente novamente mais tarde.");
   }
@@ -801,6 +1125,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       admin.loadUsers(),
+      admin.loadProfiles(),
       catalog.loadDistricts(),
       catalog.loadChurches(),
       catalog.loadMinistries()
@@ -813,8 +1138,6 @@ onMounted(async () => {
 watch(
   () => form.role,
   () => {
-    if (!requiresDistrict.value) form.districtScopeId = "";
-    if (!requiresChurch.value) form.churchScopeId = "";
     if (!requiresMinistry.value) form.ministryIds = [];
   }
 );
@@ -822,9 +1145,8 @@ watch(
 watch(
   () => editDialog.form.role,
   () => {
-    if (!editRequiresDistrict.value) editDialog.form.districtScopeId = "";
-    if (!editRequiresChurch.value) editDialog.form.churchScopeId = "";
     if (!editRequiresMinistry.value) editDialog.form.ministryIds = [];
   }
 );
 </script>
+

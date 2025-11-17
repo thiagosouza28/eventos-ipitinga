@@ -18,6 +18,10 @@ import {
 } from "../../config/pending-payment-value-rule";
 
 type EventLotEntity = Awaited<ReturnType<typeof eventLotService.list>>[number];
+type ActorUser = {
+  id?: string | null;
+  role?: string | null;
+};
 
 const buildSlug = (title: string) =>
   slugify(title, {
@@ -49,6 +53,23 @@ const serializeLot = (lot: EventLotEntity | null | undefined) => {
 };
 
 export class EventService {
+  private assertCanManageEvent(event: { createdById?: string | null }, actor?: ActorUser) {
+    if (!actor) {
+      throw new AppError("Permissão insuficiente", 403);
+    }
+    const createdById = (event as any).createdById ?? null;
+    if (actor.role === "AdminGeral") {
+      return;
+    }
+    if (actor.role === "AdminDistrital" && createdById === actor.id) {
+      return;
+    }
+    if (actor.role === "AdminDistrital") {
+      throw new AppError("Distritais só podem gerenciar eventos que cadastraram.", 403);
+    }
+    throw new AppError("Permissão insuficiente para gerenciar eventos.", 403);
+  }
+
   async getPublicBySlug(slug: string) {
     const event = await prisma.event.findUnique({
       where: { slug }
@@ -181,11 +202,12 @@ export class EventService {
     return slug;
   }
 
-  async create(data: {
-    title: string;
-    description: string;
-    startDate: string;
-    endDate: string;
+  async create(
+    data: {
+      title: string;
+      description: string;
+      startDate: string;
+      endDate: string;
     location: string;
     bannerUrl?: string;
     slug?: string;
@@ -196,7 +218,9 @@ export class EventService {
     paymentMethods?: PaymentMethod[];
     pendingPaymentValueRule?: PendingPaymentValueRule;
     ministryId: string;
-  }) {
+    },
+    actor?: ActorUser
+  ) {
     const desiredSlug = data.slug ? normalizeSlugInput(data.slug) : null;
     const baseSlug =
       desiredSlug && desiredSlug.length > 0
@@ -222,7 +246,8 @@ export class EventService {
           data.paymentMethods ?? DEFAULT_PAYMENT_METHODS
         ),
         pendingPaymentValueRule: data.pendingPaymentValueRule ?? DEFAULT_PENDING_PAYMENT_VALUE_RULE,
-        slug
+        slug,
+        createdById: actor?.id ?? null
       }
     });
     const serialized = {
@@ -255,10 +280,14 @@ export class EventService {
       slug?: string;
       pendingPaymentValueRule?: PendingPaymentValueRule;
       ministryId?: string;
-    }>
+    }>,
+    actor?: ActorUser
   ) {
     const event = await prisma.event.findUnique({ where: { id } });
     if (!event) throw new NotFoundError("Evento nao encontrado");
+    if (actor) {
+      this.assertCanManageEvent(event, actor);
+    }
 
     const payload: Prisma.EventUpdateInput = {};
 
@@ -330,9 +359,12 @@ export class EventService {
     return eventLotService.findActive(eventId, referenceDate);
   }
 
-  async delete(id: string) {
+  async delete(id: string, actor?: ActorUser) {
     const event = await prisma.event.findUnique({ where: { id } });
     if (!event) throw new NotFoundError("Evento nao encontrado");
+    if (actor) {
+      this.assertCanManageEvent(event, actor);
+    }
 
     const [orderCount, registrationCount] = await Promise.all([
       prisma.order.count({ where: { eventId: id } }),

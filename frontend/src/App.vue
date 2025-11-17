@@ -1,56 +1,107 @@
 <template>
   <div :class="{ dark: isDark }">
-    <div
-      class="min-h-screen bg-gradient-to-b from-primary-50 via-white to-white text-neutral-900 transition-colors dark:from-neutral-950 dark:via-black dark:to-neutral-950 dark:text-neutral-50"
-    >
+    <div class="min-h-screen text-[color:var(--text-base)] transition-colors">
       <header
-        class="border-b border-primary-100/60 bg-white/90 shadow-sm backdrop-blur-md dark:border-primary-900/40 dark:bg-black/70"
+        class="sticky top-0 z-50 border-b border-[color:var(--app-shell-border)] bg-[color:var(--surface-blur)] shadow-[0_18px_60px_-50px_rgba(15,23,42,0.9)] backdrop-blur-xl"
       >
-        <div class="mx-auto flex w-full max-w-[95%] xl:max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:flex-nowrap sm:gap-4 sm:px-6">
-          <RouterLink to="/" class="flex items-center gap-2 text-lg font-semibold text-neutral-900 dark:text-white">
+        <div
+          class="mx-auto flex w-full max-w-[98%] items-center justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-6 2xl:max-w-[1900px]"
+        >
+          <RouterLink to="/" class="flex items-center gap-3 text-lg font-semibold text-neutral-900 dark:text-white">
             <span
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white shadow-lg shadow-primary-600/30"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-lg text-white shadow-lg shadow-primary-600/40"
             >
               CI
             </span>
-            <span>CATRE Ipitinga</span>
+            <span class="text-base font-semibold sm:text-lg">CATRE Ipitinga</span>
           </RouterLink>
-          <div class="flex flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none sm:gap-3">
-          <RouterLink
-            :to="adminLink"
-            class="rounded-md border border-primary-500/60 px-3 py-1.5 text-sm font-medium text-primary-700 transition hover:bg-primary-50 dark:border-primary-400/70 dark:text-primary-200 dark:hover:bg-primary-500/20"
-          >
-            {{ adminLinkLabel }}
-          </RouterLink>
-          <button
-            v-if="auth.isAuthenticated"
-            type="button"
-            class="rounded-md border border-black/10 px-3 py-1.5 text-sm text-neutral-900 transition hover:bg-black/5 dark:border-white/10 dark:text-neutral-100 dark:hover:bg-white/5"
-            @click="handleSignOut"
-          >
-            Sair
-          </button>
-          <button
-            type="button"
-            class="rounded-md border border-black/10 px-3 py-1.5 text-sm text-neutral-900 transition hover:bg-black/5 dark:border-white/10 dark:text-neutral-100 dark:hover:bg-white/5"
-            @click="toggleTheme"
-          >
-              <span v-if="isDark">Tema claro</span>
-              <span v-else>Tema escuro</span>
+          <div class="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-transparent bg-neutral-200/80 text-neutral-900 transition hover:bg-neutral-300 dark:bg-white/10 dark:text-white"
+              :aria-pressed="isDark"
+              @click="toggleTheme"
+            >
+              <SunIcon v-if="isDark" class="h-5 w-5" aria-hidden="true" />
+              <MoonIcon v-else class="h-5 w-5" aria-hidden="true" />
+              <span class="sr-only">Alternar tema</span>
+            </button>
+            <div v-if="greetingMessage" class="hidden flex-col text-right leading-tight sm:flex">
+              <span class="text-sm font-semibold text-[color:var(--text-base)] dark:text-white">
+                {{ greetingMessage }}
+              </span>
+              <span class="text-xs text-[color:var(--text-muted)]">Estamos felizes em ver voce</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-2">
+              <RouterLink
+                :to="adminLink"
+                class="inline-flex items-center gap-2 rounded-full border border-[color:var(--app-shell-border)] bg-white/80 px-4 py-2 text-sm font-medium text-primary-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:bg-transparent dark:text-primary-200"
+              >
+                <ShieldCheckIcon class="h-5 w-5" aria-hidden="true" />
+                <span>{{ adminLinkLabel }}</span>
+              </RouterLink>
+              <button
+                v-if="auth.isAuthenticated"
+                type="button"
+                class="inline-flex items-center gap-2 rounded-full border border-[color:var(--app-shell-border)] px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:text-neutral-100"
+                @click="handleSignOut"
+              >
+                <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
+                <span>Sair</span>
+              </button>
+            </div>
+            <button
+              type="button"
+              class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--app-shell-border)] bg-white/80 text-neutral-700 transition hover:bg-white sm:hidden dark:border-white/10 dark:bg-transparent dark:text-white dark:hover:bg-white/10"
+              @click="toggleMobileMenu"
+            >
+              <Bars3Icon v-if="!mobileMenuOpen" class="h-6 w-6" aria-hidden="true" />
+              <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
+              <span class="sr-only">Abrir menu</span>
             </button>
           </div>
         </div>
+        <transition name="fade">
+          <div
+            v-if="mobileMenuOpen"
+            class="mx-auto mt-2 flex w-full max-w-[95%] flex-col gap-2 rounded-2xl border border-[color:var(--app-shell-border)] bg-[color:var(--surface-card)] px-4 py-4 text-sm shadow-lg sm:hidden"
+          >
+            <div
+              v-if="greetingMessage"
+              class="rounded-xl border border-[color:var(--app-shell-border)] px-4 py-3 text-sm font-semibold text-[color:var(--text-base)] dark:text-white"
+            >
+              {{ greetingMessage }}
+            </div>
+            <RouterLink
+              :to="adminLink"
+              class="inline-flex items-center gap-2 rounded-xl border border-[color:var(--app-shell-border)] px-3 py-2 font-medium text-primary-700 transition hover:bg-white/80 dark:text-primary-200"
+              @click="closeMobileMenu"
+            >
+              <ShieldCheckIcon class="h-5 w-5" />
+              <span>{{ adminLinkLabel }}</span>
+            </RouterLink>
+            <button
+              v-if="auth.isAuthenticated"
+              type="button"
+              class="inline-flex items-center gap-2 rounded-xl border border-[color:var(--app-shell-border)] px-3 py-2 text-left font-medium text-neutral-700 transition hover:bg-white/80 dark:text-neutral-100"
+              @click="handleSignOut"
+            >
+              <ArrowRightOnRectangleIcon class="h-5 w-5" />
+              <span>Sair</span>
+            </button>
+          </div>
+        </transition>
       </header>
 
       <div
-        class="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[95%] flex-col rounded-[28px] border border-white/60 bg-white/90 px-4 py-10 shadow-2xl shadow-primary-100/50 backdrop-blur xl:max-w-[1600px] dark:border-white/10 dark:bg-neutral-950/80 dark:shadow-black/40 sm:px-6"
+        class="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[98%] flex-col rounded-[32px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-4 py-10 shadow-[0_45px_120px_-60px_rgba(15,23,42,0.5)] backdrop-blur 2xl:max-w-[1900px] sm:px-6"
       >
         <main class="flex-1 pb-10">
           <RouterView />
         </main>
 
         <footer
-          class="mt-auto border-t border-black/5 bg-white/80 py-6 text-center text-sm text-neutral-500 dark:border-white/10 dark:bg-black/60"
+          class="mt-auto border-t border-[color:var(--app-shell-border)] bg-[color:var(--surface-card-alt)] py-6 text-center text-sm text-[color:var(--text-muted)]"
         >
           &copy; {{ new Date().getFullYear() }} CATRE Ipitinga. Sistema de inscrições e check-in.
         </footer>
@@ -60,8 +111,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { RouterLink, RouterView, useRouter } from "vue-router";
+import {
+  ArrowRightOnRectangleIcon,
+  Bars3Icon,
+  MoonIcon,
+  ShieldCheckIcon,
+  SunIcon,
+  XMarkIcon
+} from "@heroicons/vue/24/outline";
 
 import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./stores/auth";
@@ -69,14 +128,73 @@ import { useAuthStore } from "./stores/auth";
 const { isDark, toggleTheme } = useTheme();
 const router = useRouter();
 const auth = useAuthStore();
+const mobileMenuOpen = ref(false);
+const currentTime = ref(new Date());
+let timer: number | undefined;
 
 const adminLink = computed(() =>
   auth.isAuthenticated ? { name: "admin-dashboard" } : { name: "admin-login" }
 );
 const adminLinkLabel = computed(() => (auth.isAuthenticated ? "Painel admin" : "Admin"));
+const userDisplayName = computed(() => {
+  const name = auth.user?.name?.trim();
+  if (!name) return "";
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) {
+    return parts[0] ?? "";
+  }
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+});
+const greetingMessage = computed(() => {
+  if (!auth.isAuthenticated) return "";
+  const displayName = userDisplayName.value;
+  if (!displayName) return "";
+  const hour = currentTime.value.getHours();
+  let greeting = "Ola";
+  if (hour >= 5 && hour < 12) {
+    greeting = "Bom dia";
+  } else if (hour >= 12 && hour < 18) {
+    greeting = "Boa tarde";
+  } else {
+    greeting = "Boa noite";
+  }
+  return `${greeting}, ${displayName}`;
+});
+
+onMounted(() => {
+  timer = window.setInterval(() => {
+    currentTime.value = new Date();
+  }, 60 * 1000);
+});
+
+onBeforeUnmount(() => {
+  if (timer) {
+    window.clearInterval(timer);
+  }
+});
 
 const handleSignOut = () => {
   auth.signOut();
   router.push({ name: "admin-login" });
+  mobileMenuOpen.value = false;
+};
+
+const toggleMobileMenu = () => {
+  mobileMenuOpen.value = !mobileMenuOpen.value;
+};
+
+const closeMobileMenu = () => {
+  mobileMenuOpen.value = false;
 };
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 150ms ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

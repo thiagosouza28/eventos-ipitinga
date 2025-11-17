@@ -1,6 +1,11 @@
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 
+type ActorUser = {
+  id?: string | null;
+  role?: string | null;
+};
+
 type LotInput = {
   name: string;
   priceCents: number;
@@ -52,6 +57,23 @@ const ensureNoOverlap = async (
 };
 
 class EventLotService {
+  private assertCanManage(event: { createdById?: string | null }, actor?: ActorUser) {
+    if (!actor) {
+      throw new AppError("Permissão insuficiente", 403);
+    }
+    if (actor.role === "AdminGeral") {
+      return;
+    }
+    const createdById = (event as any).createdById ?? null;
+    if (actor.role === "AdminDistrital" && createdById === actor.id) {
+      return;
+    }
+    if (actor.role === "AdminDistrital") {
+      throw new AppError("Distritais só podem gerenciar eventos que cadastraram.", 403);
+    }
+    throw new AppError("Permissão insuficiente para gerenciar eventos.", 403);
+  }
+
   list(eventId: string) {
     return prisma.eventLot.findMany({
       where: { eventId },
@@ -59,10 +81,13 @@ class EventLotService {
     });
   }
 
-  async create(eventId: string, input: LotInput) {
+  async create(eventId: string, input: LotInput, actor?: ActorUser) {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) {
       throw new NotFoundError("Evento nao encontrado");
+    }
+    if (actor) {
+      this.assertCanManage(event, actor);
     }
     const isFree = Boolean((event as any).isFree);
     if (isFree) {
@@ -86,13 +111,16 @@ class EventLotService {
     return lot;
   }
 
-  async update(lotId: string, data: Partial<LotInput>) {
+  async update(lotId: string, data: Partial<LotInput>, actor?: ActorUser) {
     const lot = await prisma.eventLot.findUnique({
       where: { id: lotId },
       include: { event: true }
     });
     if (!lot) {
       throw new NotFoundError("Lote nao encontrado");
+    }
+    if (actor) {
+      this.assertCanManage(lot.event, actor);
     }
 
     const isFree = Boolean((lot.event as any)?.isFree);
@@ -132,7 +160,17 @@ class EventLotService {
     return updated;
   }
 
-  async delete(lotId: string) {
+  async delete(lotId: string, actor?: ActorUser) {
+    const lot = await prisma.eventLot.findUnique({
+      where: { id: lotId },
+      include: { event: true }
+    });
+    if (!lot) {
+      throw new NotFoundError("Lote nao encontrado");
+    }
+    if (actor) {
+      this.assertCanManage(lot.event, actor);
+    }
     try {
       await prisma.eventLot.delete({ where: { id: lotId } });
     } catch (error: any) {
