@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, toRaw } from "vue";
 import { permissionModules, permissionActions } from "../../config/permission-schema";
 const props = defineProps();

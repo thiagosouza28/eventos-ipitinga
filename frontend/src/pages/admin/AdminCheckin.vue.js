@@ -1,5 +1,5 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { computed, onMounted, ref } from "vue";
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { computed, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { QrcodeStream } from "vue-qrcode-reader";
 import { formatCPF } from "../../utils/cpf";
@@ -8,6 +8,10 @@ import DateField from "../../components/forms/DateField.vue";
 import { useAdminStore } from "../../stores/admin";
 const route = useRoute();
 const admin = useAdminStore();
+const initialRouteEvent = typeof route.params.eventId === "string" && route.params.eventId.length
+    ? String(route.params.eventId)
+    : null;
+const activeEventId = ref(initialRouteEvent);
 const cpf = ref("");
 const birthDate = ref("");
 const feedback = ref("");
@@ -26,12 +30,12 @@ const pendingHistory = ref([]);
 const historyLoading = ref(false);
 let feedbackTimer = null;
 const cameraConstraints = computed(() => ({
-    facingMode: { ideal: facingMode.value },
-    aspectRatio: { ideal: 1.777 }
+    facingMode: facingMode.value === "environment"
+        ? { ideal: "environment" }
+        : { ideal: "user" }
 }));
 const awaitingScanConfirmation = computed(() => pendingCheckin.value?.source === "scan" && pendingCheckin.value.status === "READY");
-const cameraPaused = computed(() => !cameraReady.value ||
-    isProcessing.value ||
+const cameraPaused = computed(() => isProcessing.value ||
     confirming.value ||
     awaitingScanConfirmation.value);
 const cameraStatus = computed(() => {
@@ -45,16 +49,48 @@ const cameraStatus = computed(() => {
         return "Processando QR Code...";
     return "";
 });
+const fallbackEventInfo = computed(() => {
+    const registration = pendingCheckin.value?.registration;
+    if (!registration)
+        return null;
+    const details = [registration.eventLocation, registration.eventPeriod]
+        .filter((value) => value && value !== "Nao informado")
+        .join(" - ");
+    return {
+        title: registration.eventTitle || "Evento",
+        details
+    };
+});
+const currentEvent = computed(() => admin.dashboard?.event ?? null);
+const currentEventTitle = computed(() => currentEvent.value?.title ?? fallbackEventInfo.value?.title ?? "Check-in de participantes");
+const currentEventDetails = computed(() => {
+    if (currentEvent.value) {
+        const start = currentEvent.value.startDate
+            ? new Date(currentEvent.value.startDate).toLocaleDateString("pt-BR")
+            : null;
+        const end = currentEvent.value.endDate
+            ? new Date(currentEvent.value.endDate).toLocaleDateString("pt-BR")
+            : null;
+        const period = start && end ? `${start} - ${end}` : start ?? end;
+        const location = currentEvent.value.location ?? null;
+        return [location, period].filter(Boolean).join(" - ");
+    }
+    return fallbackEventInfo.value?.details ?? "";
+});
 const summaryCards = computed(() => {
-    const totals = admin.dashboard?.totals ?? {};
+    const totals = admin.dashboard?.totals;
+    if (!totals)
+        return [];
+    const total = (totals.CHECKED_IN ?? 0) + (totals.PAID ?? 0) + (totals.PENDING_PAYMENT ?? 0);
     return [
         {
             key: "CHECKED_IN",
-            title: "Check-ins",
-            label: "Presencas confirmadas",
+            title: "Check-ins confirmados",
+            label: "Presencas registradas",
             value: totals.CHECKED_IN ?? 0,
             accent: "from-emerald-500 to-teal-500",
-            icon: "✓"
+            icon: "?",
+            emphasisClass: "text-emerald-600 dark:text-emerald-300"
         },
         {
             key: "PAID",
@@ -62,7 +98,8 @@ const summaryCards = computed(() => {
             label: "Prontos para check-in",
             value: totals.PAID ?? 0,
             accent: "from-sky-500 to-blue-600",
-            icon: "★"
+            icon: "?",
+            emphasisClass: "text-primary-600 dark:text-primary-300"
         },
         {
             key: "PENDING_PAYMENT",
@@ -70,7 +107,17 @@ const summaryCards = computed(() => {
             label: "Aguardando pagamento",
             value: totals.PENDING_PAYMENT ?? 0,
             accent: "from-amber-400 to-orange-500",
-            icon: "…"
+            icon: ".",
+            emphasisClass: "text-amber-600 dark:text-amber-300"
+        },
+        {
+            key: "TOTAL",
+            title: "Inscricoes",
+            label: "Total encontradas",
+            value: total,
+            accent: "from-neutral-600 to-neutral-800",
+            icon: "#",
+            emphasisClass: "text-neutral-900 dark:text-white"
         }
     ];
 });
@@ -135,6 +182,9 @@ const applyPendingResult = (result, source, fallbackSignature) => {
         source,
         confirmation
     };
+    if (result.registration.eventId) {
+        activeEventId.value = result.registration.eventId;
+    }
     pendingHistory.value = [];
     void loadPendingHistory(result.registration.id);
 };
@@ -176,11 +226,28 @@ const loadPendingHistory = async (registrationId) => {
         historyLoading.value = false;
     }
 };
-const loadDashboard = async () => {
-    const eventId = route.params.eventId;
-    if (!eventId)
+const loadDashboard = async (eventIdParam) => {
+    if (eventIdParam === null) {
+        activeEventId.value = null;
+        admin.dashboard = null;
         return;
-    await admin.loadDashboard(eventId);
+    }
+    const routeEvent = typeof route.params.eventId === "string" && route.params.eventId.length
+        ? String(route.params.eventId)
+        : null;
+    const resolved = eventIdParam ?? activeEventId.value ?? routeEvent;
+    if (!resolved) {
+        activeEventId.value = null;
+        admin.dashboard = null;
+        return;
+    }
+    activeEventId.value = resolved;
+    try {
+        await admin.loadDashboard(resolved);
+    }
+    catch (error) {
+        console.error("Erro ao carregar painel de check-in", error);
+    }
 };
 const restartCamera = () => {
     if (isRestarting.value)
@@ -201,13 +268,16 @@ const showFeedback = (message, variant) => {
     feedback.value = message;
     feedbackClass.value =
         variant === "success"
-            ? "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100"
-            : "bg-neutral-900 text-white dark:bg-black/80 dark:text-white";
+            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100"
+            : "bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-100";
     if (feedbackTimer)
         window.clearTimeout(feedbackTimer);
     feedbackTimer = window.setTimeout(() => {
         feedback.value = "";
-        feedbackClass.value = "";
+        feedbackClass.value =
+            variant === "success"
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-100"
+                : "bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-100";
     }, 3500);
 };
 const onDecode = async (decoded) => {
@@ -237,7 +307,7 @@ const onDecode = async (decoded) => {
         else {
             showFeedback("Este participante ja realizou check-in anteriormente.", "success");
         }
-        await loadDashboard();
+        await loadDashboard(result.registration.eventId ?? undefined);
         lastScanned.value = { value: decoded, timestamp: now };
     }
     catch (error) {
@@ -286,6 +356,7 @@ const manualLookup = async () => {
         else {
             showFeedback("Este participante ja realizou check-in anteriormente.", "success");
         }
+        await loadDashboard(result.registration.eventId ?? undefined);
     }
     catch (error) {
         showFeedback(error.response?.data?.message ?? "Não foi possível localizar a inscrição.", "error");
@@ -294,6 +365,11 @@ const manualLookup = async () => {
     manualLoading.value = false;
     isProcessing.value = false;
 };
+watch(() => route.params.eventId, (value) => {
+    const normalized = typeof value === "string" && value.length ? String(value) : null;
+    clearPending();
+    void loadDashboard(normalized);
+}, { immediate: true });
 const confirmPending = async () => {
     if (!pendingCheckin.value ||
         pendingCheckin.value.status !== "READY" ||
@@ -303,20 +379,21 @@ const confirmPending = async () => {
     }
     confirming.value = true;
     isProcessing.value = true;
-    const { confirmation, source } = pendingCheckin.value;
+    const { confirmation, source, registration } = pendingCheckin.value;
     const payload = {
         registrationId: confirmation.registrationId
     };
     if (confirmation.signature) {
         payload.signature = confirmation.signature;
     }
+    const dashboardEventId = registration.eventId ?? activeEventId.value;
     try {
         const result = (await admin.confirmCheckin(payload));
         const successMessage = result.status === "ALREADY_CONFIRMED"
             ? "Este participante ja possuia check-in registrado."
             : "Check-in confirmado com sucesso!";
         showFeedback(successMessage, "success");
-        await loadDashboard();
+        await loadDashboard(dashboardEventId ?? undefined);
         if (source === "manual") {
             cpf.value = "";
             birthDate.value = "";
@@ -344,60 +421,76 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 });
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_0 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-const __VLS_1 = __VLS_0({}, ...__VLS_functionalComponentArgsRest(__VLS_0));
+const __VLS_0 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
+}));
+const __VLS_1 = __VLS_0({
+    ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_0));
 __VLS_2.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between" },
+    ...{ class: "flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-    ...{ class: "text-2xl font-semibold text-neutral-800 dark:text-neutral-50" },
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "max-w-2xl" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "text-sm text-neutral-500" },
+    ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
 });
+__VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
+    ...{ class: "text-3xl font-semibold text-neutral-900 dark:text-white" },
+});
+(__VLS_ctx.currentEventTitle);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+    ...{ class: "mt-1 text-sm text-neutral-600 dark:text-neutral-400" },
+});
+if (__VLS_ctx.currentEventDetails) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-2 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    (__VLS_ctx.currentEventDetails);
+}
 const __VLS_3 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
 const __VLS_4 = __VLS_asFunctionalComponent(__VLS_3, new __VLS_3({
     to: "/admin/dashboard",
-    ...{ class: "inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
 }));
 const __VLS_5 = __VLS_4({
     to: "/admin/dashboard",
-    ...{ class: "inline-flex w-full items-center justify-center rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_4));
 __VLS_6.slots.default;
 var __VLS_6;
 if (__VLS_ctx.summaryCards.length) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" },
+        ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" },
     });
     for (const [card] of __VLS_getVForSourceType((__VLS_ctx.summaryCards))) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             key: (card.key),
-            ...{ class: "rounded-2xl border border-neutral-200 bg-white/80 p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/30" },
+            ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex items-center justify-between" },
         });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
+            ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
         });
         (card.title);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-2xl font-semibold text-neutral-900 dark:text-neutral-50" },
-        });
-        (card.value);
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white" },
+            ...{ class: "inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white" },
             ...{ class: (card.accent) },
         });
         (card.icon);
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "mt-2 text-sm text-neutral-500 dark:text-neutral-400" },
+            ...{ class: "mt-2 text-2xl font-bold" },
+            ...{ class: (card.emphasisClass) },
+        });
+        (card.value);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
         });
         (card.label);
     }
@@ -405,20 +498,33 @@ if (__VLS_ctx.summaryCards.length) {
 var __VLS_2;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
 // @ts-ignore
-const __VLS_7 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-const __VLS_8 = __VLS_7({}, ...__VLS_functionalComponentArgsRest(__VLS_7));
+const __VLS_7 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+}));
+const __VLS_8 = __VLS_7({
+    ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+}, ...__VLS_functionalComponentArgsRest(__VLS_7));
 __VLS_9.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "grid gap-6 md:grid-cols-2" },
+    ...{ class: "grid gap-6 lg:grid-cols-12" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-4" },
+    ...{ class: "space-y-4 lg:col-span-7" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "flex items-center justify-between" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
     ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
 });
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rounded-xl border border-dashed border-neutral-300 p-3 dark:border-neutral-700" },
+    ...{ class: "rounded-2xl border border-dashed border-neutral-300/70 bg-white/70 p-3 shadow-inner dark:border-white/20 dark:bg-white/5" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "relative w-full overflow-hidden rounded-2xl bg-black/40" },
 });
 const __VLS_10 = {}.QrcodeStream;
 /** @type {[typeof __VLS_components.QrcodeStream, typeof __VLS_components.QrcodeStream, ]} */ ;
@@ -426,6 +532,7 @@ const __VLS_10 = {}.QrcodeStream;
 const __VLS_11 = __VLS_asFunctionalComponent(__VLS_10, new __VLS_10({
     ...{ 'onDecode': {} },
     ...{ 'onInit': {} },
+    ...{ class: "h-[200px] w-full sm:h-[260px]" },
     key: (__VLS_ctx.streamKey),
     constraints: (__VLS_ctx.cameraConstraints),
     paused: (__VLS_ctx.cameraPaused),
@@ -433,6 +540,7 @@ const __VLS_11 = __VLS_asFunctionalComponent(__VLS_10, new __VLS_10({
 const __VLS_12 = __VLS_11({
     ...{ 'onDecode': {} },
     ...{ 'onInit': {} },
+    ...{ class: "h-[200px] w-full sm:h-[260px]" },
     key: (__VLS_ctx.streamKey),
     constraints: (__VLS_ctx.cameraConstraints),
     paused: (__VLS_ctx.cameraPaused),
@@ -449,44 +557,41 @@ const __VLS_18 = {
 __VLS_13.slots.default;
 if (__VLS_ctx.cameraStatus) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex h-full min-h-[220px] items-center justify-center text-sm text-neutral-500" },
+        ...{ class: "flex h-full min-h-[180px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400 sm:min-h-[220px]" },
     });
     (__VLS_ctx.cameraStatus);
 }
 var __VLS_13;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-wrap items-center gap-3 text-sm text-neutral-500" },
+    ...{ class: "flex flex-wrap items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     ...{ onClick: (__VLS_ctx.restartCamera) },
     type: "button",
-    ...{ class: "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+    ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
     disabled: (__VLS_ctx.isRestarting),
 });
-(__VLS_ctx.isRestarting ? "Reiniciando..." : "Recarregar camera");
+(__VLS_ctx.isRestarting ? "Reiniciando..." : "Recarregar c�mera");
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     ...{ onClick: (__VLS_ctx.toggleFacingMode) },
     type: "button",
-    ...{ class: "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800 sm:w-auto" },
+    ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
     disabled: (__VLS_ctx.isProcessing),
 });
 (__VLS_ctx.facingMode === "environment" ? "frontal" : "traseira");
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-xs text-neutral-400" },
-});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-4" },
+    ...{ class: "space-y-4 lg:col-span-5" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
     ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
     ...{ onSubmit: (__VLS_ctx.manualLookup) },
-    ...{ class: "grid gap-3" },
+    ...{ class: "grid gap-4" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+    ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     ...{ onInput: (__VLS_ctx.handleCpfInputChange) },
@@ -496,35 +601,35 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     inputmode: "numeric",
     maxlength: "14",
     autocomplete: "off",
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    ...{ class: "mt-2 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
     required: true,
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
+    ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
 });
 /** @type {[typeof DateField, ]} */ ;
 // @ts-ignore
 const __VLS_19 = __VLS_asFunctionalComponent(DateField, new DateField({
     modelValue: (__VLS_ctx.birthDate),
     required: true,
-    ...{ class: "mt-1" },
+    ...{ class: "mt-2" },
 }));
 const __VLS_20 = __VLS_19({
     modelValue: (__VLS_ctx.birthDate),
     required: true,
-    ...{ class: "mt-1" },
+    ...{ class: "mt-2" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_19));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     type: "submit",
-    ...{ class: "w-full rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto" },
+    ...{ class: "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
     disabled: (__VLS_ctx.manualLoading || __VLS_ctx.isProcessing || __VLS_ctx.confirming),
 });
 (__VLS_ctx.manualLoading ? "Buscando..." : "Buscar participante");
 if (__VLS_ctx.feedback) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "rounded-2xl px-4 py-3 text-sm" },
         ...{ class: (__VLS_ctx.feedbackClass) },
-        ...{ class: "rounded-lg px-4 py-3 text-sm" },
     });
     (__VLS_ctx.feedback);
 }
@@ -533,10 +638,10 @@ if (__VLS_ctx.pendingCheckin) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
     const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "space-y-4" },
+        ...{ class: "space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
     }));
     const __VLS_23 = __VLS_22({
-        ...{ class: "space-y-4" },
+        ...{ class: "space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_22));
     __VLS_24.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -637,7 +742,7 @@ if (__VLS_ctx.pendingCheckin) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.confirmPending) },
             type: "button",
-            ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" },
+            ...{ class: "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
             disabled: (__VLS_ctx.confirming),
         });
         (__VLS_ctx.confirming ? "Confirmando..." : "Confirmar presenca");
@@ -645,7 +750,7 @@ if (__VLS_ctx.pendingCheckin) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.cancelPending) },
         type: "button",
-        ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" },
+        ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
         disabled: (__VLS_ctx.confirming),
     });
     (__VLS_ctx.pendingCheckin.status === "READY" ? "Cancelar" : "Fechar");
@@ -654,8 +759,12 @@ if (__VLS_ctx.pendingCheckin) {
 if (__VLS_ctx.admin.dashboard) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-    const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
+    const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+    }));
+    const __VLS_26 = __VLS_25({
+        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_25));
     __VLS_27.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
         ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
@@ -676,171 +785,264 @@ if (__VLS_ctx.admin.dashboard) {
     var __VLS_27;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['via-primary-50/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-primary-100/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:from-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:via-neutral-900/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:to-primary-950/30']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-3xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:grid-cols-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['xl:grid-cols-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-100/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-9']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-neutral-50/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:from-neutral-900/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:to-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:grid-cols-12']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:col-span-7']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-black/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-[200px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-[260px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['min-h-[220px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-h-[180px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:min-h-[220px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:px-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:col-span-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:placeholder-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-primary-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-r']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-500/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:translate-y-0.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-neutral-50/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:from-neutral-900/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:to-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
@@ -924,27 +1126,49 @@ if (__VLS_ctx.admin.dashboard) {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-r']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-neutral-50/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:from-neutral-900/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:to-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
@@ -980,6 +1204,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             cameraConstraints: cameraConstraints,
             cameraPaused: cameraPaused,
             cameraStatus: cameraStatus,
+            currentEventTitle: currentEventTitle,
+            currentEventDetails: currentEventDetails,
             summaryCards: summaryCards,
             formatDateTime: formatDateTime,
             pendingStatusInfo: pendingStatusInfo,

@@ -357,6 +357,6 @@ const quickActions = computed<QuickAction[]>(() => {
   return actions;
 });
 
-const getQuickActionClasses = () =>
+const getQuickActionClasses = (_variant?: QuickActionVariant) =>
   "border border-[#dbe6ff] bg-gradient-to-br from-[#a8c9ff] via-[#6f9eff] to-[#4b72ff] text-white shadow-[0_28px_60px_-35px_rgba(75,114,255,0.65)] transition hover:-translate-y-0.5 hover:shadow-xl dark:border-primary-400 dark:from-primary-600 dark:via-primary-500 dark:to-primary-700 dark:shadow-primary-500/40";
 </script>

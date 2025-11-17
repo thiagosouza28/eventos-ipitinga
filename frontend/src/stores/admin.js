@@ -173,7 +173,7 @@ export const useAdminStore = defineStore("admin", () => {
         const response = await api.get(`/admin/registrations/${registrationId}/history`);
         return response.data;
     };
-    const loadOrders = async (filters) => {
+    const loadOrders = async (filters = {}) => {
         const response = await api.get("/admin/orders", { params: filters });
         orders.value = response.data;
     };
@@ -228,6 +228,15 @@ export const useAdminStore = defineStore("admin", () => {
     const deleteUser = async (userId) => {
         await api.delete(`/admin/users/${userId}`);
         await loadUsers();
+    };
+    const getUserPermissions = async (userId) => {
+        const response = await api.get(`/admin/users/${userId}/permissions`);
+        return response.data;
+    };
+    const updateUserPermissions = async (userId, permissions) => {
+        const response = await api.put(`/admin/users/${userId}/permissions`, { permissions });
+        await loadUsers();
+        return response.data;
     };
     const loadProfiles = async () => {
         const response = await api.get("/admin/profiles");
@@ -294,6 +303,8 @@ export const useAdminStore = defineStore("admin", () => {
         resetUserPassword,
         updateUserStatus,
         deleteUser,
+        getUserPermissions,
+        updateUserPermissions,
         loadProfiles,
         createProfile,
         updateProfile,

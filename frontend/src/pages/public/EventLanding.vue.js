@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";

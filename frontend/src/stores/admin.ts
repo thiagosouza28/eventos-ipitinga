@@ -255,7 +255,7 @@ export const useAdminStore = defineStore("admin", () => {
     };
   };
 
-  const loadOrders = async (filters: Record<string, unknown>) => {
+  const loadOrders = async (filters: Record<string, unknown> = {}) => {
     const response = await api.get("/admin/orders", { params: filters });
     orders.value = response.data;
   };

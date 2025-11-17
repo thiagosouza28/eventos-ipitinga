@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, onMounted, ref, useAttrs, watch } from "vue";
 defineOptions({ inheritAttrs: false });
 const baseInputClass = "w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm text-neutral-800 transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100 dark:focus:border-primary-400 dark:focus:ring-primary-500/40";

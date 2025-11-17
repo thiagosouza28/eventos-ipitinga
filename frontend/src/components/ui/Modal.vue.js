@@ -1,4 +1,4 @@
-/// <reference types="../../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { nextTick, ref, watch } from "vue";
 const props = defineProps();
 const emit = defineEmits();
@@ -32,13 +32,13 @@ if (__VLS_ctx.modelValue) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ onKeydown: (__VLS_ctx.close) },
         ...{ onClick: (__VLS_ctx.handleOverlay) },
-        ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8" },
+        ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 sm:px-6" },
         tabindex: "-1",
         ref: "dialogRef",
     });
     /** @type {typeof __VLS_ctx.dialogRef} */ ;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-6 shadow-lg dark:border-neutral-700 dark:bg-neutral-900" },
+        ...{ class: "w-full max-w-[92vw] xl:max-w-[1800px] max-h-[96vh] overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-6 shadow-lg dark:border-neutral-700 dark:bg-neutral-900 sm:p-8" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mb-4 flex items-center justify-between" },
@@ -79,12 +79,14 @@ var __VLS_3;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-black/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:px-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-w-2xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-h-[90vh]']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-[92vw]']} */ ;
+/** @type {__VLS_StyleScopedClasses['xl:max-w-[1800px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-h-[96vh]']} */ ;
 /** @type {__VLS_StyleScopedClasses['overflow-y-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
@@ -92,6 +94,7 @@ var __VLS_3;
 /** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:p-8']} */ ;
 /** @type {__VLS_StyleScopedClasses['mb-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;

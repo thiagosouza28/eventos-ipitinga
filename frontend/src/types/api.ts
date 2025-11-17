@@ -149,6 +149,7 @@ export interface Registration {
   districtId: string;
   churchId: string;
   orderId: string;
+  createdAt?: string | null;
   eventId: string;
   priceCents: number;
   gender?: string | null;
