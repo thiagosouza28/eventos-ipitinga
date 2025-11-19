@@ -117,7 +117,21 @@
       <div
         class="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[98%] flex-col rounded-[32px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-4 py-10 shadow-[0_45px_120px_-60px_rgba(15,23,42,0.5)] backdrop-blur 2xl:max-w-[1900px] sm:px-6"
       >
-        <main class="flex-1 pb-10">
+        <main v-if="isAdminLayout" class="flex flex-1 gap-6 pb-6">
+          <AdminSidebar :is-open="isSidebarOpen" :menu-items="adminMenuItems" @toggle="toggleSidebar" />
+          <div class="flex-1 rounded-[28px] bg-[#F5F7FA] p-4 sm:p-6">
+            <button
+              type="button"
+              class="mb-4 inline-flex items-center gap-2 rounded-full border border-[#E4E7EC] bg-white px-4 py-2 text-sm font-medium text-[#1A1A1A] shadow-sm transition hover:-translate-y-0.5 md:hidden"
+              @click="toggleSidebar"
+            >
+              <Bars3Icon class="h-5 w-5" aria-hidden="true" />
+              Menu
+            </button>
+            <RouterView />
+          </div>
+        </main>
+        <main v-else class="flex-1 pb-10">
           <RouterView />
         </main>
 
@@ -132,30 +146,74 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import { RouterLink, RouterView, useRouter } from "vue-router";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
+  BanknotesIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  Cog6ToothIcon,
   MoonIcon,
+  QrCodeIcon,
   ShieldCheckIcon,
+  Squares2X2Icon,
   SunIcon,
+  UsersIcon,
   XMarkIcon
 } from "@heroicons/vue/24/outline";
 
 import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./stores/auth";
 import { useSystemConfigStore } from "./stores/system-config";
+import AdminSidebar from "./components/admin/AdminSidebar.vue";
 
 const { isDark, toggleTheme } = useTheme();
 const router = useRouter();
+const route = useRoute();
 const auth = useAuthStore();
 const systemConfigStore = useSystemConfigStore();
 const { config: systemConfig } = storeToRefs(systemConfigStore);
 const mobileMenuOpen = ref(false);
 const currentTime = ref(new Date());
+const isSidebarOpen = ref(false);
 let timer: number | undefined;
+
+const adminMenuItems = [
+  { label: "Dashboard", to: { name: "admin-dashboard" }, icon: Squares2X2Icon },
+  { label: "Eventos", to: { name: "admin-events" }, icon: CalendarDaysIcon },
+  { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon },
+  { label: "Inscri��es", to: { name: "admin-registrations" }, icon: UsersIcon },
+  { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon },
+  { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon },
+  { label: "Configura��es", to: { name: "admin-system-config" }, icon: Cog6ToothIcon }
+];
+
+const isAdminLayout = computed(() => {
+  if (!route.path.startsWith("/admin")) {
+    return false;
+  }
+  return route.name !== "admin-login";
+});
+
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value;
+};
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (!isAdminLayout.value) {
+      isSidebarOpen.value = false;
+      return;
+    }
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      isSidebarOpen.value = false;
+    }
+  }
+);
 
 const activeBrandLogo = computed(() => {
   const branding = systemConfig.value.branding;
