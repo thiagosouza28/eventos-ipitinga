@@ -8,11 +8,17 @@
           class="mx-auto flex w-full max-w-[98%] items-center justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-6 2xl:max-w-[1900px]"
         >
           <RouterLink to="/" class="flex items-center gap-3 text-lg font-semibold text-neutral-900 dark:text-white">
-            <span
-              class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-lg text-white shadow-lg shadow-primary-600/40"
+            <div
+              class="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-[color:var(--app-shell-border)] bg-[color:var(--surface-card)] shadow-lg shadow-primary-600/40"
             >
-              CI
-            </span>
+              <img
+                v-if="activeBrandLogo"
+                :src="activeBrandLogo"
+                alt="Logotipo CATRE"
+                class="h-full w-full object-contain p-1.5"
+              />
+              <span v-else>CI</span>
+            </div>
             <span class="text-base font-semibold sm:text-lg">CATRE Ipitinga</span>
           </RouterLink>
           <div class="flex items-center gap-2 sm:gap-3">
@@ -39,6 +45,13 @@
               >
                 <ShieldCheckIcon class="h-5 w-5" aria-hidden="true" />
                 <span>{{ adminLinkLabel }}</span>
+              </RouterLink>
+              <RouterLink
+                v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
+                :to="{ name: 'admin-system-config' }"
+                class="inline-flex items-center gap-2 rounded-full border border-[color:var(--app-shell-border)] px-4 py-2 text-sm font-medium text-[color:var(--text-base)] transition hover:-translate-y-0.5 hover:bg-[color:var(--surface-card-alt)]"
+              >
+                <span>Configurações</span>
               </RouterLink>
               <button
                 v-if="auth.isAuthenticated"
@@ -80,6 +93,14 @@
               <ShieldCheckIcon class="h-5 w-5" />
               <span>{{ adminLinkLabel }}</span>
             </RouterLink>
+            <RouterLink
+              v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
+              :to="{ name: 'admin-system-config' }"
+              class="inline-flex items-center gap-2 rounded-xl border border-[color:var(--app-shell-border)] px-3 py-2 font-medium text-[color:var(--text-base)] transition hover:bg-white/80"
+              @click="closeMobileMenu"
+            >
+              <span>Configurações</span>
+            </RouterLink>
             <button
               v-if="auth.isAuthenticated"
               type="button"
@@ -113,6 +134,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { RouterLink, RouterView, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
@@ -124,13 +146,24 @@ import {
 
 import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./stores/auth";
+import { useSystemConfigStore } from "./stores/system-config";
 
 const { isDark, toggleTheme } = useTheme();
 const router = useRouter();
 const auth = useAuthStore();
+const systemConfigStore = useSystemConfigStore();
+const { config: systemConfig } = storeToRefs(systemConfigStore);
 const mobileMenuOpen = ref(false);
 const currentTime = ref(new Date());
 let timer: number | undefined;
+
+const activeBrandLogo = computed(() => {
+  const branding = systemConfig.value.branding;
+  if (isDark.value) {
+    return branding.logoDarkUrl ?? branding.logoLightUrl ?? "";
+  }
+  return branding.logoLightUrl ?? branding.logoDarkUrl ?? "";
+});
 
 const adminLink = computed(() =>
   auth.isAuthenticated ? { name: "admin-dashboard" } : { name: "admin-login" }

@@ -59,6 +59,11 @@ export type AuditLog = $Result.DefaultSelection<Prisma.$AuditLogPayload>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model SystemConfig
+ * 
+ */
+export type SystemConfig = $Result.DefaultSelection<Prisma.$SystemConfigPayload>
+/**
  * Model EventLot
  * 
  */
@@ -323,6 +328,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs>;
+
+  /**
+   * `prisma.systemConfig`: Exposes CRUD operations for the **SystemConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SystemConfigs
+    * const systemConfigs = await prisma.systemConfig.findMany()
+    * ```
+    */
+  get systemConfig(): Prisma.SystemConfigDelegate<ExtArgs>;
 
   /**
    * `prisma.eventLot`: Exposes CRUD operations for the **EventLot** model.
@@ -843,6 +858,7 @@ export namespace Prisma {
     WebhookEvent: 'WebhookEvent',
     AuditLog: 'AuditLog',
     User: 'User',
+    SystemConfig: 'SystemConfig',
     EventLot: 'EventLot',
     Expense: 'Expense',
     Ministry: 'Ministry',
@@ -865,7 +881,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission"
+      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "systemConfig" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1460,6 +1476,72 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      SystemConfig: {
+        payload: Prisma.$SystemConfigPayload<ExtArgs>
+        fields: Prisma.SystemConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SystemConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SystemConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.SystemConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SystemConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>
+          }
+          findMany: {
+            args: Prisma.SystemConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>[]
+          }
+          create: {
+            args: Prisma.SystemConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>
+          }
+          createMany: {
+            args: Prisma.SystemConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.SystemConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>
+          }
+          update: {
+            args: Prisma.SystemConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.SystemConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SystemConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SystemConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.SystemConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSystemConfig>
+          }
+          groupBy: {
+            args: Prisma.SystemConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SystemConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SystemConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<SystemConfigCountAggregateOutputType> | number
           }
         }
       }
@@ -2087,14 +2169,14 @@ export namespace Prisma {
 
   export type DistrictCountOutputType = {
     churches: number
-    users: number
     registrations: number
+    users: number
   }
 
   export type DistrictCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     churches?: boolean | DistrictCountOutputTypeCountChurchesArgs
-    users?: boolean | DistrictCountOutputTypeCountUsersArgs
     registrations?: boolean | DistrictCountOutputTypeCountRegistrationsArgs
+    users?: boolean | DistrictCountOutputTypeCountUsersArgs
   }
 
   // Custom InputTypes
@@ -2118,15 +2200,15 @@ export namespace Prisma {
   /**
    * DistrictCountOutputType without action
    */
-  export type DistrictCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UserWhereInput
+  export type DistrictCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
   }
 
   /**
    * DistrictCountOutputType without action
    */
-  export type DistrictCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RegistrationWhereInput
+  export type DistrictCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
   }
 
 
@@ -2135,13 +2217,13 @@ export namespace Prisma {
    */
 
   export type ChurchCountOutputType = {
-    users: number
     registrations: number
+    users: number
   }
 
   export type ChurchCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    users?: boolean | ChurchCountOutputTypeCountUsersArgs
     registrations?: boolean | ChurchCountOutputTypeCountRegistrationsArgs
+    users?: boolean | ChurchCountOutputTypeCountUsersArgs
   }
 
   // Custom InputTypes
@@ -2158,15 +2240,15 @@ export namespace Prisma {
   /**
    * ChurchCountOutputType without action
    */
-  export type ChurchCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UserWhereInput
+  export type ChurchCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
   }
 
   /**
    * ChurchCountOutputType without action
    */
-  export type ChurchCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RegistrationWhereInput
+  export type ChurchCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
   }
 
 
@@ -2175,17 +2257,17 @@ export namespace Prisma {
    */
 
   export type EventCountOutputType = {
-    orders: number
-    registrations: number
     lots: number
     expenses: number
+    orders: number
+    registrations: number
   }
 
   export type EventCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    orders?: boolean | EventCountOutputTypeCountOrdersArgs
-    registrations?: boolean | EventCountOutputTypeCountRegistrationsArgs
     lots?: boolean | EventCountOutputTypeCountLotsArgs
     expenses?: boolean | EventCountOutputTypeCountExpensesArgs
+    orders?: boolean | EventCountOutputTypeCountOrdersArgs
+    registrations?: boolean | EventCountOutputTypeCountRegistrationsArgs
   }
 
   // Custom InputTypes
@@ -2202,20 +2284,6 @@ export namespace Prisma {
   /**
    * EventCountOutputType without action
    */
-  export type EventCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: OrderWhereInput
-  }
-
-  /**
-   * EventCountOutputType without action
-   */
-  export type EventCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RegistrationWhereInput
-  }
-
-  /**
-   * EventCountOutputType without action
-   */
   export type EventCountOutputTypeCountLotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: EventLotWhereInput
   }
@@ -2227,20 +2295,34 @@ export namespace Prisma {
     where?: ExpenseWhereInput
   }
 
+  /**
+   * EventCountOutputType without action
+   */
+  export type EventCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+  /**
+   * EventCountOutputType without action
+   */
+  export type EventCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
+  }
+
 
   /**
    * Count Type OrderCountOutputType
    */
 
   export type OrderCountOutputType = {
-    registrations: number
     refunds: number
+    registrations: number
     webhookEvents: number
   }
 
   export type OrderCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    registrations?: boolean | OrderCountOutputTypeCountRegistrationsArgs
     refunds?: boolean | OrderCountOutputTypeCountRefundsArgs
+    registrations?: boolean | OrderCountOutputTypeCountRegistrationsArgs
     webhookEvents?: boolean | OrderCountOutputTypeCountWebhookEventsArgs
   }
 
@@ -2258,15 +2340,15 @@ export namespace Prisma {
   /**
    * OrderCountOutputType without action
    */
-  export type OrderCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RegistrationWhereInput
+  export type OrderCountOutputTypeCountRefundsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RefundWhereInput
   }
 
   /**
    * OrderCountOutputType without action
    */
-  export type OrderCountOutputTypeCountRefundsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RefundWhereInput
+  export type OrderCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
   }
 
   /**
@@ -2314,15 +2396,17 @@ export namespace Prisma {
 
   export type UserCountOutputType = {
     auditLogs: number
-    ministries: number
     eventsCreated: number
+    ministries: number
+    systemConfigsUpdated: number
     permissionsOverride: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
-    ministries?: boolean | UserCountOutputTypeCountMinistriesArgs
     eventsCreated?: boolean | UserCountOutputTypeCountEventsCreatedArgs
+    ministries?: boolean | UserCountOutputTypeCountMinistriesArgs
+    systemConfigsUpdated?: boolean | UserCountOutputTypeCountSystemConfigsUpdatedArgs
     permissionsOverride?: boolean | UserCountOutputTypeCountPermissionsOverrideArgs
   }
 
@@ -2347,6 +2431,13 @@ export namespace Prisma {
   /**
    * UserCountOutputType without action
    */
+  export type UserCountOutputTypeCountEventsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
   export type UserCountOutputTypeCountMinistriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: MinistryUserWhereInput
   }
@@ -2354,8 +2445,8 @@ export namespace Prisma {
   /**
    * UserCountOutputType without action
    */
-  export type UserCountOutputTypeCountEventsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: EventWhereInput
+  export type UserCountOutputTypeCountSystemConfigsUpdatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SystemConfigWhereInput
   }
 
   /**
@@ -2403,14 +2494,14 @@ export namespace Prisma {
 
   export type MinistryCountOutputType = {
     events: number
-    registrations: number
     users: number
+    registrations: number
   }
 
   export type MinistryCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     events?: boolean | MinistryCountOutputTypeCountEventsArgs
-    registrations?: boolean | MinistryCountOutputTypeCountRegistrationsArgs
     users?: boolean | MinistryCountOutputTypeCountUsersArgs
+    registrations?: boolean | MinistryCountOutputTypeCountRegistrationsArgs
   }
 
   // Custom InputTypes
@@ -2434,15 +2525,15 @@ export namespace Prisma {
   /**
    * MinistryCountOutputType without action
    */
-  export type MinistryCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: RegistrationWhereInput
+  export type MinistryCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MinistryUserWhereInput
   }
 
   /**
    * MinistryCountOutputType without action
    */
-  export type MinistryCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: MinistryUserWhereInput
+  export type MinistryCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
   }
 
 
@@ -2647,8 +2738,8 @@ export namespace Prisma {
     pastorName?: boolean
     createdAt?: boolean
     churches?: boolean | District$churchesArgs<ExtArgs>
-    users?: boolean | District$usersArgs<ExtArgs>
     registrations?: boolean | District$registrationsArgs<ExtArgs>
+    users?: boolean | District$usersArgs<ExtArgs>
     _count?: boolean | DistrictCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["district"]>
 
@@ -2662,8 +2753,8 @@ export namespace Prisma {
 
   export type DistrictInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     churches?: boolean | District$churchesArgs<ExtArgs>
-    users?: boolean | District$usersArgs<ExtArgs>
     registrations?: boolean | District$registrationsArgs<ExtArgs>
+    users?: boolean | District$usersArgs<ExtArgs>
     _count?: boolean | DistrictCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -2671,8 +2762,8 @@ export namespace Prisma {
     name: "District"
     objects: {
       churches: Prisma.$ChurchPayload<ExtArgs>[]
-      users: Prisma.$UserPayload<ExtArgs>[]
       registrations: Prisma.$RegistrationPayload<ExtArgs>[]
+      users: Prisma.$UserPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3020,8 +3111,8 @@ export namespace Prisma {
   export interface Prisma__DistrictClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     churches<T extends District$churchesArgs<ExtArgs> = {}>(args?: Subset<T, District$churchesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findMany"> | Null>
-    users<T extends District$usersArgs<ExtArgs> = {}>(args?: Subset<T, District$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
     registrations<T extends District$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, District$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
+    users<T extends District$usersArgs<ExtArgs> = {}>(args?: Subset<T, District$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3374,26 +3465,6 @@ export namespace Prisma {
   }
 
   /**
-   * District.users
-   */
-  export type District$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserInclude<ExtArgs> | null
-    where?: UserWhereInput
-    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
-    cursor?: UserWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
-  }
-
-  /**
    * District.registrations
    */
   export type District$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3411,6 +3482,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+  }
+
+  /**
+   * District.users
+   */
+  export type District$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
@@ -3633,8 +3724,8 @@ export namespace Prisma {
     directorPhotoUrl?: boolean
     createdAt?: boolean
     district?: boolean | DistrictDefaultArgs<ExtArgs>
-    users?: boolean | Church$usersArgs<ExtArgs>
     registrations?: boolean | Church$registrationsArgs<ExtArgs>
+    users?: boolean | Church$usersArgs<ExtArgs>
     _count?: boolean | ChurchCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["church"]>
 
@@ -3654,8 +3745,8 @@ export namespace Prisma {
 
   export type ChurchInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     district?: boolean | DistrictDefaultArgs<ExtArgs>
-    users?: boolean | Church$usersArgs<ExtArgs>
     registrations?: boolean | Church$registrationsArgs<ExtArgs>
+    users?: boolean | Church$usersArgs<ExtArgs>
     _count?: boolean | ChurchCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -3663,8 +3754,8 @@ export namespace Prisma {
     name: "Church"
     objects: {
       district: Prisma.$DistrictPayload<ExtArgs>
-      users: Prisma.$UserPayload<ExtArgs>[]
       registrations: Prisma.$RegistrationPayload<ExtArgs>[]
+      users: Prisma.$UserPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4018,8 +4109,8 @@ export namespace Prisma {
   export interface Prisma__ChurchClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     district<T extends DistrictDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DistrictDefaultArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
-    users<T extends Church$usersArgs<ExtArgs> = {}>(args?: Subset<T, Church$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
     registrations<T extends Church$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Church$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
+    users<T extends Church$usersArgs<ExtArgs> = {}>(args?: Subset<T, Church$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4358,26 +4449,6 @@ export namespace Prisma {
   }
 
   /**
-   * Church.users
-   */
-  export type Church$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the User
-     */
-    select?: UserSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserInclude<ExtArgs> | null
-    where?: UserWhereInput
-    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
-    cursor?: UserWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
-  }
-
-  /**
    * Church.registrations
    */
   export type Church$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4395,6 +4466,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+  }
+
+  /**
+   * Church.users
+   */
+  export type Church$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
@@ -4710,12 +4801,12 @@ export namespace Prisma {
     createdAt?: boolean
     ministryId?: boolean
     createdById?: boolean
-    orders?: boolean | Event$ordersArgs<ExtArgs>
-    registrations?: boolean | Event$registrationsArgs<ExtArgs>
+    createdBy?: boolean | Event$createdByArgs<ExtArgs>
+    ministry?: boolean | Event$ministryArgs<ExtArgs>
     lots?: boolean | Event$lotsArgs<ExtArgs>
     expenses?: boolean | Event$expensesArgs<ExtArgs>
-    ministry?: boolean | Event$ministryArgs<ExtArgs>
-    createdBy?: boolean | Event$createdByArgs<ExtArgs>
+    orders?: boolean | Event$ordersArgs<ExtArgs>
+    registrations?: boolean | Event$registrationsArgs<ExtArgs>
     _count?: boolean | EventCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["event"]>
 
@@ -4741,24 +4832,24 @@ export namespace Prisma {
   }
 
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    orders?: boolean | Event$ordersArgs<ExtArgs>
-    registrations?: boolean | Event$registrationsArgs<ExtArgs>
+    createdBy?: boolean | Event$createdByArgs<ExtArgs>
+    ministry?: boolean | Event$ministryArgs<ExtArgs>
     lots?: boolean | Event$lotsArgs<ExtArgs>
     expenses?: boolean | Event$expensesArgs<ExtArgs>
-    ministry?: boolean | Event$ministryArgs<ExtArgs>
-    createdBy?: boolean | Event$createdByArgs<ExtArgs>
+    orders?: boolean | Event$ordersArgs<ExtArgs>
+    registrations?: boolean | Event$registrationsArgs<ExtArgs>
     _count?: boolean | EventCountOutputTypeDefaultArgs<ExtArgs>
   }
 
   export type $EventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Event"
     objects: {
-      orders: Prisma.$OrderPayload<ExtArgs>[]
-      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
+      createdBy: Prisma.$UserPayload<ExtArgs> | null
+      ministry: Prisma.$MinistryPayload<ExtArgs> | null
       lots: Prisma.$EventLotPayload<ExtArgs>[]
       expenses: Prisma.$ExpensePayload<ExtArgs>[]
-      ministry: Prisma.$MinistryPayload<ExtArgs> | null
-      createdBy: Prisma.$UserPayload<ExtArgs> | null
+      orders: Prisma.$OrderPayload<ExtArgs>[]
+      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5118,12 +5209,12 @@ export namespace Prisma {
    */
   export interface Prisma__EventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    orders<T extends Event$ordersArgs<ExtArgs> = {}>(args?: Subset<T, Event$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
-    registrations<T extends Event$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Event$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
+    createdBy<T extends Event$createdByArgs<ExtArgs> = {}>(args?: Subset<T, Event$createdByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    ministry<T extends Event$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Event$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     lots<T extends Event$lotsArgs<ExtArgs> = {}>(args?: Subset<T, Event$lotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventLotPayload<ExtArgs>, T, "findMany"> | Null>
     expenses<T extends Event$expensesArgs<ExtArgs> = {}>(args?: Subset<T, Event$expensesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExpensePayload<ExtArgs>, T, "findMany"> | Null>
-    ministry<T extends Event$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Event$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
-    createdBy<T extends Event$createdByArgs<ExtArgs> = {}>(args?: Subset<T, Event$createdByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    orders<T extends Event$ordersArgs<ExtArgs> = {}>(args?: Subset<T, Event$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
+    registrations<T extends Event$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Event$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5469,43 +5560,33 @@ export namespace Prisma {
   }
 
   /**
-   * Event.orders
+   * Event.createdBy
    */
-  export type Event$ordersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Event$createdByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Order
+     * Select specific fields to fetch from the User
      */
-    select?: OrderSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: OrderInclude<ExtArgs> | null
-    where?: OrderWhereInput
-    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
-    cursor?: OrderWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
-   * Event.registrations
+   * Event.ministry
    */
-  export type Event$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Event$ministryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Registration
+     * Select specific fields to fetch from the Ministry
      */
-    select?: RegistrationSelect<ExtArgs> | null
+    select?: MinistrySelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: RegistrationInclude<ExtArgs> | null
-    where?: RegistrationWhereInput
-    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
-    cursor?: RegistrationWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+    include?: MinistryInclude<ExtArgs> | null
+    where?: MinistryWhereInput
   }
 
   /**
@@ -5549,33 +5630,43 @@ export namespace Prisma {
   }
 
   /**
-   * Event.ministry
+   * Event.orders
    */
-  export type Event$ministryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Event$ordersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Ministry
+     * Select specific fields to fetch from the Order
      */
-    select?: MinistrySelect<ExtArgs> | null
+    select?: OrderSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: MinistryInclude<ExtArgs> | null
-    where?: MinistryWhereInput
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
   }
 
   /**
-   * Event.createdBy
+   * Event.registrations
    */
-  export type Event$createdByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type Event$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the User
+     * Select specific fields to fetch from the Registration
      */
-    select?: UserSelect<ExtArgs> | null
+    select?: RegistrationSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: UserInclude<ExtArgs> | null
-    where?: UserWhereInput
+    include?: RegistrationInclude<ExtArgs> | null
+    where?: RegistrationWhereInput
+    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
+    cursor?: RegistrationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
   }
 
   /**
@@ -5901,8 +5992,8 @@ export namespace Prisma {
     createdAt?: boolean
     event?: boolean | EventDefaultArgs<ExtArgs>
     pricingLot?: boolean | Order$pricingLotArgs<ExtArgs>
-    registrations?: boolean | Order$registrationsArgs<ExtArgs>
     refunds?: boolean | Order$refundsArgs<ExtArgs>
+    registrations?: boolean | Order$registrationsArgs<ExtArgs>
     webhookEvents?: boolean | Order$webhookEventsArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["order"]>
@@ -5931,8 +6022,8 @@ export namespace Prisma {
   export type OrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     event?: boolean | EventDefaultArgs<ExtArgs>
     pricingLot?: boolean | Order$pricingLotArgs<ExtArgs>
-    registrations?: boolean | Order$registrationsArgs<ExtArgs>
     refunds?: boolean | Order$refundsArgs<ExtArgs>
+    registrations?: boolean | Order$registrationsArgs<ExtArgs>
     webhookEvents?: boolean | Order$webhookEventsArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -5942,8 +6033,8 @@ export namespace Prisma {
     objects: {
       event: Prisma.$EventPayload<ExtArgs>
       pricingLot: Prisma.$EventLotPayload<ExtArgs> | null
-      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
       refunds: Prisma.$RefundPayload<ExtArgs>[]
+      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
       webhookEvents: Prisma.$WebhookEventPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -6306,8 +6397,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     event<T extends EventDefaultArgs<ExtArgs> = {}>(args?: Subset<T, EventDefaultArgs<ExtArgs>>): Prisma__EventClient<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     pricingLot<T extends Order$pricingLotArgs<ExtArgs> = {}>(args?: Subset<T, Order$pricingLotArgs<ExtArgs>>): Prisma__EventLotClient<$Result.GetResult<Prisma.$EventLotPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
-    registrations<T extends Order$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Order$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     refunds<T extends Order$refundsArgs<ExtArgs> = {}>(args?: Subset<T, Order$refundsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany"> | Null>
+    registrations<T extends Order$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Order$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     webhookEvents<T extends Order$webhookEventsArgs<ExtArgs> = {}>(args?: Subset<T, Order$webhookEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WebhookEventPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -6669,26 +6760,6 @@ export namespace Prisma {
   }
 
   /**
-   * Order.registrations
-   */
-  export type Order$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Registration
-     */
-    select?: RegistrationSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: RegistrationInclude<ExtArgs> | null
-    where?: RegistrationWhereInput
-    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
-    cursor?: RegistrationWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
-  }
-
-  /**
    * Order.refunds
    */
   export type Order$refundsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6706,6 +6777,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RefundScalarFieldEnum | RefundScalarFieldEnum[]
+  }
+
+  /**
+   * Order.registrations
+   */
+  export type Order$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Registration
+     */
+    select?: RegistrationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    where?: RegistrationWhereInput
+    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
+    cursor?: RegistrationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
   }
 
   /**
@@ -6769,7 +6860,6 @@ export namespace Prisma {
     id: string | null
     orderId: string | null
     eventId: string | null
-    ministryId: string | null
     fullName: string | null
     cpf: string | null
     birthDate: Date | null
@@ -6785,13 +6875,13 @@ export namespace Prisma {
     checkinAt: Date | null
     paidAt: Date | null
     createdAt: Date | null
+    ministryId: string | null
   }
 
   export type RegistrationMaxAggregateOutputType = {
     id: string | null
     orderId: string | null
     eventId: string | null
-    ministryId: string | null
     fullName: string | null
     cpf: string | null
     birthDate: Date | null
@@ -6807,13 +6897,13 @@ export namespace Prisma {
     checkinAt: Date | null
     paidAt: Date | null
     createdAt: Date | null
+    ministryId: string | null
   }
 
   export type RegistrationCountAggregateOutputType = {
     id: number
     orderId: number
     eventId: number
-    ministryId: number
     fullName: number
     cpf: number
     birthDate: number
@@ -6829,6 +6919,7 @@ export namespace Prisma {
     checkinAt: number
     paidAt: number
     createdAt: number
+    ministryId: number
     _all: number
   }
 
@@ -6847,7 +6938,6 @@ export namespace Prisma {
     id?: true
     orderId?: true
     eventId?: true
-    ministryId?: true
     fullName?: true
     cpf?: true
     birthDate?: true
@@ -6863,13 +6953,13 @@ export namespace Prisma {
     checkinAt?: true
     paidAt?: true
     createdAt?: true
+    ministryId?: true
   }
 
   export type RegistrationMaxAggregateInputType = {
     id?: true
     orderId?: true
     eventId?: true
-    ministryId?: true
     fullName?: true
     cpf?: true
     birthDate?: true
@@ -6885,13 +6975,13 @@ export namespace Prisma {
     checkinAt?: true
     paidAt?: true
     createdAt?: true
+    ministryId?: true
   }
 
   export type RegistrationCountAggregateInputType = {
     id?: true
     orderId?: true
     eventId?: true
-    ministryId?: true
     fullName?: true
     cpf?: true
     birthDate?: true
@@ -6907,6 +6997,7 @@ export namespace Prisma {
     checkinAt?: true
     paidAt?: true
     createdAt?: true
+    ministryId?: true
     _all?: true
   }
 
@@ -7000,7 +7091,6 @@ export namespace Prisma {
     id: string
     orderId: string
     eventId: string
-    ministryId: string | null
     fullName: string
     cpf: string
     birthDate: Date
@@ -7016,6 +7106,7 @@ export namespace Prisma {
     checkinAt: Date | null
     paidAt: Date | null
     createdAt: Date
+    ministryId: string | null
     _count: RegistrationCountAggregateOutputType | null
     _avg: RegistrationAvgAggregateOutputType | null
     _sum: RegistrationSumAggregateOutputType | null
@@ -7041,7 +7132,6 @@ export namespace Prisma {
     id?: boolean
     orderId?: boolean
     eventId?: boolean
-    ministryId?: boolean
     fullName?: boolean
     cpf?: boolean
     birthDate?: boolean
@@ -7057,12 +7147,13 @@ export namespace Prisma {
     checkinAt?: boolean
     paidAt?: boolean
     createdAt?: boolean
-    order?: boolean | OrderDefaultArgs<ExtArgs>
+    ministryId?: boolean
+    refunds?: boolean | Registration$refundsArgs<ExtArgs>
+    church?: boolean | ChurchDefaultArgs<ExtArgs>
+    district?: boolean | DistrictDefaultArgs<ExtArgs>
     event?: boolean | EventDefaultArgs<ExtArgs>
     ministry?: boolean | Registration$ministryArgs<ExtArgs>
-    district?: boolean | DistrictDefaultArgs<ExtArgs>
-    church?: boolean | ChurchDefaultArgs<ExtArgs>
-    refunds?: boolean | Registration$refundsArgs<ExtArgs>
+    order?: boolean | OrderDefaultArgs<ExtArgs>
     _count?: boolean | RegistrationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
 
@@ -7071,7 +7162,6 @@ export namespace Prisma {
     id?: boolean
     orderId?: boolean
     eventId?: boolean
-    ministryId?: boolean
     fullName?: boolean
     cpf?: boolean
     birthDate?: boolean
@@ -7087,33 +7177,33 @@ export namespace Prisma {
     checkinAt?: boolean
     paidAt?: boolean
     createdAt?: boolean
+    ministryId?: boolean
   }
 
   export type RegistrationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    order?: boolean | OrderDefaultArgs<ExtArgs>
+    refunds?: boolean | Registration$refundsArgs<ExtArgs>
+    church?: boolean | ChurchDefaultArgs<ExtArgs>
+    district?: boolean | DistrictDefaultArgs<ExtArgs>
     event?: boolean | EventDefaultArgs<ExtArgs>
     ministry?: boolean | Registration$ministryArgs<ExtArgs>
-    district?: boolean | DistrictDefaultArgs<ExtArgs>
-    church?: boolean | ChurchDefaultArgs<ExtArgs>
-    refunds?: boolean | Registration$refundsArgs<ExtArgs>
+    order?: boolean | OrderDefaultArgs<ExtArgs>
     _count?: boolean | RegistrationCountOutputTypeDefaultArgs<ExtArgs>
   }
 
   export type $RegistrationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Registration"
     objects: {
-      order: Prisma.$OrderPayload<ExtArgs>
+      refunds: Prisma.$RefundPayload<ExtArgs>[]
+      church: Prisma.$ChurchPayload<ExtArgs>
+      district: Prisma.$DistrictPayload<ExtArgs>
       event: Prisma.$EventPayload<ExtArgs>
       ministry: Prisma.$MinistryPayload<ExtArgs> | null
-      district: Prisma.$DistrictPayload<ExtArgs>
-      church: Prisma.$ChurchPayload<ExtArgs>
-      refunds: Prisma.$RefundPayload<ExtArgs>[]
+      order: Prisma.$OrderPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       orderId: string
       eventId: string
-      ministryId: string | null
       fullName: string
       cpf: string
       birthDate: Date
@@ -7129,6 +7219,7 @@ export namespace Prisma {
       checkinAt: Date | null
       paidAt: Date | null
       createdAt: Date
+      ministryId: string | null
     }, ExtArgs["result"]["registration"]>
     composites: {}
   }
@@ -7469,12 +7560,12 @@ export namespace Prisma {
    */
   export interface Prisma__RegistrationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    refunds<T extends Registration$refundsArgs<ExtArgs> = {}>(args?: Subset<T, Registration$refundsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany"> | Null>
+    church<T extends ChurchDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ChurchDefaultArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    district<T extends DistrictDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DistrictDefaultArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     event<T extends EventDefaultArgs<ExtArgs> = {}>(args?: Subset<T, EventDefaultArgs<ExtArgs>>): Prisma__EventClient<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     ministry<T extends Registration$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Registration$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
-    district<T extends DistrictDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DistrictDefaultArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
-    church<T extends ChurchDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ChurchDefaultArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
-    refunds<T extends Registration$refundsArgs<ExtArgs> = {}>(args?: Subset<T, Registration$refundsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany"> | Null>
+    order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7507,7 +7598,6 @@ export namespace Prisma {
     readonly id: FieldRef<"Registration", 'String'>
     readonly orderId: FieldRef<"Registration", 'String'>
     readonly eventId: FieldRef<"Registration", 'String'>
-    readonly ministryId: FieldRef<"Registration", 'String'>
     readonly fullName: FieldRef<"Registration", 'String'>
     readonly cpf: FieldRef<"Registration", 'String'>
     readonly birthDate: FieldRef<"Registration", 'DateTime'>
@@ -7523,6 +7613,7 @@ export namespace Prisma {
     readonly checkinAt: FieldRef<"Registration", 'DateTime'>
     readonly paidAt: FieldRef<"Registration", 'DateTime'>
     readonly createdAt: FieldRef<"Registration", 'DateTime'>
+    readonly ministryId: FieldRef<"Registration", 'String'>
   }
     
 
@@ -7822,21 +7913,6 @@ export namespace Prisma {
   }
 
   /**
-   * Registration.ministry
-   */
-  export type Registration$ministryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Ministry
-     */
-    select?: MinistrySelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: MinistryInclude<ExtArgs> | null
-    where?: MinistryWhereInput
-  }
-
-  /**
    * Registration.refunds
    */
   export type Registration$refundsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7854,6 +7930,21 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RefundScalarFieldEnum | RefundScalarFieldEnum[]
+  }
+
+  /**
+   * Registration.ministry
+   */
+  export type Registration$ministryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Ministry
+     */
+    select?: MinistrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MinistryInclude<ExtArgs> | null
+    where?: MinistryWhereInput
   }
 
   /**
@@ -10666,52 +10757,52 @@ export namespace Prisma {
   export type UserMinAggregateOutputType = {
     id: string | null
     name: string | null
-    cpf: string | null
-    phone: string | null
-    photoUrl: string | null
     email: string | null
     passwordHash: string | null
     role: string | null
     districtScopeId: string | null
-    mustChangePassword: boolean | null
     churchScopeId: string | null
+    createdAt: Date | null
+    cpf: string | null
+    mustChangePassword: boolean | null
+    phone: string | null
+    photoUrl: string | null
     profileId: string | null
     status: $Enums.UserStatus | null
-    createdAt: Date | null
   }
 
   export type UserMaxAggregateOutputType = {
     id: string | null
     name: string | null
-    cpf: string | null
-    phone: string | null
-    photoUrl: string | null
     email: string | null
     passwordHash: string | null
     role: string | null
     districtScopeId: string | null
-    mustChangePassword: boolean | null
     churchScopeId: string | null
+    createdAt: Date | null
+    cpf: string | null
+    mustChangePassword: boolean | null
+    phone: string | null
+    photoUrl: string | null
     profileId: string | null
     status: $Enums.UserStatus | null
-    createdAt: Date | null
   }
 
   export type UserCountAggregateOutputType = {
     id: number
     name: number
-    cpf: number
-    phone: number
-    photoUrl: number
     email: number
     passwordHash: number
     role: number
     districtScopeId: number
-    mustChangePassword: number
     churchScopeId: number
+    createdAt: number
+    cpf: number
+    mustChangePassword: number
+    phone: number
+    photoUrl: number
     profileId: number
     status: number
-    createdAt: number
     _all: number
   }
 
@@ -10719,52 +10810,52 @@ export namespace Prisma {
   export type UserMinAggregateInputType = {
     id?: true
     name?: true
-    cpf?: true
-    phone?: true
-    photoUrl?: true
     email?: true
     passwordHash?: true
     role?: true
     districtScopeId?: true
-    mustChangePassword?: true
     churchScopeId?: true
+    createdAt?: true
+    cpf?: true
+    mustChangePassword?: true
+    phone?: true
+    photoUrl?: true
     profileId?: true
     status?: true
-    createdAt?: true
   }
 
   export type UserMaxAggregateInputType = {
     id?: true
     name?: true
-    cpf?: true
-    phone?: true
-    photoUrl?: true
     email?: true
     passwordHash?: true
     role?: true
     districtScopeId?: true
-    mustChangePassword?: true
     churchScopeId?: true
+    createdAt?: true
+    cpf?: true
+    mustChangePassword?: true
+    phone?: true
+    photoUrl?: true
     profileId?: true
     status?: true
-    createdAt?: true
   }
 
   export type UserCountAggregateInputType = {
     id?: true
     name?: true
-    cpf?: true
-    phone?: true
-    photoUrl?: true
     email?: true
     passwordHash?: true
     role?: true
     districtScopeId?: true
-    mustChangePassword?: true
     churchScopeId?: true
+    createdAt?: true
+    cpf?: true
+    mustChangePassword?: true
+    phone?: true
+    photoUrl?: true
     profileId?: true
     status?: true
-    createdAt?: true
     _all?: true
   }
 
@@ -10843,18 +10934,18 @@ export namespace Prisma {
   export type UserGroupByOutputType = {
     id: string
     name: string
-    cpf: string | null
-    phone: string | null
-    photoUrl: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId: string | null
-    mustChangePassword: boolean
     churchScopeId: string | null
+    createdAt: Date
+    cpf: string | null
+    mustChangePassword: boolean
+    phone: string | null
+    photoUrl: string | null
     profileId: string | null
     status: $Enums.UserStatus
-    createdAt: Date
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
@@ -10877,24 +10968,25 @@ export namespace Prisma {
   export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
-    cpf?: boolean
-    phone?: boolean
-    photoUrl?: boolean
     email?: boolean
     passwordHash?: boolean
     role?: boolean
     districtScopeId?: boolean
-    mustChangePassword?: boolean
     churchScopeId?: boolean
+    createdAt?: boolean
+    cpf?: boolean
+    mustChangePassword?: boolean
+    phone?: boolean
+    photoUrl?: boolean
     profileId?: boolean
     status?: boolean
-    createdAt?: boolean
-    districtScope?: boolean | User$districtScopeArgs<ExtArgs>
-    churchScope?: boolean | User$churchScopeArgs<ExtArgs>
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
-    ministries?: boolean | User$ministriesArgs<ExtArgs>
-    profile?: boolean | User$profileArgs<ExtArgs>
     eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
+    ministries?: boolean | User$ministriesArgs<ExtArgs>
+    systemConfigsUpdated?: boolean | User$systemConfigsUpdatedArgs<ExtArgs>
+    churchScope?: boolean | User$churchScopeArgs<ExtArgs>
+    districtScope?: boolean | User$districtScopeArgs<ExtArgs>
+    profile?: boolean | User$profileArgs<ExtArgs>
     permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -10903,27 +10995,28 @@ export namespace Prisma {
   export type UserSelectScalar = {
     id?: boolean
     name?: boolean
-    cpf?: boolean
-    phone?: boolean
-    photoUrl?: boolean
     email?: boolean
     passwordHash?: boolean
     role?: boolean
     districtScopeId?: boolean
-    mustChangePassword?: boolean
     churchScopeId?: boolean
+    createdAt?: boolean
+    cpf?: boolean
+    mustChangePassword?: boolean
+    phone?: boolean
+    photoUrl?: boolean
     profileId?: boolean
     status?: boolean
-    createdAt?: boolean
   }
 
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    districtScope?: boolean | User$districtScopeArgs<ExtArgs>
-    churchScope?: boolean | User$churchScopeArgs<ExtArgs>
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
-    ministries?: boolean | User$ministriesArgs<ExtArgs>
-    profile?: boolean | User$profileArgs<ExtArgs>
     eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
+    ministries?: boolean | User$ministriesArgs<ExtArgs>
+    systemConfigsUpdated?: boolean | User$systemConfigsUpdatedArgs<ExtArgs>
+    churchScope?: boolean | User$churchScopeArgs<ExtArgs>
+    districtScope?: boolean | User$districtScopeArgs<ExtArgs>
+    profile?: boolean | User$profileArgs<ExtArgs>
     permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -10931,29 +11024,30 @@ export namespace Prisma {
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
-      districtScope: Prisma.$DistrictPayload<ExtArgs> | null
-      churchScope: Prisma.$ChurchPayload<ExtArgs> | null
       auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
-      ministries: Prisma.$MinistryUserPayload<ExtArgs>[]
-      profile: Prisma.$ProfilePayload<ExtArgs> | null
       eventsCreated: Prisma.$EventPayload<ExtArgs>[]
+      ministries: Prisma.$MinistryUserPayload<ExtArgs>[]
+      systemConfigsUpdated: Prisma.$SystemConfigPayload<ExtArgs>[]
+      churchScope: Prisma.$ChurchPayload<ExtArgs> | null
+      districtScope: Prisma.$DistrictPayload<ExtArgs> | null
+      profile: Prisma.$ProfilePayload<ExtArgs> | null
       permissionsOverride: Prisma.$UserPermissionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
-      cpf: string | null
-      phone: string | null
-      photoUrl: string | null
       email: string
       passwordHash: string
       role: string
       districtScopeId: string | null
-      mustChangePassword: boolean
       churchScopeId: string | null
+      createdAt: Date
+      cpf: string | null
+      mustChangePassword: boolean
+      phone: string | null
+      photoUrl: string | null
       profileId: string | null
       status: $Enums.UserStatus
-      createdAt: Date
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -11294,12 +11388,13 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    districtScope<T extends User$districtScopeArgs<ExtArgs> = {}>(args?: Subset<T, User$districtScopeArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
-    churchScope<T extends User$churchScopeArgs<ExtArgs> = {}>(args?: Subset<T, User$churchScopeArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany"> | Null>
-    ministries<T extends User$ministriesArgs<ExtArgs> = {}>(args?: Subset<T, User$ministriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MinistryUserPayload<ExtArgs>, T, "findMany"> | Null>
-    profile<T extends User$profileArgs<ExtArgs> = {}>(args?: Subset<T, User$profileArgs<ExtArgs>>): Prisma__ProfileClient<$Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     eventsCreated<T extends User$eventsCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$eventsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
+    ministries<T extends User$ministriesArgs<ExtArgs> = {}>(args?: Subset<T, User$ministriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MinistryUserPayload<ExtArgs>, T, "findMany"> | Null>
+    systemConfigsUpdated<T extends User$systemConfigsUpdatedArgs<ExtArgs> = {}>(args?: Subset<T, User$systemConfigsUpdatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findMany"> | Null>
+    churchScope<T extends User$churchScopeArgs<ExtArgs> = {}>(args?: Subset<T, User$churchScopeArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    districtScope<T extends User$districtScopeArgs<ExtArgs> = {}>(args?: Subset<T, User$districtScopeArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    profile<T extends User$profileArgs<ExtArgs> = {}>(args?: Subset<T, User$profileArgs<ExtArgs>>): Prisma__ProfileClient<$Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     permissionsOverride<T extends User$permissionsOverrideArgs<ExtArgs> = {}>(args?: Subset<T, User$permissionsOverrideArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -11332,18 +11427,18 @@ export namespace Prisma {
   interface UserFieldRefs {
     readonly id: FieldRef<"User", 'String'>
     readonly name: FieldRef<"User", 'String'>
-    readonly cpf: FieldRef<"User", 'String'>
-    readonly phone: FieldRef<"User", 'String'>
-    readonly photoUrl: FieldRef<"User", 'String'>
     readonly email: FieldRef<"User", 'String'>
     readonly passwordHash: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'String'>
     readonly districtScopeId: FieldRef<"User", 'String'>
-    readonly mustChangePassword: FieldRef<"User", 'Boolean'>
     readonly churchScopeId: FieldRef<"User", 'String'>
+    readonly createdAt: FieldRef<"User", 'DateTime'>
+    readonly cpf: FieldRef<"User", 'String'>
+    readonly mustChangePassword: FieldRef<"User", 'Boolean'>
+    readonly phone: FieldRef<"User", 'String'>
+    readonly photoUrl: FieldRef<"User", 'String'>
     readonly profileId: FieldRef<"User", 'String'>
     readonly status: FieldRef<"User", 'UserStatus'>
-    readonly createdAt: FieldRef<"User", 'DateTime'>
   }
     
 
@@ -11643,36 +11738,6 @@ export namespace Prisma {
   }
 
   /**
-   * User.districtScope
-   */
-  export type User$districtScopeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the District
-     */
-    select?: DistrictSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: DistrictInclude<ExtArgs> | null
-    where?: DistrictWhereInput
-  }
-
-  /**
-   * User.churchScope
-   */
-  export type User$churchScopeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Church
-     */
-    select?: ChurchSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: ChurchInclude<ExtArgs> | null
-    where?: ChurchWhereInput
-  }
-
-  /**
    * User.auditLogs
    */
   export type User$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11690,6 +11755,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * User.eventsCreated
+   */
+  export type User$eventsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Event
+     */
+    select?: EventSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventInclude<ExtArgs> | null
+    where?: EventWhereInput
+    orderBy?: EventOrderByWithRelationInput | EventOrderByWithRelationInput[]
+    cursor?: EventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EventScalarFieldEnum | EventScalarFieldEnum[]
   }
 
   /**
@@ -11713,6 +11798,56 @@ export namespace Prisma {
   }
 
   /**
+   * User.systemConfigsUpdated
+   */
+  export type User$systemConfigsUpdatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    where?: SystemConfigWhereInput
+    orderBy?: SystemConfigOrderByWithRelationInput | SystemConfigOrderByWithRelationInput[]
+    cursor?: SystemConfigWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SystemConfigScalarFieldEnum | SystemConfigScalarFieldEnum[]
+  }
+
+  /**
+   * User.churchScope
+   */
+  export type User$churchScopeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Church
+     */
+    select?: ChurchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChurchInclude<ExtArgs> | null
+    where?: ChurchWhereInput
+  }
+
+  /**
+   * User.districtScope
+   */
+  export type User$districtScopeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the District
+     */
+    select?: DistrictSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DistrictInclude<ExtArgs> | null
+    where?: DistrictWhereInput
+  }
+
+  /**
    * User.profile
    */
   export type User$profileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11725,26 +11860,6 @@ export namespace Prisma {
      */
     include?: ProfileInclude<ExtArgs> | null
     where?: ProfileWhereInput
-  }
-
-  /**
-   * User.eventsCreated
-   */
-  export type User$eventsCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Event
-     */
-    select?: EventSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: EventInclude<ExtArgs> | null
-    where?: EventWhereInput
-    orderBy?: EventOrderByWithRelationInput | EventOrderByWithRelationInput[]
-    cursor?: EventWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: EventScalarFieldEnum | EventScalarFieldEnum[]
   }
 
   /**
@@ -11779,6 +11894,896 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SystemConfig
+   */
+
+  export type AggregateSystemConfig = {
+    _count: SystemConfigCountAggregateOutputType | null
+    _min: SystemConfigMinAggregateOutputType | null
+    _max: SystemConfigMaxAggregateOutputType | null
+  }
+
+  export type SystemConfigMinAggregateOutputType = {
+    id: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    updatedById: string | null
+  }
+
+  export type SystemConfigMaxAggregateOutputType = {
+    id: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    updatedById: string | null
+  }
+
+  export type SystemConfigCountAggregateOutputType = {
+    id: number
+    settings: number
+    createdAt: number
+    updatedAt: number
+    updatedById: number
+    _all: number
+  }
+
+
+  export type SystemConfigMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    updatedById?: true
+  }
+
+  export type SystemConfigMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    updatedById?: true
+  }
+
+  export type SystemConfigCountAggregateInputType = {
+    id?: true
+    settings?: true
+    createdAt?: true
+    updatedAt?: true
+    updatedById?: true
+    _all?: true
+  }
+
+  export type SystemConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SystemConfig to aggregate.
+     */
+    where?: SystemConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemConfigs to fetch.
+     */
+    orderBy?: SystemConfigOrderByWithRelationInput | SystemConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SystemConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SystemConfigs
+    **/
+    _count?: true | SystemConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SystemConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SystemConfigMaxAggregateInputType
+  }
+
+  export type GetSystemConfigAggregateType<T extends SystemConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateSystemConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSystemConfig[P]>
+      : GetScalarType<T[P], AggregateSystemConfig[P]>
+  }
+
+
+
+
+  export type SystemConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SystemConfigWhereInput
+    orderBy?: SystemConfigOrderByWithAggregationInput | SystemConfigOrderByWithAggregationInput[]
+    by: SystemConfigScalarFieldEnum[] | SystemConfigScalarFieldEnum
+    having?: SystemConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SystemConfigCountAggregateInputType | true
+    _min?: SystemConfigMinAggregateInputType
+    _max?: SystemConfigMaxAggregateInputType
+  }
+
+  export type SystemConfigGroupByOutputType = {
+    id: string
+    settings: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    updatedById: string | null
+    _count: SystemConfigCountAggregateOutputType | null
+    _min: SystemConfigMinAggregateOutputType | null
+    _max: SystemConfigMaxAggregateOutputType | null
+  }
+
+  type GetSystemConfigGroupByPayload<T extends SystemConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SystemConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SystemConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SystemConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], SystemConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SystemConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    settings?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    updatedById?: boolean
+    updatedBy?: boolean | SystemConfig$updatedByArgs<ExtArgs>
+  }, ExtArgs["result"]["systemConfig"]>
+
+
+  export type SystemConfigSelectScalar = {
+    id?: boolean
+    settings?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    updatedById?: boolean
+  }
+
+  export type SystemConfigInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    updatedBy?: boolean | SystemConfig$updatedByArgs<ExtArgs>
+  }
+
+  export type $SystemConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SystemConfig"
+    objects: {
+      updatedBy: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      settings: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+      updatedById: string | null
+    }, ExtArgs["result"]["systemConfig"]>
+    composites: {}
+  }
+
+  type SystemConfigGetPayload<S extends boolean | null | undefined | SystemConfigDefaultArgs> = $Result.GetResult<Prisma.$SystemConfigPayload, S>
+
+  type SystemConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SystemConfigFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SystemConfigCountAggregateInputType | true
+    }
+
+  export interface SystemConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SystemConfig'], meta: { name: 'SystemConfig' } }
+    /**
+     * Find zero or one SystemConfig that matches the filter.
+     * @param {SystemConfigFindUniqueArgs} args - Arguments to find a SystemConfig
+     * @example
+     * // Get one SystemConfig
+     * const systemConfig = await prisma.systemConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SystemConfigFindUniqueArgs>(args: SelectSubset<T, SystemConfigFindUniqueArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SystemConfig that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SystemConfigFindUniqueOrThrowArgs} args - Arguments to find a SystemConfig
+     * @example
+     * // Get one SystemConfig
+     * const systemConfig = await prisma.systemConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SystemConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, SystemConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SystemConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigFindFirstArgs} args - Arguments to find a SystemConfig
+     * @example
+     * // Get one SystemConfig
+     * const systemConfig = await prisma.systemConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SystemConfigFindFirstArgs>(args?: SelectSubset<T, SystemConfigFindFirstArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SystemConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigFindFirstOrThrowArgs} args - Arguments to find a SystemConfig
+     * @example
+     * // Get one SystemConfig
+     * const systemConfig = await prisma.systemConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SystemConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, SystemConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SystemConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SystemConfigs
+     * const systemConfigs = await prisma.systemConfig.findMany()
+     * 
+     * // Get first 10 SystemConfigs
+     * const systemConfigs = await prisma.systemConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const systemConfigWithIdOnly = await prisma.systemConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SystemConfigFindManyArgs>(args?: SelectSubset<T, SystemConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SystemConfig.
+     * @param {SystemConfigCreateArgs} args - Arguments to create a SystemConfig.
+     * @example
+     * // Create one SystemConfig
+     * const SystemConfig = await prisma.systemConfig.create({
+     *   data: {
+     *     // ... data to create a SystemConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends SystemConfigCreateArgs>(args: SelectSubset<T, SystemConfigCreateArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SystemConfigs.
+     * @param {SystemConfigCreateManyArgs} args - Arguments to create many SystemConfigs.
+     * @example
+     * // Create many SystemConfigs
+     * const systemConfig = await prisma.systemConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SystemConfigCreateManyArgs>(args?: SelectSubset<T, SystemConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a SystemConfig.
+     * @param {SystemConfigDeleteArgs} args - Arguments to delete one SystemConfig.
+     * @example
+     * // Delete one SystemConfig
+     * const SystemConfig = await prisma.systemConfig.delete({
+     *   where: {
+     *     // ... filter to delete one SystemConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SystemConfigDeleteArgs>(args: SelectSubset<T, SystemConfigDeleteArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SystemConfig.
+     * @param {SystemConfigUpdateArgs} args - Arguments to update one SystemConfig.
+     * @example
+     * // Update one SystemConfig
+     * const systemConfig = await prisma.systemConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SystemConfigUpdateArgs>(args: SelectSubset<T, SystemConfigUpdateArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SystemConfigs.
+     * @param {SystemConfigDeleteManyArgs} args - Arguments to filter SystemConfigs to delete.
+     * @example
+     * // Delete a few SystemConfigs
+     * const { count } = await prisma.systemConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SystemConfigDeleteManyArgs>(args?: SelectSubset<T, SystemConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SystemConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SystemConfigs
+     * const systemConfig = await prisma.systemConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SystemConfigUpdateManyArgs>(args: SelectSubset<T, SystemConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SystemConfig.
+     * @param {SystemConfigUpsertArgs} args - Arguments to update or create a SystemConfig.
+     * @example
+     * // Update or create a SystemConfig
+     * const systemConfig = await prisma.systemConfig.upsert({
+     *   create: {
+     *     // ... data to create a SystemConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SystemConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SystemConfigUpsertArgs>(args: SelectSubset<T, SystemConfigUpsertArgs<ExtArgs>>): Prisma__SystemConfigClient<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SystemConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigCountArgs} args - Arguments to filter SystemConfigs to count.
+     * @example
+     * // Count the number of SystemConfigs
+     * const count = await prisma.systemConfig.count({
+     *   where: {
+     *     // ... the filter for the SystemConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends SystemConfigCountArgs>(
+      args?: Subset<T, SystemConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SystemConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SystemConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SystemConfigAggregateArgs>(args: Subset<T, SystemConfigAggregateArgs>): Prisma.PrismaPromise<GetSystemConfigAggregateType<T>>
+
+    /**
+     * Group by SystemConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SystemConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SystemConfigGroupByArgs['orderBy'] }
+        : { orderBy?: SystemConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SystemConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSystemConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SystemConfig model
+   */
+  readonly fields: SystemConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SystemConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SystemConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    updatedBy<T extends SystemConfig$updatedByArgs<ExtArgs> = {}>(args?: Subset<T, SystemConfig$updatedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SystemConfig model
+   */ 
+  interface SystemConfigFieldRefs {
+    readonly id: FieldRef<"SystemConfig", 'String'>
+    readonly settings: FieldRef<"SystemConfig", 'Json'>
+    readonly createdAt: FieldRef<"SystemConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"SystemConfig", 'DateTime'>
+    readonly updatedById: FieldRef<"SystemConfig", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SystemConfig findUnique
+   */
+  export type SystemConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which SystemConfig to fetch.
+     */
+    where: SystemConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemConfig findUniqueOrThrow
+   */
+  export type SystemConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which SystemConfig to fetch.
+     */
+    where: SystemConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemConfig findFirst
+   */
+  export type SystemConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which SystemConfig to fetch.
+     */
+    where?: SystemConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemConfigs to fetch.
+     */
+    orderBy?: SystemConfigOrderByWithRelationInput | SystemConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SystemConfigs.
+     */
+    cursor?: SystemConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemConfigs.
+     */
+    distinct?: SystemConfigScalarFieldEnum | SystemConfigScalarFieldEnum[]
+  }
+
+  /**
+   * SystemConfig findFirstOrThrow
+   */
+  export type SystemConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which SystemConfig to fetch.
+     */
+    where?: SystemConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemConfigs to fetch.
+     */
+    orderBy?: SystemConfigOrderByWithRelationInput | SystemConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SystemConfigs.
+     */
+    cursor?: SystemConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemConfigs.
+     */
+    distinct?: SystemConfigScalarFieldEnum | SystemConfigScalarFieldEnum[]
+  }
+
+  /**
+   * SystemConfig findMany
+   */
+  export type SystemConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * Filter, which SystemConfigs to fetch.
+     */
+    where?: SystemConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemConfigs to fetch.
+     */
+    orderBy?: SystemConfigOrderByWithRelationInput | SystemConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SystemConfigs.
+     */
+    cursor?: SystemConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemConfigs.
+     */
+    skip?: number
+    distinct?: SystemConfigScalarFieldEnum | SystemConfigScalarFieldEnum[]
+  }
+
+  /**
+   * SystemConfig create
+   */
+  export type SystemConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SystemConfig.
+     */
+    data: XOR<SystemConfigCreateInput, SystemConfigUncheckedCreateInput>
+  }
+
+  /**
+   * SystemConfig createMany
+   */
+  export type SystemConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SystemConfigs.
+     */
+    data: SystemConfigCreateManyInput | SystemConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SystemConfig update
+   */
+  export type SystemConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SystemConfig.
+     */
+    data: XOR<SystemConfigUpdateInput, SystemConfigUncheckedUpdateInput>
+    /**
+     * Choose, which SystemConfig to update.
+     */
+    where: SystemConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemConfig updateMany
+   */
+  export type SystemConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SystemConfigs.
+     */
+    data: XOR<SystemConfigUpdateManyMutationInput, SystemConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which SystemConfigs to update
+     */
+    where?: SystemConfigWhereInput
+  }
+
+  /**
+   * SystemConfig upsert
+   */
+  export type SystemConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SystemConfig to update in case it exists.
+     */
+    where: SystemConfigWhereUniqueInput
+    /**
+     * In case the SystemConfig found by the `where` argument doesn't exist, create a new SystemConfig with this data.
+     */
+    create: XOR<SystemConfigCreateInput, SystemConfigUncheckedCreateInput>
+    /**
+     * In case the SystemConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SystemConfigUpdateInput, SystemConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * SystemConfig delete
+   */
+  export type SystemConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
+    /**
+     * Filter which SystemConfig to delete.
+     */
+    where: SystemConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemConfig deleteMany
+   */
+  export type SystemConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SystemConfigs to delete
+     */
+    where?: SystemConfigWhereInput
+  }
+
+  /**
+   * SystemConfig.updatedBy
+   */
+  export type SystemConfig$updatedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * SystemConfig without action
+   */
+  export type SystemConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemConfig
+     */
+    select?: SystemConfigSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SystemConfigInclude<ExtArgs> | null
   }
 
 
@@ -13884,8 +14889,8 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     events?: boolean | Ministry$eventsArgs<ExtArgs>
-    registrations?: boolean | Ministry$registrationsArgs<ExtArgs>
     users?: boolean | Ministry$usersArgs<ExtArgs>
+    registrations?: boolean | Ministry$registrationsArgs<ExtArgs>
     _count?: boolean | MinistryCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["ministry"]>
 
@@ -13901,8 +14906,8 @@ export namespace Prisma {
 
   export type MinistryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     events?: boolean | Ministry$eventsArgs<ExtArgs>
-    registrations?: boolean | Ministry$registrationsArgs<ExtArgs>
     users?: boolean | Ministry$usersArgs<ExtArgs>
+    registrations?: boolean | Ministry$registrationsArgs<ExtArgs>
     _count?: boolean | MinistryCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -13910,8 +14915,8 @@ export namespace Prisma {
     name: "Ministry"
     objects: {
       events: Prisma.$EventPayload<ExtArgs>[]
-      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
       users: Prisma.$MinistryUserPayload<ExtArgs>[]
+      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -14261,8 +15266,8 @@ export namespace Prisma {
   export interface Prisma__MinistryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     events<T extends Ministry$eventsArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
-    registrations<T extends Ministry$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     users<T extends Ministry$usersArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MinistryUserPayload<ExtArgs>, T, "findMany"> | Null>
+    registrations<T extends Ministry$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14617,26 +15622,6 @@ export namespace Prisma {
   }
 
   /**
-   * Ministry.registrations
-   */
-  export type Ministry$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Registration
-     */
-    select?: RegistrationSelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: RegistrationInclude<ExtArgs> | null
-    where?: RegistrationWhereInput
-    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
-    cursor?: RegistrationWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
-  }
-
-  /**
    * Ministry.users
    */
   export type Ministry$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14654,6 +15639,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: MinistryUserScalarFieldEnum | MinistryUserScalarFieldEnum[]
+  }
+
+  /**
+   * Ministry.registrations
+   */
+  export type Ministry$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Registration
+     */
+    select?: RegistrationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    where?: RegistrationWhereInput
+    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
+    cursor?: RegistrationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
   }
 
   /**
@@ -14819,8 +15824,8 @@ export namespace Prisma {
     userId?: boolean
     ministryId?: boolean
     assignedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
     ministry?: boolean | MinistryDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["ministryUser"]>
 
 
@@ -14831,15 +15836,15 @@ export namespace Prisma {
   }
 
   export type MinistryUserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
     ministry?: boolean | MinistryDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
   }
 
   export type $MinistryUserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "MinistryUser"
     objects: {
-      user: Prisma.$UserPayload<ExtArgs>
       ministry: Prisma.$MinistryPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       userId: string
@@ -15185,8 +16190,8 @@ export namespace Prisma {
    */
   export interface Prisma__MinistryUserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     ministry<T extends MinistryDefaultArgs<ExtArgs> = {}>(args?: Subset<T, MinistryDefaultArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -18492,7 +19497,6 @@ export namespace Prisma {
     id: 'id',
     orderId: 'orderId',
     eventId: 'eventId',
-    ministryId: 'ministryId',
     fullName: 'fullName',
     cpf: 'cpf',
     birthDate: 'birthDate',
@@ -18507,7 +19511,8 @@ export namespace Prisma {
     receiptPdfUrl: 'receiptPdfUrl',
     checkinAt: 'checkinAt',
     paidAt: 'paidAt',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    ministryId: 'ministryId'
   };
 
   export type RegistrationScalarFieldEnum = (typeof RegistrationScalarFieldEnum)[keyof typeof RegistrationScalarFieldEnum]
@@ -18556,21 +19561,32 @@ export namespace Prisma {
   export const UserScalarFieldEnum: {
     id: 'id',
     name: 'name',
-    cpf: 'cpf',
-    phone: 'phone',
-    photoUrl: 'photoUrl',
     email: 'email',
     passwordHash: 'passwordHash',
     role: 'role',
     districtScopeId: 'districtScopeId',
-    mustChangePassword: 'mustChangePassword',
     churchScopeId: 'churchScopeId',
+    createdAt: 'createdAt',
+    cpf: 'cpf',
+    mustChangePassword: 'mustChangePassword',
+    phone: 'phone',
+    photoUrl: 'photoUrl',
     profileId: 'profileId',
-    status: 'status',
-    createdAt: 'createdAt'
+    status: 'status'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const SystemConfigScalarFieldEnum: {
+    id: 'id',
+    settings: 'settings',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    updatedById: 'updatedById'
+  };
+
+  export type SystemConfigScalarFieldEnum = (typeof SystemConfigScalarFieldEnum)[keyof typeof SystemConfigScalarFieldEnum]
 
 
   export const EventLotScalarFieldEnum: {
@@ -18681,12 +19697,28 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
   export const NullsOrder: {
     first: 'first',
     last: 'last'
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -18730,6 +19762,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -18748,8 +19787,8 @@ export namespace Prisma {
     pastorName?: StringNullableFilter<"District"> | string | null
     createdAt?: DateTimeFilter<"District"> | Date | string
     churches?: ChurchListRelationFilter
-    users?: UserListRelationFilter
     registrations?: RegistrationListRelationFilter
+    users?: UserListRelationFilter
   }
 
   export type DistrictOrderByWithRelationInput = {
@@ -18758,8 +19797,8 @@ export namespace Prisma {
     pastorName?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     churches?: ChurchOrderByRelationAggregateInput
-    users?: UserOrderByRelationAggregateInput
     registrations?: RegistrationOrderByRelationAggregateInput
+    users?: UserOrderByRelationAggregateInput
   }
 
   export type DistrictWhereUniqueInput = Prisma.AtLeast<{
@@ -18771,8 +19810,8 @@ export namespace Prisma {
     pastorName?: StringNullableFilter<"District"> | string | null
     createdAt?: DateTimeFilter<"District"> | Date | string
     churches?: ChurchListRelationFilter
-    users?: UserListRelationFilter
     registrations?: RegistrationListRelationFilter
+    users?: UserListRelationFilter
   }, "id" | "name">
 
   export type DistrictOrderByWithAggregationInput = {
@@ -18810,8 +19849,8 @@ export namespace Prisma {
     directorPhotoUrl?: StringNullableFilter<"Church"> | string | null
     createdAt?: DateTimeFilter<"Church"> | Date | string
     district?: XOR<DistrictRelationFilter, DistrictWhereInput>
-    users?: UserListRelationFilter
     registrations?: RegistrationListRelationFilter
+    users?: UserListRelationFilter
   }
 
   export type ChurchOrderByWithRelationInput = {
@@ -18826,8 +19865,8 @@ export namespace Prisma {
     directorPhotoUrl?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     district?: DistrictOrderByWithRelationInput
-    users?: UserOrderByRelationAggregateInput
     registrations?: RegistrationOrderByRelationAggregateInput
+    users?: UserOrderByRelationAggregateInput
   }
 
   export type ChurchWhereUniqueInput = Prisma.AtLeast<{
@@ -18846,8 +19885,8 @@ export namespace Prisma {
     directorPhotoUrl?: StringNullableFilter<"Church"> | string | null
     createdAt?: DateTimeFilter<"Church"> | Date | string
     district?: XOR<DistrictRelationFilter, DistrictWhereInput>
-    users?: UserListRelationFilter
     registrations?: RegistrationListRelationFilter
+    users?: UserListRelationFilter
   }, "id" | "name_districtId">
 
   export type ChurchOrderByWithAggregationInput = {
@@ -18903,12 +19942,12 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Event"> | Date | string
     ministryId?: StringNullableFilter<"Event"> | string | null
     createdById?: StringNullableFilter<"Event"> | string | null
-    orders?: OrderListRelationFilter
-    registrations?: RegistrationListRelationFilter
+    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     lots?: EventLotListRelationFilter
     expenses?: ExpenseListRelationFilter
-    ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
-    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    orders?: OrderListRelationFilter
+    registrations?: RegistrationListRelationFilter
   }
 
   export type EventOrderByWithRelationInput = {
@@ -18929,12 +19968,12 @@ export namespace Prisma {
     createdAt?: SortOrder
     ministryId?: SortOrderInput | SortOrder
     createdById?: SortOrderInput | SortOrder
-    orders?: OrderOrderByRelationAggregateInput
-    registrations?: RegistrationOrderByRelationAggregateInput
+    createdBy?: UserOrderByWithRelationInput
+    ministry?: MinistryOrderByWithRelationInput
     lots?: EventLotOrderByRelationAggregateInput
     expenses?: ExpenseOrderByRelationAggregateInput
-    ministry?: MinistryOrderByWithRelationInput
-    createdBy?: UserOrderByWithRelationInput
+    orders?: OrderOrderByRelationAggregateInput
+    registrations?: RegistrationOrderByRelationAggregateInput
   }
 
   export type EventWhereUniqueInput = Prisma.AtLeast<{
@@ -18958,12 +19997,12 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Event"> | Date | string
     ministryId?: StringNullableFilter<"Event"> | string | null
     createdById?: StringNullableFilter<"Event"> | string | null
-    orders?: OrderListRelationFilter
-    registrations?: RegistrationListRelationFilter
+    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     lots?: EventLotListRelationFilter
     expenses?: ExpenseListRelationFilter
-    ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
-    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    orders?: OrderListRelationFilter
+    registrations?: RegistrationListRelationFilter
   }, "id" | "slug">
 
   export type EventOrderByWithAggregationInput = {
@@ -19037,8 +20076,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Order"> | Date | string
     event?: XOR<EventRelationFilter, EventWhereInput>
     pricingLot?: XOR<EventLotNullableRelationFilter, EventLotWhereInput> | null
-    registrations?: RegistrationListRelationFilter
     refunds?: RefundListRelationFilter
+    registrations?: RegistrationListRelationFilter
     webhookEvents?: WebhookEventListRelationFilter
   }
 
@@ -19062,8 +20101,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     event?: EventOrderByWithRelationInput
     pricingLot?: EventLotOrderByWithRelationInput
-    registrations?: RegistrationOrderByRelationAggregateInput
     refunds?: RefundOrderByRelationAggregateInput
+    registrations?: RegistrationOrderByRelationAggregateInput
     webhookEvents?: WebhookEventOrderByRelationAggregateInput
   }
 
@@ -19090,8 +20129,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Order"> | Date | string
     event?: XOR<EventRelationFilter, EventWhereInput>
     pricingLot?: XOR<EventLotNullableRelationFilter, EventLotWhereInput> | null
-    registrations?: RegistrationListRelationFilter
     refunds?: RefundListRelationFilter
+    registrations?: RegistrationListRelationFilter
     webhookEvents?: WebhookEventListRelationFilter
   }, "id" | "externalReference">
 
@@ -19150,7 +20189,6 @@ export namespace Prisma {
     id?: StringFilter<"Registration"> | string
     orderId?: StringFilter<"Registration"> | string
     eventId?: StringFilter<"Registration"> | string
-    ministryId?: StringNullableFilter<"Registration"> | string | null
     fullName?: StringFilter<"Registration"> | string
     cpf?: StringFilter<"Registration"> | string
     birthDate?: DateTimeFilter<"Registration"> | Date | string
@@ -19166,19 +20204,19 @@ export namespace Prisma {
     checkinAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
     paidAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
     createdAt?: DateTimeFilter<"Registration"> | Date | string
-    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    ministryId?: StringNullableFilter<"Registration"> | string | null
+    refunds?: RefundListRelationFilter
+    church?: XOR<ChurchRelationFilter, ChurchWhereInput>
+    district?: XOR<DistrictRelationFilter, DistrictWhereInput>
     event?: XOR<EventRelationFilter, EventWhereInput>
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
-    district?: XOR<DistrictRelationFilter, DistrictWhereInput>
-    church?: XOR<ChurchRelationFilter, ChurchWhereInput>
-    refunds?: RefundListRelationFilter
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
   }
 
   export type RegistrationOrderByWithRelationInput = {
     id?: SortOrder
     orderId?: SortOrder
     eventId?: SortOrder
-    ministryId?: SortOrderInput | SortOrder
     fullName?: SortOrder
     cpf?: SortOrder
     birthDate?: SortOrder
@@ -19194,12 +20232,13 @@ export namespace Prisma {
     checkinAt?: SortOrderInput | SortOrder
     paidAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
-    order?: OrderOrderByWithRelationInput
+    ministryId?: SortOrderInput | SortOrder
+    refunds?: RefundOrderByRelationAggregateInput
+    church?: ChurchOrderByWithRelationInput
+    district?: DistrictOrderByWithRelationInput
     event?: EventOrderByWithRelationInput
     ministry?: MinistryOrderByWithRelationInput
-    district?: DistrictOrderByWithRelationInput
-    church?: ChurchOrderByWithRelationInput
-    refunds?: RefundOrderByRelationAggregateInput
+    order?: OrderOrderByWithRelationInput
   }
 
   export type RegistrationWhereUniqueInput = Prisma.AtLeast<{
@@ -19210,7 +20249,6 @@ export namespace Prisma {
     NOT?: RegistrationWhereInput | RegistrationWhereInput[]
     orderId?: StringFilter<"Registration"> | string
     eventId?: StringFilter<"Registration"> | string
-    ministryId?: StringNullableFilter<"Registration"> | string | null
     fullName?: StringFilter<"Registration"> | string
     cpf?: StringFilter<"Registration"> | string
     birthDate?: DateTimeFilter<"Registration"> | Date | string
@@ -19226,19 +20264,19 @@ export namespace Prisma {
     checkinAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
     paidAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
     createdAt?: DateTimeFilter<"Registration"> | Date | string
-    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    ministryId?: StringNullableFilter<"Registration"> | string | null
+    refunds?: RefundListRelationFilter
+    church?: XOR<ChurchRelationFilter, ChurchWhereInput>
+    district?: XOR<DistrictRelationFilter, DistrictWhereInput>
     event?: XOR<EventRelationFilter, EventWhereInput>
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
-    district?: XOR<DistrictRelationFilter, DistrictWhereInput>
-    church?: XOR<ChurchRelationFilter, ChurchWhereInput>
-    refunds?: RefundListRelationFilter
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
   }, "id" | "eventId_cpf">
 
   export type RegistrationOrderByWithAggregationInput = {
     id?: SortOrder
     orderId?: SortOrder
     eventId?: SortOrder
-    ministryId?: SortOrderInput | SortOrder
     fullName?: SortOrder
     cpf?: SortOrder
     birthDate?: SortOrder
@@ -19254,6 +20292,7 @@ export namespace Prisma {
     checkinAt?: SortOrderInput | SortOrder
     paidAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    ministryId?: SortOrderInput | SortOrder
     _count?: RegistrationCountOrderByAggregateInput
     _avg?: RegistrationAvgOrderByAggregateInput
     _max?: RegistrationMaxOrderByAggregateInput
@@ -19268,7 +20307,6 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Registration"> | string
     orderId?: StringWithAggregatesFilter<"Registration"> | string
     eventId?: StringWithAggregatesFilter<"Registration"> | string
-    ministryId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     fullName?: StringWithAggregatesFilter<"Registration"> | string
     cpf?: StringWithAggregatesFilter<"Registration"> | string
     birthDate?: DateTimeWithAggregatesFilter<"Registration"> | Date | string
@@ -19284,6 +20322,7 @@ export namespace Prisma {
     checkinAt?: DateTimeNullableWithAggregatesFilter<"Registration"> | Date | string | null
     paidAt?: DateTimeNullableWithAggregatesFilter<"Registration"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Registration"> | Date | string
+    ministryId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
   }
 
   export type RefundWhereInput = {
@@ -19497,93 +20536,96 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     id?: StringFilter<"User"> | string
     name?: StringFilter<"User"> | string
-    cpf?: StringNullableFilter<"User"> | string | null
-    phone?: StringNullableFilter<"User"> | string | null
-    photoUrl?: StringNullableFilter<"User"> | string | null
     email?: StringFilter<"User"> | string
     passwordHash?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
     districtScopeId?: StringNullableFilter<"User"> | string | null
-    mustChangePassword?: BoolFilter<"User"> | boolean
     churchScopeId?: StringNullableFilter<"User"> | string | null
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    cpf?: StringNullableFilter<"User"> | string | null
+    mustChangePassword?: BoolFilter<"User"> | boolean
+    phone?: StringNullableFilter<"User"> | string | null
+    photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
-    createdAt?: DateTimeFilter<"User"> | Date | string
-    districtScope?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
-    churchScope?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
     auditLogs?: AuditLogListRelationFilter
-    ministries?: MinistryUserListRelationFilter
-    profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     eventsCreated?: EventListRelationFilter
+    ministries?: MinistryUserListRelationFilter
+    systemConfigsUpdated?: SystemConfigListRelationFilter
+    churchScope?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
+    districtScope?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     permissionsOverride?: UserPermissionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
-    cpf?: SortOrderInput | SortOrder
-    phone?: SortOrderInput | SortOrder
-    photoUrl?: SortOrderInput | SortOrder
     email?: SortOrder
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrderInput | SortOrder
-    mustChangePassword?: SortOrder
     churchScopeId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    cpf?: SortOrderInput | SortOrder
+    mustChangePassword?: SortOrder
+    phone?: SortOrderInput | SortOrder
+    photoUrl?: SortOrderInput | SortOrder
     profileId?: SortOrderInput | SortOrder
     status?: SortOrder
-    createdAt?: SortOrder
-    districtScope?: DistrictOrderByWithRelationInput
-    churchScope?: ChurchOrderByWithRelationInput
     auditLogs?: AuditLogOrderByRelationAggregateInput
-    ministries?: MinistryUserOrderByRelationAggregateInput
-    profile?: ProfileOrderByWithRelationInput
     eventsCreated?: EventOrderByRelationAggregateInput
+    ministries?: MinistryUserOrderByRelationAggregateInput
+    systemConfigsUpdated?: SystemConfigOrderByRelationAggregateInput
+    churchScope?: ChurchOrderByWithRelationInput
+    districtScope?: DistrictOrderByWithRelationInput
+    profile?: ProfileOrderByWithRelationInput
     permissionsOverride?: UserPermissionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    cpf?: string
     email?: string
+    cpf?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     name?: StringFilter<"User"> | string
-    phone?: StringNullableFilter<"User"> | string | null
-    photoUrl?: StringNullableFilter<"User"> | string | null
     passwordHash?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
     districtScopeId?: StringNullableFilter<"User"> | string | null
-    mustChangePassword?: BoolFilter<"User"> | boolean
     churchScopeId?: StringNullableFilter<"User"> | string | null
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    mustChangePassword?: BoolFilter<"User"> | boolean
+    phone?: StringNullableFilter<"User"> | string | null
+    photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
-    createdAt?: DateTimeFilter<"User"> | Date | string
-    districtScope?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
-    churchScope?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
     auditLogs?: AuditLogListRelationFilter
-    ministries?: MinistryUserListRelationFilter
-    profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     eventsCreated?: EventListRelationFilter
+    ministries?: MinistryUserListRelationFilter
+    systemConfigsUpdated?: SystemConfigListRelationFilter
+    churchScope?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
+    districtScope?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     permissionsOverride?: UserPermissionListRelationFilter
-  }, "id" | "cpf" | "email">
+  }, "id" | "email" | "cpf">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
-    cpf?: SortOrderInput | SortOrder
-    phone?: SortOrderInput | SortOrder
-    photoUrl?: SortOrderInput | SortOrder
     email?: SortOrder
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrderInput | SortOrder
-    mustChangePassword?: SortOrder
     churchScopeId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    cpf?: SortOrderInput | SortOrder
+    mustChangePassword?: SortOrder
+    phone?: SortOrderInput | SortOrder
+    photoUrl?: SortOrderInput | SortOrder
     profileId?: SortOrderInput | SortOrder
     status?: SortOrder
-    createdAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
@@ -19595,18 +20637,73 @@ export namespace Prisma {
     NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"User"> | string
     name?: StringWithAggregatesFilter<"User"> | string
-    cpf?: StringNullableWithAggregatesFilter<"User"> | string | null
-    phone?: StringNullableWithAggregatesFilter<"User"> | string | null
-    photoUrl?: StringNullableWithAggregatesFilter<"User"> | string | null
     email?: StringWithAggregatesFilter<"User"> | string
     passwordHash?: StringWithAggregatesFilter<"User"> | string
     role?: StringWithAggregatesFilter<"User"> | string
     districtScopeId?: StringNullableWithAggregatesFilter<"User"> | string | null
-    mustChangePassword?: BoolWithAggregatesFilter<"User"> | boolean
     churchScopeId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+    cpf?: StringNullableWithAggregatesFilter<"User"> | string | null
+    mustChangePassword?: BoolWithAggregatesFilter<"User"> | boolean
+    phone?: StringNullableWithAggregatesFilter<"User"> | string | null
+    photoUrl?: StringNullableWithAggregatesFilter<"User"> | string | null
     profileId?: StringNullableWithAggregatesFilter<"User"> | string | null
     status?: EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
-    createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type SystemConfigWhereInput = {
+    AND?: SystemConfigWhereInput | SystemConfigWhereInput[]
+    OR?: SystemConfigWhereInput[]
+    NOT?: SystemConfigWhereInput | SystemConfigWhereInput[]
+    id?: StringFilter<"SystemConfig"> | string
+    settings?: JsonFilter<"SystemConfig">
+    createdAt?: DateTimeFilter<"SystemConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemConfig"> | Date | string
+    updatedById?: StringNullableFilter<"SystemConfig"> | string | null
+    updatedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type SystemConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    settings?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    updatedById?: SortOrderInput | SortOrder
+    updatedBy?: UserOrderByWithRelationInput
+  }
+
+  export type SystemConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: SystemConfigWhereInput | SystemConfigWhereInput[]
+    OR?: SystemConfigWhereInput[]
+    NOT?: SystemConfigWhereInput | SystemConfigWhereInput[]
+    settings?: JsonFilter<"SystemConfig">
+    createdAt?: DateTimeFilter<"SystemConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemConfig"> | Date | string
+    updatedById?: StringNullableFilter<"SystemConfig"> | string | null
+    updatedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type SystemConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    settings?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    updatedById?: SortOrderInput | SortOrder
+    _count?: SystemConfigCountOrderByAggregateInput
+    _max?: SystemConfigMaxOrderByAggregateInput
+    _min?: SystemConfigMinOrderByAggregateInput
+  }
+
+  export type SystemConfigScalarWhereWithAggregatesInput = {
+    AND?: SystemConfigScalarWhereWithAggregatesInput | SystemConfigScalarWhereWithAggregatesInput[]
+    OR?: SystemConfigScalarWhereWithAggregatesInput[]
+    NOT?: SystemConfigScalarWhereWithAggregatesInput | SystemConfigScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SystemConfig"> | string
+    settings?: JsonWithAggregatesFilter<"SystemConfig">
+    createdAt?: DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SystemConfig"> | Date | string
+    updatedById?: StringNullableWithAggregatesFilter<"SystemConfig"> | string | null
   }
 
   export type EventLotWhereInput = {
@@ -19773,8 +20870,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Ministry"> | Date | string
     updatedAt?: DateTimeFilter<"Ministry"> | Date | string
     events?: EventListRelationFilter
-    registrations?: RegistrationListRelationFilter
     users?: MinistryUserListRelationFilter
+    registrations?: RegistrationListRelationFilter
   }
 
   export type MinistryOrderByWithRelationInput = {
@@ -19785,8 +20882,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     events?: EventOrderByRelationAggregateInput
-    registrations?: RegistrationOrderByRelationAggregateInput
     users?: MinistryUserOrderByRelationAggregateInput
+    registrations?: RegistrationOrderByRelationAggregateInput
   }
 
   export type MinistryWhereUniqueInput = Prisma.AtLeast<{
@@ -19800,8 +20897,8 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Ministry"> | Date | string
     updatedAt?: DateTimeFilter<"Ministry"> | Date | string
     events?: EventListRelationFilter
-    registrations?: RegistrationListRelationFilter
     users?: MinistryUserListRelationFilter
+    registrations?: RegistrationListRelationFilter
   }, "id" | "name">
 
   export type MinistryOrderByWithAggregationInput = {
@@ -19835,16 +20932,16 @@ export namespace Prisma {
     userId?: StringFilter<"MinistryUser"> | string
     ministryId?: StringFilter<"MinistryUser"> | string
     assignedAt?: DateTimeFilter<"MinistryUser"> | Date | string
-    user?: XOR<UserRelationFilter, UserWhereInput>
     ministry?: XOR<MinistryRelationFilter, MinistryWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
   }
 
   export type MinistryUserOrderByWithRelationInput = {
     userId?: SortOrder
     ministryId?: SortOrder
     assignedAt?: SortOrder
-    user?: UserOrderByWithRelationInput
     ministry?: MinistryOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
   }
 
   export type MinistryUserWhereUniqueInput = Prisma.AtLeast<{
@@ -19855,8 +20952,8 @@ export namespace Prisma {
     userId?: StringFilter<"MinistryUser"> | string
     ministryId?: StringFilter<"MinistryUser"> | string
     assignedAt?: DateTimeFilter<"MinistryUser"> | Date | string
-    user?: XOR<UserRelationFilter, UserWhereInput>
     ministry?: XOR<MinistryRelationFilter, MinistryWhereInput>
+    user?: XOR<UserRelationFilter, UserWhereInput>
   }, "userId_ministryId">
 
   export type MinistryUserOrderByWithAggregationInput = {
@@ -20138,8 +21235,8 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchCreateNestedManyWithoutDistrictInput
-    users?: UserCreateNestedManyWithoutDistrictScopeInput
     registrations?: RegistrationCreateNestedManyWithoutDistrictInput
+    users?: UserCreateNestedManyWithoutDistrictScopeInput
   }
 
   export type DistrictUncheckedCreateInput = {
@@ -20148,8 +21245,8 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
-    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
+    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
   }
 
   export type DistrictUpdateInput = {
@@ -20158,8 +21255,8 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUpdateManyWithoutDistrictNestedInput
-    users?: UserUpdateManyWithoutDistrictScopeNestedInput
     registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+    users?: UserUpdateManyWithoutDistrictScopeNestedInput
   }
 
   export type DistrictUncheckedUpdateInput = {
@@ -20168,8 +21265,8 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
-    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
+    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
   }
 
   export type DistrictCreateManyInput = {
@@ -20204,8 +21301,8 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     district: DistrictCreateNestedOneWithoutChurchesInput
-    users?: UserCreateNestedManyWithoutChurchScopeInput
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
+    users?: UserCreateNestedManyWithoutChurchScopeInput
   }
 
   export type ChurchUncheckedCreateInput = {
@@ -20219,8 +21316,8 @@ export namespace Prisma {
     directorWhatsapp?: string | null
     directorPhotoUrl?: string | null
     createdAt?: Date | string
-    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
+    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
   }
 
   export type ChurchUpdateInput = {
@@ -20234,8 +21331,8 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
-    users?: UserUpdateManyWithoutChurchScopeNestedInput
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
+    users?: UserUpdateManyWithoutChurchScopeNestedInput
   }
 
   export type ChurchUncheckedUpdateInput = {
@@ -20249,8 +21346,8 @@ export namespace Prisma {
     directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
+    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
   }
 
   export type ChurchCreateManyInput = {
@@ -20307,12 +21404,12 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
-    orders?: OrderCreateNestedManyWithoutEventInput
-    registrations?: RegistrationCreateNestedManyWithoutEventInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
-    ministry?: MinistryCreateNestedOneWithoutEventsInput
-    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    orders?: OrderCreateNestedManyWithoutEventInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateInput = {
@@ -20333,10 +21430,10 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
-    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
   }
 
   export type EventUpdateInput = {
@@ -20355,12 +21452,12 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orders?: OrderUpdateManyWithoutEventNestedInput
-    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
-    ministry?: MinistryUpdateOneWithoutEventsNestedInput
-    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    orders?: OrderUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateInput = {
@@ -20381,10 +21478,10 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
-    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
-    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
   }
 
   export type EventCreateManyInput = {
@@ -20463,8 +21560,8 @@ export namespace Prisma {
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
-    registrations?: RegistrationCreateNestedManyWithoutOrderInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
   }
 
@@ -20486,8 +21583,8 @@ export namespace Prisma {
     feeCents?: number
     netAmountCents?: number
     createdAt?: Date | string
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
   }
 
@@ -20509,8 +21606,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
-    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
   }
 
@@ -20532,8 +21629,8 @@ export namespace Prisma {
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
   }
 
@@ -20610,19 +21707,18 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRegistrationsInput
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
-    district: DistrictCreateNestedOneWithoutRegistrationsInput
-    church: ChurchCreateNestedOneWithoutRegistrationsInput
-    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
   }
 
   export type RegistrationUncheckedCreateInput = {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -20638,6 +21734,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
@@ -20656,19 +21753,18 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
-    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
-    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
-    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20684,6 +21780,7 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -20691,7 +21788,6 @@ export namespace Prisma {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -20707,6 +21803,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
   }
 
   export type RegistrationUpdateManyMutationInput = {
@@ -20730,7 +21827,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20746,6 +21842,7 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RefundCreateInput = {
@@ -20964,133 +22061,192 @@ export namespace Prisma {
   export type UserCreateInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
     createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    mustChangePassword?: boolean
     churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
-    createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    mustChangePassword?: boolean
     churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
-    createdAt?: Date | string
   }
 
   export type UserUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   }
 
   export type UserUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  }
+
+  export type SystemConfigCreateInput = {
+    id?: string
+    settings: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    updatedBy?: UserCreateNestedOneWithoutSystemConfigsUpdatedInput
+  }
+
+  export type SystemConfigUncheckedCreateInput = {
+    id?: string
+    settings: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    updatedById?: string | null
+  }
+
+  export type SystemConfigUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedBy?: UserUpdateOneWithoutSystemConfigsUpdatedNestedInput
+  }
+
+  export type SystemConfigUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SystemConfigCreateManyInput = {
+    id?: string
+    settings: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    updatedById?: string | null
+  }
+
+  export type SystemConfigUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemConfigUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type EventLotCreateInput = {
@@ -21264,8 +22420,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventCreateNestedManyWithoutMinistryInput
-    registrations?: RegistrationCreateNestedManyWithoutMinistryInput
     users?: MinistryUserCreateNestedManyWithoutMinistryInput
+    registrations?: RegistrationCreateNestedManyWithoutMinistryInput
   }
 
   export type MinistryUncheckedCreateInput = {
@@ -21276,8 +22432,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     events?: EventUncheckedCreateNestedManyWithoutMinistryInput
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
     users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
   }
 
   export type MinistryUpdateInput = {
@@ -21288,8 +22444,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUpdateManyWithoutMinistryNestedInput
-    registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
     users?: MinistryUserUpdateManyWithoutMinistryNestedInput
+    registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
   }
 
   export type MinistryUncheckedUpdateInput = {
@@ -21300,8 +22456,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
-    registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
     users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
   }
 
   export type MinistryCreateManyInput = {
@@ -21333,8 +22489,8 @@ export namespace Prisma {
 
   export type MinistryUserCreateInput = {
     assignedAt?: Date | string
-    user: UserCreateNestedOneWithoutMinistriesInput
     ministry: MinistryCreateNestedOneWithoutUsersInput
+    user: UserCreateNestedOneWithoutMinistriesInput
   }
 
   export type MinistryUserUncheckedCreateInput = {
@@ -21345,8 +22501,8 @@ export namespace Prisma {
 
   export type MinistryUserUpdateInput = {
     assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutMinistriesNestedInput
     ministry?: MinistryUpdateOneRequiredWithoutUsersNestedInput
+    user?: UserUpdateOneRequiredWithoutMinistriesNestedInput
   }
 
   export type MinistryUserUncheckedUpdateInput = {
@@ -21709,16 +22865,16 @@ export namespace Prisma {
     none?: ChurchWhereInput
   }
 
-  export type UserListRelationFilter = {
-    every?: UserWhereInput
-    some?: UserWhereInput
-    none?: UserWhereInput
-  }
-
   export type RegistrationListRelationFilter = {
     every?: RegistrationWhereInput
     some?: RegistrationWhereInput
     none?: RegistrationWhereInput
+  }
+
+  export type UserListRelationFilter = {
+    every?: UserWhereInput
+    some?: UserWhereInput
+    none?: UserWhereInput
   }
 
   export type SortOrderInput = {
@@ -21730,11 +22886,11 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type UserOrderByRelationAggregateInput = {
+  export type RegistrationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
-  export type RegistrationOrderByRelationAggregateInput = {
+  export type UserOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -21908,10 +23064,14 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type OrderListRelationFilter = {
-    every?: OrderWhereInput
-    some?: OrderWhereInput
-    none?: OrderWhereInput
+  export type UserNullableRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type MinistryNullableRelationFilter = {
+    is?: MinistryWhereInput | null
+    isNot?: MinistryWhereInput | null
   }
 
   export type EventLotListRelationFilter = {
@@ -21926,18 +23086,10 @@ export namespace Prisma {
     none?: ExpenseWhereInput
   }
 
-  export type MinistryNullableRelationFilter = {
-    is?: MinistryWhereInput | null
-    isNot?: MinistryWhereInput | null
-  }
-
-  export type UserNullableRelationFilter = {
-    is?: UserWhereInput | null
-    isNot?: UserWhereInput | null
-  }
-
-  export type OrderOrderByRelationAggregateInput = {
-    _count?: SortOrder
+  export type OrderListRelationFilter = {
+    every?: OrderWhereInput
+    some?: OrderWhereInput
+    none?: OrderWhereInput
   }
 
   export type EventLotOrderByRelationAggregateInput = {
@@ -21945,6 +23097,10 @@ export namespace Prisma {
   }
 
   export type ExpenseOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrderOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -22162,14 +23318,14 @@ export namespace Prisma {
     netAmountCents?: SortOrder
   }
 
-  export type OrderRelationFilter = {
-    is?: OrderWhereInput
-    isNot?: OrderWhereInput
-  }
-
   export type ChurchRelationFilter = {
     is?: ChurchWhereInput
     isNot?: ChurchWhereInput
+  }
+
+  export type OrderRelationFilter = {
+    is?: OrderWhereInput
+    isNot?: OrderWhereInput
   }
 
   export type RegistrationEventIdCpfCompoundUniqueInput = {
@@ -22181,7 +23337,6 @@ export namespace Prisma {
     id?: SortOrder
     orderId?: SortOrder
     eventId?: SortOrder
-    ministryId?: SortOrder
     fullName?: SortOrder
     cpf?: SortOrder
     birthDate?: SortOrder
@@ -22197,6 +23352,7 @@ export namespace Prisma {
     checkinAt?: SortOrder
     paidAt?: SortOrder
     createdAt?: SortOrder
+    ministryId?: SortOrder
   }
 
   export type RegistrationAvgOrderByAggregateInput = {
@@ -22208,7 +23364,6 @@ export namespace Prisma {
     id?: SortOrder
     orderId?: SortOrder
     eventId?: SortOrder
-    ministryId?: SortOrder
     fullName?: SortOrder
     cpf?: SortOrder
     birthDate?: SortOrder
@@ -22224,13 +23379,13 @@ export namespace Prisma {
     checkinAt?: SortOrder
     paidAt?: SortOrder
     createdAt?: SortOrder
+    ministryId?: SortOrder
   }
 
   export type RegistrationMinOrderByAggregateInput = {
     id?: SortOrder
     orderId?: SortOrder
     eventId?: SortOrder
-    ministryId?: SortOrder
     fullName?: SortOrder
     cpf?: SortOrder
     birthDate?: SortOrder
@@ -22246,6 +23401,7 @@ export namespace Prisma {
     checkinAt?: SortOrder
     paidAt?: SortOrder
     createdAt?: SortOrder
+    ministryId?: SortOrder
   }
 
   export type RegistrationSumOrderByAggregateInput = {
@@ -22371,20 +23527,16 @@ export namespace Prisma {
     not?: NestedEnumUserStatusFilter<$PrismaModel> | $Enums.UserStatus
   }
 
-  export type DistrictNullableRelationFilter = {
-    is?: DistrictWhereInput | null
-    isNot?: DistrictWhereInput | null
-  }
-
-  export type ChurchNullableRelationFilter = {
-    is?: ChurchWhereInput | null
-    isNot?: ChurchWhereInput | null
-  }
-
   export type AuditLogListRelationFilter = {
     every?: AuditLogWhereInput
     some?: AuditLogWhereInput
     none?: AuditLogWhereInput
+  }
+
+  export type EventListRelationFilter = {
+    every?: EventWhereInput
+    some?: EventWhereInput
+    none?: EventWhereInput
   }
 
   export type MinistryUserListRelationFilter = {
@@ -22393,15 +23545,25 @@ export namespace Prisma {
     none?: MinistryUserWhereInput
   }
 
+  export type SystemConfigListRelationFilter = {
+    every?: SystemConfigWhereInput
+    some?: SystemConfigWhereInput
+    none?: SystemConfigWhereInput
+  }
+
+  export type ChurchNullableRelationFilter = {
+    is?: ChurchWhereInput | null
+    isNot?: ChurchWhereInput | null
+  }
+
+  export type DistrictNullableRelationFilter = {
+    is?: DistrictWhereInput | null
+    isNot?: DistrictWhereInput | null
+  }
+
   export type ProfileNullableRelationFilter = {
     is?: ProfileWhereInput | null
     isNot?: ProfileWhereInput | null
-  }
-
-  export type EventListRelationFilter = {
-    every?: EventWhereInput
-    some?: EventWhereInput
-    none?: EventWhereInput
   }
 
   export type UserPermissionListRelationFilter = {
@@ -22414,11 +23576,15 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type EventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type MinistryUserOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
-  export type EventOrderByRelationAggregateInput = {
+  export type SystemConfigOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -22429,52 +23595,52 @@ export namespace Prisma {
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
-    cpf?: SortOrder
-    phone?: SortOrder
-    photoUrl?: SortOrder
     email?: SortOrder
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrder
-    mustChangePassword?: SortOrder
     churchScopeId?: SortOrder
+    createdAt?: SortOrder
+    cpf?: SortOrder
+    mustChangePassword?: SortOrder
+    phone?: SortOrder
+    photoUrl?: SortOrder
     profileId?: SortOrder
     status?: SortOrder
-    createdAt?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
-    cpf?: SortOrder
-    phone?: SortOrder
-    photoUrl?: SortOrder
     email?: SortOrder
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrder
-    mustChangePassword?: SortOrder
     churchScopeId?: SortOrder
+    createdAt?: SortOrder
+    cpf?: SortOrder
+    mustChangePassword?: SortOrder
+    phone?: SortOrder
+    photoUrl?: SortOrder
     profileId?: SortOrder
     status?: SortOrder
-    createdAt?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
-    cpf?: SortOrder
-    phone?: SortOrder
-    photoUrl?: SortOrder
     email?: SortOrder
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrder
-    mustChangePassword?: SortOrder
     churchScopeId?: SortOrder
+    createdAt?: SortOrder
+    cpf?: SortOrder
+    mustChangePassword?: SortOrder
+    phone?: SortOrder
+    photoUrl?: SortOrder
     profileId?: SortOrder
     status?: SortOrder
-    createdAt?: SortOrder
   }
 
   export type EnumUserStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -22485,6 +23651,75 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumUserStatusFilter<$PrismaModel>
     _max?: NestedEnumUserStatusFilter<$PrismaModel>
+  }
+  export type JsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type SystemConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    settings?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    updatedById?: SortOrder
+  }
+
+  export type SystemConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    updatedById?: SortOrder
+  }
+
+  export type SystemConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    updatedById?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type EventLotEventIdNameCompoundUniqueInput = {
@@ -22604,14 +23839,14 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type UserRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
-  }
-
   export type MinistryRelationFilter = {
     is?: MinistryWhereInput
     isNot?: MinistryWhereInput
+  }
+
+  export type UserRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
   }
 
   export type MinistryUserUserIdMinistryIdCompoundUniqueInput = {
@@ -22792,18 +24027,18 @@ export namespace Prisma {
     connect?: ChurchWhereUniqueInput | ChurchWhereUniqueInput[]
   }
 
-  export type UserCreateNestedManyWithoutDistrictScopeInput = {
-    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
-    createMany?: UserCreateManyDistrictScopeInputEnvelope
-    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-  }
-
   export type RegistrationCreateNestedManyWithoutDistrictInput = {
     create?: XOR<RegistrationCreateWithoutDistrictInput, RegistrationUncheckedCreateWithoutDistrictInput> | RegistrationCreateWithoutDistrictInput[] | RegistrationUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutDistrictInput | RegistrationCreateOrConnectWithoutDistrictInput[]
     createMany?: RegistrationCreateManyDistrictInputEnvelope
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type UserCreateNestedManyWithoutDistrictScopeInput = {
+    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
+    createMany?: UserCreateManyDistrictScopeInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
   export type ChurchUncheckedCreateNestedManyWithoutDistrictInput = {
@@ -22813,18 +24048,18 @@ export namespace Prisma {
     connect?: ChurchWhereUniqueInput | ChurchWhereUniqueInput[]
   }
 
-  export type UserUncheckedCreateNestedManyWithoutDistrictScopeInput = {
-    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
-    createMany?: UserCreateManyDistrictScopeInputEnvelope
-    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-  }
-
   export type RegistrationUncheckedCreateNestedManyWithoutDistrictInput = {
     create?: XOR<RegistrationCreateWithoutDistrictInput, RegistrationUncheckedCreateWithoutDistrictInput> | RegistrationCreateWithoutDistrictInput[] | RegistrationUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutDistrictInput | RegistrationCreateOrConnectWithoutDistrictInput[]
     createMany?: RegistrationCreateManyDistrictInputEnvelope
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type UserUncheckedCreateNestedManyWithoutDistrictScopeInput = {
+    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
+    createMany?: UserCreateManyDistrictScopeInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -22853,20 +24088,6 @@ export namespace Prisma {
     deleteMany?: ChurchScalarWhereInput | ChurchScalarWhereInput[]
   }
 
-  export type UserUpdateManyWithoutDistrictScopeNestedInput = {
-    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
-    upsert?: UserUpsertWithWhereUniqueWithoutDistrictScopeInput | UserUpsertWithWhereUniqueWithoutDistrictScopeInput[]
-    createMany?: UserCreateManyDistrictScopeInputEnvelope
-    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    update?: UserUpdateWithWhereUniqueWithoutDistrictScopeInput | UserUpdateWithWhereUniqueWithoutDistrictScopeInput[]
-    updateMany?: UserUpdateManyWithWhereWithoutDistrictScopeInput | UserUpdateManyWithWhereWithoutDistrictScopeInput[]
-    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
-  }
-
   export type RegistrationUpdateManyWithoutDistrictNestedInput = {
     create?: XOR<RegistrationCreateWithoutDistrictInput, RegistrationUncheckedCreateWithoutDistrictInput> | RegistrationCreateWithoutDistrictInput[] | RegistrationUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutDistrictInput | RegistrationCreateOrConnectWithoutDistrictInput[]
@@ -22879,6 +24100,20 @@ export namespace Prisma {
     update?: RegistrationUpdateWithWhereUniqueWithoutDistrictInput | RegistrationUpdateWithWhereUniqueWithoutDistrictInput[]
     updateMany?: RegistrationUpdateManyWithWhereWithoutDistrictInput | RegistrationUpdateManyWithWhereWithoutDistrictInput[]
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type UserUpdateManyWithoutDistrictScopeNestedInput = {
+    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutDistrictScopeInput | UserUpsertWithWhereUniqueWithoutDistrictScopeInput[]
+    createMany?: UserCreateManyDistrictScopeInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutDistrictScopeInput | UserUpdateWithWhereUniqueWithoutDistrictScopeInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutDistrictScopeInput | UserUpdateManyWithWhereWithoutDistrictScopeInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type ChurchUncheckedUpdateManyWithoutDistrictNestedInput = {
@@ -22895,20 +24130,6 @@ export namespace Prisma {
     deleteMany?: ChurchScalarWhereInput | ChurchScalarWhereInput[]
   }
 
-  export type UserUncheckedUpdateManyWithoutDistrictScopeNestedInput = {
-    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
-    upsert?: UserUpsertWithWhereUniqueWithoutDistrictScopeInput | UserUpsertWithWhereUniqueWithoutDistrictScopeInput[]
-    createMany?: UserCreateManyDistrictScopeInputEnvelope
-    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    update?: UserUpdateWithWhereUniqueWithoutDistrictScopeInput | UserUpdateWithWhereUniqueWithoutDistrictScopeInput[]
-    updateMany?: UserUpdateManyWithWhereWithoutDistrictScopeInput | UserUpdateManyWithWhereWithoutDistrictScopeInput[]
-    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
-  }
-
   export type RegistrationUncheckedUpdateManyWithoutDistrictNestedInput = {
     create?: XOR<RegistrationCreateWithoutDistrictInput, RegistrationUncheckedCreateWithoutDistrictInput> | RegistrationCreateWithoutDistrictInput[] | RegistrationUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutDistrictInput | RegistrationCreateOrConnectWithoutDistrictInput[]
@@ -22923,17 +24144,24 @@ export namespace Prisma {
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
+  export type UserUncheckedUpdateManyWithoutDistrictScopeNestedInput = {
+    create?: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput> | UserCreateWithoutDistrictScopeInput[] | UserUncheckedCreateWithoutDistrictScopeInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutDistrictScopeInput | UserUpsertWithWhereUniqueWithoutDistrictScopeInput[]
+    createMany?: UserCreateManyDistrictScopeInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutDistrictScopeInput | UserUpdateWithWhereUniqueWithoutDistrictScopeInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutDistrictScopeInput | UserUpdateManyWithWhereWithoutDistrictScopeInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
+  }
+
   export type DistrictCreateNestedOneWithoutChurchesInput = {
     create?: XOR<DistrictCreateWithoutChurchesInput, DistrictUncheckedCreateWithoutChurchesInput>
     connectOrCreate?: DistrictCreateOrConnectWithoutChurchesInput
     connect?: DistrictWhereUniqueInput
-  }
-
-  export type UserCreateNestedManyWithoutChurchScopeInput = {
-    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
-    createMany?: UserCreateManyChurchScopeInputEnvelope
-    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
   export type RegistrationCreateNestedManyWithoutChurchInput = {
@@ -22943,7 +24171,7 @@ export namespace Prisma {
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
-  export type UserUncheckedCreateNestedManyWithoutChurchScopeInput = {
+  export type UserCreateNestedManyWithoutChurchScopeInput = {
     create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
     connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
     createMany?: UserCreateManyChurchScopeInputEnvelope
@@ -22957,6 +24185,13 @@ export namespace Prisma {
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
+  export type UserUncheckedCreateNestedManyWithoutChurchScopeInput = {
+    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
+    createMany?: UserCreateManyChurchScopeInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
   export type NullableDateTimeFieldUpdateOperationsInput = {
     set?: Date | string | null
   }
@@ -22967,20 +24202,6 @@ export namespace Prisma {
     upsert?: DistrictUpsertWithoutChurchesInput
     connect?: DistrictWhereUniqueInput
     update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutChurchesInput, DistrictUpdateWithoutChurchesInput>, DistrictUncheckedUpdateWithoutChurchesInput>
-  }
-
-  export type UserUpdateManyWithoutChurchScopeNestedInput = {
-    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
-    upsert?: UserUpsertWithWhereUniqueWithoutChurchScopeInput | UserUpsertWithWhereUniqueWithoutChurchScopeInput[]
-    createMany?: UserCreateManyChurchScopeInputEnvelope
-    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    update?: UserUpdateWithWhereUniqueWithoutChurchScopeInput | UserUpdateWithWhereUniqueWithoutChurchScopeInput[]
-    updateMany?: UserUpdateManyWithWhereWithoutChurchScopeInput | UserUpdateManyWithWhereWithoutChurchScopeInput[]
-    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type RegistrationUpdateManyWithoutChurchNestedInput = {
@@ -22997,7 +24218,7 @@ export namespace Prisma {
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
-  export type UserUncheckedUpdateManyWithoutChurchScopeNestedInput = {
+  export type UserUpdateManyWithoutChurchScopeNestedInput = {
     create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
     connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
     upsert?: UserUpsertWithWhereUniqueWithoutChurchScopeInput | UserUpsertWithWhereUniqueWithoutChurchScopeInput[]
@@ -23025,18 +24246,30 @@ export namespace Prisma {
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
-  export type OrderCreateNestedManyWithoutEventInput = {
-    create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
-    connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
-    createMany?: OrderCreateManyEventInputEnvelope
-    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  export type UserUncheckedUpdateManyWithoutChurchScopeNestedInput = {
+    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutChurchScopeInput | UserUpsertWithWhereUniqueWithoutChurchScopeInput[]
+    createMany?: UserCreateManyChurchScopeInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutChurchScopeInput | UserUpdateWithWhereUniqueWithoutChurchScopeInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutChurchScopeInput | UserUpdateManyWithWhereWithoutChurchScopeInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
-  export type RegistrationCreateNestedManyWithoutEventInput = {
-    create?: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput> | RegistrationCreateWithoutEventInput[] | RegistrationUncheckedCreateWithoutEventInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutEventInput | RegistrationCreateOrConnectWithoutEventInput[]
-    createMany?: RegistrationCreateManyEventInputEnvelope
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  export type UserCreateNestedOneWithoutEventsCreatedInput = {
+    create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type MinistryCreateNestedOneWithoutEventsInput = {
+    create?: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: MinistryCreateOrConnectWithoutEventsInput
+    connect?: MinistryWhereUniqueInput
   }
 
   export type EventLotCreateNestedManyWithoutEventInput = {
@@ -23053,26 +24286,14 @@ export namespace Prisma {
     connect?: ExpenseWhereUniqueInput | ExpenseWhereUniqueInput[]
   }
 
-  export type MinistryCreateNestedOneWithoutEventsInput = {
-    create?: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
-    connectOrCreate?: MinistryCreateOrConnectWithoutEventsInput
-    connect?: MinistryWhereUniqueInput
-  }
-
-  export type UserCreateNestedOneWithoutEventsCreatedInput = {
-    create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
-    connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type OrderUncheckedCreateNestedManyWithoutEventInput = {
+  export type OrderCreateNestedManyWithoutEventInput = {
     create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
     connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
     createMany?: OrderCreateManyEventInputEnvelope
     connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
   }
 
-  export type RegistrationUncheckedCreateNestedManyWithoutEventInput = {
+  export type RegistrationCreateNestedManyWithoutEventInput = {
     create?: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput> | RegistrationCreateWithoutEventInput[] | RegistrationUncheckedCreateWithoutEventInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutEventInput | RegistrationCreateOrConnectWithoutEventInput[]
     createMany?: RegistrationCreateManyEventInputEnvelope
@@ -23091,6 +24312,20 @@ export namespace Prisma {
     connectOrCreate?: ExpenseCreateOrConnectWithoutEventInput | ExpenseCreateOrConnectWithoutEventInput[]
     createMany?: ExpenseCreateManyEventInputEnvelope
     connect?: ExpenseWhereUniqueInput | ExpenseWhereUniqueInput[]
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutEventInput = {
+    create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
+    createMany?: OrderCreateManyEventInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type RegistrationUncheckedCreateNestedManyWithoutEventInput = {
+    create?: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput> | RegistrationCreateWithoutEventInput[] | RegistrationUncheckedCreateWithoutEventInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutEventInput | RegistrationCreateOrConnectWithoutEventInput[]
+    createMany?: RegistrationCreateManyEventInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
   export type IntFieldUpdateOperationsInput = {
@@ -23113,32 +24348,24 @@ export namespace Prisma {
     set?: boolean
   }
 
-  export type OrderUpdateManyWithoutEventNestedInput = {
-    create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
-    connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
-    upsert?: OrderUpsertWithWhereUniqueWithoutEventInput | OrderUpsertWithWhereUniqueWithoutEventInput[]
-    createMany?: OrderCreateManyEventInputEnvelope
-    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
-    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
-    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
-    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
-    update?: OrderUpdateWithWhereUniqueWithoutEventInput | OrderUpdateWithWhereUniqueWithoutEventInput[]
-    updateMany?: OrderUpdateManyWithWhereWithoutEventInput | OrderUpdateManyWithWhereWithoutEventInput[]
-    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  export type UserUpdateOneWithoutEventsCreatedNestedInput = {
+    create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
+    upsert?: UserUpsertWithoutEventsCreatedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEventsCreatedInput, UserUpdateWithoutEventsCreatedInput>, UserUncheckedUpdateWithoutEventsCreatedInput>
   }
 
-  export type RegistrationUpdateManyWithoutEventNestedInput = {
-    create?: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput> | RegistrationCreateWithoutEventInput[] | RegistrationUncheckedCreateWithoutEventInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutEventInput | RegistrationCreateOrConnectWithoutEventInput[]
-    upsert?: RegistrationUpsertWithWhereUniqueWithoutEventInput | RegistrationUpsertWithWhereUniqueWithoutEventInput[]
-    createMany?: RegistrationCreateManyEventInputEnvelope
-    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    update?: RegistrationUpdateWithWhereUniqueWithoutEventInput | RegistrationUpdateWithWhereUniqueWithoutEventInput[]
-    updateMany?: RegistrationUpdateManyWithWhereWithoutEventInput | RegistrationUpdateManyWithWhereWithoutEventInput[]
-    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  export type MinistryUpdateOneWithoutEventsNestedInput = {
+    create?: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: MinistryCreateOrConnectWithoutEventsInput
+    upsert?: MinistryUpsertWithoutEventsInput
+    disconnect?: MinistryWhereInput | boolean
+    delete?: MinistryWhereInput | boolean
+    connect?: MinistryWhereUniqueInput
+    update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutEventsInput, MinistryUpdateWithoutEventsInput>, MinistryUncheckedUpdateWithoutEventsInput>
   }
 
   export type EventLotUpdateManyWithoutEventNestedInput = {
@@ -23169,27 +24396,7 @@ export namespace Prisma {
     deleteMany?: ExpenseScalarWhereInput | ExpenseScalarWhereInput[]
   }
 
-  export type MinistryUpdateOneWithoutEventsNestedInput = {
-    create?: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
-    connectOrCreate?: MinistryCreateOrConnectWithoutEventsInput
-    upsert?: MinistryUpsertWithoutEventsInput
-    disconnect?: MinistryWhereInput | boolean
-    delete?: MinistryWhereInput | boolean
-    connect?: MinistryWhereUniqueInput
-    update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutEventsInput, MinistryUpdateWithoutEventsInput>, MinistryUncheckedUpdateWithoutEventsInput>
-  }
-
-  export type UserUpdateOneWithoutEventsCreatedNestedInput = {
-    create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
-    connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
-    upsert?: UserUpsertWithoutEventsCreatedInput
-    disconnect?: UserWhereInput | boolean
-    delete?: UserWhereInput | boolean
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEventsCreatedInput, UserUpdateWithoutEventsCreatedInput>, UserUncheckedUpdateWithoutEventsCreatedInput>
-  }
-
-  export type OrderUncheckedUpdateManyWithoutEventNestedInput = {
+  export type OrderUpdateManyWithoutEventNestedInput = {
     create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
     connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
     upsert?: OrderUpsertWithWhereUniqueWithoutEventInput | OrderUpsertWithWhereUniqueWithoutEventInput[]
@@ -23203,7 +24410,7 @@ export namespace Prisma {
     deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
   }
 
-  export type RegistrationUncheckedUpdateManyWithoutEventNestedInput = {
+  export type RegistrationUpdateManyWithoutEventNestedInput = {
     create?: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput> | RegistrationCreateWithoutEventInput[] | RegistrationUncheckedCreateWithoutEventInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutEventInput | RegistrationCreateOrConnectWithoutEventInput[]
     upsert?: RegistrationUpsertWithWhereUniqueWithoutEventInput | RegistrationUpsertWithWhereUniqueWithoutEventInput[]
@@ -23245,6 +24452,34 @@ export namespace Prisma {
     deleteMany?: ExpenseScalarWhereInput | ExpenseScalarWhereInput[]
   }
 
+  export type OrderUncheckedUpdateManyWithoutEventNestedInput = {
+    create?: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput> | OrderCreateWithoutEventInput[] | OrderUncheckedCreateWithoutEventInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutEventInput | OrderCreateOrConnectWithoutEventInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutEventInput | OrderUpsertWithWhereUniqueWithoutEventInput[]
+    createMany?: OrderCreateManyEventInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutEventInput | OrderUpdateWithWhereUniqueWithoutEventInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutEventInput | OrderUpdateManyWithWhereWithoutEventInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutEventNestedInput = {
+    create?: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput> | RegistrationCreateWithoutEventInput[] | RegistrationUncheckedCreateWithoutEventInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutEventInput | RegistrationCreateOrConnectWithoutEventInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutEventInput | RegistrationUpsertWithWhereUniqueWithoutEventInput[]
+    createMany?: RegistrationCreateManyEventInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutEventInput | RegistrationUpdateWithWhereUniqueWithoutEventInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutEventInput | RegistrationUpdateManyWithWhereWithoutEventInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
   export type EventCreateNestedOneWithoutOrdersInput = {
     create?: XOR<EventCreateWithoutOrdersInput, EventUncheckedCreateWithoutOrdersInput>
     connectOrCreate?: EventCreateOrConnectWithoutOrdersInput
@@ -23257,18 +24492,18 @@ export namespace Prisma {
     connect?: EventLotWhereUniqueInput
   }
 
-  export type RegistrationCreateNestedManyWithoutOrderInput = {
-    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
-    createMany?: RegistrationCreateManyOrderInputEnvelope
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-  }
-
   export type RefundCreateNestedManyWithoutOrderInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
     createMany?: RefundCreateManyOrderInputEnvelope
     connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+  }
+
+  export type RegistrationCreateNestedManyWithoutOrderInput = {
+    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
+    createMany?: RegistrationCreateManyOrderInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
   export type WebhookEventCreateNestedManyWithoutOrderInput = {
@@ -23278,18 +24513,18 @@ export namespace Prisma {
     connect?: WebhookEventWhereUniqueInput | WebhookEventWhereUniqueInput[]
   }
 
-  export type RegistrationUncheckedCreateNestedManyWithoutOrderInput = {
-    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
-    createMany?: RegistrationCreateManyOrderInputEnvelope
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-  }
-
   export type RefundUncheckedCreateNestedManyWithoutOrderInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
     createMany?: RefundCreateManyOrderInputEnvelope
     connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+  }
+
+  export type RegistrationUncheckedCreateNestedManyWithoutOrderInput = {
+    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
+    createMany?: RegistrationCreateManyOrderInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
   export type WebhookEventUncheckedCreateNestedManyWithoutOrderInput = {
@@ -23317,20 +24552,6 @@ export namespace Prisma {
     update?: XOR<XOR<EventLotUpdateToOneWithWhereWithoutOrdersInput, EventLotUpdateWithoutOrdersInput>, EventLotUncheckedUpdateWithoutOrdersInput>
   }
 
-  export type RegistrationUpdateManyWithoutOrderNestedInput = {
-    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
-    upsert?: RegistrationUpsertWithWhereUniqueWithoutOrderInput | RegistrationUpsertWithWhereUniqueWithoutOrderInput[]
-    createMany?: RegistrationCreateManyOrderInputEnvelope
-    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    update?: RegistrationUpdateWithWhereUniqueWithoutOrderInput | RegistrationUpdateWithWhereUniqueWithoutOrderInput[]
-    updateMany?: RegistrationUpdateManyWithWhereWithoutOrderInput | RegistrationUpdateManyWithWhereWithoutOrderInput[]
-    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
-  }
-
   export type RefundUpdateManyWithoutOrderNestedInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
@@ -23343,6 +24564,20 @@ export namespace Prisma {
     update?: RefundUpdateWithWhereUniqueWithoutOrderInput | RefundUpdateWithWhereUniqueWithoutOrderInput[]
     updateMany?: RefundUpdateManyWithWhereWithoutOrderInput | RefundUpdateManyWithWhereWithoutOrderInput[]
     deleteMany?: RefundScalarWhereInput | RefundScalarWhereInput[]
+  }
+
+  export type RegistrationUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutOrderInput | RegistrationUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: RegistrationCreateManyOrderInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutOrderInput | RegistrationUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutOrderInput | RegistrationUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
   export type WebhookEventUpdateManyWithoutOrderNestedInput = {
@@ -23359,20 +24594,6 @@ export namespace Prisma {
     deleteMany?: WebhookEventScalarWhereInput | WebhookEventScalarWhereInput[]
   }
 
-  export type RegistrationUncheckedUpdateManyWithoutOrderNestedInput = {
-    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
-    upsert?: RegistrationUpsertWithWhereUniqueWithoutOrderInput | RegistrationUpsertWithWhereUniqueWithoutOrderInput[]
-    createMany?: RegistrationCreateManyOrderInputEnvelope
-    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    update?: RegistrationUpdateWithWhereUniqueWithoutOrderInput | RegistrationUpdateWithWhereUniqueWithoutOrderInput[]
-    updateMany?: RegistrationUpdateManyWithWhereWithoutOrderInput | RegistrationUpdateManyWithWhereWithoutOrderInput[]
-    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
-  }
-
   export type RefundUncheckedUpdateManyWithoutOrderNestedInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
@@ -23385,6 +24606,20 @@ export namespace Prisma {
     update?: RefundUpdateWithWhereUniqueWithoutOrderInput | RefundUpdateWithWhereUniqueWithoutOrderInput[]
     updateMany?: RefundUpdateManyWithWhereWithoutOrderInput | RefundUpdateManyWithWhereWithoutOrderInput[]
     deleteMany?: RefundScalarWhereInput | RefundScalarWhereInput[]
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput> | RegistrationCreateWithoutOrderInput[] | RegistrationUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderInput | RegistrationCreateOrConnectWithoutOrderInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutOrderInput | RegistrationUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: RegistrationCreateManyOrderInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutOrderInput | RegistrationUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutOrderInput | RegistrationUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
   export type WebhookEventUncheckedUpdateManyWithoutOrderNestedInput = {
@@ -23401,10 +24636,23 @@ export namespace Prisma {
     deleteMany?: WebhookEventScalarWhereInput | WebhookEventScalarWhereInput[]
   }
 
-  export type OrderCreateNestedOneWithoutRegistrationsInput = {
-    create?: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
-    connectOrCreate?: OrderCreateOrConnectWithoutRegistrationsInput
-    connect?: OrderWhereUniqueInput
+  export type RefundCreateNestedManyWithoutRegistrationInput = {
+    create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
+    connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
+    createMany?: RefundCreateManyRegistrationInputEnvelope
+    connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+  }
+
+  export type ChurchCreateNestedOneWithoutRegistrationsInput = {
+    create?: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: ChurchCreateOrConnectWithoutRegistrationsInput
+    connect?: ChurchWhereUniqueInput
+  }
+
+  export type DistrictCreateNestedOneWithoutRegistrationsInput = {
+    create?: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutRegistrationsInput
+    connect?: DistrictWhereUniqueInput
   }
 
   export type EventCreateNestedOneWithoutRegistrationsInput = {
@@ -23419,23 +24667,10 @@ export namespace Prisma {
     connect?: MinistryWhereUniqueInput
   }
 
-  export type DistrictCreateNestedOneWithoutRegistrationsInput = {
-    create?: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
-    connectOrCreate?: DistrictCreateOrConnectWithoutRegistrationsInput
-    connect?: DistrictWhereUniqueInput
-  }
-
-  export type ChurchCreateNestedOneWithoutRegistrationsInput = {
-    create?: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
-    connectOrCreate?: ChurchCreateOrConnectWithoutRegistrationsInput
-    connect?: ChurchWhereUniqueInput
-  }
-
-  export type RefundCreateNestedManyWithoutRegistrationInput = {
-    create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
-    connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
-    createMany?: RefundCreateManyRegistrationInputEnvelope
-    connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+  export type OrderCreateNestedOneWithoutRegistrationsInput = {
+    create?: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutRegistrationsInput
+    connect?: OrderWhereUniqueInput
   }
 
   export type RefundUncheckedCreateNestedManyWithoutRegistrationInput = {
@@ -23445,12 +24680,34 @@ export namespace Prisma {
     connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
   }
 
-  export type OrderUpdateOneRequiredWithoutRegistrationsNestedInput = {
-    create?: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
-    connectOrCreate?: OrderCreateOrConnectWithoutRegistrationsInput
-    upsert?: OrderUpsertWithoutRegistrationsInput
-    connect?: OrderWhereUniqueInput
-    update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutRegistrationsInput, OrderUpdateWithoutRegistrationsInput>, OrderUncheckedUpdateWithoutRegistrationsInput>
+  export type RefundUpdateManyWithoutRegistrationNestedInput = {
+    create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
+    connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
+    upsert?: RefundUpsertWithWhereUniqueWithoutRegistrationInput | RefundUpsertWithWhereUniqueWithoutRegistrationInput[]
+    createMany?: RefundCreateManyRegistrationInputEnvelope
+    set?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+    disconnect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+    delete?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+    connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+    update?: RefundUpdateWithWhereUniqueWithoutRegistrationInput | RefundUpdateWithWhereUniqueWithoutRegistrationInput[]
+    updateMany?: RefundUpdateManyWithWhereWithoutRegistrationInput | RefundUpdateManyWithWhereWithoutRegistrationInput[]
+    deleteMany?: RefundScalarWhereInput | RefundScalarWhereInput[]
+  }
+
+  export type ChurchUpdateOneRequiredWithoutRegistrationsNestedInput = {
+    create?: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: ChurchCreateOrConnectWithoutRegistrationsInput
+    upsert?: ChurchUpsertWithoutRegistrationsInput
+    connect?: ChurchWhereUniqueInput
+    update?: XOR<XOR<ChurchUpdateToOneWithWhereWithoutRegistrationsInput, ChurchUpdateWithoutRegistrationsInput>, ChurchUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type DistrictUpdateOneRequiredWithoutRegistrationsNestedInput = {
+    create?: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutRegistrationsInput
+    upsert?: DistrictUpsertWithoutRegistrationsInput
+    connect?: DistrictWhereUniqueInput
+    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutRegistrationsInput, DistrictUpdateWithoutRegistrationsInput>, DistrictUncheckedUpdateWithoutRegistrationsInput>
   }
 
   export type EventUpdateOneRequiredWithoutRegistrationsNestedInput = {
@@ -23471,34 +24728,12 @@ export namespace Prisma {
     update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutRegistrationsInput, MinistryUpdateWithoutRegistrationsInput>, MinistryUncheckedUpdateWithoutRegistrationsInput>
   }
 
-  export type DistrictUpdateOneRequiredWithoutRegistrationsNestedInput = {
-    create?: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
-    connectOrCreate?: DistrictCreateOrConnectWithoutRegistrationsInput
-    upsert?: DistrictUpsertWithoutRegistrationsInput
-    connect?: DistrictWhereUniqueInput
-    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutRegistrationsInput, DistrictUpdateWithoutRegistrationsInput>, DistrictUncheckedUpdateWithoutRegistrationsInput>
-  }
-
-  export type ChurchUpdateOneRequiredWithoutRegistrationsNestedInput = {
-    create?: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
-    connectOrCreate?: ChurchCreateOrConnectWithoutRegistrationsInput
-    upsert?: ChurchUpsertWithoutRegistrationsInput
-    connect?: ChurchWhereUniqueInput
-    update?: XOR<XOR<ChurchUpdateToOneWithWhereWithoutRegistrationsInput, ChurchUpdateWithoutRegistrationsInput>, ChurchUncheckedUpdateWithoutRegistrationsInput>
-  }
-
-  export type RefundUpdateManyWithoutRegistrationNestedInput = {
-    create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
-    connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
-    upsert?: RefundUpsertWithWhereUniqueWithoutRegistrationInput | RefundUpsertWithWhereUniqueWithoutRegistrationInput[]
-    createMany?: RefundCreateManyRegistrationInputEnvelope
-    set?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
-    disconnect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
-    delete?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
-    connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
-    update?: RefundUpdateWithWhereUniqueWithoutRegistrationInput | RefundUpdateWithWhereUniqueWithoutRegistrationInput[]
-    updateMany?: RefundUpdateManyWithWhereWithoutRegistrationInput | RefundUpdateManyWithWhereWithoutRegistrationInput[]
-    deleteMany?: RefundScalarWhereInput | RefundScalarWhereInput[]
+  export type OrderUpdateOneRequiredWithoutRegistrationsNestedInput = {
+    create?: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutRegistrationsInput
+    upsert?: OrderUpsertWithoutRegistrationsInput
+    connect?: OrderWhereUniqueInput
+    update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutRegistrationsInput, OrderUpdateWithoutRegistrationsInput>, OrderUncheckedUpdateWithoutRegistrationsInput>
   }
 
   export type RefundUncheckedUpdateManyWithoutRegistrationNestedInput = {
@@ -23575,23 +24810,18 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAuditLogsInput, UserUpdateWithoutAuditLogsInput>, UserUncheckedUpdateWithoutAuditLogsInput>
   }
 
-  export type DistrictCreateNestedOneWithoutUsersInput = {
-    create?: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
-    connectOrCreate?: DistrictCreateOrConnectWithoutUsersInput
-    connect?: DistrictWhereUniqueInput
-  }
-
-  export type ChurchCreateNestedOneWithoutUsersInput = {
-    create?: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
-    connectOrCreate?: ChurchCreateOrConnectWithoutUsersInput
-    connect?: ChurchWhereUniqueInput
-  }
-
   export type AuditLogCreateNestedManyWithoutActorInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
     createMany?: AuditLogCreateManyActorInputEnvelope
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type EventCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
   export type MinistryUserCreateNestedManyWithoutUserInput = {
@@ -23601,17 +24831,29 @@ export namespace Prisma {
     connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
   }
 
+  export type SystemConfigCreateNestedManyWithoutUpdatedByInput = {
+    create?: XOR<SystemConfigCreateWithoutUpdatedByInput, SystemConfigUncheckedCreateWithoutUpdatedByInput> | SystemConfigCreateWithoutUpdatedByInput[] | SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: SystemConfigCreateOrConnectWithoutUpdatedByInput | SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+    createMany?: SystemConfigCreateManyUpdatedByInputEnvelope
+    connect?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+  }
+
+  export type ChurchCreateNestedOneWithoutUsersInput = {
+    create?: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: ChurchCreateOrConnectWithoutUsersInput
+    connect?: ChurchWhereUniqueInput
+  }
+
+  export type DistrictCreateNestedOneWithoutUsersInput = {
+    create?: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutUsersInput
+    connect?: DistrictWhereUniqueInput
+  }
+
   export type ProfileCreateNestedOneWithoutUsersInput = {
     create?: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
     connectOrCreate?: ProfileCreateOrConnectWithoutUsersInput
     connect?: ProfileWhereUniqueInput
-  }
-
-  export type EventCreateNestedManyWithoutCreatedByInput = {
-    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
-    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
-    createMany?: EventCreateManyCreatedByInputEnvelope
-    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
   export type UserPermissionCreateNestedManyWithoutUserInput = {
@@ -23628,6 +24870,13 @@ export namespace Prisma {
     connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
   }
 
+  export type EventUncheckedCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+  }
+
   export type MinistryUserUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput> | MinistryUserCreateWithoutUserInput[] | MinistryUserUncheckedCreateWithoutUserInput[]
     connectOrCreate?: MinistryUserCreateOrConnectWithoutUserInput | MinistryUserCreateOrConnectWithoutUserInput[]
@@ -23635,11 +24884,11 @@ export namespace Prisma {
     connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
   }
 
-  export type EventUncheckedCreateNestedManyWithoutCreatedByInput = {
-    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
-    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
-    createMany?: EventCreateManyCreatedByInputEnvelope
-    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+  export type SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput = {
+    create?: XOR<SystemConfigCreateWithoutUpdatedByInput, SystemConfigUncheckedCreateWithoutUpdatedByInput> | SystemConfigCreateWithoutUpdatedByInput[] | SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: SystemConfigCreateOrConnectWithoutUpdatedByInput | SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+    createMany?: SystemConfigCreateManyUpdatedByInputEnvelope
+    connect?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
   }
 
   export type UserPermissionUncheckedCreateNestedManyWithoutUserInput = {
@@ -23651,26 +24900,6 @@ export namespace Prisma {
 
   export type EnumUserStatusFieldUpdateOperationsInput = {
     set?: $Enums.UserStatus
-  }
-
-  export type DistrictUpdateOneWithoutUsersNestedInput = {
-    create?: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
-    connectOrCreate?: DistrictCreateOrConnectWithoutUsersInput
-    upsert?: DistrictUpsertWithoutUsersInput
-    disconnect?: DistrictWhereInput | boolean
-    delete?: DistrictWhereInput | boolean
-    connect?: DistrictWhereUniqueInput
-    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutUsersInput, DistrictUpdateWithoutUsersInput>, DistrictUncheckedUpdateWithoutUsersInput>
-  }
-
-  export type ChurchUpdateOneWithoutUsersNestedInput = {
-    create?: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
-    connectOrCreate?: ChurchCreateOrConnectWithoutUsersInput
-    upsert?: ChurchUpsertWithoutUsersInput
-    disconnect?: ChurchWhereInput | boolean
-    delete?: ChurchWhereInput | boolean
-    connect?: ChurchWhereUniqueInput
-    update?: XOR<XOR<ChurchUpdateToOneWithWhereWithoutUsersInput, ChurchUpdateWithoutUsersInput>, ChurchUncheckedUpdateWithoutUsersInput>
   }
 
   export type AuditLogUpdateManyWithoutActorNestedInput = {
@@ -23687,6 +24916,20 @@ export namespace Prisma {
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
   }
 
+  export type EventUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutCreatedByInput | EventUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: EventCreateManyCreatedByInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutCreatedByInput | EventUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutCreatedByInput | EventUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
+  }
+
   export type MinistryUserUpdateManyWithoutUserNestedInput = {
     create?: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput> | MinistryUserCreateWithoutUserInput[] | MinistryUserUncheckedCreateWithoutUserInput[]
     connectOrCreate?: MinistryUserCreateOrConnectWithoutUserInput | MinistryUserCreateOrConnectWithoutUserInput[]
@@ -23701,6 +24944,40 @@ export namespace Prisma {
     deleteMany?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
   }
 
+  export type SystemConfigUpdateManyWithoutUpdatedByNestedInput = {
+    create?: XOR<SystemConfigCreateWithoutUpdatedByInput, SystemConfigUncheckedCreateWithoutUpdatedByInput> | SystemConfigCreateWithoutUpdatedByInput[] | SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: SystemConfigCreateOrConnectWithoutUpdatedByInput | SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+    upsert?: SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput | SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput[]
+    createMany?: SystemConfigCreateManyUpdatedByInputEnvelope
+    set?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    disconnect?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    delete?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    connect?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    update?: SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput | SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput[]
+    updateMany?: SystemConfigUpdateManyWithWhereWithoutUpdatedByInput | SystemConfigUpdateManyWithWhereWithoutUpdatedByInput[]
+    deleteMany?: SystemConfigScalarWhereInput | SystemConfigScalarWhereInput[]
+  }
+
+  export type ChurchUpdateOneWithoutUsersNestedInput = {
+    create?: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: ChurchCreateOrConnectWithoutUsersInput
+    upsert?: ChurchUpsertWithoutUsersInput
+    disconnect?: ChurchWhereInput | boolean
+    delete?: ChurchWhereInput | boolean
+    connect?: ChurchWhereUniqueInput
+    update?: XOR<XOR<ChurchUpdateToOneWithWhereWithoutUsersInput, ChurchUpdateWithoutUsersInput>, ChurchUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type DistrictUpdateOneWithoutUsersNestedInput = {
+    create?: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutUsersInput
+    upsert?: DistrictUpsertWithoutUsersInput
+    disconnect?: DistrictWhereInput | boolean
+    delete?: DistrictWhereInput | boolean
+    connect?: DistrictWhereUniqueInput
+    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutUsersInput, DistrictUpdateWithoutUsersInput>, DistrictUncheckedUpdateWithoutUsersInput>
+  }
+
   export type ProfileUpdateOneWithoutUsersNestedInput = {
     create?: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
     connectOrCreate?: ProfileCreateOrConnectWithoutUsersInput
@@ -23709,20 +24986,6 @@ export namespace Prisma {
     delete?: ProfileWhereInput | boolean
     connect?: ProfileWhereUniqueInput
     update?: XOR<XOR<ProfileUpdateToOneWithWhereWithoutUsersInput, ProfileUpdateWithoutUsersInput>, ProfileUncheckedUpdateWithoutUsersInput>
-  }
-
-  export type EventUpdateManyWithoutCreatedByNestedInput = {
-    create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
-    connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
-    upsert?: EventUpsertWithWhereUniqueWithoutCreatedByInput | EventUpsertWithWhereUniqueWithoutCreatedByInput[]
-    createMany?: EventCreateManyCreatedByInputEnvelope
-    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
-    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
-    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
-    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
-    update?: EventUpdateWithWhereUniqueWithoutCreatedByInput | EventUpdateWithWhereUniqueWithoutCreatedByInput[]
-    updateMany?: EventUpdateManyWithWhereWithoutCreatedByInput | EventUpdateManyWithWhereWithoutCreatedByInput[]
-    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
   }
 
   export type UserPermissionUpdateManyWithoutUserNestedInput = {
@@ -23753,20 +25016,6 @@ export namespace Prisma {
     deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
   }
 
-  export type MinistryUserUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput> | MinistryUserCreateWithoutUserInput[] | MinistryUserUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: MinistryUserCreateOrConnectWithoutUserInput | MinistryUserCreateOrConnectWithoutUserInput[]
-    upsert?: MinistryUserUpsertWithWhereUniqueWithoutUserInput | MinistryUserUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: MinistryUserCreateManyUserInputEnvelope
-    set?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
-    disconnect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
-    delete?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
-    connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
-    update?: MinistryUserUpdateWithWhereUniqueWithoutUserInput | MinistryUserUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: MinistryUserUpdateManyWithWhereWithoutUserInput | MinistryUserUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
-  }
-
   export type EventUncheckedUpdateManyWithoutCreatedByNestedInput = {
     create?: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput> | EventCreateWithoutCreatedByInput[] | EventUncheckedCreateWithoutCreatedByInput[]
     connectOrCreate?: EventCreateOrConnectWithoutCreatedByInput | EventCreateOrConnectWithoutCreatedByInput[]
@@ -23781,6 +25030,34 @@ export namespace Prisma {
     deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
   }
 
+  export type MinistryUserUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput> | MinistryUserCreateWithoutUserInput[] | MinistryUserUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: MinistryUserCreateOrConnectWithoutUserInput | MinistryUserCreateOrConnectWithoutUserInput[]
+    upsert?: MinistryUserUpsertWithWhereUniqueWithoutUserInput | MinistryUserUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: MinistryUserCreateManyUserInputEnvelope
+    set?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+    disconnect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+    delete?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+    connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+    update?: MinistryUserUpdateWithWhereUniqueWithoutUserInput | MinistryUserUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: MinistryUserUpdateManyWithWhereWithoutUserInput | MinistryUserUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
+  }
+
+  export type SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput = {
+    create?: XOR<SystemConfigCreateWithoutUpdatedByInput, SystemConfigUncheckedCreateWithoutUpdatedByInput> | SystemConfigCreateWithoutUpdatedByInput[] | SystemConfigUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: SystemConfigCreateOrConnectWithoutUpdatedByInput | SystemConfigCreateOrConnectWithoutUpdatedByInput[]
+    upsert?: SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput | SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput[]
+    createMany?: SystemConfigCreateManyUpdatedByInputEnvelope
+    set?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    disconnect?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    delete?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    connect?: SystemConfigWhereUniqueInput | SystemConfigWhereUniqueInput[]
+    update?: SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput | SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput[]
+    updateMany?: SystemConfigUpdateManyWithWhereWithoutUpdatedByInput | SystemConfigUpdateManyWithWhereWithoutUpdatedByInput[]
+    deleteMany?: SystemConfigScalarWhereInput | SystemConfigScalarWhereInput[]
+  }
+
   export type UserPermissionUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<UserPermissionCreateWithoutUserInput, UserPermissionUncheckedCreateWithoutUserInput> | UserPermissionCreateWithoutUserInput[] | UserPermissionUncheckedCreateWithoutUserInput[]
     connectOrCreate?: UserPermissionCreateOrConnectWithoutUserInput | UserPermissionCreateOrConnectWithoutUserInput[]
@@ -23793,6 +25070,22 @@ export namespace Prisma {
     update?: UserPermissionUpdateWithWhereUniqueWithoutUserInput | UserPermissionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: UserPermissionUpdateManyWithWhereWithoutUserInput | UserPermissionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutSystemConfigsUpdatedInput = {
+    create?: XOR<UserCreateWithoutSystemConfigsUpdatedInput, UserUncheckedCreateWithoutSystemConfigsUpdatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutSystemConfigsUpdatedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneWithoutSystemConfigsUpdatedNestedInput = {
+    create?: XOR<UserCreateWithoutSystemConfigsUpdatedInput, UserUncheckedCreateWithoutSystemConfigsUpdatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutSystemConfigsUpdatedInput
+    upsert?: UserUpsertWithoutSystemConfigsUpdatedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSystemConfigsUpdatedInput, UserUpdateWithoutSystemConfigsUpdatedInput>, UserUncheckedUpdateWithoutSystemConfigsUpdatedInput>
   }
 
   export type EventCreateNestedOneWithoutLotsInput = {
@@ -23872,18 +25165,18 @@ export namespace Prisma {
     connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
-  export type RegistrationCreateNestedManyWithoutMinistryInput = {
-    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
-    createMany?: RegistrationCreateManyMinistryInputEnvelope
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-  }
-
   export type MinistryUserCreateNestedManyWithoutMinistryInput = {
     create?: XOR<MinistryUserCreateWithoutMinistryInput, MinistryUserUncheckedCreateWithoutMinistryInput> | MinistryUserCreateWithoutMinistryInput[] | MinistryUserUncheckedCreateWithoutMinistryInput[]
     connectOrCreate?: MinistryUserCreateOrConnectWithoutMinistryInput | MinistryUserCreateOrConnectWithoutMinistryInput[]
     createMany?: MinistryUserCreateManyMinistryInputEnvelope
     connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+  }
+
+  export type RegistrationCreateNestedManyWithoutMinistryInput = {
+    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
+    createMany?: RegistrationCreateManyMinistryInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
   export type EventUncheckedCreateNestedManyWithoutMinistryInput = {
@@ -23893,18 +25186,18 @@ export namespace Prisma {
     connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
-  export type RegistrationUncheckedCreateNestedManyWithoutMinistryInput = {
-    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
-    createMany?: RegistrationCreateManyMinistryInputEnvelope
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-  }
-
   export type MinistryUserUncheckedCreateNestedManyWithoutMinistryInput = {
     create?: XOR<MinistryUserCreateWithoutMinistryInput, MinistryUserUncheckedCreateWithoutMinistryInput> | MinistryUserCreateWithoutMinistryInput[] | MinistryUserUncheckedCreateWithoutMinistryInput[]
     connectOrCreate?: MinistryUserCreateOrConnectWithoutMinistryInput | MinistryUserCreateOrConnectWithoutMinistryInput[]
     createMany?: MinistryUserCreateManyMinistryInputEnvelope
     connect?: MinistryUserWhereUniqueInput | MinistryUserWhereUniqueInput[]
+  }
+
+  export type RegistrationUncheckedCreateNestedManyWithoutMinistryInput = {
+    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
+    createMany?: RegistrationCreateManyMinistryInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
   export type EventUpdateManyWithoutMinistryNestedInput = {
@@ -23921,20 +25214,6 @@ export namespace Prisma {
     deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
   }
 
-  export type RegistrationUpdateManyWithoutMinistryNestedInput = {
-    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
-    upsert?: RegistrationUpsertWithWhereUniqueWithoutMinistryInput | RegistrationUpsertWithWhereUniqueWithoutMinistryInput[]
-    createMany?: RegistrationCreateManyMinistryInputEnvelope
-    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    update?: RegistrationUpdateWithWhereUniqueWithoutMinistryInput | RegistrationUpdateWithWhereUniqueWithoutMinistryInput[]
-    updateMany?: RegistrationUpdateManyWithWhereWithoutMinistryInput | RegistrationUpdateManyWithWhereWithoutMinistryInput[]
-    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
-  }
-
   export type MinistryUserUpdateManyWithoutMinistryNestedInput = {
     create?: XOR<MinistryUserCreateWithoutMinistryInput, MinistryUserUncheckedCreateWithoutMinistryInput> | MinistryUserCreateWithoutMinistryInput[] | MinistryUserUncheckedCreateWithoutMinistryInput[]
     connectOrCreate?: MinistryUserCreateOrConnectWithoutMinistryInput | MinistryUserCreateOrConnectWithoutMinistryInput[]
@@ -23947,6 +25226,20 @@ export namespace Prisma {
     update?: MinistryUserUpdateWithWhereUniqueWithoutMinistryInput | MinistryUserUpdateWithWhereUniqueWithoutMinistryInput[]
     updateMany?: MinistryUserUpdateManyWithWhereWithoutMinistryInput | MinistryUserUpdateManyWithWhereWithoutMinistryInput[]
     deleteMany?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
+  }
+
+  export type RegistrationUpdateManyWithoutMinistryNestedInput = {
+    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutMinistryInput | RegistrationUpsertWithWhereUniqueWithoutMinistryInput[]
+    createMany?: RegistrationCreateManyMinistryInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutMinistryInput | RegistrationUpdateWithWhereUniqueWithoutMinistryInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutMinistryInput | RegistrationUpdateManyWithWhereWithoutMinistryInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
   export type EventUncheckedUpdateManyWithoutMinistryNestedInput = {
@@ -23963,20 +25256,6 @@ export namespace Prisma {
     deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
   }
 
-  export type RegistrationUncheckedUpdateManyWithoutMinistryNestedInput = {
-    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
-    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
-    upsert?: RegistrationUpsertWithWhereUniqueWithoutMinistryInput | RegistrationUpsertWithWhereUniqueWithoutMinistryInput[]
-    createMany?: RegistrationCreateManyMinistryInputEnvelope
-    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
-    update?: RegistrationUpdateWithWhereUniqueWithoutMinistryInput | RegistrationUpdateWithWhereUniqueWithoutMinistryInput[]
-    updateMany?: RegistrationUpdateManyWithWhereWithoutMinistryInput | RegistrationUpdateManyWithWhereWithoutMinistryInput[]
-    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
-  }
-
   export type MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput = {
     create?: XOR<MinistryUserCreateWithoutMinistryInput, MinistryUserUncheckedCreateWithoutMinistryInput> | MinistryUserCreateWithoutMinistryInput[] | MinistryUserUncheckedCreateWithoutMinistryInput[]
     connectOrCreate?: MinistryUserCreateOrConnectWithoutMinistryInput | MinistryUserCreateOrConnectWithoutMinistryInput[]
@@ -23991,10 +25270,18 @@ export namespace Prisma {
     deleteMany?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
   }
 
-  export type UserCreateNestedOneWithoutMinistriesInput = {
-    create?: XOR<UserCreateWithoutMinistriesInput, UserUncheckedCreateWithoutMinistriesInput>
-    connectOrCreate?: UserCreateOrConnectWithoutMinistriesInput
-    connect?: UserWhereUniqueInput
+  export type RegistrationUncheckedUpdateManyWithoutMinistryNestedInput = {
+    create?: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput> | RegistrationCreateWithoutMinistryInput[] | RegistrationUncheckedCreateWithoutMinistryInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutMinistryInput | RegistrationUpsertWithWhereUniqueWithoutMinistryInput[]
+    createMany?: RegistrationCreateManyMinistryInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutMinistryInput | RegistrationUpdateWithWhereUniqueWithoutMinistryInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutMinistryInput | RegistrationUpdateManyWithWhereWithoutMinistryInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
   export type MinistryCreateNestedOneWithoutUsersInput = {
@@ -24003,12 +25290,10 @@ export namespace Prisma {
     connect?: MinistryWhereUniqueInput
   }
 
-  export type UserUpdateOneRequiredWithoutMinistriesNestedInput = {
+  export type UserCreateNestedOneWithoutMinistriesInput = {
     create?: XOR<UserCreateWithoutMinistriesInput, UserUncheckedCreateWithoutMinistriesInput>
     connectOrCreate?: UserCreateOrConnectWithoutMinistriesInput
-    upsert?: UserUpsertWithoutMinistriesInput
     connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMinistriesInput, UserUpdateWithoutMinistriesInput>, UserUncheckedUpdateWithoutMinistriesInput>
   }
 
   export type MinistryUpdateOneRequiredWithoutUsersNestedInput = {
@@ -24017,6 +25302,14 @@ export namespace Prisma {
     upsert?: MinistryUpsertWithoutUsersInput
     connect?: MinistryWhereUniqueInput
     update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutUsersInput, MinistryUpdateWithoutUsersInput>, MinistryUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutMinistriesNestedInput = {
+    create?: XOR<UserCreateWithoutMinistriesInput, UserUncheckedCreateWithoutMinistriesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMinistriesInput
+    upsert?: UserUpsertWithoutMinistriesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMinistriesInput, UserUpdateWithoutMinistriesInput>, UserUncheckedUpdateWithoutMinistriesInput>
   }
 
   export type ProfilePermissionCreateNestedManyWithoutProfileInput = {
@@ -24348,6 +25641,28 @@ export namespace Prisma {
     _min?: NestedEnumUserStatusFilter<$PrismaModel>
     _max?: NestedEnumUserStatusFilter<$PrismaModel>
   }
+  export type NestedJsonFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type ChurchCreateWithoutDistrictInput = {
     id?: string
@@ -24359,8 +25674,8 @@ export namespace Prisma {
     directorWhatsapp?: string | null
     directorPhotoUrl?: string | null
     createdAt?: Date | string
-    users?: UserCreateNestedManyWithoutChurchScopeInput
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
+    users?: UserCreateNestedManyWithoutChurchScopeInput
   }
 
   export type ChurchUncheckedCreateWithoutDistrictInput = {
@@ -24373,8 +25688,8 @@ export namespace Prisma {
     directorWhatsapp?: string | null
     directorPhotoUrl?: string | null
     createdAt?: Date | string
-    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
+    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
   }
 
   export type ChurchCreateOrConnectWithoutDistrictInput = {
@@ -24384,56 +25699,6 @@ export namespace Prisma {
 
   export type ChurchCreateManyDistrictInputEnvelope = {
     data: ChurchCreateManyDistrictInput | ChurchCreateManyDistrictInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type UserCreateWithoutDistrictScopeInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
-    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
-    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
-    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutDistrictScopeInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    mustChangePassword?: boolean
-    churchScopeId?: string | null
-    profileId?: string | null
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
-    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
-    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutDistrictScopeInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput>
-  }
-
-  export type UserCreateManyDistrictScopeInputEnvelope = {
-    data: UserCreateManyDistrictScopeInput | UserCreateManyDistrictScopeInput[]
     skipDuplicates?: boolean
   }
 
@@ -24452,18 +25717,17 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRegistrationsInput
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
-    church: ChurchCreateNestedOneWithoutRegistrationsInput
-    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
   }
 
   export type RegistrationUncheckedCreateWithoutDistrictInput = {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -24478,6 +25742,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
@@ -24488,6 +25753,58 @@ export namespace Prisma {
 
   export type RegistrationCreateManyDistrictInputEnvelope = {
     data: RegistrationCreateManyDistrictInput | RegistrationCreateManyDistrictInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutDistrictScopeInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutDistrictScopeInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutDistrictScopeInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput>
+  }
+
+  export type UserCreateManyDistrictScopeInputEnvelope = {
+    data: UserCreateManyDistrictScopeInput | UserCreateManyDistrictScopeInput[]
     skipDuplicates?: boolean
   }
 
@@ -24523,42 +25840,6 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Church"> | Date | string
   }
 
-  export type UserUpsertWithWhereUniqueWithoutDistrictScopeInput = {
-    where: UserWhereUniqueInput
-    update: XOR<UserUpdateWithoutDistrictScopeInput, UserUncheckedUpdateWithoutDistrictScopeInput>
-    create: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput>
-  }
-
-  export type UserUpdateWithWhereUniqueWithoutDistrictScopeInput = {
-    where: UserWhereUniqueInput
-    data: XOR<UserUpdateWithoutDistrictScopeInput, UserUncheckedUpdateWithoutDistrictScopeInput>
-  }
-
-  export type UserUpdateManyWithWhereWithoutDistrictScopeInput = {
-    where: UserScalarWhereInput
-    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutDistrictScopeInput>
-  }
-
-  export type UserScalarWhereInput = {
-    AND?: UserScalarWhereInput | UserScalarWhereInput[]
-    OR?: UserScalarWhereInput[]
-    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
-    id?: StringFilter<"User"> | string
-    name?: StringFilter<"User"> | string
-    cpf?: StringNullableFilter<"User"> | string | null
-    phone?: StringNullableFilter<"User"> | string | null
-    photoUrl?: StringNullableFilter<"User"> | string | null
-    email?: StringFilter<"User"> | string
-    passwordHash?: StringFilter<"User"> | string
-    role?: StringFilter<"User"> | string
-    districtScopeId?: StringNullableFilter<"User"> | string | null
-    mustChangePassword?: BoolFilter<"User"> | boolean
-    churchScopeId?: StringNullableFilter<"User"> | string | null
-    profileId?: StringNullableFilter<"User"> | string | null
-    status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
-    createdAt?: DateTimeFilter<"User"> | Date | string
-  }
-
   export type RegistrationUpsertWithWhereUniqueWithoutDistrictInput = {
     where: RegistrationWhereUniqueInput
     update: XOR<RegistrationUpdateWithoutDistrictInput, RegistrationUncheckedUpdateWithoutDistrictInput>
@@ -24582,7 +25863,6 @@ export namespace Prisma {
     id?: StringFilter<"Registration"> | string
     orderId?: StringFilter<"Registration"> | string
     eventId?: StringFilter<"Registration"> | string
-    ministryId?: StringNullableFilter<"Registration"> | string | null
     fullName?: StringFilter<"Registration"> | string
     cpf?: StringFilter<"Registration"> | string
     birthDate?: DateTimeFilter<"Registration"> | Date | string
@@ -24598,6 +25878,43 @@ export namespace Prisma {
     checkinAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
     paidAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
     createdAt?: DateTimeFilter<"Registration"> | Date | string
+    ministryId?: StringNullableFilter<"Registration"> | string | null
+  }
+
+  export type UserUpsertWithWhereUniqueWithoutDistrictScopeInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutDistrictScopeInput, UserUncheckedUpdateWithoutDistrictScopeInput>
+    create: XOR<UserCreateWithoutDistrictScopeInput, UserUncheckedCreateWithoutDistrictScopeInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutDistrictScopeInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutDistrictScopeInput, UserUncheckedUpdateWithoutDistrictScopeInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutDistrictScopeInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutDistrictScopeInput>
+  }
+
+  export type UserScalarWhereInput = {
+    AND?: UserScalarWhereInput | UserScalarWhereInput[]
+    OR?: UserScalarWhereInput[]
+    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
+    id?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    passwordHash?: StringFilter<"User"> | string
+    role?: StringFilter<"User"> | string
+    districtScopeId?: StringNullableFilter<"User"> | string | null
+    churchScopeId?: StringNullableFilter<"User"> | string | null
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    cpf?: StringNullableFilter<"User"> | string | null
+    mustChangePassword?: BoolFilter<"User"> | boolean
+    phone?: StringNullableFilter<"User"> | string | null
+    photoUrl?: StringNullableFilter<"User"> | string | null
+    profileId?: StringNullableFilter<"User"> | string | null
+    status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
   }
 
   export type DistrictCreateWithoutChurchesInput = {
@@ -24605,8 +25922,8 @@ export namespace Prisma {
     name: string
     pastorName?: string | null
     createdAt?: Date | string
-    users?: UserCreateNestedManyWithoutDistrictScopeInput
     registrations?: RegistrationCreateNestedManyWithoutDistrictInput
+    users?: UserCreateNestedManyWithoutDistrictScopeInput
   }
 
   export type DistrictUncheckedCreateWithoutChurchesInput = {
@@ -24614,63 +25931,13 @@ export namespace Prisma {
     name: string
     pastorName?: string | null
     createdAt?: Date | string
-    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
+    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
   }
 
   export type DistrictCreateOrConnectWithoutChurchesInput = {
     where: DistrictWhereUniqueInput
     create: XOR<DistrictCreateWithoutChurchesInput, DistrictUncheckedCreateWithoutChurchesInput>
-  }
-
-  export type UserCreateWithoutChurchScopeInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
-    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
-    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutChurchScopeInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    districtScopeId?: string | null
-    mustChangePassword?: boolean
-    profileId?: string | null
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
-    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
-    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutChurchScopeInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput>
-  }
-
-  export type UserCreateManyChurchScopeInputEnvelope = {
-    data: UserCreateManyChurchScopeInput | UserCreateManyChurchScopeInput[]
-    skipDuplicates?: boolean
   }
 
   export type RegistrationCreateWithoutChurchInput = {
@@ -24688,18 +25955,17 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRegistrationsInput
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
-    district: DistrictCreateNestedOneWithoutRegistrationsInput
-    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
   }
 
   export type RegistrationUncheckedCreateWithoutChurchInput = {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -24714,6 +25980,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
@@ -24724,6 +25991,58 @@ export namespace Prisma {
 
   export type RegistrationCreateManyChurchInputEnvelope = {
     data: RegistrationCreateManyChurchInput | RegistrationCreateManyChurchInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutChurchScopeInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutChurchScopeInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutChurchScopeInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput>
+  }
+
+  export type UserCreateManyChurchScopeInputEnvelope = {
+    data: UserCreateManyChurchScopeInput | UserCreateManyChurchScopeInput[]
     skipDuplicates?: boolean
   }
 
@@ -24743,8 +26062,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUpdateManyWithoutDistrictScopeNestedInput
     registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+    users?: UserUpdateManyWithoutDistrictScopeNestedInput
   }
 
   export type DistrictUncheckedUpdateWithoutChurchesInput = {
@@ -24752,24 +26071,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
-  }
-
-  export type UserUpsertWithWhereUniqueWithoutChurchScopeInput = {
-    where: UserWhereUniqueInput
-    update: XOR<UserUpdateWithoutChurchScopeInput, UserUncheckedUpdateWithoutChurchScopeInput>
-    create: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput>
-  }
-
-  export type UserUpdateWithWhereUniqueWithoutChurchScopeInput = {
-    where: UserWhereUniqueInput
-    data: XOR<UserUpdateWithoutChurchScopeInput, UserUncheckedUpdateWithoutChurchScopeInput>
-  }
-
-  export type UserUpdateManyWithWhereWithoutChurchScopeInput = {
-    where: UserScalarWhereInput
-    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutChurchScopeInput>
+    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
   }
 
   export type RegistrationUpsertWithWhereUniqueWithoutChurchInput = {
@@ -24788,112 +26091,94 @@ export namespace Prisma {
     data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutChurchInput>
   }
 
-  export type OrderCreateWithoutEventInput = {
+  export type UserUpsertWithWhereUniqueWithoutChurchScopeInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutChurchScopeInput, UserUncheckedUpdateWithoutChurchScopeInput>
+    create: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutChurchScopeInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutChurchScopeInput, UserUncheckedUpdateWithoutChurchScopeInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutChurchScopeInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutChurchScopeInput>
+  }
+
+  export type UserCreateWithoutEventsCreatedInput = {
     id?: string
-    buyerCpf: string
-    totalCents: number
-    status?: string
-    paymentMethod?: string
-    mpPaymentId?: string | null
-    mpPreferenceId?: string | null
-    preferenceVersion?: number
-    externalReference: string
-    expiresAt: Date | string
-    paidAt?: Date | string | null
-    manualPaymentReference?: string | null
-    feeCents?: number
-    netAmountCents?: number
+    name: string
+    email: string
+    passwordHash: string
+    role: string
     createdAt?: Date | string
-    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
-    registrations?: RegistrationCreateNestedManyWithoutOrderInput
-    refunds?: RefundCreateNestedManyWithoutOrderInput
-    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
-  }
-
-  export type OrderUncheckedCreateWithoutEventInput = {
-    id?: string
-    buyerCpf: string
-    totalCents: number
-    status?: string
-    paymentMethod?: string
-    mpPaymentId?: string | null
-    mpPreferenceId?: string | null
-    preferenceVersion?: number
-    pricingLotId?: string | null
-    externalReference: string
-    expiresAt: Date | string
-    paidAt?: Date | string | null
-    manualPaymentReference?: string | null
-    feeCents?: number
-    netAmountCents?: number
-    createdAt?: Date | string
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
-    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
-    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
-  }
-
-  export type OrderCreateOrConnectWithoutEventInput = {
-    where: OrderWhereUniqueInput
-    create: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput>
-  }
-
-  export type OrderCreateManyEventInputEnvelope = {
-    data: OrderCreateManyEventInput | OrderCreateManyEventInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type RegistrationCreateWithoutEventInput = {
-    id?: string
-    fullName: string
-    cpf: string
-    birthDate: Date | string
-    ageYears: number
-    priceCents?: number
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
     photoUrl?: string | null
-    gender?: string | null
-    paymentMethod?: string | null
-    status?: string
-    receiptPdfUrl?: string | null
-    checkinAt?: Date | string | null
-    paidAt?: Date | string | null
-    createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRegistrationsInput
-    ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
-    district: DistrictCreateNestedOneWithoutRegistrationsInput
-    church: ChurchCreateNestedOneWithoutRegistrationsInput
-    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
-  export type RegistrationUncheckedCreateWithoutEventInput = {
+  export type UserUncheckedCreateWithoutEventsCreatedInput = {
     id?: string
-    orderId: string
-    ministryId?: string | null
-    fullName: string
-    cpf: string
-    birthDate: Date | string
-    ageYears: number
-    priceCents?: number
-    districtId: string
-    churchId: string
-    photoUrl?: string | null
-    gender?: string | null
-    paymentMethod?: string | null
-    status?: string
-    receiptPdfUrl?: string | null
-    checkinAt?: Date | string | null
-    paidAt?: Date | string | null
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchScopeId?: string | null
     createdAt?: Date | string
-    refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
-  export type RegistrationCreateOrConnectWithoutEventInput = {
-    where: RegistrationWhereUniqueInput
-    create: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput>
+  export type UserCreateOrConnectWithoutEventsCreatedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
   }
 
-  export type RegistrationCreateManyEventInputEnvelope = {
-    data: RegistrationCreateManyEventInput | RegistrationCreateManyEventInput[]
-    skipDuplicates?: boolean
+  export type MinistryCreateWithoutEventsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: MinistryUserCreateNestedManyWithoutMinistryInput
+    registrations?: RegistrationCreateNestedManyWithoutMinistryInput
+  }
+
+  export type MinistryUncheckedCreateWithoutEventsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
+  }
+
+  export type MinistryCreateOrConnectWithoutEventsInput = {
+    where: MinistryWhereUniqueInput
+    create: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
   }
 
   export type EventLotCreateWithoutEventInput = {
@@ -24960,131 +26245,198 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type MinistryCreateWithoutEventsInput = {
+  export type OrderCreateWithoutEventInput = {
     id?: string
-    name: string
-    description?: string | null
-    isActive?: boolean
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    feeCents?: number
+    netAmountCents?: number
     createdAt?: Date | string
-    updatedAt?: Date | string
-    registrations?: RegistrationCreateNestedManyWithoutMinistryInput
-    users?: MinistryUserCreateNestedManyWithoutMinistryInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
   }
 
-  export type MinistryUncheckedCreateWithoutEventsInput = {
+  export type OrderUncheckedCreateWithoutEventInput = {
     id?: string
-    name: string
-    description?: string | null
-    isActive?: boolean
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    feeCents?: number
+    netAmountCents?: number
     createdAt?: Date | string
-    updatedAt?: Date | string
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
-    users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
   }
 
-  export type MinistryCreateOrConnectWithoutEventsInput = {
-    where: MinistryWhereUniqueInput
-    create: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
-  }
-
-  export type UserCreateWithoutEventsCreatedInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
-    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
-    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutEventsCreatedInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    districtScopeId?: string | null
-    mustChangePassword?: boolean
-    churchScopeId?: string | null
-    profileId?: string | null
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
-    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutEventsCreatedInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
-  }
-
-  export type OrderUpsertWithWhereUniqueWithoutEventInput = {
+  export type OrderCreateOrConnectWithoutEventInput = {
     where: OrderWhereUniqueInput
-    update: XOR<OrderUpdateWithoutEventInput, OrderUncheckedUpdateWithoutEventInput>
     create: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput>
   }
 
-  export type OrderUpdateWithWhereUniqueWithoutEventInput = {
-    where: OrderWhereUniqueInput
-    data: XOR<OrderUpdateWithoutEventInput, OrderUncheckedUpdateWithoutEventInput>
+  export type OrderCreateManyEventInputEnvelope = {
+    data: OrderCreateManyEventInput | OrderCreateManyEventInput[]
+    skipDuplicates?: boolean
   }
 
-  export type OrderUpdateManyWithWhereWithoutEventInput = {
-    where: OrderScalarWhereInput
-    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutEventInput>
+  export type RegistrationCreateWithoutEventInput = {
+    id?: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
+    ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
   }
 
-  export type OrderScalarWhereInput = {
-    AND?: OrderScalarWhereInput | OrderScalarWhereInput[]
-    OR?: OrderScalarWhereInput[]
-    NOT?: OrderScalarWhereInput | OrderScalarWhereInput[]
-    id?: StringFilter<"Order"> | string
-    eventId?: StringFilter<"Order"> | string
-    buyerCpf?: StringFilter<"Order"> | string
-    totalCents?: IntFilter<"Order"> | number
-    status?: StringFilter<"Order"> | string
-    paymentMethod?: StringFilter<"Order"> | string
-    mpPaymentId?: StringNullableFilter<"Order"> | string | null
-    mpPreferenceId?: StringNullableFilter<"Order"> | string | null
-    preferenceVersion?: IntFilter<"Order"> | number
-    pricingLotId?: StringNullableFilter<"Order"> | string | null
-    externalReference?: StringFilter<"Order"> | string
-    expiresAt?: DateTimeFilter<"Order"> | Date | string
-    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
-    manualPaymentReference?: StringNullableFilter<"Order"> | string | null
-    feeCents?: IntFilter<"Order"> | number
-    netAmountCents?: IntFilter<"Order"> | number
-    createdAt?: DateTimeFilter<"Order"> | Date | string
+  export type RegistrationUncheckedCreateWithoutEventInput = {
+    id?: string
+    orderId: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    districtId: string
+    churchId: string
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    ministryId?: string | null
+    refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
-  export type RegistrationUpsertWithWhereUniqueWithoutEventInput = {
+  export type RegistrationCreateOrConnectWithoutEventInput = {
     where: RegistrationWhereUniqueInput
-    update: XOR<RegistrationUpdateWithoutEventInput, RegistrationUncheckedUpdateWithoutEventInput>
     create: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput>
   }
 
-  export type RegistrationUpdateWithWhereUniqueWithoutEventInput = {
-    where: RegistrationWhereUniqueInput
-    data: XOR<RegistrationUpdateWithoutEventInput, RegistrationUncheckedUpdateWithoutEventInput>
+  export type RegistrationCreateManyEventInputEnvelope = {
+    data: RegistrationCreateManyEventInput | RegistrationCreateManyEventInput[]
+    skipDuplicates?: boolean
   }
 
-  export type RegistrationUpdateManyWithWhereWithoutEventInput = {
-    where: RegistrationScalarWhereInput
-    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutEventInput>
+  export type UserUpsertWithoutEventsCreatedInput = {
+    update: XOR<UserUpdateWithoutEventsCreatedInput, UserUncheckedUpdateWithoutEventsCreatedInput>
+    create: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutEventsCreatedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutEventsCreatedInput, UserUncheckedUpdateWithoutEventsCreatedInput>
+  }
+
+  export type UserUpdateWithoutEventsCreatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutEventsCreatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type MinistryUpsertWithoutEventsInput = {
+    update: XOR<MinistryUpdateWithoutEventsInput, MinistryUncheckedUpdateWithoutEventsInput>
+    create: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
+    where?: MinistryWhereInput
+  }
+
+  export type MinistryUpdateToOneWithWhereWithoutEventsInput = {
+    where?: MinistryWhereInput
+    data: XOR<MinistryUpdateWithoutEventsInput, MinistryUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type MinistryUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: MinistryUserUpdateManyWithoutMinistryNestedInput
+    registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
+  }
+
+  export type MinistryUncheckedUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
   }
 
   export type EventLotUpsertWithWhereUniqueWithoutEventInput = {
@@ -25148,88 +26500,59 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Expense"> | Date | string
   }
 
-  export type MinistryUpsertWithoutEventsInput = {
-    update: XOR<MinistryUpdateWithoutEventsInput, MinistryUncheckedUpdateWithoutEventsInput>
-    create: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
-    where?: MinistryWhereInput
+  export type OrderUpsertWithWhereUniqueWithoutEventInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutEventInput, OrderUncheckedUpdateWithoutEventInput>
+    create: XOR<OrderCreateWithoutEventInput, OrderUncheckedCreateWithoutEventInput>
   }
 
-  export type MinistryUpdateToOneWithWhereWithoutEventsInput = {
-    where?: MinistryWhereInput
-    data: XOR<MinistryUpdateWithoutEventsInput, MinistryUncheckedUpdateWithoutEventsInput>
+  export type OrderUpdateWithWhereUniqueWithoutEventInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutEventInput, OrderUncheckedUpdateWithoutEventInput>
   }
 
-  export type MinistryUpdateWithoutEventsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
-    users?: MinistryUserUpdateManyWithoutMinistryNestedInput
+  export type OrderUpdateManyWithWhereWithoutEventInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutEventInput>
   }
 
-  export type MinistryUncheckedUpdateWithoutEventsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
-    users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
+  export type OrderScalarWhereInput = {
+    AND?: OrderScalarWhereInput | OrderScalarWhereInput[]
+    OR?: OrderScalarWhereInput[]
+    NOT?: OrderScalarWhereInput | OrderScalarWhereInput[]
+    id?: StringFilter<"Order"> | string
+    eventId?: StringFilter<"Order"> | string
+    buyerCpf?: StringFilter<"Order"> | string
+    totalCents?: IntFilter<"Order"> | number
+    status?: StringFilter<"Order"> | string
+    paymentMethod?: StringFilter<"Order"> | string
+    mpPaymentId?: StringNullableFilter<"Order"> | string | null
+    mpPreferenceId?: StringNullableFilter<"Order"> | string | null
+    preferenceVersion?: IntFilter<"Order"> | number
+    pricingLotId?: StringNullableFilter<"Order"> | string | null
+    externalReference?: StringFilter<"Order"> | string
+    expiresAt?: DateTimeFilter<"Order"> | Date | string
+    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    manualPaymentReference?: StringNullableFilter<"Order"> | string | null
+    feeCents?: IntFilter<"Order"> | number
+    netAmountCents?: IntFilter<"Order"> | number
+    createdAt?: DateTimeFilter<"Order"> | Date | string
   }
 
-  export type UserUpsertWithoutEventsCreatedInput = {
-    update: XOR<UserUpdateWithoutEventsCreatedInput, UserUncheckedUpdateWithoutEventsCreatedInput>
-    create: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
-    where?: UserWhereInput
+  export type RegistrationUpsertWithWhereUniqueWithoutEventInput = {
+    where: RegistrationWhereUniqueInput
+    update: XOR<RegistrationUpdateWithoutEventInput, RegistrationUncheckedUpdateWithoutEventInput>
+    create: XOR<RegistrationCreateWithoutEventInput, RegistrationUncheckedCreateWithoutEventInput>
   }
 
-  export type UserUpdateToOneWithWhereWithoutEventsCreatedInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutEventsCreatedInput, UserUncheckedUpdateWithoutEventsCreatedInput>
+  export type RegistrationUpdateWithWhereUniqueWithoutEventInput = {
+    where: RegistrationWhereUniqueInput
+    data: XOR<RegistrationUpdateWithoutEventInput, RegistrationUncheckedUpdateWithoutEventInput>
   }
 
-  export type UserUpdateWithoutEventsCreatedInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
-    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
-    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutEventsCreatedInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    profileId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
-    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  export type RegistrationUpdateManyWithWhereWithoutEventInput = {
+    where: RegistrationScalarWhereInput
+    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutEventInput>
   }
 
   export type EventCreateWithoutOrdersInput = {
@@ -25248,11 +26571,11 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
-    registrations?: RegistrationCreateNestedManyWithoutEventInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
-    ministry?: MinistryCreateNestedOneWithoutEventsInput
-    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateWithoutOrdersInput = {
@@ -25273,9 +26596,9 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
   }
 
   export type EventCreateOrConnectWithoutOrdersInput = {
@@ -25308,60 +26631,6 @@ export namespace Prisma {
     create: XOR<EventLotCreateWithoutOrdersInput, EventLotUncheckedCreateWithoutOrdersInput>
   }
 
-  export type RegistrationCreateWithoutOrderInput = {
-    id?: string
-    fullName: string
-    cpf: string
-    birthDate: Date | string
-    ageYears: number
-    priceCents?: number
-    photoUrl?: string | null
-    gender?: string | null
-    paymentMethod?: string | null
-    status?: string
-    receiptPdfUrl?: string | null
-    checkinAt?: Date | string | null
-    paidAt?: Date | string | null
-    createdAt?: Date | string
-    event: EventCreateNestedOneWithoutRegistrationsInput
-    ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
-    district: DistrictCreateNestedOneWithoutRegistrationsInput
-    church: ChurchCreateNestedOneWithoutRegistrationsInput
-    refunds?: RefundCreateNestedManyWithoutRegistrationInput
-  }
-
-  export type RegistrationUncheckedCreateWithoutOrderInput = {
-    id?: string
-    eventId: string
-    ministryId?: string | null
-    fullName: string
-    cpf: string
-    birthDate: Date | string
-    ageYears: number
-    priceCents?: number
-    districtId: string
-    churchId: string
-    photoUrl?: string | null
-    gender?: string | null
-    paymentMethod?: string | null
-    status?: string
-    receiptPdfUrl?: string | null
-    checkinAt?: Date | string | null
-    paidAt?: Date | string | null
-    createdAt?: Date | string
-    refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
-  }
-
-  export type RegistrationCreateOrConnectWithoutOrderInput = {
-    where: RegistrationWhereUniqueInput
-    create: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput>
-  }
-
-  export type RegistrationCreateManyOrderInputEnvelope = {
-    data: RegistrationCreateManyOrderInput | RegistrationCreateManyOrderInput[]
-    skipDuplicates?: boolean
-  }
-
   export type RefundCreateWithoutOrderInput = {
     id?: string
     amountCents: number
@@ -25387,6 +26656,60 @@ export namespace Prisma {
 
   export type RefundCreateManyOrderInputEnvelope = {
     data: RefundCreateManyOrderInput | RefundCreateManyOrderInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RegistrationCreateWithoutOrderInput = {
+    id?: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
+    event: EventCreateNestedOneWithoutRegistrationsInput
+    ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
+  }
+
+  export type RegistrationUncheckedCreateWithoutOrderInput = {
+    id?: string
+    eventId: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    districtId: string
+    churchId: string
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    ministryId?: string | null
+    refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+  }
+
+  export type RegistrationCreateOrConnectWithoutOrderInput = {
+    where: RegistrationWhereUniqueInput
+    create: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput>
+  }
+
+  export type RegistrationCreateManyOrderInputEnvelope = {
+    data: RegistrationCreateManyOrderInput | RegistrationCreateManyOrderInput[]
     skipDuplicates?: boolean
   }
 
@@ -25447,11 +26770,11 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
-    ministry?: MinistryUpdateOneWithoutEventsNestedInput
-    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateWithoutOrdersInput = {
@@ -25472,9 +26795,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
-    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
   }
 
   export type EventLotUpsertWithoutOrdersInput = {
@@ -25508,22 +26831,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type RegistrationUpsertWithWhereUniqueWithoutOrderInput = {
-    where: RegistrationWhereUniqueInput
-    update: XOR<RegistrationUpdateWithoutOrderInput, RegistrationUncheckedUpdateWithoutOrderInput>
-    create: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput>
-  }
-
-  export type RegistrationUpdateWithWhereUniqueWithoutOrderInput = {
-    where: RegistrationWhereUniqueInput
-    data: XOR<RegistrationUpdateWithoutOrderInput, RegistrationUncheckedUpdateWithoutOrderInput>
-  }
-
-  export type RegistrationUpdateManyWithWhereWithoutOrderInput = {
-    where: RegistrationScalarWhereInput
-    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutOrderInput>
-  }
-
   export type RefundUpsertWithWhereUniqueWithoutOrderInput = {
     where: RefundWhereUniqueInput
     update: XOR<RefundUpdateWithoutOrderInput, RefundUncheckedUpdateWithoutOrderInput>
@@ -25551,6 +26858,22 @@ export namespace Prisma {
     mpRefundId?: StringFilter<"Refund"> | string
     reason?: StringNullableFilter<"Refund"> | string | null
     createdAt?: DateTimeFilter<"Refund"> | Date | string
+  }
+
+  export type RegistrationUpsertWithWhereUniqueWithoutOrderInput = {
+    where: RegistrationWhereUniqueInput
+    update: XOR<RegistrationUpdateWithoutOrderInput, RegistrationUncheckedUpdateWithoutOrderInput>
+    create: XOR<RegistrationCreateWithoutOrderInput, RegistrationUncheckedCreateWithoutOrderInput>
+  }
+
+  export type RegistrationUpdateWithWhereUniqueWithoutOrderInput = {
+    where: RegistrationWhereUniqueInput
+    data: XOR<RegistrationUpdateWithoutOrderInput, RegistrationUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type RegistrationUpdateManyWithWhereWithoutOrderInput = {
+    where: RegistrationScalarWhereInput
+    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutOrderInput>
   }
 
   export type WebhookEventUpsertWithWhereUniqueWithoutOrderInput = {
@@ -25581,6 +26904,168 @@ export namespace Prisma {
     processedAt?: DateTimeNullableFilter<"WebhookEvent"> | Date | string | null
     createdAt?: DateTimeFilter<"WebhookEvent"> | Date | string
     orderId?: StringNullableFilter<"WebhookEvent"> | string | null
+  }
+
+  export type RefundCreateWithoutRegistrationInput = {
+    id?: string
+    amountCents: number
+    mpRefundId: string
+    reason?: string | null
+    createdAt?: Date | string
+    order: OrderCreateNestedOneWithoutRefundsInput
+  }
+
+  export type RefundUncheckedCreateWithoutRegistrationInput = {
+    id?: string
+    orderId: string
+    amountCents: number
+    mpRefundId: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
+  export type RefundCreateOrConnectWithoutRegistrationInput = {
+    where: RefundWhereUniqueInput
+    create: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput>
+  }
+
+  export type RefundCreateManyRegistrationInputEnvelope = {
+    data: RefundCreateManyRegistrationInput | RefundCreateManyRegistrationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ChurchCreateWithoutRegistrationsInput = {
+    id?: string
+    name: string
+    directorName?: string | null
+    directorCpf?: string | null
+    directorBirthDate?: Date | string | null
+    directorEmail?: string | null
+    directorWhatsapp?: string | null
+    directorPhotoUrl?: string | null
+    createdAt?: Date | string
+    district: DistrictCreateNestedOneWithoutChurchesInput
+    users?: UserCreateNestedManyWithoutChurchScopeInput
+  }
+
+  export type ChurchUncheckedCreateWithoutRegistrationsInput = {
+    id?: string
+    name: string
+    districtId: string
+    directorName?: string | null
+    directorCpf?: string | null
+    directorBirthDate?: Date | string | null
+    directorEmail?: string | null
+    directorWhatsapp?: string | null
+    directorPhotoUrl?: string | null
+    createdAt?: Date | string
+    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
+  }
+
+  export type ChurchCreateOrConnectWithoutRegistrationsInput = {
+    where: ChurchWhereUniqueInput
+    create: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
+  }
+
+  export type DistrictCreateWithoutRegistrationsInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchCreateNestedManyWithoutDistrictInput
+    users?: UserCreateNestedManyWithoutDistrictScopeInput
+  }
+
+  export type DistrictUncheckedCreateWithoutRegistrationsInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+  }
+
+  export type DistrictCreateOrConnectWithoutRegistrationsInput = {
+    where: DistrictWhereUniqueInput
+    create: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
+  }
+
+  export type EventCreateWithoutRegistrationsInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+    lots?: EventLotCreateNestedManyWithoutEventInput
+    expenses?: ExpenseCreateNestedManyWithoutEventInput
+    orders?: OrderCreateNestedManyWithoutEventInput
+  }
+
+  export type EventUncheckedCreateWithoutRegistrationsInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    createdById?: string | null
+    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+  }
+
+  export type EventCreateOrConnectWithoutRegistrationsInput = {
+    where: EventWhereUniqueInput
+    create: XOR<EventCreateWithoutRegistrationsInput, EventUncheckedCreateWithoutRegistrationsInput>
+  }
+
+  export type MinistryCreateWithoutRegistrationsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    events?: EventCreateNestedManyWithoutMinistryInput
+    users?: MinistryUserCreateNestedManyWithoutMinistryInput
+  }
+
+  export type MinistryUncheckedCreateWithoutRegistrationsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    events?: EventUncheckedCreateNestedManyWithoutMinistryInput
+    users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
+  }
+
+  export type MinistryCreateOrConnectWithoutRegistrationsInput = {
+    where: MinistryWhereUniqueInput
+    create: XOR<MinistryCreateWithoutRegistrationsInput, MinistryUncheckedCreateWithoutRegistrationsInput>
   }
 
   export type OrderCreateWithoutRegistrationsInput = {
@@ -25632,166 +27117,178 @@ export namespace Prisma {
     create: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
   }
 
-  export type EventCreateWithoutRegistrationsInput = {
-    id?: string
-    title: string
-    description: string
-    startDate: Date | string
-    endDate: Date | string
-    location: string
-    bannerUrl?: string | null
-    priceCents?: number
-    minAgeYears?: number | null
-    isFree?: boolean
-    isActive?: boolean
-    slug: string
-    paymentMethods?: string
-    pendingPaymentValueRule?: string
-    createdAt?: Date | string
-    orders?: OrderCreateNestedManyWithoutEventInput
-    lots?: EventLotCreateNestedManyWithoutEventInput
-    expenses?: ExpenseCreateNestedManyWithoutEventInput
-    ministry?: MinistryCreateNestedOneWithoutEventsInput
-    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
-  }
-
-  export type EventUncheckedCreateWithoutRegistrationsInput = {
-    id?: string
-    title: string
-    description: string
-    startDate: Date | string
-    endDate: Date | string
-    location: string
-    bannerUrl?: string | null
-    priceCents?: number
-    minAgeYears?: number | null
-    isFree?: boolean
-    isActive?: boolean
-    slug: string
-    paymentMethods?: string
-    pendingPaymentValueRule?: string
-    createdAt?: Date | string
-    ministryId?: string | null
-    createdById?: string | null
-    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
-    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
-    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
-  }
-
-  export type EventCreateOrConnectWithoutRegistrationsInput = {
-    where: EventWhereUniqueInput
-    create: XOR<EventCreateWithoutRegistrationsInput, EventUncheckedCreateWithoutRegistrationsInput>
-  }
-
-  export type MinistryCreateWithoutRegistrationsInput = {
-    id?: string
-    name: string
-    description?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    events?: EventCreateNestedManyWithoutMinistryInput
-    users?: MinistryUserCreateNestedManyWithoutMinistryInput
-  }
-
-  export type MinistryUncheckedCreateWithoutRegistrationsInput = {
-    id?: string
-    name: string
-    description?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    events?: EventUncheckedCreateNestedManyWithoutMinistryInput
-    users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
-  }
-
-  export type MinistryCreateOrConnectWithoutRegistrationsInput = {
-    where: MinistryWhereUniqueInput
-    create: XOR<MinistryCreateWithoutRegistrationsInput, MinistryUncheckedCreateWithoutRegistrationsInput>
-  }
-
-  export type DistrictCreateWithoutRegistrationsInput = {
-    id?: string
-    name: string
-    pastorName?: string | null
-    createdAt?: Date | string
-    churches?: ChurchCreateNestedManyWithoutDistrictInput
-    users?: UserCreateNestedManyWithoutDistrictScopeInput
-  }
-
-  export type DistrictUncheckedCreateWithoutRegistrationsInput = {
-    id?: string
-    name: string
-    pastorName?: string | null
-    createdAt?: Date | string
-    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
-    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
-  }
-
-  export type DistrictCreateOrConnectWithoutRegistrationsInput = {
-    where: DistrictWhereUniqueInput
-    create: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
-  }
-
-  export type ChurchCreateWithoutRegistrationsInput = {
-    id?: string
-    name: string
-    directorName?: string | null
-    directorCpf?: string | null
-    directorBirthDate?: Date | string | null
-    directorEmail?: string | null
-    directorWhatsapp?: string | null
-    directorPhotoUrl?: string | null
-    createdAt?: Date | string
-    district: DistrictCreateNestedOneWithoutChurchesInput
-    users?: UserCreateNestedManyWithoutChurchScopeInput
-  }
-
-  export type ChurchUncheckedCreateWithoutRegistrationsInput = {
-    id?: string
-    name: string
-    districtId: string
-    directorName?: string | null
-    directorCpf?: string | null
-    directorBirthDate?: Date | string | null
-    directorEmail?: string | null
-    directorWhatsapp?: string | null
-    directorPhotoUrl?: string | null
-    createdAt?: Date | string
-    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
-  }
-
-  export type ChurchCreateOrConnectWithoutRegistrationsInput = {
-    where: ChurchWhereUniqueInput
-    create: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
-  }
-
-  export type RefundCreateWithoutRegistrationInput = {
-    id?: string
-    amountCents: number
-    mpRefundId: string
-    reason?: string | null
-    createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRefundsInput
-  }
-
-  export type RefundUncheckedCreateWithoutRegistrationInput = {
-    id?: string
-    orderId: string
-    amountCents: number
-    mpRefundId: string
-    reason?: string | null
-    createdAt?: Date | string
-  }
-
-  export type RefundCreateOrConnectWithoutRegistrationInput = {
+  export type RefundUpsertWithWhereUniqueWithoutRegistrationInput = {
     where: RefundWhereUniqueInput
+    update: XOR<RefundUpdateWithoutRegistrationInput, RefundUncheckedUpdateWithoutRegistrationInput>
     create: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput>
   }
 
-  export type RefundCreateManyRegistrationInputEnvelope = {
-    data: RefundCreateManyRegistrationInput | RefundCreateManyRegistrationInput[]
-    skipDuplicates?: boolean
+  export type RefundUpdateWithWhereUniqueWithoutRegistrationInput = {
+    where: RefundWhereUniqueInput
+    data: XOR<RefundUpdateWithoutRegistrationInput, RefundUncheckedUpdateWithoutRegistrationInput>
+  }
+
+  export type RefundUpdateManyWithWhereWithoutRegistrationInput = {
+    where: RefundScalarWhereInput
+    data: XOR<RefundUpdateManyMutationInput, RefundUncheckedUpdateManyWithoutRegistrationInput>
+  }
+
+  export type ChurchUpsertWithoutRegistrationsInput = {
+    update: XOR<ChurchUpdateWithoutRegistrationsInput, ChurchUncheckedUpdateWithoutRegistrationsInput>
+    create: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
+    where?: ChurchWhereInput
+  }
+
+  export type ChurchUpdateToOneWithWhereWithoutRegistrationsInput = {
+    where?: ChurchWhereInput
+    data: XOR<ChurchUpdateWithoutRegistrationsInput, ChurchUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type ChurchUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
+    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
+    users?: UserUpdateManyWithoutChurchScopeNestedInput
+  }
+
+  export type ChurchUncheckedUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    districtId?: StringFieldUpdateOperationsInput | string
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
+    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
+  }
+
+  export type DistrictUpsertWithoutRegistrationsInput = {
+    update: XOR<DistrictUpdateWithoutRegistrationsInput, DistrictUncheckedUpdateWithoutRegistrationsInput>
+    create: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
+    where?: DistrictWhereInput
+  }
+
+  export type DistrictUpdateToOneWithWhereWithoutRegistrationsInput = {
+    where?: DistrictWhereInput
+    data: XOR<DistrictUpdateWithoutRegistrationsInput, DistrictUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type DistrictUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    users?: UserUpdateManyWithoutDistrictScopeNestedInput
+  }
+
+  export type DistrictUncheckedUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+  }
+
+  export type EventUpsertWithoutRegistrationsInput = {
+    update: XOR<EventUpdateWithoutRegistrationsInput, EventUncheckedUpdateWithoutRegistrationsInput>
+    create: XOR<EventCreateWithoutRegistrationsInput, EventUncheckedCreateWithoutRegistrationsInput>
+    where?: EventWhereInput
+  }
+
+  export type EventUpdateToOneWithWhereWithoutRegistrationsInput = {
+    where?: EventWhereInput
+    data: XOR<EventUpdateWithoutRegistrationsInput, EventUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type EventUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    lots?: EventLotUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUpdateManyWithoutEventNestedInput
+    orders?: OrderUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+  }
+
+  export type MinistryUpsertWithoutRegistrationsInput = {
+    update: XOR<MinistryUpdateWithoutRegistrationsInput, MinistryUncheckedUpdateWithoutRegistrationsInput>
+    create: XOR<MinistryCreateWithoutRegistrationsInput, MinistryUncheckedCreateWithoutRegistrationsInput>
+    where?: MinistryWhereInput
+  }
+
+  export type MinistryUpdateToOneWithWhereWithoutRegistrationsInput = {
+    where?: MinistryWhereInput
+    data: XOR<MinistryUpdateWithoutRegistrationsInput, MinistryUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type MinistryUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    events?: EventUpdateManyWithoutMinistryNestedInput
+    users?: MinistryUserUpdateManyWithoutMinistryNestedInput
+  }
+
+  export type MinistryUncheckedUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
+    users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
   }
 
   export type OrderUpsertWithoutRegistrationsInput = {
@@ -25847,180 +27344,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
-  }
-
-  export type EventUpsertWithoutRegistrationsInput = {
-    update: XOR<EventUpdateWithoutRegistrationsInput, EventUncheckedUpdateWithoutRegistrationsInput>
-    create: XOR<EventCreateWithoutRegistrationsInput, EventUncheckedCreateWithoutRegistrationsInput>
-    where?: EventWhereInput
-  }
-
-  export type EventUpdateToOneWithWhereWithoutRegistrationsInput = {
-    where?: EventWhereInput
-    data: XOR<EventUpdateWithoutRegistrationsInput, EventUncheckedUpdateWithoutRegistrationsInput>
-  }
-
-  export type EventUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: StringFieldUpdateOperationsInput | string
-    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: StringFieldUpdateOperationsInput | string
-    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    priceCents?: IntFieldUpdateOperationsInput | number
-    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
-    isFree?: BoolFieldUpdateOperationsInput | boolean
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    slug?: StringFieldUpdateOperationsInput | string
-    paymentMethods?: StringFieldUpdateOperationsInput | string
-    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orders?: OrderUpdateManyWithoutEventNestedInput
-    lots?: EventLotUpdateManyWithoutEventNestedInput
-    expenses?: ExpenseUpdateManyWithoutEventNestedInput
-    ministry?: MinistryUpdateOneWithoutEventsNestedInput
-    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
-  }
-
-  export type EventUncheckedUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    description?: StringFieldUpdateOperationsInput | string
-    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    location?: StringFieldUpdateOperationsInput | string
-    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    priceCents?: IntFieldUpdateOperationsInput | number
-    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
-    isFree?: BoolFieldUpdateOperationsInput | boolean
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    slug?: StringFieldUpdateOperationsInput | string
-    paymentMethods?: StringFieldUpdateOperationsInput | string
-    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
-    createdById?: NullableStringFieldUpdateOperationsInput | string | null
-    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
-    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
-    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
-  }
-
-  export type MinistryUpsertWithoutRegistrationsInput = {
-    update: XOR<MinistryUpdateWithoutRegistrationsInput, MinistryUncheckedUpdateWithoutRegistrationsInput>
-    create: XOR<MinistryCreateWithoutRegistrationsInput, MinistryUncheckedCreateWithoutRegistrationsInput>
-    where?: MinistryWhereInput
-  }
-
-  export type MinistryUpdateToOneWithWhereWithoutRegistrationsInput = {
-    where?: MinistryWhereInput
-    data: XOR<MinistryUpdateWithoutRegistrationsInput, MinistryUncheckedUpdateWithoutRegistrationsInput>
-  }
-
-  export type MinistryUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    events?: EventUpdateManyWithoutMinistryNestedInput
-    users?: MinistryUserUpdateManyWithoutMinistryNestedInput
-  }
-
-  export type MinistryUncheckedUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
-    users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
-  }
-
-  export type DistrictUpsertWithoutRegistrationsInput = {
-    update: XOR<DistrictUpdateWithoutRegistrationsInput, DistrictUncheckedUpdateWithoutRegistrationsInput>
-    create: XOR<DistrictCreateWithoutRegistrationsInput, DistrictUncheckedCreateWithoutRegistrationsInput>
-    where?: DistrictWhereInput
-  }
-
-  export type DistrictUpdateToOneWithWhereWithoutRegistrationsInput = {
-    where?: DistrictWhereInput
-    data: XOR<DistrictUpdateWithoutRegistrationsInput, DistrictUncheckedUpdateWithoutRegistrationsInput>
-  }
-
-  export type DistrictUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    churches?: ChurchUpdateManyWithoutDistrictNestedInput
-    users?: UserUpdateManyWithoutDistrictScopeNestedInput
-  }
-
-  export type DistrictUncheckedUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
-    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
-  }
-
-  export type ChurchUpsertWithoutRegistrationsInput = {
-    update: XOR<ChurchUpdateWithoutRegistrationsInput, ChurchUncheckedUpdateWithoutRegistrationsInput>
-    create: XOR<ChurchCreateWithoutRegistrationsInput, ChurchUncheckedCreateWithoutRegistrationsInput>
-    where?: ChurchWhereInput
-  }
-
-  export type ChurchUpdateToOneWithWhereWithoutRegistrationsInput = {
-    where?: ChurchWhereInput
-    data: XOR<ChurchUpdateWithoutRegistrationsInput, ChurchUncheckedUpdateWithoutRegistrationsInput>
-  }
-
-  export type ChurchUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    directorName?: NullableStringFieldUpdateOperationsInput | string | null
-    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
-    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
-    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
-    users?: UserUpdateManyWithoutChurchScopeNestedInput
-  }
-
-  export type ChurchUncheckedUpdateWithoutRegistrationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    districtId?: StringFieldUpdateOperationsInput | string
-    directorName?: NullableStringFieldUpdateOperationsInput | string | null
-    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
-    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
-    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
-  }
-
-  export type RefundUpsertWithWhereUniqueWithoutRegistrationInput = {
-    where: RefundWhereUniqueInput
-    update: XOR<RefundUpdateWithoutRegistrationInput, RefundUncheckedUpdateWithoutRegistrationInput>
-    create: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput>
-  }
-
-  export type RefundUpdateWithWhereUniqueWithoutRegistrationInput = {
-    where: RefundWhereUniqueInput
-    data: XOR<RefundUpdateWithoutRegistrationInput, RefundUncheckedUpdateWithoutRegistrationInput>
-  }
-
-  export type RefundUpdateManyWithWhereWithoutRegistrationInput = {
-    where: RefundScalarWhereInput
-    data: XOR<RefundUpdateManyMutationInput, RefundUncheckedUpdateManyWithoutRegistrationInput>
   }
 
   export type OrderCreateWithoutRefundsInput = {
@@ -26087,18 +27410,17 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRegistrationsInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
-    district: DistrictCreateNestedOneWithoutRegistrationsInput
-    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
   }
 
   export type RegistrationUncheckedCreateWithoutRefundsInput = {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -26114,6 +27436,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
   }
 
   export type RegistrationCreateOrConnectWithoutRefundsInput = {
@@ -26202,18 +27525,17 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
-    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
-    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutRefundsInput = {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -26229,6 +27551,7 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrderCreateWithoutWebhookEventsInput = {
@@ -26249,8 +27572,8 @@ export namespace Prisma {
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
-    registrations?: RegistrationCreateNestedManyWithoutOrderInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUncheckedCreateWithoutWebhookEventsInput = {
@@ -26271,8 +27594,8 @@ export namespace Prisma {
     feeCents?: number
     netAmountCents?: number
     createdAt?: Date | string
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutWebhookEventsInput = {
@@ -26309,8 +27632,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
-    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutWebhookEventsInput = {
@@ -26331,47 +27654,49 @@ export namespace Prisma {
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type UserCreateWithoutAuditLogsInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
     createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    mustChangePassword?: boolean
     churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
-    createdAt?: Date | string
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -26394,64 +27719,171 @@ export namespace Prisma {
   export type UserUpdateWithoutAuditLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type DistrictCreateWithoutUsersInput = {
+  export type AuditLogCreateWithoutActorInput = {
     id?: string
-    name: string
-    pastorName?: string | null
+    action: string
+    entity: string
+    entityId: string
+    metadataJson?: string | null
     createdAt?: Date | string
-    churches?: ChurchCreateNestedManyWithoutDistrictInput
-    registrations?: RegistrationCreateNestedManyWithoutDistrictInput
   }
 
-  export type DistrictUncheckedCreateWithoutUsersInput = {
+  export type AuditLogUncheckedCreateWithoutActorInput = {
     id?: string
-    name: string
-    pastorName?: string | null
+    action: string
+    entity: string
+    entityId: string
+    metadataJson?: string | null
     createdAt?: Date | string
-    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
   }
 
-  export type DistrictCreateOrConnectWithoutUsersInput = {
-    where: DistrictWhereUniqueInput
-    create: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
+  export type AuditLogCreateOrConnectWithoutActorInput = {
+    where: AuditLogWhereUniqueInput
+    create: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput>
+  }
+
+  export type AuditLogCreateManyActorInputEnvelope = {
+    data: AuditLogCreateManyActorInput | AuditLogCreateManyActorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EventCreateWithoutCreatedByInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+    lots?: EventLotCreateNestedManyWithoutEventInput
+    expenses?: ExpenseCreateNestedManyWithoutEventInput
+    orders?: OrderCreateNestedManyWithoutEventInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
+  }
+
+  export type EventUncheckedCreateWithoutCreatedByInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
+  }
+
+  export type EventCreateOrConnectWithoutCreatedByInput = {
+    where: EventWhereUniqueInput
+    create: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type EventCreateManyCreatedByInputEnvelope = {
+    data: EventCreateManyCreatedByInput | EventCreateManyCreatedByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MinistryUserCreateWithoutUserInput = {
+    assignedAt?: Date | string
+    ministry: MinistryCreateNestedOneWithoutUsersInput
+  }
+
+  export type MinistryUserUncheckedCreateWithoutUserInput = {
+    ministryId: string
+    assignedAt?: Date | string
+  }
+
+  export type MinistryUserCreateOrConnectWithoutUserInput = {
+    where: MinistryUserWhereUniqueInput
+    create: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput>
+  }
+
+  export type MinistryUserCreateManyUserInputEnvelope = {
+    data: MinistryUserCreateManyUserInput | MinistryUserCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SystemConfigCreateWithoutUpdatedByInput = {
+    id?: string
+    settings: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemConfigUncheckedCreateWithoutUpdatedByInput = {
+    id?: string
+    settings: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemConfigCreateOrConnectWithoutUpdatedByInput = {
+    where: SystemConfigWhereUniqueInput
+    create: XOR<SystemConfigCreateWithoutUpdatedByInput, SystemConfigUncheckedCreateWithoutUpdatedByInput>
+  }
+
+  export type SystemConfigCreateManyUpdatedByInputEnvelope = {
+    data: SystemConfigCreateManyUpdatedByInput | SystemConfigCreateManyUpdatedByInput[]
+    skipDuplicates?: boolean
   }
 
   export type ChurchCreateWithoutUsersInput = {
@@ -26487,52 +27919,27 @@ export namespace Prisma {
     create: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
   }
 
-  export type AuditLogCreateWithoutActorInput = {
+  export type DistrictCreateWithoutUsersInput = {
     id?: string
-    action: string
-    entity: string
-    entityId: string
-    metadataJson?: string | null
+    name: string
+    pastorName?: string | null
     createdAt?: Date | string
+    churches?: ChurchCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationCreateNestedManyWithoutDistrictInput
   }
 
-  export type AuditLogUncheckedCreateWithoutActorInput = {
+  export type DistrictUncheckedCreateWithoutUsersInput = {
     id?: string
-    action: string
-    entity: string
-    entityId: string
-    metadataJson?: string | null
+    name: string
+    pastorName?: string | null
     createdAt?: Date | string
+    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
   }
 
-  export type AuditLogCreateOrConnectWithoutActorInput = {
-    where: AuditLogWhereUniqueInput
-    create: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput>
-  }
-
-  export type AuditLogCreateManyActorInputEnvelope = {
-    data: AuditLogCreateManyActorInput | AuditLogCreateManyActorInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type MinistryUserCreateWithoutUserInput = {
-    assignedAt?: Date | string
-    ministry: MinistryCreateNestedOneWithoutUsersInput
-  }
-
-  export type MinistryUserUncheckedCreateWithoutUserInput = {
-    ministryId: string
-    assignedAt?: Date | string
-  }
-
-  export type MinistryUserCreateOrConnectWithoutUserInput = {
-    where: MinistryUserWhereUniqueInput
-    create: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput>
-  }
-
-  export type MinistryUserCreateManyUserInputEnvelope = {
-    data: MinistryUserCreateManyUserInput | MinistryUserCreateManyUserInput[]
-    skipDuplicates?: boolean
+  export type DistrictCreateOrConnectWithoutUsersInput = {
+    where: DistrictWhereUniqueInput
+    create: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
   }
 
   export type ProfileCreateWithoutUsersInput = {
@@ -26558,62 +27965,6 @@ export namespace Prisma {
   export type ProfileCreateOrConnectWithoutUsersInput = {
     where: ProfileWhereUniqueInput
     create: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
-  }
-
-  export type EventCreateWithoutCreatedByInput = {
-    id?: string
-    title: string
-    description: string
-    startDate: Date | string
-    endDate: Date | string
-    location: string
-    bannerUrl?: string | null
-    priceCents?: number
-    minAgeYears?: number | null
-    isFree?: boolean
-    isActive?: boolean
-    slug: string
-    paymentMethods?: string
-    pendingPaymentValueRule?: string
-    createdAt?: Date | string
-    orders?: OrderCreateNestedManyWithoutEventInput
-    registrations?: RegistrationCreateNestedManyWithoutEventInput
-    lots?: EventLotCreateNestedManyWithoutEventInput
-    expenses?: ExpenseCreateNestedManyWithoutEventInput
-    ministry?: MinistryCreateNestedOneWithoutEventsInput
-  }
-
-  export type EventUncheckedCreateWithoutCreatedByInput = {
-    id?: string
-    title: string
-    description: string
-    startDate: Date | string
-    endDate: Date | string
-    location: string
-    bannerUrl?: string | null
-    priceCents?: number
-    minAgeYears?: number | null
-    isFree?: boolean
-    isActive?: boolean
-    slug: string
-    paymentMethods?: string
-    pendingPaymentValueRule?: string
-    createdAt?: Date | string
-    ministryId?: string | null
-    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
-    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
-    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
-  }
-
-  export type EventCreateOrConnectWithoutCreatedByInput = {
-    where: EventWhereUniqueInput
-    create: XOR<EventCreateWithoutCreatedByInput, EventUncheckedCreateWithoutCreatedByInput>
-  }
-
-  export type EventCreateManyCreatedByInputEnvelope = {
-    data: EventCreateManyCreatedByInput | EventCreateManyCreatedByInput[]
-    skipDuplicates?: boolean
   }
 
   export type UserPermissionCreateWithoutUserInput = {
@@ -26656,74 +28007,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type DistrictUpsertWithoutUsersInput = {
-    update: XOR<DistrictUpdateWithoutUsersInput, DistrictUncheckedUpdateWithoutUsersInput>
-    create: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
-    where?: DistrictWhereInput
-  }
-
-  export type DistrictUpdateToOneWithWhereWithoutUsersInput = {
-    where?: DistrictWhereInput
-    data: XOR<DistrictUpdateWithoutUsersInput, DistrictUncheckedUpdateWithoutUsersInput>
-  }
-
-  export type DistrictUpdateWithoutUsersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    churches?: ChurchUpdateManyWithoutDistrictNestedInput
-    registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
-  }
-
-  export type DistrictUncheckedUpdateWithoutUsersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
-    registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
-  }
-
-  export type ChurchUpsertWithoutUsersInput = {
-    update: XOR<ChurchUpdateWithoutUsersInput, ChurchUncheckedUpdateWithoutUsersInput>
-    create: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
-    where?: ChurchWhereInput
-  }
-
-  export type ChurchUpdateToOneWithWhereWithoutUsersInput = {
-    where?: ChurchWhereInput
-    data: XOR<ChurchUpdateWithoutUsersInput, ChurchUncheckedUpdateWithoutUsersInput>
-  }
-
-  export type ChurchUpdateWithoutUsersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    directorName?: NullableStringFieldUpdateOperationsInput | string | null
-    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
-    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
-    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
-    registrations?: RegistrationUpdateManyWithoutChurchNestedInput
-  }
-
-  export type ChurchUncheckedUpdateWithoutUsersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    districtId?: StringFieldUpdateOperationsInput | string
-    directorName?: NullableStringFieldUpdateOperationsInput | string | null
-    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
-    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
-    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
-    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
-  }
-
   export type AuditLogUpsertWithWhereUniqueWithoutActorInput = {
     where: AuditLogWhereUniqueInput
     update: XOR<AuditLogUpdateWithoutActorInput, AuditLogUncheckedUpdateWithoutActorInput>
@@ -26751,62 +28034,6 @@ export namespace Prisma {
     entityId?: StringFilter<"AuditLog"> | string
     metadataJson?: StringNullableFilter<"AuditLog"> | string | null
     createdAt?: DateTimeFilter<"AuditLog"> | Date | string
-  }
-
-  export type MinistryUserUpsertWithWhereUniqueWithoutUserInput = {
-    where: MinistryUserWhereUniqueInput
-    update: XOR<MinistryUserUpdateWithoutUserInput, MinistryUserUncheckedUpdateWithoutUserInput>
-    create: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput>
-  }
-
-  export type MinistryUserUpdateWithWhereUniqueWithoutUserInput = {
-    where: MinistryUserWhereUniqueInput
-    data: XOR<MinistryUserUpdateWithoutUserInput, MinistryUserUncheckedUpdateWithoutUserInput>
-  }
-
-  export type MinistryUserUpdateManyWithWhereWithoutUserInput = {
-    where: MinistryUserScalarWhereInput
-    data: XOR<MinistryUserUpdateManyMutationInput, MinistryUserUncheckedUpdateManyWithoutUserInput>
-  }
-
-  export type MinistryUserScalarWhereInput = {
-    AND?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
-    OR?: MinistryUserScalarWhereInput[]
-    NOT?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
-    userId?: StringFilter<"MinistryUser"> | string
-    ministryId?: StringFilter<"MinistryUser"> | string
-    assignedAt?: DateTimeFilter<"MinistryUser"> | Date | string
-  }
-
-  export type ProfileUpsertWithoutUsersInput = {
-    update: XOR<ProfileUpdateWithoutUsersInput, ProfileUncheckedUpdateWithoutUsersInput>
-    create: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
-    where?: ProfileWhereInput
-  }
-
-  export type ProfileUpdateToOneWithWhereWithoutUsersInput = {
-    where?: ProfileWhereInput
-    data: XOR<ProfileUpdateWithoutUsersInput, ProfileUncheckedUpdateWithoutUsersInput>
-  }
-
-  export type ProfileUpdateWithoutUsersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    permissions?: ProfilePermissionUpdateManyWithoutProfileNestedInput
-  }
-
-  export type ProfileUncheckedUpdateWithoutUsersInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    description?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    permissions?: ProfilePermissionUncheckedUpdateManyWithoutProfileNestedInput
   }
 
   export type EventUpsertWithWhereUniqueWithoutCreatedByInput = {
@@ -26848,6 +28075,157 @@ export namespace Prisma {
     createdById?: StringNullableFilter<"Event"> | string | null
   }
 
+  export type MinistryUserUpsertWithWhereUniqueWithoutUserInput = {
+    where: MinistryUserWhereUniqueInput
+    update: XOR<MinistryUserUpdateWithoutUserInput, MinistryUserUncheckedUpdateWithoutUserInput>
+    create: XOR<MinistryUserCreateWithoutUserInput, MinistryUserUncheckedCreateWithoutUserInput>
+  }
+
+  export type MinistryUserUpdateWithWhereUniqueWithoutUserInput = {
+    where: MinistryUserWhereUniqueInput
+    data: XOR<MinistryUserUpdateWithoutUserInput, MinistryUserUncheckedUpdateWithoutUserInput>
+  }
+
+  export type MinistryUserUpdateManyWithWhereWithoutUserInput = {
+    where: MinistryUserScalarWhereInput
+    data: XOR<MinistryUserUpdateManyMutationInput, MinistryUserUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type MinistryUserScalarWhereInput = {
+    AND?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
+    OR?: MinistryUserScalarWhereInput[]
+    NOT?: MinistryUserScalarWhereInput | MinistryUserScalarWhereInput[]
+    userId?: StringFilter<"MinistryUser"> | string
+    ministryId?: StringFilter<"MinistryUser"> | string
+    assignedAt?: DateTimeFilter<"MinistryUser"> | Date | string
+  }
+
+  export type SystemConfigUpsertWithWhereUniqueWithoutUpdatedByInput = {
+    where: SystemConfigWhereUniqueInput
+    update: XOR<SystemConfigUpdateWithoutUpdatedByInput, SystemConfigUncheckedUpdateWithoutUpdatedByInput>
+    create: XOR<SystemConfigCreateWithoutUpdatedByInput, SystemConfigUncheckedCreateWithoutUpdatedByInput>
+  }
+
+  export type SystemConfigUpdateWithWhereUniqueWithoutUpdatedByInput = {
+    where: SystemConfigWhereUniqueInput
+    data: XOR<SystemConfigUpdateWithoutUpdatedByInput, SystemConfigUncheckedUpdateWithoutUpdatedByInput>
+  }
+
+  export type SystemConfigUpdateManyWithWhereWithoutUpdatedByInput = {
+    where: SystemConfigScalarWhereInput
+    data: XOR<SystemConfigUpdateManyMutationInput, SystemConfigUncheckedUpdateManyWithoutUpdatedByInput>
+  }
+
+  export type SystemConfigScalarWhereInput = {
+    AND?: SystemConfigScalarWhereInput | SystemConfigScalarWhereInput[]
+    OR?: SystemConfigScalarWhereInput[]
+    NOT?: SystemConfigScalarWhereInput | SystemConfigScalarWhereInput[]
+    id?: StringFilter<"SystemConfig"> | string
+    settings?: JsonFilter<"SystemConfig">
+    createdAt?: DateTimeFilter<"SystemConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemConfig"> | Date | string
+    updatedById?: StringNullableFilter<"SystemConfig"> | string | null
+  }
+
+  export type ChurchUpsertWithoutUsersInput = {
+    update: XOR<ChurchUpdateWithoutUsersInput, ChurchUncheckedUpdateWithoutUsersInput>
+    create: XOR<ChurchCreateWithoutUsersInput, ChurchUncheckedCreateWithoutUsersInput>
+    where?: ChurchWhereInput
+  }
+
+  export type ChurchUpdateToOneWithWhereWithoutUsersInput = {
+    where?: ChurchWhereInput
+    data: XOR<ChurchUpdateWithoutUsersInput, ChurchUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type ChurchUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
+    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
+    registrations?: RegistrationUpdateManyWithoutChurchNestedInput
+  }
+
+  export type ChurchUncheckedUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    districtId?: StringFieldUpdateOperationsInput | string
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
+    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
+  }
+
+  export type DistrictUpsertWithoutUsersInput = {
+    update: XOR<DistrictUpdateWithoutUsersInput, DistrictUncheckedUpdateWithoutUsersInput>
+    create: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
+    where?: DistrictWhereInput
+  }
+
+  export type DistrictUpdateToOneWithWhereWithoutUsersInput = {
+    where?: DistrictWhereInput
+    data: XOR<DistrictUpdateWithoutUsersInput, DistrictUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type DistrictUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type DistrictUncheckedUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type ProfileUpsertWithoutUsersInput = {
+    update: XOR<ProfileUpdateWithoutUsersInput, ProfileUncheckedUpdateWithoutUsersInput>
+    create: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
+    where?: ProfileWhereInput
+  }
+
+  export type ProfileUpdateToOneWithWhereWithoutUsersInput = {
+    where?: ProfileWhereInput
+    data: XOR<ProfileUpdateWithoutUsersInput, ProfileUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type ProfileUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    permissions?: ProfilePermissionUpdateManyWithoutProfileNestedInput
+  }
+
+  export type ProfileUncheckedUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    permissions?: ProfilePermissionUncheckedUpdateManyWithoutProfileNestedInput
+  }
+
   export type UserPermissionUpsertWithWhereUniqueWithoutUserInput = {
     where: UserPermissionWhereUniqueInput
     update: XOR<UserPermissionUpdateWithoutUserInput, UserPermissionUncheckedUpdateWithoutUserInput>
@@ -26883,6 +28261,106 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"UserPermission"> | Date | string
   }
 
+  export type UserCreateWithoutSystemConfigsUpdatedInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutSystemConfigsUpdatedInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutSystemConfigsUpdatedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutSystemConfigsUpdatedInput, UserUncheckedCreateWithoutSystemConfigsUpdatedInput>
+  }
+
+  export type UserUpsertWithoutSystemConfigsUpdatedInput = {
+    update: XOR<UserUpdateWithoutSystemConfigsUpdatedInput, UserUncheckedUpdateWithoutSystemConfigsUpdatedInput>
+    create: XOR<UserCreateWithoutSystemConfigsUpdatedInput, UserUncheckedCreateWithoutSystemConfigsUpdatedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutSystemConfigsUpdatedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutSystemConfigsUpdatedInput, UserUncheckedUpdateWithoutSystemConfigsUpdatedInput>
+  }
+
+  export type UserUpdateWithoutSystemConfigsUpdatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutSystemConfigsUpdatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
   export type EventCreateWithoutLotsInput = {
     id?: string
     title: string
@@ -26899,11 +28377,11 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+    expenses?: ExpenseCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
     registrations?: RegistrationCreateNestedManyWithoutEventInput
-    expenses?: ExpenseCreateNestedManyWithoutEventInput
-    ministry?: MinistryCreateNestedOneWithoutEventsInput
-    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutLotsInput = {
@@ -26924,9 +28402,9 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
-    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
   }
 
   export type EventCreateOrConnectWithoutLotsInput = {
@@ -26951,8 +28429,8 @@ export namespace Prisma {
     netAmountCents?: number
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
-    registrations?: RegistrationCreateNestedManyWithoutOrderInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
   }
 
@@ -26973,8 +28451,8 @@ export namespace Prisma {
     feeCents?: number
     netAmountCents?: number
     createdAt?: Date | string
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
   }
 
@@ -27015,11 +28493,11 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    expenses?: ExpenseUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
-    expenses?: ExpenseUpdateManyWithoutEventNestedInput
-    ministry?: MinistryUpdateOneWithoutEventsNestedInput
-    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutLotsInput = {
@@ -27040,9 +28518,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
-    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
   }
 
   export type OrderUpsertWithWhereUniqueWithoutPricingLotInput = {
@@ -27077,11 +28555,11 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+    lots?: EventLotCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
     registrations?: RegistrationCreateNestedManyWithoutEventInput
-    lots?: EventLotCreateNestedManyWithoutEventInput
-    ministry?: MinistryCreateNestedOneWithoutEventsInput
-    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
   }
 
   export type EventUncheckedCreateWithoutExpensesInput = {
@@ -27102,9 +28580,9 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
-    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
   }
 
   export type EventCreateOrConnectWithoutExpensesInput = {
@@ -27139,11 +28617,11 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    lots?: EventLotUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
-    lots?: EventLotUpdateManyWithoutEventNestedInput
-    ministry?: MinistryUpdateOneWithoutEventsNestedInput
-    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
   }
 
   export type EventUncheckedUpdateWithoutExpensesInput = {
@@ -27164,9 +28642,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
-    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
   }
 
   export type EventCreateWithoutMinistryInput = {
@@ -27185,11 +28663,11 @@ export namespace Prisma {
     paymentMethods?: string
     pendingPaymentValueRule?: string
     createdAt?: Date | string
-    orders?: OrderCreateNestedManyWithoutEventInput
-    registrations?: RegistrationCreateNestedManyWithoutEventInput
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
-    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    orders?: OrderCreateNestedManyWithoutEventInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
   }
 
   export type EventUncheckedCreateWithoutMinistryInput = {
@@ -27209,10 +28687,10 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     createdById?: string | null
-    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
-    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
   }
 
   export type EventCreateOrConnectWithoutMinistryInput = {
@@ -27222,6 +28700,26 @@ export namespace Prisma {
 
   export type EventCreateManyMinistryInputEnvelope = {
     data: EventCreateManyMinistryInput | EventCreateManyMinistryInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MinistryUserCreateWithoutMinistryInput = {
+    assignedAt?: Date | string
+    user: UserCreateNestedOneWithoutMinistriesInput
+  }
+
+  export type MinistryUserUncheckedCreateWithoutMinistryInput = {
+    userId: string
+    assignedAt?: Date | string
+  }
+
+  export type MinistryUserCreateOrConnectWithoutMinistryInput = {
+    where: MinistryUserWhereUniqueInput
+    create: XOR<MinistryUserCreateWithoutMinistryInput, MinistryUserUncheckedCreateWithoutMinistryInput>
+  }
+
+  export type MinistryUserCreateManyMinistryInputEnvelope = {
+    data: MinistryUserCreateManyMinistryInput | MinistryUserCreateManyMinistryInput[]
     skipDuplicates?: boolean
   }
 
@@ -27240,11 +28738,11 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-    order: OrderCreateNestedOneWithoutRegistrationsInput
-    event: EventCreateNestedOneWithoutRegistrationsInput
-    district: DistrictCreateNestedOneWithoutRegistrationsInput
-    church: ChurchCreateNestedOneWithoutRegistrationsInput
     refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
+    event: EventCreateNestedOneWithoutRegistrationsInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
   }
 
   export type RegistrationUncheckedCreateWithoutMinistryInput = {
@@ -27279,26 +28777,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type MinistryUserCreateWithoutMinistryInput = {
-    assignedAt?: Date | string
-    user: UserCreateNestedOneWithoutMinistriesInput
-  }
-
-  export type MinistryUserUncheckedCreateWithoutMinistryInput = {
-    userId: string
-    assignedAt?: Date | string
-  }
-
-  export type MinistryUserCreateOrConnectWithoutMinistryInput = {
-    where: MinistryUserWhereUniqueInput
-    create: XOR<MinistryUserCreateWithoutMinistryInput, MinistryUserUncheckedCreateWithoutMinistryInput>
-  }
-
-  export type MinistryUserCreateManyMinistryInputEnvelope = {
-    data: MinistryUserCreateManyMinistryInput | MinistryUserCreateManyMinistryInput[]
-    skipDuplicates?: boolean
-  }
-
   export type EventUpsertWithWhereUniqueWithoutMinistryInput = {
     where: EventWhereUniqueInput
     update: XOR<EventUpdateWithoutMinistryInput, EventUncheckedUpdateWithoutMinistryInput>
@@ -27313,22 +28791,6 @@ export namespace Prisma {
   export type EventUpdateManyWithWhereWithoutMinistryInput = {
     where: EventScalarWhereInput
     data: XOR<EventUpdateManyMutationInput, EventUncheckedUpdateManyWithoutMinistryInput>
-  }
-
-  export type RegistrationUpsertWithWhereUniqueWithoutMinistryInput = {
-    where: RegistrationWhereUniqueInput
-    update: XOR<RegistrationUpdateWithoutMinistryInput, RegistrationUncheckedUpdateWithoutMinistryInput>
-    create: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput>
-  }
-
-  export type RegistrationUpdateWithWhereUniqueWithoutMinistryInput = {
-    where: RegistrationWhereUniqueInput
-    data: XOR<RegistrationUpdateWithoutMinistryInput, RegistrationUncheckedUpdateWithoutMinistryInput>
-  }
-
-  export type RegistrationUpdateManyWithWhereWithoutMinistryInput = {
-    where: RegistrationScalarWhereInput
-    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutMinistryInput>
   }
 
   export type MinistryUserUpsertWithWhereUniqueWithoutMinistryInput = {
@@ -27347,49 +28809,20 @@ export namespace Prisma {
     data: XOR<MinistryUserUpdateManyMutationInput, MinistryUserUncheckedUpdateManyWithoutMinistryInput>
   }
 
-  export type UserCreateWithoutMinistriesInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
-    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
-    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
-    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  export type RegistrationUpsertWithWhereUniqueWithoutMinistryInput = {
+    where: RegistrationWhereUniqueInput
+    update: XOR<RegistrationUpdateWithoutMinistryInput, RegistrationUncheckedUpdateWithoutMinistryInput>
+    create: XOR<RegistrationCreateWithoutMinistryInput, RegistrationUncheckedCreateWithoutMinistryInput>
   }
 
-  export type UserUncheckedCreateWithoutMinistriesInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    districtScopeId?: string | null
-    mustChangePassword?: boolean
-    churchScopeId?: string | null
-    profileId?: string | null
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
-    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  export type RegistrationUpdateWithWhereUniqueWithoutMinistryInput = {
+    where: RegistrationWhereUniqueInput
+    data: XOR<RegistrationUpdateWithoutMinistryInput, RegistrationUncheckedUpdateWithoutMinistryInput>
   }
 
-  export type UserCreateOrConnectWithoutMinistriesInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutMinistriesInput, UserUncheckedCreateWithoutMinistriesInput>
+  export type RegistrationUpdateManyWithWhereWithoutMinistryInput = {
+    where: RegistrationScalarWhereInput
+    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutMinistryInput>
   }
 
   export type MinistryCreateWithoutUsersInput = {
@@ -27419,55 +28852,51 @@ export namespace Prisma {
     create: XOR<MinistryCreateWithoutUsersInput, MinistryUncheckedCreateWithoutUsersInput>
   }
 
-  export type UserUpsertWithoutMinistriesInput = {
-    update: XOR<UserUpdateWithoutMinistriesInput, UserUncheckedUpdateWithoutMinistriesInput>
+  export type UserCreateWithoutMinistriesInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutMinistriesInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutMinistriesInput = {
+    where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutMinistriesInput, UserUncheckedCreateWithoutMinistriesInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutMinistriesInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutMinistriesInput, UserUncheckedUpdateWithoutMinistriesInput>
-  }
-
-  export type UserUpdateWithoutMinistriesInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
-    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
-    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
-    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutMinistriesInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    profileId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
-    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type MinistryUpsertWithoutUsersInput = {
@@ -27501,6 +28930,59 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
+  }
+
+  export type UserUpsertWithoutMinistriesInput = {
+    update: XOR<UserUpdateWithoutMinistriesInput, UserUncheckedUpdateWithoutMinistriesInput>
+    create: XOR<UserCreateWithoutMinistriesInput, UserUncheckedCreateWithoutMinistriesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutMinistriesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutMinistriesInput, UserUncheckedUpdateWithoutMinistriesInput>
+  }
+
+  export type UserUpdateWithoutMinistriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutMinistriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ProfilePermissionCreateWithoutProfileInput = {
@@ -27546,40 +29028,42 @@ export namespace Prisma {
   export type UserCreateWithoutProfileInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
     createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutProfileInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    mustChangePassword?: boolean
     churchScopeId?: string | null
-    status?: $Enums.UserStatus
     createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -27703,41 +29187,43 @@ export namespace Prisma {
   export type UserCreateWithoutPermissionsOverrideInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
-    mustChangePassword?: boolean
-    status?: $Enums.UserStatus
     createdAt?: Date | string
-    districtScope?: DistrictCreateNestedOneWithoutUsersInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    profile?: ProfileCreateNestedOneWithoutUsersInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
   }
 
   export type UserUncheckedCreateWithoutPermissionsOverrideInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    mustChangePassword?: boolean
     churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
-    createdAt?: Date | string
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
-    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
   }
 
   export type UserCreateOrConnectWithoutPermissionsOverrideInput = {
@@ -27759,41 +29245,43 @@ export namespace Prisma {
   export type UserUpdateWithoutPermissionsOverrideInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPermissionsOverrideInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
   }
 
   export type ChurchCreateManyDistrictInput = {
@@ -27808,27 +29296,10 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
-  export type UserCreateManyDistrictScopeInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    mustChangePassword?: boolean
-    churchScopeId?: string | null
-    profileId?: string | null
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
-  }
-
   export type RegistrationCreateManyDistrictInput = {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -27843,6 +29314,23 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
+  }
+
+  export type UserCreateManyDistrictScopeInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    churchScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
   }
 
   export type ChurchUpdateWithoutDistrictInput = {
@@ -27855,8 +29343,8 @@ export namespace Prisma {
     directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUpdateManyWithoutChurchScopeNestedInput
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
+    users?: UserUpdateManyWithoutChurchScopeNestedInput
   }
 
   export type ChurchUncheckedUpdateWithoutDistrictInput = {
@@ -27869,8 +29357,8 @@ export namespace Prisma {
     directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
+    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
   }
 
   export type ChurchUncheckedUpdateManyWithoutDistrictInput = {
@@ -27882,62 +29370,6 @@ export namespace Prisma {
     directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
     directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type UserUpdateWithoutDistrictScopeInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
-    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
-    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
-    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutDistrictScopeInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    profileId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
-    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
-    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateManyWithoutDistrictScopeInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    profileId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -27956,18 +29388,17 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
-    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
-    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutDistrictInput = {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -27982,6 +29413,7 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -27989,7 +29421,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28004,29 +29435,71 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
-  export type UserCreateManyChurchScopeInput = {
-    id?: string
-    name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
-    email: string
-    passwordHash: string
-    role: string
-    districtScopeId?: string | null
-    mustChangePassword?: boolean
-    profileId?: string | null
-    status?: $Enums.UserStatus
-    createdAt?: Date | string
+  export type UserUpdateWithoutDistrictScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutDistrictScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutDistrictScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   }
 
   export type RegistrationCreateManyChurchInput = {
     id?: string
     orderId: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -28041,62 +29514,23 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
+    ministryId?: string | null
   }
 
-  export type UserUpdateWithoutChurchScopeInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    profile?: ProfileUpdateOneWithoutUsersNestedInput
-    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
-    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutChurchScopeInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    profileId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
-    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
-    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateManyWithoutChurchScopeInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
-    passwordHash?: StringFieldUpdateOperationsInput | string
-    role?: StringFieldUpdateOperationsInput | string
-    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    profileId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  export type UserCreateManyChurchScopeInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
   }
 
   export type RegistrationUpdateWithoutChurchInput = {
@@ -28114,18 +29548,17 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
-    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
-    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutChurchInput = {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28140,6 +29573,7 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -28147,7 +29581,6 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     orderId?: StringFieldUpdateOperationsInput | string
     eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     fullName?: StringFieldUpdateOperationsInput | string
     cpf?: StringFieldUpdateOperationsInput | string
     birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28162,6 +29595,86 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type UserUpdateWithoutChurchScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutChurchScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutChurchScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  }
+
+  export type EventLotCreateManyEventInput = {
+    id?: string
+    name: string
+    priceCents: number
+    startsAt: Date | string
+    endsAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type ExpenseCreateManyEventInput = {
+    id?: string
+    description: string
+    date: Date | string
+    amountCents: number
+    madeBy: string
+    items?: string | null
+    receiptUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type OrderCreateManyEventInput = {
@@ -28186,7 +29699,6 @@ export namespace Prisma {
   export type RegistrationCreateManyEventInput = {
     id?: string
     orderId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -28202,155 +29714,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-  }
-
-  export type EventLotCreateManyEventInput = {
-    id?: string
-    name: string
-    priceCents: number
-    startsAt: Date | string
-    endsAt?: Date | string | null
-    createdAt?: Date | string
-  }
-
-  export type ExpenseCreateManyEventInput = {
-    id?: string
-    description: string
-    date: Date | string
-    amountCents: number
-    madeBy: string
-    items?: string | null
-    receiptUrl?: string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type OrderUpdateWithoutEventInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    buyerCpf?: StringFieldUpdateOperationsInput | string
-    totalCents?: IntFieldUpdateOperationsInput | number
-    status?: StringFieldUpdateOperationsInput | string
-    paymentMethod?: StringFieldUpdateOperationsInput | string
-    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
-    preferenceVersion?: IntFieldUpdateOperationsInput | number
-    externalReference?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
-    feeCents?: IntFieldUpdateOperationsInput | number
-    netAmountCents?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
-    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
-    refunds?: RefundUpdateManyWithoutOrderNestedInput
-    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
-  }
-
-  export type OrderUncheckedUpdateWithoutEventInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    buyerCpf?: StringFieldUpdateOperationsInput | string
-    totalCents?: IntFieldUpdateOperationsInput | number
-    status?: StringFieldUpdateOperationsInput | string
-    paymentMethod?: StringFieldUpdateOperationsInput | string
-    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
-    preferenceVersion?: IntFieldUpdateOperationsInput | number
-    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
-    externalReference?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
-    feeCents?: IntFieldUpdateOperationsInput | number
-    netAmountCents?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
-    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
-    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
-  }
-
-  export type OrderUncheckedUpdateManyWithoutEventInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    buyerCpf?: StringFieldUpdateOperationsInput | string
-    totalCents?: IntFieldUpdateOperationsInput | number
-    status?: StringFieldUpdateOperationsInput | string
-    paymentMethod?: StringFieldUpdateOperationsInput | string
-    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
-    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
-    preferenceVersion?: IntFieldUpdateOperationsInput | number
-    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
-    externalReference?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
-    feeCents?: IntFieldUpdateOperationsInput | number
-    netAmountCents?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type RegistrationUpdateWithoutEventInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    fullName?: StringFieldUpdateOperationsInput | string
-    cpf?: StringFieldUpdateOperationsInput | string
-    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    ageYears?: IntFieldUpdateOperationsInput | number
-    priceCents?: IntFieldUpdateOperationsInput | number
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableStringFieldUpdateOperationsInput | string | null
-    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
-    ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
-    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
-    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
-    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
-  }
-
-  export type RegistrationUncheckedUpdateWithoutEventInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    orderId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
-    fullName?: StringFieldUpdateOperationsInput | string
-    cpf?: StringFieldUpdateOperationsInput | string
-    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    ageYears?: IntFieldUpdateOperationsInput | number
-    priceCents?: IntFieldUpdateOperationsInput | number
-    districtId?: StringFieldUpdateOperationsInput | string
-    churchId?: StringFieldUpdateOperationsInput | string
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableStringFieldUpdateOperationsInput | string | null
-    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
-  }
-
-  export type RegistrationUncheckedUpdateManyWithoutEventInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    orderId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
-    fullName?: StringFieldUpdateOperationsInput | string
-    cpf?: StringFieldUpdateOperationsInput | string
-    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    ageYears?: IntFieldUpdateOperationsInput | number
-    priceCents?: IntFieldUpdateOperationsInput | number
-    districtId?: StringFieldUpdateOperationsInput | string
-    churchId?: StringFieldUpdateOperationsInput | string
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableStringFieldUpdateOperationsInput | string | null
-    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: string | null
   }
 
   export type EventLotUpdateWithoutEventInput = {
@@ -28418,10 +29782,146 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type OrderUpdateWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistrationUpdateWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
+    ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutEventInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RefundCreateManyOrderInput = {
+    id?: string
+    registrationId: string
+    amountCents: number
+    mpRefundId: string
+    reason?: string | null
+    createdAt?: Date | string
+  }
+
   export type RegistrationCreateManyOrderInput = {
     id?: string
     eventId: string
-    ministryId?: string | null
     fullName: string
     cpf: string
     birthDate: Date | string
@@ -28437,15 +29937,7 @@ export namespace Prisma {
     checkinAt?: Date | string | null
     paidAt?: Date | string | null
     createdAt?: Date | string
-  }
-
-  export type RefundCreateManyOrderInput = {
-    id?: string
-    registrationId: string
-    amountCents: number
-    mpRefundId: string
-    reason?: string | null
-    createdAt?: Date | string
+    ministryId?: string | null
   }
 
   export type WebhookEventCreateManyOrderInput = {
@@ -28456,71 +29948,6 @@ export namespace Prisma {
     idempotencyKey: string
     processedAt?: Date | string | null
     createdAt?: Date | string
-  }
-
-  export type RegistrationUpdateWithoutOrderInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    fullName?: StringFieldUpdateOperationsInput | string
-    cpf?: StringFieldUpdateOperationsInput | string
-    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    ageYears?: IntFieldUpdateOperationsInput | number
-    priceCents?: IntFieldUpdateOperationsInput | number
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableStringFieldUpdateOperationsInput | string | null
-    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
-    ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
-    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
-    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
-    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
-  }
-
-  export type RegistrationUncheckedUpdateWithoutOrderInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
-    fullName?: StringFieldUpdateOperationsInput | string
-    cpf?: StringFieldUpdateOperationsInput | string
-    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    ageYears?: IntFieldUpdateOperationsInput | number
-    priceCents?: IntFieldUpdateOperationsInput | number
-    districtId?: StringFieldUpdateOperationsInput | string
-    churchId?: StringFieldUpdateOperationsInput | string
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableStringFieldUpdateOperationsInput | string | null
-    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
-  }
-
-  export type RegistrationUncheckedUpdateManyWithoutOrderInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    eventId?: StringFieldUpdateOperationsInput | string
-    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
-    fullName?: StringFieldUpdateOperationsInput | string
-    cpf?: StringFieldUpdateOperationsInput | string
-    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
-    ageYears?: IntFieldUpdateOperationsInput | number
-    priceCents?: IntFieldUpdateOperationsInput | number
-    districtId?: StringFieldUpdateOperationsInput | string
-    churchId?: StringFieldUpdateOperationsInput | string
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    gender?: NullableStringFieldUpdateOperationsInput | string | null
-    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RefundUpdateWithoutOrderInput = {
@@ -28548,6 +29975,71 @@ export namespace Prisma {
     mpRefundId?: StringFieldUpdateOperationsInput | string
     reason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistrationUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
+    event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
+    ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type WebhookEventUpdateWithoutOrderInput = {
@@ -28625,11 +30117,6 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
-  export type MinistryUserCreateManyUserInput = {
-    ministryId: string
-    assignedAt?: Date | string
-  }
-
   export type EventCreateManyCreatedByInput = {
     id?: string
     title: string
@@ -28647,6 +30134,18 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+  }
+
+  export type MinistryUserCreateManyUserInput = {
+    ministryId: string
+    assignedAt?: Date | string
+  }
+
+  export type SystemConfigCreateManyUpdatedByInput = {
+    id?: string
+    settings: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type UserPermissionCreateManyUserInput = {
@@ -28691,21 +30190,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type MinistryUserUpdateWithoutUserInput = {
-    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    ministry?: MinistryUpdateOneRequiredWithoutUsersNestedInput
-  }
-
-  export type MinistryUserUncheckedUpdateWithoutUserInput = {
-    ministryId?: StringFieldUpdateOperationsInput | string
-    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type MinistryUserUncheckedUpdateManyWithoutUserInput = {
-    ministryId?: StringFieldUpdateOperationsInput | string
-    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type EventUpdateWithoutCreatedByInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
@@ -28722,11 +30206,11 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orders?: OrderUpdateManyWithoutEventNestedInput
-    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
-    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    orders?: OrderUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateWithoutCreatedByInput = {
@@ -28746,10 +30230,10 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
-    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
-    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateManyWithoutCreatedByInput = {
@@ -28769,6 +30253,42 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type MinistryUserUpdateWithoutUserInput = {
+    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministry?: MinistryUpdateOneRequiredWithoutUsersNestedInput
+  }
+
+  export type MinistryUserUncheckedUpdateWithoutUserInput = {
+    ministryId?: StringFieldUpdateOperationsInput | string
+    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MinistryUserUncheckedUpdateManyWithoutUserInput = {
+    ministryId?: StringFieldUpdateOperationsInput | string
+    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemConfigUpdateWithoutUpdatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemConfigUncheckedUpdateWithoutUpdatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemConfigUncheckedUpdateManyWithoutUpdatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserPermissionUpdateWithoutUserInput = {
@@ -28852,8 +30372,8 @@ export namespace Prisma {
     netAmountCents?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
-    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
   }
 
@@ -28874,8 +30394,8 @@ export namespace Prisma {
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
   }
 
@@ -28917,6 +30437,11 @@ export namespace Prisma {
     createdById?: string | null
   }
 
+  export type MinistryUserCreateManyMinistryInput = {
+    userId: string
+    assignedAt?: Date | string
+  }
+
   export type RegistrationCreateManyMinistryInput = {
     id?: string
     orderId: string
@@ -28938,11 +30463,6 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
-  export type MinistryUserCreateManyMinistryInput = {
-    userId: string
-    assignedAt?: Date | string
-  }
-
   export type EventUpdateWithoutMinistryInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
@@ -28959,11 +30479,11 @@ export namespace Prisma {
     paymentMethods?: StringFieldUpdateOperationsInput | string
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orders?: OrderUpdateManyWithoutEventNestedInput
-    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
-    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    orders?: OrderUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateWithoutMinistryInput = {
@@ -28983,10 +30503,10 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
-    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
-    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
   }
 
   export type EventUncheckedUpdateManyWithoutMinistryInput = {
@@ -29008,6 +30528,21 @@ export namespace Prisma {
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type MinistryUserUpdateWithoutMinistryInput = {
+    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutMinistriesNestedInput
+  }
+
+  export type MinistryUserUncheckedUpdateWithoutMinistryInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MinistryUserUncheckedUpdateManyWithoutMinistryInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type RegistrationUpdateWithoutMinistryInput = {
     id?: StringFieldUpdateOperationsInput | string
     fullName?: StringFieldUpdateOperationsInput | string
@@ -29023,11 +30558,11 @@ export namespace Prisma {
     checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
-    event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
-    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
-    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
     refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
+    event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutMinistryInput = {
@@ -29073,21 +30608,6 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type MinistryUserUpdateWithoutMinistryInput = {
-    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutMinistriesNestedInput
-  }
-
-  export type MinistryUserUncheckedUpdateWithoutMinistryInput = {
-    userId?: StringFieldUpdateOperationsInput | string
-    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type MinistryUserUncheckedUpdateManyWithoutMinistryInput = {
-    userId?: StringFieldUpdateOperationsInput | string
-    assignedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type ProfilePermissionCreateManyProfileInput = {
     id?: string
     module: string
@@ -29106,17 +30626,17 @@ export namespace Prisma {
   export type UserCreateManyProfileInput = {
     id?: string
     name: string
-    cpf?: string | null
-    phone?: string | null
-    photoUrl?: string | null
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    mustChangePassword?: boolean
     churchScopeId?: string | null
-    status?: $Enums.UserStatus
     createdAt?: Date | string
+    cpf?: string | null
+    mustChangePassword?: boolean
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
   }
 
   export type ProfilePermissionUpdateWithoutProfileInput = {
@@ -29167,57 +30687,59 @@ export namespace Prisma {
   export type UserUpdateWithoutProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
-    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutProfileInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
     churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
   }
 
 
@@ -29297,6 +30819,10 @@ export namespace Prisma {
      * @deprecated Use UserDefaultArgs instead
      */
     export type UserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SystemConfigDefaultArgs instead
+     */
+    export type SystemConfigArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SystemConfigDefaultArgs<ExtArgs>
     /**
      * @deprecated Use EventLotDefaultArgs instead
      */

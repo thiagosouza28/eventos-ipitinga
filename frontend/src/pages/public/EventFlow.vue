@@ -7,7 +7,7 @@
       <p class="text-neutral-500">Evento não encontrado.</p>
     </BaseCard>
   </div>
-  <div v-else class="space-y-6">
+  <div v-else class="space-y-6" data-uppercase-scope>
     <BaseCard>
       <div class="space-y-4">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

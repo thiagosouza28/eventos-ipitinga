@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import type { PermissionAction } from "../types/api";
+import type { PermissionAction, Role } from "../types/api";
 import { useAuthStore } from "../stores/auth";
 
 const EventLanding = () => import("../pages/public/EventLanding.vue");
@@ -24,6 +24,7 @@ const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
 const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
 const AdminAccessDenied = () => import("../pages/admin/AdminAccessDenied.vue");
+const AdminSystemConfig = () => import("../pages/admin/AdminSystemConfig.vue");
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -123,6 +124,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresPermission: { module: "checkin", action: "view" } }
     },
     {
+      path: "/admin/system-config",
+      name: "admin-system-config",
+      component: AdminSystemConfig,
+      meta: { requiresAuth: true, requiresRole: "AdminGeral" }
+    },
+    {
       path: "/admin/acesso-negado",
       name: "admin-access-denied",
       component: AdminAccessDenied,
@@ -157,6 +164,19 @@ router.beforeEach((to, _from, next) => {
           module: requirement.module,
           action: requirement.action ?? "view",
           from: to.fullPath
+        }
+      });
+      return;
+    }
+  }
+  if (to.meta.requiresRole && auth.isAuthenticated) {
+    const requiredRole = to.meta.requiresRole as Role;
+    if (auth.user?.role !== requiredRole) {
+      next({
+        name: "admin-access-denied",
+        query: {
+          from: to.fullPath,
+          role: requiredRole
         }
       });
       return;

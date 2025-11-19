@@ -45,10 +45,12 @@ const reportDownloadSchema = reportSchema.extend({
 
 const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "") : v);
 
+const toUppercase = (value: string) => value.trim().toUpperCase();
+
 const updateSchema = z.object({
   districtId: z.string().uuid().optional(),
   churchId: z.string().uuid().optional(),
-  fullName: z.string().min(3).optional(),
+  fullName: z.string().min(3).transform(toUppercase).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   cpf: z
     .preprocess(onlyDigits, z.string().length(11))

@@ -5,6 +5,7 @@ import { Role } from "../config/roles";
 import type { PermissionEntry } from "../config/permissions";
 import { RolePermissionPresets } from "../config/permissions";
 import { prisma } from "../lib/prisma";
+import { DEFAULT_SYSTEM_CONFIG } from "../modules/system-config/system-config.types";
 
 const ensureDistrict = async (name: string) => {
   const existing = await prisma.district.findUnique({ where: { name } });
@@ -104,6 +105,24 @@ const ensureProfile = async (
   return profile;
 };
 
+const ensureSystemConfig = async () => {
+  const existing = await prisma.systemConfig.findFirst();
+  if (existing) {
+    if (!existing.settings || Object.keys(existing.settings as Record<string, unknown>).length === 0) {
+      return prisma.systemConfig.update({
+        where: { id: existing.id },
+        data: { settings: DEFAULT_SYSTEM_CONFIG }
+      });
+    }
+    return existing;
+  }
+  return prisma.systemConfig.create({
+    data: {
+      settings: DEFAULT_SYSTEM_CONFIG
+    }
+  });
+};
+
 type EnsureUserInput = {
   name: string;
   email: string;
@@ -159,6 +178,7 @@ const run = async () => {
   const musicMinistry = await ensureMinistry("MinistÃ©rio de MÃºsica", "Equipe de louvor e adoraÃ§Ã£o.");
 
   const event = await ensureEvent(youthMinistry.id);
+  await ensureSystemConfig();
 
   const adminGeneralProfile = await ensureProfile(
     "Administrador Geral",
@@ -180,12 +200,12 @@ const run = async () => {
 
   const financeProfile = await ensureProfile(
     "Tesoureiro",
-    "Responsável pelo caixa e relatórios financeiros.",
+    "Responsï¿½vel pelo caixa e relatï¿½rios financeiros.",
     RolePermissionPresets.Tesoureiro
   );
   const ministryCoordinatorProfile = await ensureProfile(
-    "Coordenador de Ministério",
-    "Gere inscrições do seu ministério.",
+    "Coordenador de Ministï¿½rio",
+    "Gere inscriï¿½ï¿½es do seu ministï¿½rio.",
     RolePermissionPresets.CoordenadorMinisterio
   );
   const profileMap: Record<Role, string> = {
@@ -244,6 +264,20 @@ const run = async () => {
       profileId: profileMap.Tesoureiro
     }
   ];
+
+  const targetAdminEmail = "thgdsztls@gmail.com";
+  const hasTargetAdmin = seededUsers.some(
+    (user) => user.email?.toLowerCase() === targetAdminEmail.toLowerCase()
+  );
+  if (!hasTargetAdmin) {
+    seededUsers.push({
+      name: "Thiago Santos",
+      email: targetAdminEmail,
+      password: env.ADMIN_PASSWORD,
+      role: "AdminGeral",
+      profileId: profileMap.AdminGeral
+    });
+  }
 
   const users = await Promise.all(seededUsers.map((user) => ensureUser(user)));
 

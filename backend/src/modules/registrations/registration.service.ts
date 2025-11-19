@@ -403,7 +403,7 @@ export class RegistrationService {
     const payload: Prisma.RegistrationUpdateInput = {};
 
     if (data.fullName !== undefined) {
-      payload.fullName = data.fullName;
+      payload.fullName = data.fullName.trim().toUpperCase();
     }
     if (data.districtId) {
       payload.district = { connect: { id: data.districtId } };

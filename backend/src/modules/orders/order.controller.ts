@@ -48,6 +48,8 @@ const startSchema = z.object({
   buyerCpf: cpfSchema
 });
 
+const uppercaseField = (value: string) => value.trim().toUpperCase();
+
 const batchSchema = z.object({
   eventId: cuidOrUuid,
   buyerCpf: cpfSchema,
@@ -55,7 +57,7 @@ const batchSchema = z.object({
   people: z
     .array(
       z.object({
-        fullName: z.string().min(3),
+        fullName: z.string().min(3).transform(uppercaseField),
         cpf: cpfSchema,
         birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         gender: z.preprocess(

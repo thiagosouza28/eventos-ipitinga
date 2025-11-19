@@ -1,30 +1,19 @@
-const brandBlue = {
-  50: "#e8f0ff",
-  100: "#d4e4ff",
-  200: "#adc4ff",
-  300: "#7ea4ff",
-  400: "#4e82ff",
-  500: "#1f63ff",
-  600: "#154ad6",
-  700: "#1038a8",
-  800: "#0b2778",
-  900: "#06174d",
-  950: "#030b26"
+const COLOR_SCALE_KEYS = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
+
+const withOpacityValue = (variable) => {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgb(var(${variable}) / ${opacityValue})`;
+    }
+    return `rgb(var(${variable}))`;
+  };
 };
 
-const brandNeutral = {
-  50: "#f8f9ff",
-  100: "#f1f2f8",
-  200: "#e2e4ef",
-  300: "#c9cddd",
-  400: "#a2a8c0",
-  500: "#7c829b",
-  600: "#595f78",
-  700: "#3d4154",
-  800: "#222838",
-  900: "#101321",
-  950: "#070914"
-};
+const buildPalette = (prefix) =>
+  COLOR_SCALE_KEYS.reduce((acc, shade) => {
+    acc[shade] = withOpacityValue(`${prefix}${shade}`);
+    return acc;
+  }, {});
 
 module.exports = {
   darkMode: "class",
@@ -32,11 +21,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: brandBlue,
-        neutral: brandNeutral
+        primary: buildPalette("--palette-primary-"),
+        neutral: buildPalette("--palette-neutral-"),
+        info: withOpacityValue("--support-info"),
+        success: withOpacityValue("--support-success"),
+        warning: withOpacityValue("--support-warning"),
+        danger: withOpacityValue("--support-danger")
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"]
+        sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"]
+      },
+      borderRadius: {
+        none: "0px",
+        sm: "var(--radius-sm)",
+        DEFAULT: "var(--radius-md)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "calc(var(--radius-lg) + 8px)",
+        "2xl": "calc(var(--radius-lg) + 16px)",
+        "3xl": "calc(var(--radius-lg) + 24px)",
+        full: "var(--radius-pill)"
       }
     }
   },

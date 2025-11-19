@@ -14,8 +14,8 @@ model District {
   pastorName    String?
   createdAt     DateTime       @default(now())
   churches      Church[]
-  users         User[]         @relation("DistrictUsers")
   registrations Registration[]
+  users         User[]         @relation("DistrictUsers")
 }
 
 model Church {
@@ -30,8 +30,8 @@ model Church {
   directorPhotoUrl  String?        @db.LongText
   createdAt         DateTime       @default(now())
   district          District       @relation(fields: [districtId], references: [id])
-  users             User[]         @relation("ChurchUsers")
   registrations     Registration[]
+  users             User[]         @relation("ChurchUsers")
 
   @@unique([name, districtId])
   @@index([districtId])
@@ -55,14 +55,15 @@ model Event {
   createdAt               DateTime       @default(now())
   ministryId              String?
   createdById             String?
-  orders                  Order[]
-  registrations           Registration[]
+  createdBy               User?          @relation("EventCreators", fields: [createdById], references: [id])
+  ministry                Ministry?      @relation(fields: [ministryId], references: [id])
   lots                    EventLot[]
   expenses                Expense[]
-  ministry                Ministry?      @relation(fields: [ministryId], references: [id])
-  createdBy               User?          @relation("EventCreators", fields: [createdById], references: [id])
+  orders                  Order[]
+  registrations           Registration[]
 
   @@index([ministryId])
+  @@index([createdById], map: "Event_createdById_fkey")
 }
 
 model Order {
@@ -85,20 +86,20 @@ model Order {
   createdAt              DateTime       @default(now())
   event                  Event          @relation(fields: [eventId], references: [id])
   pricingLot             EventLot?      @relation(fields: [pricingLotId], references: [id])
-  registrations          Registration[]
   refunds                Refund[]
+  registrations          Registration[]
   webhookEvents          WebhookEvent[]
 
   @@index([eventId])
   @@index([buyerCpf])
   @@index([status])
+  @@index([pricingLotId], map: "Order_pricingLotId_fkey")
 }
 
 model Registration {
   id            String    @id @default(cuid())
   orderId       String
   eventId       String
-  ministryId    String?
   fullName      String
   cpf           String
   birthDate     DateTime
@@ -114,18 +115,22 @@ model Registration {
   checkinAt     DateTime?
   paidAt        DateTime?
   createdAt     DateTime  @default(now())
-  order         Order     @relation(fields: [orderId], references: [id])
+  ministryId    String?
+  refunds       Refund[]
+  church        Church    @relation(fields: [churchId], references: [id])
+  district      District  @relation(fields: [districtId], references: [id])
   event         Event     @relation(fields: [eventId], references: [id])
   ministry      Ministry? @relation(fields: [ministryId], references: [id])
-  district      District  @relation(fields: [districtId], references: [id])
-  church        Church    @relation(fields: [churchId], references: [id])
-  refunds       Refund[]
+  order         Order     @relation(fields: [orderId], references: [id])
 
   @@unique([eventId, cpf])
   @@index([orderId])
   @@index([eventId])
   @@index([cpf])
   @@index([status])
+  @@index([churchId], map: "Registration_churchId_fkey")
+  @@index([districtId], map: "Registration_districtId_fkey")
+  @@index([ministryId], map: "Registration_ministryId_fkey")
 }
 
 model Refund {
@@ -138,6 +143,9 @@ model Refund {
   createdAt      DateTime     @default(now())
   order          Order        @relation(fields: [orderId], references: [id])
   registration   Registration @relation(fields: [registrationId], references: [id])
+
+  @@index([orderId], map: "Refund_orderId_fkey")
+  @@index([registrationId], map: "Refund_registrationId_fkey")
 }
 
 model WebhookEvent {
@@ -150,6 +158,8 @@ model WebhookEvent {
   createdAt      DateTime  @default(now())
   orderId        String?
   order          Order?    @relation(fields: [orderId], references: [id])
+
+  @@index([orderId], map: "WebhookEvent_orderId_fkey")
 }
 
 model AuditLog {
@@ -161,32 +171,48 @@ model AuditLog {
   metadataJson String?  @db.LongText
   createdAt    DateTime @default(now())
   actor        User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([actorUserId], map: "AuditLog_actorUserId_fkey")
 }
 
 model User {
-  id                  String           @id @default(cuid())
-  name                String
-  cpf                 String?          @unique
-  phone               String?
-  photoUrl            String?          @db.LongText
-  email               String           @unique
-  passwordHash        String
-  role                String
-  districtScopeId     String?
-  mustChangePassword  Boolean          @default(false)
-  churchScopeId       String?
-  profileId           String?
-  status              UserStatus       @default(ACTIVE)
-  createdAt           DateTime         @default(now())
-  districtScope       District?        @relation("DistrictUsers", fields: [districtScopeId], references: [id])
-  churchScope         Church?          @relation("ChurchUsers", fields: [churchScopeId], references: [id])
-  auditLogs           AuditLog[]
-  ministries          MinistryUser[]
-  profile             Profile?         @relation(fields: [profileId], references: [id])
-  eventsCreated       Event[]          @relation("EventCreators")
-  permissionsOverride UserPermission[]
+  id                   String           @id @default(cuid())
+  name                 String
+  email                String           @unique
+  passwordHash         String
+  role                 String
+  districtScopeId      String?
+  churchScopeId        String?
+  createdAt            DateTime         @default(now())
+  cpf                  String?          @unique
+  mustChangePassword   Boolean          @default(false)
+  phone                String?
+  photoUrl             String?          @db.LongText
+  profileId            String?
+  status               UserStatus       @default(ACTIVE)
+  auditLogs            AuditLog[]
+  eventsCreated        Event[]          @relation("EventCreators")
+  ministries           MinistryUser[]
+  systemConfigsUpdated SystemConfig[]   @relation("SystemConfigUpdatedBy")
+  churchScope          Church?          @relation("ChurchUsers", fields: [churchScopeId], references: [id])
+  districtScope        District?        @relation("DistrictUsers", fields: [districtScopeId], references: [id])
+  profile              Profile?         @relation(fields: [profileId], references: [id])
+  permissionsOverride  UserPermission[]
 
   @@index([profileId])
+  @@index([churchScopeId], map: "User_churchScopeId_fkey")
+  @@index([districtScopeId], map: "User_districtScopeId_fkey")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  settings    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("SystemConfigUpdatedBy", fields: [updatedById], references: [id])
+
+  @@index([updatedById], map: "SystemConfig_updatedById_fkey")
 }
 
 model EventLot {
@@ -229,16 +255,16 @@ model Ministry {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   events        Event[]
-  registrations Registration[]
   users         MinistryUser[]
+  registrations Registration[]
 }
 
 model MinistryUser {
   userId     String
   ministryId String
   assignedAt DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id])
   ministry   Ministry @relation(fields: [ministryId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@id([userId, ministryId])
   @@index([ministryId])

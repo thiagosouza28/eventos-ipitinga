@@ -186,7 +186,6 @@ exports.Prisma.RegistrationScalarFieldEnum = {
   id: 'id',
   orderId: 'orderId',
   eventId: 'eventId',
-  ministryId: 'ministryId',
   fullName: 'fullName',
   cpf: 'cpf',
   birthDate: 'birthDate',
@@ -201,7 +200,8 @@ exports.Prisma.RegistrationScalarFieldEnum = {
   receiptPdfUrl: 'receiptPdfUrl',
   checkinAt: 'checkinAt',
   paidAt: 'paidAt',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  ministryId: 'ministryId'
 };
 
 exports.Prisma.RefundScalarFieldEnum = {
@@ -238,18 +238,26 @@ exports.Prisma.AuditLogScalarFieldEnum = {
 exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  cpf: 'cpf',
-  phone: 'phone',
-  photoUrl: 'photoUrl',
   email: 'email',
   passwordHash: 'passwordHash',
   role: 'role',
   districtScopeId: 'districtScopeId',
-  mustChangePassword: 'mustChangePassword',
   churchScopeId: 'churchScopeId',
+  createdAt: 'createdAt',
+  cpf: 'cpf',
+  mustChangePassword: 'mustChangePassword',
+  phone: 'phone',
+  photoUrl: 'photoUrl',
   profileId: 'profileId',
-  status: 'status',
-  createdAt: 'createdAt'
+  status: 'status'
+};
+
+exports.Prisma.SystemConfigScalarFieldEnum = {
+  id: 'id',
+  settings: 'settings',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  updatedById: 'updatedById'
 };
 
 exports.Prisma.EventLotScalarFieldEnum = {
@@ -336,9 +344,19 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 exports.UserStatus = exports.$Enums.UserStatus = {
   ACTIVE: 'ACTIVE',
@@ -355,6 +373,7 @@ exports.Prisma.ModelName = {
   WebhookEvent: 'WebhookEvent',
   AuditLog: 'AuditLog',
   User: 'User',
+  SystemConfig: 'SystemConfig',
   EventLot: 'EventLot',
   Expense: 'Expense',
   Ministry: 'Ministry',

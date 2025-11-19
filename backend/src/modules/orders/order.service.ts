@@ -225,6 +225,7 @@ export class OrderService {
           : null;
         return {
           ...person,
+          fullName: person.fullName.trim().toUpperCase(),
           cpf,
           storedPhoto,
           gender: parseGender(person.gender)

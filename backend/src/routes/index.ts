@@ -106,8 +106,15 @@ import {
   updateProfileStatusHandler,
   deleteProfileHandler
 } from "../controllers/profile.controller";
+import {
+  getPublicSystemConfigHandler,
+  getAdminSystemConfigHandler,
+  updateSystemConfigHandler
+} from "../controllers/system-config.controller";
 
 export const router = Router();
+
+router.get("/system/config", getPublicSystemConfigHandler);
 
 // PÃºblico
 router.get("/events", listPublicEventsHandler);
@@ -141,6 +148,9 @@ router.post("/admin/login", loginHandler);
 
 // Admin protegido
 router.use("/admin", authenticate);
+
+router.get("/admin/system/config", authorize("AdminGeral"), getAdminSystemConfigHandler);
+router.put("/admin/system/config", authorize("AdminGeral"), updateSystemConfigHandler);
 
 router.post("/admin/profile/change-password", changePasswordHandler);
 

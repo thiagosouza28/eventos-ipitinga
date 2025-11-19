@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="space-y-6">
+  <div class="space-y-6" data-uppercase-scope>
     <ErrorDialog
       :model-value="errorDialog.open"
       :title="errorDialog.title"
