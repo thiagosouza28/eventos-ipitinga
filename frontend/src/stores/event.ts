@@ -86,7 +86,7 @@ export const useEventStore = defineStore("event", () => {
     paymentMethod: PaymentMethod,
     people: PersonPayload[]
   ) => {
-    if (!event.value) throw new Error("Evento nao carregado");
+    if (!event.value) throw new Error("Evento não carregado");
     const response = await api.post("/inscriptions/batch", {
       eventId: event.value.id,
       buyerCpf,

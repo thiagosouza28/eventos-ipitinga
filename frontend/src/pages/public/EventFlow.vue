@@ -33,7 +33,7 @@
                 v-else
                 class="flex h-40 w-full items-center justify-center border border-dashed border-neutral-300 px-6 py-4 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500"
               >
-                Imagem indisponivel
+                Imagem indisponível
               </div>
             </div>
           </div>
@@ -249,11 +249,11 @@
             </p>
             <p>
               <span class="font-semibold text-neutral-700 dark:text-neutral-100">Distrito:</span>
-              {{ selectedDistrict?.name ?? "Nao selecionado" }}
+              {{ selectedDistrict?.name ?? "Não selecionado" }}
             </p>
             <p>
               <span class="font-semibold text-neutral-700 dark:text-neutral-100">Igreja:</span>
-              {{ selectedChurch?.name ?? "Nao selecionada" }}
+              {{ selectedChurch?.name ?? "Não selecionada" }}
             </p>
             <p>
               <span class="font-semibold text-neutral-700 dark:text-neutral-100">Participantes:</span>
@@ -433,15 +433,15 @@
             <p class="text-sm text-neutral-500">
               {{
                 isFreeEvent
-                  ? "Confira as informacoes antes de confirmar as inscricoes."
-                  : "Confira as informacoes antes de prosseguir com o pagamento."
+                  ? "Confira as informações antes de confirmar as inscrições."
+                  : "Confira as informações antes de prosseguir com o pagamento."
               }}
             </p>
           </div>
           <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60">
             <p>CPF responsavel: {{ buyerCpf }}</p>
-            <p>Distrito: {{ selectedDistrict?.name ?? "Nao selecionado" }}</p>
-            <p>Igreja: {{ selectedChurch?.name ?? "Nao selecionada" }}</p>
+            <p>Distrito: {{ selectedDistrict?.name ?? "Não selecionado" }}</p>
+            <p>Igreja: {{ selectedChurch?.name ?? "Não selecionada" }}</p>
           </div>
           <div
             v-if="!isFreeEvent"
@@ -475,7 +475,7 @@
               v-if="isManualPaymentSelected"
               class="text-xs text-primary-600 dark:text-primary-200"
             >
-              Pagamentos manuais serão confirmados pela tesouraria. Guarde o comprovante para quitar a pendância.
+              Pagamentos manuais serão confirmados pela tesouraria. Guarde o comprovante para quitar a pendência.
             </p>
             <p
               v-if="isFreePaymentSelected"
@@ -879,7 +879,7 @@ const loadPersistedState = () => {
     }
     if (typeof saved.currentStep === "number") currentStep.value = saved.currentStep;
   } catch (error) {
-    console.warn("Nao foi possivel carregar o estado salvo do formulario", error);
+    console.warn("Não foi possível carregar o estado salvo do formulário", error);
   }
 };
 const persistState = () => {
@@ -899,7 +899,7 @@ const persistState = () => {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (error) {
-    console.warn("Nao foi possivel salvar o estado local do formulario", error);
+    console.warn("Não foi possível salvar o estado local do formulário", error);
   }
 };
 const clearPersistedState = () => {
@@ -964,7 +964,7 @@ const disableStatePersistence = () => {
       { title: "CPF", description: "Verifique pedidos pendentes" },
       { title: "Unidade", description: "Escolha distrito e igreja" },
       { title: "Participantes", description: "Dados individuais" },
-      { title: "Revisao", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
+      { title: "Revisão", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
     ];
     if (!isFreeEvent.value) {
       base.push({ title: "Pagamento", description: "Pix com QR Code" });

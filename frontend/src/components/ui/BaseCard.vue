@@ -1,7 +1,6 @@
 <template>
   <div
-    class="rounded-[var(--card-radius)] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] p-5 text-[color:var(--text-base)] shadow transition sm:p-6"
-    :style="{ boxShadow: 'var(--card-shadow)', borderWidth: 'var(--card-border-width)' }"
+    class="rounded-[28px] border border-[color:var(--border-card)] bg-[color:var(--card)]/95 p-7 text-[color:var(--text)] shadow-[0_25px_80px_rgba(15,23,42,0.08)] backdrop-blur-md transition dark:shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
   >
     <slot />
   </div>

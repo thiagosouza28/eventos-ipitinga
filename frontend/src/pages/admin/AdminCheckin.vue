@@ -140,7 +140,7 @@
             class="h-40 w-full object-cover"
           />
           <span v-else class="px-3 text-center text-xs text-neutral-500 dark:text-neutral-300">
-            Foto nao enviada
+            Foto não enviada
           </span>
         </div>
         <div class="flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -164,7 +164,7 @@
             </span>
           </p>
           <p>Evento: {{ pendingCheckin.registration.eventTitle }}</p>
-          <p>Periodo: {{ pendingCheckin.registration.eventPeriod }}</p>
+          <p>Período: {{ pendingCheckin.registration.eventPeriod }}</p>
           <p>
             Igreja/Distrito: {{ pendingCheckin.registration.churchName }} -
             {{ pendingCheckin.registration.districtName }}
@@ -315,10 +315,9 @@ const historyLoading = ref(false);
 let feedbackTimer: number | null = null;
 
 const cameraConstraints = computed<MediaTrackConstraints>(() => ({
-  facingMode:
-    facingMode.value === "environment"
-      ? { ideal: "environment" }
-      : { ideal: "user" }
+  facingMode: facingMode.value === "environment" ? { ideal: "environment" } : { ideal: "user" },
+  width: { ideal: 1280 },
+  height: { ideal: 720 }
 }));
 const awaitingScanConfirmation = computed(
   () => pendingCheckin.value?.source === "scan" && pendingCheckin.value.status === "READY"
@@ -341,7 +340,7 @@ const fallbackEventInfo = computed(() => {
   const registration = pendingCheckin.value?.registration;
   if (!registration) return null;
   const details = [registration.eventLocation, registration.eventPeriod]
-    .filter((value) => value && value !== "Nao informado")
+    .filter((value) => value && value !== "Não informado")
     .join(" - ");
   return {
     title: registration.eventTitle || "Evento",
@@ -401,7 +400,7 @@ const summaryCards = computed(() => {
     },
     {
       key: "TOTAL",
-      title: "Inscricoes",
+      title: "Inscrições",
       label: "Total encontradas",
       value: total,
       accent: "from-neutral-600 to-neutral-800",

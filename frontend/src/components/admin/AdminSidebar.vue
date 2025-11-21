@@ -1,33 +1,39 @@
 <template>
-  <div class="hidden h-full md:flex" :class="[isOpen ? 'w-60' : 'w-20']">
+  <div
+    class="hidden md:flex"
+    :style="{ width: isOpen ? '200px' : '80px' }"
+  >
     <aside
-      class="flex h-full w-full flex-col rounded-[28px] bg-white px-3 py-6 text-sm text-[#667085] shadow-lg shadow-[rgba(15,23,42,0.08)] transition-all duration-300"
+      class="sticky top-0 flex h-screen flex-col rounded-r-[36px] rounded-l-[32px] bg-gradient-to-b from-[#f7f8ff] via-[#f0f4ff] to-[#e9efff] px-4 py-6 text-sm text-[#69708f] shadow-[0_20px_60px_rgba(106,120,255,0.18)] transition-all duration-300 dark:from-[#0f1427] dark:via-[#0b1121] dark:to-[#060915]"
     >
       <button
         type="button"
-        class="mb-8 flex h-11 w-11 items-center justify-center rounded-full border border-[#E4E7EC] text-[#1A1A1A] transition hover:bg-[#F5F7FA]"
+        class="mb-8 flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#5a6bff] shadow-[0_10px_20px_rgba(76,87,125,0.15)] transition hover:bg-[#f8f9ff] dark:border-[rgba(255,255,255,0.1)] dark:bg-[#10142b] dark:text-white"
         @click="$emit('toggle')"
       >
         <Bars3Icon class="h-5 w-5" aria-hidden="true" />
         <span class="sr-only">Alternar menu</span>
       </button>
-      <nav class="flex flex-1 flex-col items-center justify-center space-y-5">
+      <nav class="flex flex-1 flex-col space-y-2">
         <RouterLink
           v-for="item in menuItems"
           :key="item.label"
           :to="item.to"
-          class="group flex w-full items-center rounded-2xl px-2 py-2 text-sm font-medium transition-all duration-200"
+          class="group flex items-center rounded-[20px] px-3 py-3 text-sm font-medium tracking-wide transition-all duration-300"
           :class="[
-            isRouteActive(item.to) ? 'bg-[#EEF4FF] text-[#1A1A1A]' : 'text-[#667085] hover:bg-[#F5F7FA]',
-            isOpen ? 'justify-start pl-3 pr-4' : 'justify-center'
+            isOpen ? 'justify-start' : 'justify-center',
+            isActive(item.to)
+              ? 'bg-white text-[#1f4fff] shadow-[0_15px_35px_rgba(47,83,192,0.18)] dark:bg-[#10172f]'
+              : 'text-[#6b7280] hover:bg-white/70 hover:text-[#1f4fff] dark:text-[#c2c9e4] dark:hover:bg-[#10172f]'
           ]"
         >
-          <component :is="item.icon" class="h-5 w-5 text-[#667085] transition-colors group-hover:text-[#344054]" />
+          <component
+            :is="item.icon"
+            class="h-5 w-5 transition-colors"
+            :class="[isActive(item.to) ? 'text-[#1f4fff]' : 'text-[#9aa4c4] group-hover:text-[#1f4fff] dark:text-[#8d99c9]']"
+          />
           <transition name="label-fade">
-            <span
-              v-if="isOpen"
-              class="ml-3 text-base font-medium text-[#1A1A1A] transition duration-200"
-            >
+            <span v-if="isOpen" class="ml-3 text-sm font-semibold tracking-tight text-[#1f2a44] dark:text-white">
               {{ item.label }}
             </span>
           </transition>
@@ -39,28 +45,28 @@
   <transition name="sidebar-overlay">
     <div v-if="isOpen" class="fixed inset-0 z-40 flex md:hidden">
       <div class="absolute inset-0 bg-black/40" @click="$emit('toggle')" />
-      <aside class="relative ml-0 flex h-full w-60 flex-col bg-white px-4 py-6 shadow-2xl">
+      <aside class="relative ml-0 flex h-full w-64 flex-col rounded-r-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] px-4 py-6 shadow-2xl">
         <div class="flex items-center justify-between">
-          <p class="text-sm font-semibold text-[#1A1A1A]">Menu</p>
+          <p class="text-sm font-semibold text-[color:var(--text)]">Menu</p>
           <button
             type="button"
-            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#E4E7EC]"
+            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)]"
             @click="$emit('toggle')"
           >
             <XMarkIcon class="h-5 w-5" aria-hidden="true" />
             <span class="sr-only">Fechar menu</span>
           </button>
         </div>
-        <nav class="mt-6 flex flex-col space-y-4">
+        <nav class="mt-6 flex flex-col space-y-4 overflow-y-auto">
           <RouterLink
             v-for="item in menuItems"
             :key="`mobile-${item.label}`"
             :to="item.to"
-            class="flex items-center rounded-2xl px-3 py-2 text-base font-medium transition hover:bg-[#F5F7FA]"
-            :class="[isRouteActive(item.to) ? 'text-[#1A1A1A]' : 'text-[#667085]']"
+            class="flex items-center rounded-2xl px-3 py-2 text-base font-medium transition hover:bg-[color:var(--surface-card-alt)]"
+            :class="[isActive(item.to) ? 'text-[color:var(--primary)]' : 'text-[color:var(--text-muted)]']"
             @click="$emit('toggle')"
           >
-            <component :is="item.icon" class="h-5 w-5 text-[#667085]" />
+            <component :is="item.icon" class="h-5 w-5 text-[color:var(--text-muted)]" />
             <span class="ml-3">{{ item.label }}</span>
           </RouterLink>
         </nav>
@@ -99,6 +105,8 @@ const isRouteActive = (to: RouteLocationRaw) => {
   }
   return false;
 };
+
+const isActive = (to: RouteLocationRaw) => isRouteActive(to);
 </script>
 
 <style scoped>

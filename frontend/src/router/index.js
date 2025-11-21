@@ -21,6 +21,7 @@ const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
 const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
 const AdminAccessDenied = () => import("../pages/admin/AdminAccessDenied.vue");
+const AdminSystemConfig = () => import("../pages/admin/AdminSystemConfig.vue");
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -119,6 +120,12 @@ export const router = createRouter({
             meta: { requiresAuth: true, requiresPermission: { module: "checkin", action: "view" } }
         },
         {
+            path: "/admin/system-config",
+            name: "admin-system-config",
+            component: AdminSystemConfig,
+            meta: { requiresAuth: true, requiresRole: "AdminGeral" }
+        },
+        {
             path: "/admin/acesso-negado",
             name: "admin-access-denied",
             component: AdminAccessDenied,
@@ -150,6 +157,19 @@ router.beforeEach((to, _from, next) => {
                     module: requirement.module,
                     action: requirement.action ?? "view",
                     from: to.fullPath
+                }
+            });
+            return;
+        }
+    }
+    if (to.meta.requiresRole && auth.isAuthenticated) {
+        const requiredRole = to.meta.requiresRole;
+        if ((auth.user?.role) !== requiredRole) {
+            next({
+                name: "admin-access-denied",
+                query: {
+                    from: to.fullPath,
+                    role: requiredRole
                 }
             });
             return;

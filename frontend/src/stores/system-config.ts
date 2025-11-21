@@ -60,16 +60,25 @@ const toRgbTuple = (value?: string | null) => {
 };
 
 const buildThemeCss = (selector: string, profile: ThemeProfile) => {
+  const primaryBase = toRgbTuple(profile.palette.primary["500"]);
+  const primaryHover = toRgbTuple(profile.palette.primary["600"]);
   const lines: string[] = [
     `--app-bg: ${profile.tokens.appBackground};`,
+    `--background: ${profile.tokens.appBackground};`,
     `--app-shell-bg: ${profile.tokens.shellBackground};`,
     `--surface-card: ${profile.tokens.surface};`,
+    `--card: ${profile.tokens.surface};`,
     `--surface-card-alt: ${profile.tokens.surfaceAlt};`,
     `--surface-blur: ${profile.tokens.blurLayer};`,
     `--text-base: ${profile.tokens.textBase};`,
+    `--text: ${profile.tokens.textBase};`,
     `--text-muted: ${profile.tokens.textMuted};`,
     `--border-card: ${profile.tokens.border};`,
+    `--border: ${profile.tokens.border};`,
     `--accent-color: ${profile.tokens.accent};`,
+    `--primary-rgb: ${primaryBase};`,
+    `--primary: rgb(${primaryBase});`,
+    `--primary-hover: rgb(${primaryHover});`,
     `--card-shadow: ${profile.tokens.cardShadow};`,
     `--card-shadow-strong: ${profile.tokens.cardShadowStrong};`,
     `--hero-gradient: ${profile.tokens.gradientAccent};`,
@@ -91,6 +100,7 @@ const buildGeneralCss = (config: SystemConfigSettings) => {
   const { branding, typography, layout, components, reports } = config;
   const lines: string[] = [
     `--font-sans: ${branding.fontFamily};`,
+    `--font-family: ${branding.fontFamily};`,
     `--font-heading: ${branding.headingFontFamily};`,
     `--font-size-base: ${typography.baseFontSize}px;`,
     `--font-scale-ratio: ${typography.scaleRatio};`,
@@ -101,11 +111,13 @@ const buildGeneralCss = (config: SystemConfigSettings) => {
     `--radius-md: ${layout.borderRadius.md}px;`,
     `--radius-lg: ${layout.borderRadius.lg}px;`,
     `--radius-pill: ${layout.borderRadius.pill}px;`,
+    `--radius: ${layout.borderRadius.md}px;`,
     `--spacing-xs: ${layout.spacing.xs}px;`,
     `--spacing-sm: ${layout.spacing.sm}px;`,
     `--spacing-md: ${layout.spacing.md}px;`,
     `--spacing-lg: ${layout.spacing.lg}px;`,
     `--spacing-xl: ${layout.spacing.xl}px;`,
+    `--spacing-base: ${layout.spacing.md}px;`,
     `--container-width: ${layout.containerWidth}px;`,
     `--button-radius: ${components.button.borderRadius}px;`,
     `--button-shadow: ${components.button.shadow};`,
@@ -177,8 +189,8 @@ export const useSystemConfigStore = defineStore("systemConfig", {
         this.setConfig(response.data);
         this.error = null;
       } catch (error) {
-        console.warn("Falha ao carregar configuracoes do sistema", error);
-        this.error = "Nao foi possivel carregar configuracoes. Usando padrao.";
+        console.warn("Falha ao carregar configurações do sistema", error);
+        this.error = "Não foi possível carregar configurações. Usando padrão.";
         this.setConfig(defaultSystemConfig);
       } finally {
         this.loading = false;
@@ -194,11 +206,15 @@ export const useSystemConfigStore = defineStore("systemConfig", {
       if (auth.token) {
         headers.Authorization = `Bearer ${auth.token}`;
       }
+      const normalizedPayload = JSON.parse(JSON.stringify(payload)) as PartialSystemConfigSettings;
       const response = await axios.put<SystemConfigResponse>(
         `${API_BASE_URL}/admin/system/config`,
-        payload,
+        normalizedPayload,
         {
-          headers
+          headers: {
+            "Content-Type": "application/json",
+            ...headers
+          }
         }
       );
       this.setConfig(response.data);

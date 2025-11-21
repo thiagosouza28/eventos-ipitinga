@@ -114,7 +114,7 @@
         </p>
       </div>
       <div
-        class="mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
+        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
       >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead

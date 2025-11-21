@@ -11,11 +11,11 @@
       <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
         <div class="max-w-3xl">
           <p class="text-xs uppercase tracking-[0.3em] text-primary-500 dark:text-primary-300">
-            Gestao de eventos
+            Gestão de eventos
           </p>
           <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Eventos</h1>
           <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Cadastre novos eventos, edite os existentes e controle o status publico e financeiro.
+            Cadastre novos eventos, edite os existentes e controle o status público e financeiro.
           </p>
         </div>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -48,20 +48,20 @@
           </h2>
         </div>
         <p class="text-xs text-neutral-500 dark:text-neutral-400">
-          Clique em editar para ajustar dados ou exclua eventos sem inscricoes.
+          Clique em editar para ajustar dados ou exclua eventos sem inscrições.
         </p>
       </div>
-      <div class="mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40">
+      <div class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40">
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead class="bg-white/50 text-[11px] uppercase tracking-wide text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
-              <th class="px-4 py-3">Titulo</th>
-              <th class="px-4 py-3">Periodo</th>
+              <th class="px-4 py-3">Título</th>
+              <th class="px-4 py-3">Período</th>
               <th class="px-4 py-3">Valor vigente</th>
               <th class="px-4 py-3">Regra de valor pendente</th>
               <th class="px-4 py-3">Lote atual</th>
               <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3 text-right">Acoes</th>
+              <th class="px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -158,7 +158,7 @@
       <form class="mt-2 grid gap-4 md:grid-cols-2" @submit.prevent="submitCreate">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Titulo
+            Título
           </label>
           <input
             v-model="createForm.title"
@@ -389,7 +389,7 @@
       <form class="mt-2 grid gap-4 md:grid-cols-2" @submit.prevent="submitEdit">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Titulo
+            Título
           </label>
           <input
             v-model="editForm.title"
@@ -595,7 +595,7 @@
             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500 disabled:opacity-70"
             :disabled="savingEdit"
           >
-            {{ savingEdit ? "Salvando..." : "Salvar alteracoes" }}
+            {{ savingEdit ? "Salvando..." : "Salvar alterações" }}
           </button>
         </div>
       </form>
@@ -646,7 +646,7 @@
 
           <dl class="mt-6 grid gap-4 text-sm text-white/80 sm:grid-cols-2">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Periodo</dt>
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Período</dt>
               <dd class="mt-1 font-semibold text-white">
                 {{ formatDate(details.event?.startDate ?? '') }} - {{ formatDate(details.event?.endDate ?? '') }}
               </dd>
@@ -657,7 +657,7 @@
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Ministerio</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? 'Nao vinculado' }}</dd>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? 'Não vinculado' }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Valor atual</dt>
@@ -680,7 +680,7 @@
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Idade minima</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? 'Nao informada' }}</dd>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? 'Não informada' }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Descricao</dt>
@@ -724,7 +724,7 @@
                     <div>
                       <p class="text-base font-semibold text-white">{{ lot.name }}</p>
                       <p class="text-xs text-white/70">
-                        Valor: {{ formatCurrency(lot.priceCents) }} | Periodo:
+                        Valor: {{ formatCurrency(lot.priceCents) }} | Período:
                         {{ formatDateTimeBr(lot.startsAt) }}
                         <span v-if="lot.endsAt">- {{ formatDateTimeBr(lot.endsAt) }}</span>
                         <span v-else>- sem data final</span>
@@ -777,7 +777,7 @@
           </div>
 
           <div v-else class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
-            Este evento e gratuito. Nao ha lotes cadastrados e todas as inscricoes sao confirmadas automaticamente.
+            Este evento é gratuito. Não há lotes cadastrados e todas as inscrições são confirmadas automaticamente.
           </div>
 
           <div class="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:justify-between">
@@ -788,7 +788,7 @@
               rel="noopener"
               class="inline-flex items-center justify-center rounded-full border border-primary-300/50 px-5 py-2 text-sm font-semibold text-primary-200 transition hover:bg-primary-500/20"
             >
-              Ver pagina publica
+              Ver página pública
             </RouterLink>
             <button
               type="button"
@@ -1028,9 +1028,9 @@ const confirmDelete = reactive({
 
 const confirmDeleteDescription = computed(() => {
   if (!confirmDelete.target) {
-    return "Confirme a exclusao do evento selecionado.";
+    return "Confirme a exclusão do evento selecionado.";
   }
-  return `Tem certeza que deseja excluir o evento "${confirmDelete.target.title}"? Esta acao nao pode ser desfeita.`;
+  return `Tem certeza que deseja excluir o evento "${confirmDelete.target.title}"? Esta acao não pode ser desfeita.`;
 });
 
 const details = reactive({
@@ -1605,7 +1605,7 @@ onMounted(async () => {
       createModalOpen.value = true;
     }
   } catch (error) {
-    showError("Falha ao carregar eventos ou ministerios", error);
+    showError("Falha ao carregar eventos ou ministérios", error);
   }
 });
 </script>

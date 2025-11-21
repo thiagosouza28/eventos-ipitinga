@@ -165,7 +165,7 @@
             </div>
           </div>
           <div v-if="editRequiresMinistry" class="md:col-span-2">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Ministerios</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Ministérios</label>
             <div class="mt-2 grid gap-2 sm:grid-cols-2">
               <label
                 v-for="ministry in catalog.ministries"
@@ -201,7 +201,7 @@
               v-if="editDialog.loading"
               class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
             />
-            <span>{{ editDialog.loading ? "Salvando..." : "Salvar alteracoes" }}</span>
+            <span>{{ editDialog.loading ? "Salvando..." : "Salvar alterações" }}</span>
           </button>
         </div>
       </form>
@@ -216,14 +216,14 @@
       }"
     >
       <div v-if="permissionDialog.loading" class="flex h-24 items-center justify-center text-sm text-neutral-500 dark:text-neutral-300">
-        Carregando permissōes...
+        Carregando permissões...
       </div>
       <div v-else-if="permissionDialog.user" class="space-y-4">
         <p class="text-sm text-neutral-600 dark:text-neutral-300">
-          Ajuste o que o usuārio <span class="font-semibold text-primary-600 dark:text-primary-200">{{ permissionDialog.user.name }}</span>
+          Ajuste o que o usuário <span class="font-semibold text-primary-600 dark:text-primary-200">{{ permissionDialog.user.name }}</span>
           pode fazer além do perfil
           <span class="font-semibold">{{ permissionDialog.user.profile?.name ?? "sem perfil definido" }}</span>.
-          Desative um módulo para herdar as permissōes originais.
+          Desative um módulo para herdar as permissões originais.
         </p>
         <div v-for="module in permissionModules" :key="module.key" class="rounded-2xl border border-neutral-100 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
           <div class="flex flex-wrap items-center justify-between gap-3">
@@ -305,9 +305,9 @@
           <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
             Central de acesso
           </p>
-          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Usuarios</h1>
+          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Usuários</h1>
           <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Cadastre usuarios com acesso ao painel administrativo e controle suas permissoes.
+            Cadastre usuários com acesso ao painel administrativo e controle suas permissões.
           </p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -322,7 +322,7 @@
             class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
             @click="toggleCreateForm"
           >
-            {{ showCreateForm ? "Fechar formulario" : "+ Novo usuario" }}
+            {{ showCreateForm ? "Fechar formulário" : "+ Novo usuário" }}
           </button>
         </div>
       </div>
@@ -409,7 +409,7 @@
             </select>
           </div>
           <div class="space-y-2">
-            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Perfil de permissao</label>
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Perfil de permissão</label>
             <select
               v-model="form.profileId"
               class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
@@ -457,7 +457,7 @@
             </select>
           </div>
           <div v-if="requiresMinistry" class="space-y-2 md:col-span-2">
-            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Ministerios</label>
+            <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">Ministérios</label>
             <div class="mt-1 grid gap-2 sm:grid-cols-2">
               <label
                 v-for="ministry in catalog.ministries"
@@ -505,7 +505,7 @@
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
-            Usuarios cadastrados
+            Usuários cadastrados
           </p>
           <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">
             Painel de credenciais ({{ admin.users.length }})
@@ -520,7 +520,7 @@
         </button>
       </div>
       <div
-        class="mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
+        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
       >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead
@@ -530,9 +530,9 @@
               <th class="px-5 py-3">Nome</th>
               <th class="px-5 py-3">Email</th>
               <th class="px-5 py-3">Perfil</th>
-              <th class="px-5 py-3">Ministerios</th>
+              <th class="px-5 py-3">Ministérios</th>
               <th class="px-5 py-3">Status</th>
-              <th class="px-5 py-3 text-right">Acoes</th>
+              <th class="px-5 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 dark:divide-white/5">
@@ -789,8 +789,8 @@ const openPermissionDialog = async (user: AdminUser) => {
       return acc;
     }, {});
   } catch (error: any) {
-    const message = error.response?.data?.message ?? "Nao foi possivel carregar as permissǒes do usuario.";
-    showError("Falha ao carregar permissǒes", message);
+    const message = error.response?.data?.message ?? "Não foi possível carregar as permissões do usuário.";
+    showError("Falha ao carregar permissões", message);
     resetPermissionDialog();
   } finally {
     permissionDialog.loading = false;
@@ -809,8 +809,8 @@ const savePermissionOverrides = async () => {
     await admin.updateUserPermissions(permissionDialog.user.id, payload);
     resetPermissionDialog();
   } catch (error: any) {
-    const message = error.response?.data?.message ?? "Nao foi possivel salvar as permissǒes.";
-    showError("Falha ao salvar permissǒes", message);
+    const message = error.response?.data?.message ?? "Não foi possível salvar as permissões.";
+    showError("Falha ao salvar permissões", message);
   } finally {
     permissionDialog.saving = false;
   }
@@ -1082,8 +1082,8 @@ const handleUpdateUser = async () => {
     await admin.updateUser(editDialog.userId, payload);
     closeEditDialog();
   } catch (error: any) {
-    const message = error.response?.data?.message ?? "Nao foi possivel atualizar o usuario.";
-    showError("Erro ao atualizar usuario", message);
+    const message = error.response?.data?.message ?? "Não foi possível atualizar o usuário.";
+    showError("Erro ao atualizar usuário", message);
   } finally {
     editDialog.loading = false;
   }
@@ -1104,7 +1104,7 @@ const handleConfirmReset = async () => {
       password: result.temporaryPassword
     };
   } catch (error: any) {
-    const message = error.response?.data?.message ?? "Nao foi possivel resetar a senha.";
+    const message = error.response?.data?.message ?? "Não foi possível resetar a senha.";
     showError("Erro ao resetar senha", message);
   } finally {
     passwordDialog.loading = false;
@@ -1117,7 +1117,7 @@ const refreshData = async () => {
   try {
     await Promise.all([admin.loadUsers(), admin.loadProfiles()]);
   } catch (error: any) {
-    showError("Falha ao carregar usuarios", error.response?.data?.message ?? "Tente novamente mais tarde.");
+    showError("Falha ao carregar usuários", error.response?.data?.message ?? "Tente novamente mais tarde.");
   }
 };
 

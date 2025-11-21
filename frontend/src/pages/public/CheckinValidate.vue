@@ -35,7 +35,7 @@
                 </span>
               </p>
               <p>Local: {{ result.registration.eventLocation }}</p>
-              <p>Periodo: {{ result.registration.eventPeriod }}</p>
+              <p>Período: {{ result.registration.eventPeriod }}</p>
               <p>
                 Igreja/Distrito:
                 {{ result.registration.churchName }} - {{ result.registration.districtName }}
@@ -70,7 +70,7 @@
               class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500"
               @click="goToHome"
             >
-              Ir para pagina inicial
+              Ir para página inicial
             </button>
           </div>
         </div>
@@ -188,7 +188,7 @@ const validateLink = async () => {
   } catch (error: any) {
     errorMessage.value =
       error?.response?.data?.message ??
-      "Nao foi possivel validar o check-in. Procure a equipe de recepcao.";
+      "Não foi possível validar o check-in. Procure a equipe de recepção.";
   } finally {
     loading.value = false;
   }
@@ -207,7 +207,7 @@ const confirmPresence = async () => {
     password.value = "";
   } catch (error: any) {
     confirmError.value =
-      error?.response?.data?.message ?? "Nao foi possivel confirmar o check-in. Verifique a senha.";
+      error?.response?.data?.message ?? "Não foi possível confirmar o check-in. Verifique a senha.";
   } finally {
     confirming.value = false;
   }

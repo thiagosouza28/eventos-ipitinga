@@ -588,7 +588,7 @@
           </div>
           <div class="md:col-span-2 flex justify-end gap-3">
             <button type="button" class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-200 dark:border-neutral-700 dark:hover:bg-neutral-800" @click="closeEdit">Fechar</button>
-            <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">Salvar alteracoes</button>
+            <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">Salvar alterações</button>
           </div>
         </form>
         <div class="mt-4">
@@ -724,7 +724,7 @@ const applyFilters = async () => {
   try {
     await admin.loadRegistrations(buildFilterParams())
   } catch (error) {
-    showError('Falha ao carregar inscricoes', error)
+    showError('Falha ao carregar inscrições', error)
   } finally {
     isApplying.value = false
     if (pendingApply.value) { pendingApply.value = false; scheduleApply(true) }
@@ -783,7 +783,7 @@ const downloadReportPdf = async () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `relatorio-inscricoes-${reportType.value}.pdf`
+    a.download = `relatorio-inscrições-${reportType.value}.pdf`
     document.body.appendChild(a)
     a.click()
     a.remove()
@@ -813,14 +813,14 @@ const findEventPriceCents = (eventId: string) => {
   const event = admin.events.find((e) => e.id === eventId)
   return event?.currentPriceCents ?? event?.priceCents ?? 0
 }
-const findDistrictName = (id: string) => catalog.districts.find((d) => d.id === id)?.name ?? 'Nao informado'
-const findChurchName = (id: string) => catalog.churches.find((c) => c.id === id)?.name ?? 'Nao informado'
+const findDistrictName = (id: string) => catalog.districts.find((d) => d.id === id)?.name ?? 'Não informado'
+const findChurchName = (id: string) => catalog.churches.find((c) => c.id === id)?.name ?? 'Não informado'
 
 const brDateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
 function formatBirthDate(value: string | Date | null | undefined) {
-  if (!value) return 'Nao informado'
+  if (!value) return 'Não informado'
   const src = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(src.getTime())) return 'Nao informado'
+  if (Number.isNaN(src.getTime())) return 'Não informado'
   const d = new Date(src.getUTCFullYear(), src.getUTCMonth(), src.getUTCDate())
   return brDateFormatter.format(d)
 }
@@ -1074,7 +1074,7 @@ const saveNewRegistration = async () => {
   }
 }
 
-// Acoes e helpers adicionais
+// Ações e helpers adicionais
 const findEventSlug = (eventId: string) => admin.events.find((e) => e.id === eventId)?.slug ?? ''
 
 const resolvePhotoUrl = (photoUrl?: string | null) => {
@@ -1214,17 +1214,17 @@ const isPaymentLinkVisible = (registration: Registration) =>
 const copyPaymentLink = async (registration: Registration) => {
   if (!isPaymentLinkVisible(registration)) return
   const slug = findEventSlug(registration.eventId)
-  if (!slug) { showError('Nao foi possivel gerar link', new Error('Evento sem slug disponivel.')); return }
+  if (!slug) { showError('Não foi possível gerar link', new Error('Evento sem slug disponível.')); return }
   try {
     // Solicitar ao backend um link exclusivo (pode dividir o pedido, se necessário)
     const result = await admin.regenerateRegistrationPaymentLink(registration.id)
     const orderId = result?.orderId ?? registration.orderId
-    if (!orderId) { showError('Nao foi possivel gerar link', new Error('Pedido indisponivel.')); return }
+    if (!orderId) { showError('Não foi possível gerar link', new Error('Pedido indisponível.')); return }
     const link = `${window.location.origin}/evento/${slug}/pagamento/${orderId}`
     try { await navigator.clipboard.writeText(link) } catch {}
     window.open(link, '_blank')
   } catch (e) {
-    showError('Nao foi possivel gerar link', e)
+    showError('Não foi possível gerar link', e)
   }
 }
 
@@ -1244,7 +1244,7 @@ const openConfirm = (action: ConfirmAction, registration: Registration) => {
   confirmState.registration = registration
   confirmState.open = true
   confirmState.cancelLabel = 'Voltar'
-  if (action === 'cancel') { confirmState.title = 'Cancelar inscricao'; confirmState.description = 'Cancelar a inscricao de ' + registration.fullName + '? Esta acao nao pode ser desfeita.'; confirmState.confirmLabel = 'Cancelar'; confirmState.type = 'danger' }
+  if (action === 'cancel') { confirmState.title = 'Cancelar inscricao'; confirmState.description = 'Cancelar a inscricao de ' + registration.fullName + '? Esta acao não pode ser desfeita.'; confirmState.confirmLabel = 'Cancelar'; confirmState.type = 'danger' }
   else if (action === 'refund') { confirmState.title = 'Estornar inscricao'; confirmState.description = 'Confirmar estorno da inscricao de ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar estorno'; confirmState.type = 'default' }
   else if (action === 'confirm-cash') { confirmState.title = 'Confirmar pagamento em dinheiro'; confirmState.description = 'Confirmar recebimento manual em dinheiro para ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar pagamento'; confirmState.type = 'default' }
   else if (action === 'reactivate') { confirmState.title = 'Reativar inscricao'; confirmState.description = 'Reativar a inscricao de ' + registration.fullName + ' e gerar um novo link de pagamento?'; confirmState.confirmLabel = 'Reativar'; confirmState.type = 'default' }
@@ -1281,13 +1281,13 @@ const executeConfirmAction = async () => {
           try { await navigator.clipboard.writeText(link) } catch {}
           window.open(link, '_blank')
         } else {
-          showError('Nao foi possivel gerar link', new Error('Dados insuficientes para gerar pagamento.'))
+          showError('Não foi possível gerar link', new Error('Dados insuficientes para gerar pagamento.'))
         }
       } finally {
         processing.open = false
       }
     } else if (action === 'confirm-cash') {
-      if (!registration.orderId) { showError('Nao foi possivel confirmar pagamento', new Error('Inscricao sem pedido associado.')); return }
+      if (!registration.orderId) { showError('Não foi possível confirmar pagamento', new Error('Inscrição sem pedido associado.')); return }
       processing.message = 'Confirmando pagamento...'
       processing.open = true
       await ensureMinDelay(admin.confirmOrderPayment(registration.orderId, { manualReference: 'CASH-ADMIN', paidAt: new Date().toISOString() }), 2000)
