@@ -632,7 +632,14 @@ export class RegistrationService {
       include: {
         event: true,
         district: true,
-        church: true
+        church: true,
+        order: {
+          select: {
+            totalCents: true,
+            feeCents: true,
+            pricingLot: { select: { name: true } }
+          }
+        }
       }
     });
     if (!registration) throw new NotFoundError("Inscricao nao encontrada");
@@ -682,7 +689,12 @@ export class RegistrationService {
       createdAt: registration.createdAt,
       paymentMethod: paymentMethodLabel,
       paymentDate,
-      photoUrl: toPublicPhotoUrl(registration.photoUrl)
+      photoUrl: toPublicPhotoUrl(registration.photoUrl),
+      priceCents: registration.priceCents ?? 0,
+      feeCents: registration.order?.feeCents ?? 0,
+      totalCents: registration.order?.totalCents ?? registration.priceCents ?? 0,
+      lotName: registration.order?.pricingLot?.name ?? "Lote vigente",
+      participantType: "Inscrição individual"
     });
 
     const filePath = path.join(receiptsDir, `${registrationId}.pdf`);
@@ -775,14 +787,8 @@ export class RegistrationService {
       throw new AppError("Token invalido", 403);
     }
 
+    await this.generateReceipt(registrationId);
     const filePath = path.join(receiptsDir, `${registrationId}.pdf`);
-    const exists = await fs
-      .access(filePath)
-      .then(() => true)
-      .catch(() => false);
-    if (!exists) {
-      await this.generateReceipt(registrationId);
-    }
     const buffer = await fs.readFile(filePath);
     return buffer;
   }
