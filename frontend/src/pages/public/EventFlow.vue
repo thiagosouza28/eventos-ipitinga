@@ -512,7 +512,7 @@
               </div>
               <div class="mt-3 grid gap-1 text-sm text-neutral-500 sm:grid-cols-2">
                 <p>
-                  Nascimento: {{ formatDate(person.birthDate) }}
+                  Nascimento: {{ formatBirthDateLabel(person.birthDate) }}
                   <span v-if="calculateAgeYears(person.birthDate) !== null">
                     ({{ calculateAgeYears(person.birthDate) }} anos)
                   </span>
@@ -1028,6 +1028,18 @@ const disableStatePersistence = () => {
     catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
   const getGenderLabel = (value: string) =>
     genderOptions.find((option) => option.value === value)?.label ?? value;
+
+  const formatBirthDateLabel = (birthDate?: string | null): string => {
+    if (!birthDate) return "--";
+    const match = birthDate.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      const [, year, month, day] = match;
+      return `${day}/${month}/${year}`;
+    }
+    const date = new Date(birthDate);
+    if (Number.isNaN(date.getTime())) return "--";
+    return date.toLocaleDateString("pt-BR");
+  };
 
   const calculateAgeYears = (birthDate: string): number | null => {
     if (!birthDate) return null;

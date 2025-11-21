@@ -239,7 +239,7 @@
       </div>
       <div
         v-else
-        class="overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
+        class="overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
       >
         <table class="min-w-full table-auto text-sm text-neutral-700 dark:text-neutral-200">
           <thead
@@ -817,27 +817,46 @@ const findDistrictName = (id: string) => catalog.districts.find((d) => d.id === 
 const findChurchName = (id: string) => catalog.churches.find((c) => c.id === id)?.name ?? 'Não informado'
 
 const brDateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
+type DateParts = { year: number; month: number; day: number }
+const parseDateParts = (value: string | Date | null | undefined): DateParts | null => {
+  if (!value) return null
+  if (typeof value === 'string') {
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (match) {
+      const year = Number(match[1])
+      const month = Number(match[2])
+      const day = Number(match[3])
+      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+        return { year, month, day }
+      }
+    }
+  }
+  const source = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(source.getTime())) return null
+  return {
+    year: source.getUTCFullYear(),
+    month: source.getUTCMonth() + 1,
+    day: source.getUTCDate()
+  }
+}
 function formatBirthDate(value: string | Date | null | undefined) {
-  if (!value) return 'Não informado'
-  const src = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(src.getTime())) return 'Não informado'
-  const d = new Date(src.getUTCFullYear(), src.getUTCMonth(), src.getUTCDate())
-  return brDateFormatter.format(d)
+  const parts = parseDateParts(value)
+  if (!parts) return 'N?o informado'
+  const normalized = new Date(Date.UTC(parts.year, parts.month - 1, parts.day))
+  return brDateFormatter.format(normalized)
 }
 
 function calculateAge(value?: string | Date | null) {
-  if (!value) return '--'
-  const source = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(source.getTime())) return '--'
+  const parts = parseDateParts(value ?? null)
+  if (!parts) return '--'
   const today = new Date()
-  let age = today.getFullYear() - source.getFullYear()
-  const monthDiff = today.getMonth() - source.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < source.getDate())) {
+  let age = today.getFullYear() - parts.year
+  const monthDiff = today.getMonth() + 1 - parts.month
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parts.day)) {
     age -= 1
   }
-  return String(age)
+  return age >= 0 ? String(age) : '--'
 }
-
 function formatDateTime(value?: string | Date | null) {
   if (!value) return '-'
   const source = value instanceof Date ? value : new Date(value)
