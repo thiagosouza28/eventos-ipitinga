@@ -236,7 +236,6 @@
       </ul>
     </BaseCard>
   </div>
-  </div>
   <AccessDeniedNotice v-else module="checkin" action="view" />
 </template>
 
