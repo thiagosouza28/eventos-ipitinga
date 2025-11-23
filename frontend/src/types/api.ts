@@ -129,7 +129,9 @@ export interface AdminUser {
   phone?: string | null;
   photoUrl?: string | null;
   districtScopeId?: string | null;
+  churchId?: string | null;
   churchScopeId?: string | null;
+  ministryId?: string | null;
   mustChangePassword?: boolean;
   ministries?: Array<{ id: string; name: string }>;
   createdAt?: string;

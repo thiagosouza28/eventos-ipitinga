@@ -13,7 +13,8 @@ export const PermissionModules = [
   "orders",
   "financial",
   "reports",
-  "checkin"
+  "checkin",
+  "system"
 ] as const;
 
 export const PermissionActions = [
@@ -114,5 +115,6 @@ export const RolePermissionPresets: Record<Role, PermissionEntry[]> = {
     viewAccess("registrations", { canCreate: true, canEdit: true, canApprove: true }),
     viewAccess("events"),
     viewAccess("reports", { canReport: true })
+    // system module intentionally omitted for non-admins
   ]
 };

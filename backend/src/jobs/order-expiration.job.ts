@@ -1,32 +1,32 @@
 ﻿import cron from "node-cron";
 
 import { env } from "../config/env";
+import { PaymentMethod } from "../config/payment-methods";
 import { prisma } from "../lib/prisma";
+import { resolveEffectiveExpirationDate } from "../utils/order-expiration";
 import { logger } from "../utils/logger";
 
 export const cancelExpiredOrders = async () => {
   const now = new Date();
-  const expiredOrders = await prisma.order.findMany({
-    where: {
-      status: "PENDING",
-      OR: [
-        {
-          expiresAt: {
-            lte: now
-          }
-        },
-        {
-          createdAt: {
-            lte: new Date(now.getTime() - env.ORDER_EXPIRATION_MINUTES * 60 * 1000)
-          }
-        }
-      ]
-    },
+  const pendingOrders = await prisma.order.findMany({
+    where: { status: "PENDING" },
     select: {
       id: true,
+      createdAt: true,
+      expiresAt: true,
+      paymentMethod: true,
       registrations: true
     }
   });
+
+  const expiredOrders = pendingOrders.filter(
+    (order) =>
+      resolveEffectiveExpirationDate(
+        order.paymentMethod as PaymentMethod,
+        order.createdAt,
+        order.expiresAt
+      ) <= now
+  );
 
   if (!expiredOrders.length) return;
 

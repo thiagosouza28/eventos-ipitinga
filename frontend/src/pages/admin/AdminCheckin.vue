@@ -1,6 +1,11 @@
 <template>
-  <div class="space-y-6">
+  <div v-if="checkinPermissions.canList" class="space-y-6">
+    <TableSkeleton
+      v-if="loadingDashboard"
+      helperText="📡 Carregando painel de check-in..."
+    />
     <BaseCard
+      v-else
       class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
     >
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -51,6 +56,7 @@
     </BaseCard>
 
     <BaseCard
+      v-if="!loadingDashboard"
       class="border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
     >
       <div class="grid gap-6 lg:grid-cols-12">
@@ -218,7 +224,7 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="admin.dashboard" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
+    <BaseCard v-if="admin.dashboard && !loadingDashboard" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
       <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
         Ultimos check-ins
       </h2>
@@ -230,6 +236,8 @@
       </ul>
     </BaseCard>
   </div>
+  </div>
+  <AccessDeniedNotice v-else module="checkin" action="view" />
 </template>
 
 <script setup lang="ts">
@@ -240,10 +248,15 @@ import { formatCPF } from "../../utils/cpf";
 
 import BaseCard from "../../components/ui/BaseCard.vue";
 import DateField from "../../components/forms/DateField.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
+import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useModulePermissions } from "../../composables/usePermissions";
 
 const route = useRoute();
 const admin = useAdminStore() as any;
+const checkinPermissions = useModulePermissions("checkin");
+const loadingDashboard = ref(true);
 const initialRouteEvent =
   typeof route.params.eventId === "string" && route.params.eventId.length
     ? String(route.params.eventId)
@@ -553,9 +566,12 @@ const loadDashboard = async (eventIdParam?: string | null) => {
   }
   activeEventId.value = resolved;
   try {
+    loadingDashboard.value = true;
     await admin.loadDashboard(resolved);
   } catch (error) {
     console.error("Erro ao carregar painel de check-in", error);
+  } finally {
+    loadingDashboard.value = false;
   }
 };
 
@@ -734,6 +750,10 @@ const confirmPending = async () => {
 };
 
 onMounted(async () => {
+  if (!checkinPermissions.canList.value) {
+    loadingDashboard.value = false;
+    return;
+  }
   await loadDashboard();
 });
 </script>

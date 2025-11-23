@@ -6,40 +6,85 @@ import { orderService } from "../orders/order.service";
 
 export class WebhookService {
   async handleMercadoPago(payload: any, signature?: string, topic?: string) {
-    const paymentId = payload?.data?.id ?? payload?.id;
-    if (!paymentId) {
-      throw new AppError("Payload inválido", 400);
+    const resourceId = payload?.data?.id ?? payload?.id;
+    if (!resourceId) {
+      throw new AppError("Payload invalido", 400);
     }
 
-    const payment = await paymentService.fetchPayment(String(paymentId));
-    const rawOrderId = payment?.external_reference ?? payment?.order?.id;
-    if (!rawOrderId) {
-      throw new AppError("Webhook sem referência de pedido", 400);
+    const topicValue = String(topic ?? payload?.type ?? payload?.action ?? "");
+    let payment: any | null = null;
+    let merchantOrder: any | null = null;
+    let merchantApprovedPayment: any | null = null;
+
+    try {
+      payment = await paymentService.fetchPayment(String(resourceId));
+    } catch (error) {
+      logger.warn({ resourceId, topic: topicValue, error }, "Falha ao buscar pagamento direto no webhook");
     }
-    
+
+    if (!payment) {
+      try {
+        merchantOrder = await paymentService.fetchMerchantOrder(String(resourceId));
+        merchantApprovedPayment =
+          merchantOrder?.payments?.find(
+            (p: any) => p?.status === "approved" || p?.status === "authorized"
+          ) ?? merchantOrder?.payments?.[0];
+      } catch (merchantError) {
+        logger.warn({ resourceId, topic: topicValue, error: merchantError }, "Falha ao buscar merchant order no webhook");
+      }
+
+      if (merchantApprovedPayment?.id) {
+        try {
+          payment = await paymentService.fetchPayment(String(merchantApprovedPayment.id));
+        } catch (error) {
+          logger.warn(
+            { paymentId: merchantApprovedPayment.id, topic: topicValue, error },
+            "Falha ao recuperar pagamento a partir da merchant order"
+          );
+        }
+      }
+    }
+
+    if (!payment && !merchantOrder) {
+      throw new AppError("Webhook sem pagamento ou pedido associado", 400);
+    }
+
+    const rawOrderId =
+      payment?.external_reference ??
+      payment?.order?.id ??
+      merchantOrder?.external_reference;
+    if (!rawOrderId) {
+      throw new AppError("Webhook sem referencia de pedido", 400);
+    }
+
+    const paymentIdForReference =
+      (payment?.id && String(payment.id)) ??
+      (merchantApprovedPayment?.id && String(merchantApprovedPayment.id)) ??
+      null;
+
     const externalRef = String(rawOrderId);
     const isBulk = externalRef.startsWith("BULK:");
-    const orderIds = isBulk 
+    const orderIds = isBulk
       ? externalRef.replace("BULK:", "").split(",")
       : [externalRef];
 
-    // Verificar idempotência para cada pedido individualmente
-    const baseIdempotencyKey = `${paymentId}:${payload?.type ?? payload?.action ?? topic}`;
+    const baseIdempotencyKey = `${paymentIdForReference ?? resourceId}:${
+      payload?.type ?? payload?.action ?? topic ?? "unknown"
+    }`;
     const processedOrders: string[] = [];
-    
+
     for (const orderId of orderIds) {
       const idempotencyKey = `${baseIdempotencyKey}:${orderId}`;
       const alreadyProcessed = await prisma.webhookEvent.findUnique({
         where: { idempotencyKey }
       });
-      
+
       if (alreadyProcessed) {
         logger.info({ idempotencyKey, orderId }, "Webhook Mercado Pago ignorado (idempotente)");
         processedOrders.push(orderId);
         continue;
       }
 
-      // Criar webhook event para este pedido
       await prisma.webhookEvent.create({
         data: {
           provider: "mercadopago",
@@ -53,32 +98,39 @@ export class WebhookService {
       });
     }
 
-    // Se todos os pedidos já foram processados, retornar
     if (processedOrders.length === orderIds.length) {
       return { status: "ignored" };
     }
 
-    const status = payment.status as string | undefined;
-    logger.info({ orderIds, status, isBulk }, "Webhook Mercado Pago recebido");
+    const status =
+      (payment?.status as string | undefined) ??
+      (merchantApprovedPayment?.status as string | undefined) ??
+      (merchantOrder?.order_status as string | undefined);
+    logger.info({ orderIds, status, isBulk, topic: topicValue }, "Webhook Mercado Pago recebido");
 
-    if (status === "approved" || status === "authorized") {
+    const isApprovedStatus =
+      status === "approved" || status === "authorized" || status === "paid";
+
+    if (isApprovedStatus) {
       const metadataVersion = extractPreferenceVersion((payment as any)?.metadata);
-      // Marcar todos os pedidos como pagos
-      for (const orderId of orderIds) {
-        await orderService.markPaid(orderId, String(payment.id), {
-          preferenceVersion: metadataVersion ?? undefined
-        });
+      if (!paymentIdForReference) {
+        logger.warn({ orderIds, status }, "Pagamento aprovado recebido sem ID resolvido");
+      } else {
+        for (const orderId of orderIds) {
+          await orderService.markPaid(orderId, paymentIdForReference, {
+            preferenceVersion: metadataVersion ?? undefined
+          });
+        }
       }
     }
 
-    if (status === "refunded" || status === "charged_back") {
-      // Para pagamentos em lote, processar refund para cada pedido
+    if ((status === "refunded" || status === "charged_back") && payment) {
       for (const orderId of orderIds) {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
           include: { registrations: true }
         });
-        
+
         if (order) {
           for (const registration of order.registrations) {
             const item = payment.additional_info?.items?.find((i: any) => i.id === registration.id);

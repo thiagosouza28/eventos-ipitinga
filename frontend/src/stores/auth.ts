@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
+import { useLoaderStore } from "./loader";
 import type {
   Role,
   AdminProfile,
@@ -20,10 +21,11 @@ type AuthUser = {
   status: UserStatus;
   photoUrl?: string | null;
   districtScopeId?: string | null;
-  churchScopeId?: string | null;
+  churchId?: string | null;
   cpf?: string | null;
   phone?: string | null;
   mustChangePassword?: boolean;
+  ministryId?: string | null;
   ministries?: Array<{ id: string; name: string }>;
   profile?: AdminProfile | null;
   permissions?: Record<string, PermissionState>;
@@ -67,14 +69,48 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
-    const response = await axios.post(`${API_BASE_URL}/admin/login`, {
-      email,
-      password
-    });
-    token.value = response.data.token;
-    user.value = response.data.user;
+  const setSession = (payload: { token: string; user: AuthUser }) => {
+    token.value = payload.token;
+    user.value = payload.user;
     persist();
+  };
+
+  const withLoader = async <T>(action: () => Promise<T>) => {
+    const loader = useLoaderStore();
+    loader.show({ text: "🔐 Processando autenticação..." });
+    try {
+      return await action();
+    } finally {
+      loader.hide();
+    }
+  };
+
+  const signIn = async (identifier: string, password: string) => {
+    const response = await withLoader(() =>
+      axios.post(`${API_BASE_URL}/admin/login`, {
+        identifier,
+        password
+      })
+    );
+    setSession(response.data);
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    const response = await withLoader(() =>
+      axios.post(
+        `${API_BASE_URL}/admin/profile/change-password`,
+        {
+          currentPassword,
+          newPassword
+        },
+        { headers: { Authorization: token.value ? `Bearer ${token.value}` : undefined } }
+      )
+    );
+    setSession(response.data);
+  };
+
+  const requestPasswordReset = async (identifier: string) => {
+    await withLoader(() => axios.post(`${API_BASE_URL}/admin/password/recover`, { identifier }));
   };
 
   const signOut = () => {
@@ -124,6 +160,8 @@ export const useAuthStore = defineStore("auth", () => {
     canCreateFree,
     canManageUsers,
     hasPermission,
+    changePassword,
+    requestPasswordReset,
     signIn,
     signOut
   };

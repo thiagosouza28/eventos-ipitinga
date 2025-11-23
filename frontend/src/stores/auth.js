@@ -38,14 +38,29 @@ export const useAuthStore = defineStore("auth", () => {
             catch { }
         }
     };
-    const signIn = async (email, password) => {
+    const setSession = (payload) => {
+        token.value = payload.token;
+        user.value = payload.user;
+        persist();
+    };
+    const signIn = async (identifier, password) => {
         const response = await axios.post(`${API_BASE_URL}/admin/login`, {
-            email,
+            identifier,
             password
         });
-        token.value = response.data.token;
-        user.value = response.data.user;
-        persist();
+        setSession(response.data);
+    };
+    const changePassword = async (currentPassword, newPassword) => {
+        const response = await axios.post(`${API_BASE_URL}/admin/profile/change-password`, {
+            currentPassword,
+            newPassword
+        }, {
+            headers: token.value ? { Authorization: `Bearer ${token.value}` } : undefined
+        });
+        setSession(response.data);
+    };
+    const requestPasswordReset = async (identifier) => {
+        await axios.post(`${API_BASE_URL}/admin/password/recover`, { identifier });
     };
     const signOut = () => {
         token.value = null;
@@ -87,6 +102,8 @@ export const useAuthStore = defineStore("auth", () => {
         canCreateFree,
         canManageUsers,
         hasPermission,
+        changePassword,
+        requestPasswordReset,
         signIn,
         signOut
     };

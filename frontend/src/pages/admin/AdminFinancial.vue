@@ -29,9 +29,7 @@
         </RouterLink>
       </div>
     </BaseCard>
-    <div v-if="loading" class="flex justify-center py-8">
-      <LoadingSpinner />
-    </div>
+    <TableSkeleton v-if="loading" :rows="3" helperText="ðŸ“¡ Carregando dados financeiros..." />
 
     <!-- Resumo Geral -->
     <BaseCard
@@ -41,10 +39,10 @@
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">Resumo geral</p>
-      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">Visão consolidada</h2>
+      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">VisÃ£o consolidada</h2>
     </div>
     <p class="text-xs text-neutral-500 dark:text-neutral-400">
-      Atualizado automaticamente conforme as movimentações dos eventos.
+      Atualizado automaticamente conforme as movimentaÃ§Ãµes dos eventos.
     </p>
   </div>
   <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -55,13 +53,13 @@
       </p>
     </div>
     <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas MP</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas MP (processamento)</p>
       <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
-        -{{ formatCurrency((generalSummary.totals.pix?.feesCents || (generalSummary.totals.grossCents - generalSummary.totals.netCents) || generalSummary.totals.feesCents) || 0) }}
+        -{{ formatCurrency(generalMpFees) }}
       </p>
     </div>
     <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita líquida</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita lÃ­quida</p>
       <p class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300">
         {{ formatCurrency(generalSummary.totals.netCents) }}
       </p>
@@ -79,7 +77,7 @@
       </p>
     </div>
     <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">PIX líquido</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">PIX lÃ­quido</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
       </p>
@@ -97,7 +95,7 @@
       </p>
     </div>
     <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Total geral (líquido)</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Total geral (lÃ­quido)</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
       </p>
@@ -173,11 +171,11 @@
           <strong>{{ formatCurrency(eventSummary.totals.grossCents) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Taxas MP</p>
-          <strong class="text-red-600 dark:text-red-400">-{{ formatCurrency((eventSummary.totals.pix?.feesCents || (eventSummary.totals.grossCents - eventSummary.totals.netCents) || eventSummary.totals.feesCents) || 0) }}</strong>
+          <p>Taxas MP (processamento)</p>
+          <strong class="text-red-600 dark:text-red-400">-{{ formatCurrency(eventMpFees) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Receita líquida</p>
+          <p>Receita lï¿½quida</p>
           <strong class="text-primary-600 dark:text-primary-300">
             {{ formatCurrency(eventSummary.totals.netCents) }}
           </strong>
@@ -191,7 +189,7 @@
           <strong>{{ formatCurrency(eventSummary.totals.cashCents || 0) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>PIX líquido</p>
+          <p>PIX lÃ­quido</p>
           <strong>{{ formatCurrency(eventSummary.totals.pix?.netCents || 0) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
@@ -201,12 +199,12 @@
           </strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Total geral (líquido)</p>
+          <p>Total geral (lï¿½quido)</p>
           <strong>{{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}</strong>
         </div>
       </div>
       <div class="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-        <p>{{ eventSummary.paidRegistrationsCount }} inscrições pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
+        <p>{{ eventSummary.paidRegistrationsCount }} inscriÃ§Ãµes pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
       </div>
     </BaseCard>
 
@@ -395,7 +393,7 @@ import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
@@ -412,6 +410,30 @@ const showExpenseForm = ref(false);
 const editingExpense = ref<any>(null);
 const submitting = ref(false);
 const downloadingReport = ref(false);
+
+const generalMpFees = computed(() => {
+  const totals = generalSummary.value?.totals;
+  if (!totals) return 0;
+  if (typeof totals.feesCents === "number") return totals.feesCents;
+  const pixFees = totals.pix?.feesCents;
+  if (typeof pixFees === "number") return pixFees;
+  if (typeof totals.grossCents === "number" && typeof totals.netCents === "number") {
+    return totals.grossCents - totals.netCents;
+  }
+  return 0;
+});
+
+const eventMpFees = computed(() => {
+  const totals = eventSummary.value?.totals;
+  if (!totals) return 0;
+  if (typeof totals.feesCents === "number") return totals.feesCents;
+  const pixFees = totals.pix?.feesCents;
+  if (typeof pixFees === "number") return pixFees;
+  if (typeof totals.grossCents === "number" && typeof totals.netCents === "number") {
+    return totals.grossCents - totals.netCents;
+  }
+  return 0;
+});
 
 const expenseForm = ref({
   description: "",
@@ -489,7 +511,7 @@ const downloadEventReport = async () => {
     link.remove();
     URL.revokeObjectURL(url);
   } catch (error: any) {
-    showError("Erro ao gerar relatório financeiro", error);
+    showError("Erro ao gerar relatÃ³rio financeiro", error);
   } finally {
     downloadingReport.value = false;
   }

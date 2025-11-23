@@ -182,10 +182,12 @@ model User {
   passwordHash         String
   role                 String
   districtScopeId      String?
-  churchScopeId        String?
+  churchId             String?          @map("churchScopeId")
+  ministryId           String?
   createdAt            DateTime         @default(now())
   cpf                  String?          @unique
-  mustChangePassword   Boolean          @default(false)
+  isTemporaryPassword  Boolean          @default(false) @map("mustChangePassword")
+  passwordUpdatedAt    DateTime?
   phone                String?
   photoUrl             String?          @db.LongText
   profileId            String?
@@ -194,14 +196,16 @@ model User {
   eventsCreated        Event[]          @relation("EventCreators")
   ministries           MinistryUser[]
   systemConfigsUpdated SystemConfig[]   @relation("SystemConfigUpdatedBy")
-  churchScope          Church?          @relation("ChurchUsers", fields: [churchScopeId], references: [id])
+  church               Church?          @relation("ChurchUsers", fields: [churchId], references: [id])
   districtScope        District?        @relation("DistrictUsers", fields: [districtScopeId], references: [id])
+  primaryMinistry      Ministry?        @relation("UserPrimaryMinistry", fields: [ministryId], references: [id])
   profile              Profile?         @relation(fields: [profileId], references: [id])
   permissionsOverride  UserPermission[]
 
   @@index([profileId])
-  @@index([churchScopeId], map: "User_churchScopeId_fkey")
+  @@index([churchId], map: "User_churchScopeId_fkey")
   @@index([districtScopeId], map: "User_districtScopeId_fkey")
+  @@index([ministryId])
 }
 
 model SystemConfig {
@@ -257,6 +261,7 @@ model Ministry {
   events        Event[]
   users         MinistryUser[]
   registrations Registration[]
+  primaryUsers  User[]         @relation("UserPrimaryMinistry")
 }
 
 model MinistryUser {

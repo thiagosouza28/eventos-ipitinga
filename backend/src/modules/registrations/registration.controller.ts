@@ -10,6 +10,7 @@ import { isValidCpf } from "../../utils/cpf";
 import { PaymentMethod } from "../../config/payment-methods";
 import { logger } from "../../utils/logger";
 import { env } from "../../config/env";
+import { getScopedMinistryIds } from "../../utils/user-scope";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 // Aceitar IDs vazios como undefined e ignorar valores inválidos em filtros
@@ -74,7 +75,8 @@ const bulkMarkPaidSchema = z.object({
 export const listRegistrationsHandler = async (request: Request, response: Response) => {
   try {
     const filters = listSchema.parse(request.query);
-    const registrations = await registrationService.list(filters, request.user?.ministryIds);
+    const ministryIds = getScopedMinistryIds(request.user);
+    const registrations = await registrationService.list(filters, ministryIds);
     return response.json(registrations);
   } catch (error: any) {
     console.error("Erro ao listar inscrições:", error);
@@ -88,7 +90,8 @@ export const listRegistrationsHandler = async (request: Request, response: Respo
 export const registrationsReportHandler = async (request: Request, response: Response) => {
   try {
     const { groupBy, ...filters } = reportSchema.parse(request.query);
-    const report = await registrationService.report(filters, groupBy, request.user?.ministryIds);
+    const ministryIds = getScopedMinistryIds(request.user);
+    const report = await registrationService.report(filters, groupBy, ministryIds);
     return response.json(report);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -115,15 +118,16 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
     response.setHeader("Access-Control-Allow-Credentials", "true");
   }
 
+  const ministryIds = getScopedMinistryIds(request.user);
   const pdfBuffer =
     template === "event"
       ? await registrationService.generateEventSheetPdf(
           filters,
           groupBy,
           (layout as any) ?? "single",
-          request.user?.ministryIds
+          ministryIds
         )
-      : await registrationService.generateReportPdf(filters, groupBy, request.user?.ministryIds);
+      : await registrationService.generateReportPdf(filters, groupBy, ministryIds);
   const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
   response.setHeader("Content-Type", "application/pdf");
   response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

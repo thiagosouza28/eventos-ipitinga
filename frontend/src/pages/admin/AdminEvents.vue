@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div v-if="eventPermissions.canList" class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
       :title="errorDialog.title"
@@ -20,6 +20,7 @@
         </div>
         <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
+            v-if="eventPermissions.canCreate"
             type="button"
             class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
             @click="openCreateModal"
@@ -51,7 +52,14 @@
           Clique em editar para ajustar dados ou exclua eventos sem inscrições.
         </p>
       </div>
-      <div class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40">
+      <TableSkeleton
+        v-if="loadingEvents"
+        helperText="🔄 Carregando eventos..."
+      />
+      <div
+        v-else
+        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
+      >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead class="bg-white/50 text-[11px] uppercase tracking-wide text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
@@ -108,18 +116,21 @@
                     Detalhes
                   </button>
                   <button
+                    v-if="eventPermissions.canEdit"
                     class="inline-flex items-center gap-1 rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
                     @click="startEdit(event)"
                   >
                     Editar
                   </button>
                   <button
+                    v-if="eventPermissions.canEdit"
                     class="inline-flex items-center gap-1 rounded-full border border-primary-200 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30"
                     @click="toggleActive(event)"
                   >
                     {{ event.isActive ? "Desativar" : "Ativar" }}
                   </button>
                   <button
+                    v-if="eventPermissions.canDelete"
                     class="inline-flex items-center gap-1 rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
                     @click="openDelete(event)"
                   >
@@ -700,6 +711,7 @@
                 </p>
               </div>
               <button
+                v-if="eventPermissions.canEdit"
                 type="button"
                 class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white"
                 @click="openLotCreateModal"
@@ -747,6 +759,7 @@
                       </span>
                       <div class="flex flex-wrap gap-2">
                         <button
+                          v-if="eventPermissions.canEdit"
                           type="button"
                           class="rounded-full border border-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed"
                           :disabled="lotDeletingId === lot.id || editingLotId === lot.id"
@@ -756,6 +769,7 @@
                           <span v-else>Editar</span>
                         </button>
                         <button
+                          v-if="eventPermissions.canDelete"
                           type="button"
                           class="rounded-full border border-red-300/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed"
                           :disabled="lotDeletingId === lot.id || isLotActive(lot)"
@@ -881,6 +895,7 @@
       </form>
     </Modal>
   </div>
+  <AccessDeniedNotice v-else module="events" action="view" />
 </template>
 
 <script setup lang="ts">
@@ -892,6 +907,8 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
+import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
@@ -899,6 +916,7 @@ import type { Event as ApiEvent, EventLot, PaymentMethod, Ministry } from "../..
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
+import { useModulePermissions } from "../../composables/usePermissions";
 import {
   DEFAULT_PENDING_PAYMENT_VALUE_RULE,
   PENDING_PAYMENT_VALUE_RULES,
@@ -909,6 +927,7 @@ import {
 
 const admin = useAdminStore();
 const catalog = useCatalogStore();
+const eventPermissions = useModulePermissions("events");
 const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
 
@@ -1016,6 +1035,7 @@ const editForm = reactive<EventForm>({
 });
 
 const editingEventId = ref<string | null>(null);
+const loadingEvents = ref(true);
 const savingCreate = ref(false);
 const savingEdit = ref(false);
 const createModalOpen = ref(false);
@@ -1157,6 +1177,12 @@ const showError = (title: string, error: unknown) => {
   errorDialog.open = true;
 };
 
+const assertPermission = (allowed: boolean, message: string) => {
+  if (allowed) return true;
+  showError("Acesso negado", { message });
+  return false;
+};
+
 const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
 const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
 const createBannerInput = ref<HTMLInputElement | null>(null);
@@ -1259,6 +1285,9 @@ const resetLotForm = () => {
 };
 
 const startLotEdit = (lot: EventLot) => {
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes.")) {
+    return;
+  }
   editingLotId.value = lot.id;
   lotForm.name = lot.name;
   lotForm.price = formatPriceDisplay(lot.priceCents);
@@ -1273,6 +1302,9 @@ const cancelLotEdit = () => {
 };
 
 const openLotCreateModal = () => {
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes.")) {
+    return;
+  }
   resetLotForm();
   lotModalOpen.value = true;
 };
@@ -1317,6 +1349,9 @@ const resetEditForm = () => {
 };
 
 const openCreateModal = () => {
+  if (!assertPermission(eventPermissions.canCreate.value, "Você não possui permissão para criar eventos.")) {
+    return;
+  }
   resetCreateForm();
   createModalOpen.value = true;
 };
@@ -1337,6 +1372,9 @@ const handleEditModalToggle = (value: boolean) => {
 };
 
 const submitLot = async () => {
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para gerenciar lotes.")) {
+    return;
+  }
   if (!details.event) return;
   if (!lotForm.name.trim()) {
     showError("Falha ao salvar lote", { message: "Informe o nome do lote." });
@@ -1398,6 +1436,9 @@ const submitLot = async () => {
 };
 
 const deleteLot = async (lot: EventLot) => {
+  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir lotes.")) {
+    return;
+  }
   if (!details.event) return;
   if (!window.confirm(`Remover o lote "${lot.name}"?`)) {
     return;
@@ -1432,6 +1473,9 @@ watch(
 );
 
 const submitCreate = async () => {
+  if (!assertPermission(eventPermissions.canCreate.value, "Você não possui permissão para criar eventos.")) {
+    return;
+  }
   if (!createForm.paymentMethods.length) {
     showError("Falha ao criar evento", { message: "Selecione ao menos uma forma de pagamento." });
     return;
@@ -1470,6 +1514,9 @@ const submitCreate = async () => {
 
 const submitEdit = async () => {
   if (!editingEventId.value) return;
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar eventos.")) {
+    return;
+  }
   if (!editForm.paymentMethods.length) {
     showError("Falha ao atualizar evento", { message: "Selecione ao menos uma forma de pagamento." });
     return;
@@ -1506,6 +1553,9 @@ const submitEdit = async () => {
 };
 
 const startEdit = (event: ApiEvent) => {
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar eventos.")) {
+    return;
+  }
   editingEventId.value = event.id;
   editForm.title = event.title;
   editForm.slug = event.slug;
@@ -1533,6 +1583,9 @@ const cancelEdit = () => {
 };
 
 const toggleActive = async (event: ApiEvent) => {
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar eventos.")) {
+    return;
+  }
   try {
     await admin.saveEvent({
       id: event.id,
@@ -1544,6 +1597,9 @@ const toggleActive = async (event: ApiEvent) => {
 };
 
 const openDelete = (event: ApiEvent) => {
+  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
+    return;
+  }
   confirmDelete.target = event;
   confirmDelete.open = true;
 };
@@ -1555,6 +1611,10 @@ const closeDeleteDialog = () => {
 
 const handleDelete = async () => {
   if (!confirmDelete.target) return;
+  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
+    closeDeleteDialog();
+    return;
+  }
   try {
     await admin.deleteEvent(confirmDelete.target.id);
     closeDeleteDialog();
@@ -1596,16 +1656,22 @@ watch(
 );
 
 onMounted(async () => {
+  if (!eventPermissions.canList.value) {
+    loadingEvents.value = false;
+    return;
+  }
   try {
     await Promise.all([admin.loadEvents(), catalog.loadMinistries()]);
     if (!createForm.ministryId) {
       createForm.ministryId = pickDefaultMinistryId();
     }
-    if (!admin.events.length) {
+    if (!admin.events.length && eventPermissions.canCreate.value) {
       createModalOpen.value = true;
     }
   } catch (error) {
     showError("Falha ao carregar eventos ou ministérios", error);
+  } finally {
+    loadingEvents.value = false;
   }
 });
 </script>

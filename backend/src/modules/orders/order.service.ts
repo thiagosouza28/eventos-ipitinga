@@ -1,6 +1,5 @@
 import { randomUUID } from "crypto";
 
-import { env } from "../../config/env";
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
 import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
@@ -26,6 +25,7 @@ import {
 } from "../../config/pending-payment-value-rule";
 import { Gender, parseGender } from "../../config/gender";
 import { calculateMercadoPagoFees } from "../../utils/mercado-pago-fees";
+import { resolveEffectiveExpirationDate, resolveOrderExpirationDate } from "../../utils/order-expiration";
 
 type GenderInput = Gender | "MASCULINO" | "FEMININO" | "OUTRO";
 
@@ -46,10 +46,7 @@ export class OrderService {
     const orders = await prisma.order.findMany({
       where: {
         buyerCpf: sanitizeCpf(cpf),
-        status: "PENDING",
-        expiresAt: {
-          gt: new Date() // Only non-expired orders
-        }
+        status: "PENDING"
       },
       include: {
         registrations: true,
@@ -64,8 +61,18 @@ export class OrderService {
       }
     });
 
+    const now = new Date();
+    const validOrders = orders.filter((order) => {
+      const expiration = resolveEffectiveExpirationDate(
+        order.paymentMethod as PaymentMethod,
+        order.createdAt,
+        order.expiresAt
+      );
+      return expiration > now;
+    });
+
     return Promise.all(
-      orders.map(async (order) => {
+      validOrders.map(async (order) => {
         const ruleValue = order.event?.pendingPaymentValueRule;
         const pricingRule = isPendingPaymentValueRule(ruleValue)
           ? ruleValue
@@ -116,8 +123,18 @@ export class OrderService {
       }
     });
 
+    const now = new Date();
+    const validOrders = orders.filter((order) => {
+      const expiration = resolveEffectiveExpirationDate(
+        order.paymentMethod as PaymentMethod,
+        order.createdAt,
+        order.expiresAt
+      );
+      return expiration > now;
+    });
+
     return Promise.all(
-      orders.map(async (order) => {
+      validOrders.map(async (order) => {
         const ruleValue = order.event?.pendingPaymentValueRule;
         const pricingRule = isPendingPaymentValueRule(ruleValue)
           ? ruleValue
@@ -234,7 +251,7 @@ export class OrderService {
     );
 
     const orderId = randomUUID();
-    const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+    const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
     const registrations = await prisma.$transaction(async (tx) => {
       // Se for método gratuito, marcar como pago automaticamente
@@ -375,6 +392,39 @@ export class OrderService {
     if (order.status === "CANCELED" || order.status === "EXPIRED") {
       throw new AppError("Pedido expirado ou cancelado", 400);
     }
+    const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
+    const effectiveExpiration = resolveEffectiveExpirationDate(
+      paymentMethod,
+      order.createdAt,
+      order.expiresAt
+    );
+    if (order.status === OrderStatus.PENDING && effectiveExpiration <= new Date()) {
+      await prisma
+        .$transaction([
+          prisma.registration.updateMany({
+            where: { orderId, status: { in: [RegistrationStatus.PENDING_PAYMENT, RegistrationStatus.DRAFT] } },
+            data: { status: RegistrationStatus.CANCELED }
+          }),
+          prisma.order.update({
+            where: { id: orderId },
+            data: { status: OrderStatus.EXPIRED }
+          })
+        ])
+        .catch(() => undefined);
+      throw new AppError("Pedido expirado ou cancelado", 400);
+    }
+    if (
+      order.status === OrderStatus.PENDING &&
+      (!order.expiresAt || order.expiresAt.getTime() !== effectiveExpiration.getTime())
+    ) {
+      await prisma.order
+        .update({
+          where: { id: orderId },
+          data: { expiresAt: effectiveExpiration }
+        })
+        .catch(() => undefined);
+      order.expiresAt = effectiveExpiration;
+    }
     const participantCount = order.registrations.length;
     let receipts: Array<{ registrationId: string; fullName: string; receiptUrl: string }> = [];
     if (order.status === OrderStatus.PAID) {
@@ -411,7 +461,6 @@ export class OrderService {
       });
     }
 
-    const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
     const isManualMethod = ManualPaymentMethods.includes(paymentMethod);
 
     const participants = order.registrations.map((registration) => ({
@@ -643,7 +692,7 @@ export class OrderService {
         ? registration.priceCents
         : registration.event.priceCents ?? 0;
       const orderId = randomUUID();
-      const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+      const expiresAt = resolveOrderExpirationDate(registration.order.paymentMethod as PaymentMethod);
 
       await prisma.$transaction(async (tx) => {
         await tx.order.create({

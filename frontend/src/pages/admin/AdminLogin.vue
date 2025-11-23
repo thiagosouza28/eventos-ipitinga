@@ -13,14 +13,15 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              E-mail
+              CPF ou e-mail
             </label>
             <input
-              v-model="email"
-              type="email"
+              v-model="identifier"
+              type="text"
               required
               :disabled="loading"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-50"
+              placeholder="000.000.000-00 ou email@dominio.com"
             />
           </div>
           <div>
@@ -80,6 +81,14 @@
           </svg>
           <span>{{ loading ? "Entrando..." : "Entrar" }}</span>
         </button>
+        <div class="flex flex-col items-center gap-2 text-sm text-neutral-500">
+          <RouterLink
+            class="text-primary-600 transition hover:text-primary-500"
+            :to="{ name: 'admin-forgot-password' }"
+          >
+            Esqueci minha senha
+          </RouterLink>
+        </div>
         <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
       </form>
     </BaseCard>
@@ -99,7 +108,7 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
-const email = ref("");
+const identifier = ref("");
 const password = ref("");
 const showPassword = ref(false);
 const rememberMe = ref(false);
@@ -114,7 +123,7 @@ onMounted(() => {
   if (remembered) {
     try {
       const data = JSON.parse(remembered);
-      email.value = data.email || "";
+      identifier.value = data.identifier || data.email || "";
       password.value = data.password || "";
       rememberMe.value = true;
     } catch (e) {
@@ -128,6 +137,10 @@ onMounted(() => {
 });
 
 const redirectAuthenticated = () => {
+  if (auth.user?.mustChangePassword) {
+    router.replace({ name: "admin-force-password" });
+    return;
+  }
   router.replace((route.query.redirect as string) ?? "/admin/dashboard");
 };
 
@@ -145,13 +158,13 @@ const handleSubmit = async () => {
     errorMessage.value = "";
     loading.value = true;
     
-    await auth.signIn(email.value, password.value);
+    await auth.signIn(identifier.value, password.value);
     
     // Salvar credenciais se "Lembrar-me" estiver marcado
     if (rememberMe.value) {
       localStorage.setItem(
         REMEMBER_ME_KEY,
-        JSON.stringify({ email: email.value, password: password.value })
+        JSON.stringify({ identifier: identifier.value, password: password.value })
       );
     } else {
       localStorage.removeItem(REMEMBER_ME_KEY);

@@ -1,4 +1,4 @@
-import { MercadoPagoConfig, Preference, Payment, PaymentRefund } from "mercadopago";
+import { MercadoPagoConfig, Preference, Payment, PaymentRefund, MerchantOrder } from "mercadopago";
 import type { PreferenceCreateData } from "mercadopago/dist/clients/preference/create/types";
 
 import { env } from "../config/env";
@@ -12,6 +12,11 @@ import {
   PendingPaymentValueRule
 } from "../config/pending-payment-value-rule";
 import { PaymentMethod } from "../config/payment-methods";
+import {
+  resolveEffectiveExpirationDate,
+  resolveOrderExpirationDate,
+  resolvePixExpirationDate
+} from "../utils/order-expiration";
 
 const isPublicHttpsUrl = (url: string | null | undefined) => {
   if (!url) return false;
@@ -34,6 +39,19 @@ const resolveNotificationUrl = () => {
   if (!base) return null;
   const normalized = base.trim().replace(/\/$/, "");
   return `${normalized}/webhooks/mercadopago`;
+};
+
+const buildPaymentDescription = (eventTitle?: string | null, participantNames: string[] = []) => {
+  const base = (eventTitle ?? "Inscricao").trim();
+  const names = participantNames.filter(Boolean).join(", ");
+  return names ? `${base} - ${names}` : base;
+};
+
+const buildStatementDescriptor = (eventTitle?: string | null, participantNames: string[] = []) => {
+  const base = (eventTitle ?? "Inscricao").toString().replace(/\s+/g, " ").trim();
+  const firstName = participantNames.find(Boolean)?.split(/\s+/)?.[0] ?? "";
+  const raw = `${base} ${firstName}`.trim().toUpperCase();
+  return raw.slice(0, 22);
 };
 
 const resolveCurrentLotInfo = async (eventId: string, fallbackPriceCents?: number | null) => {
@@ -153,6 +171,7 @@ class PaymentService {
   private preference = new Preference(this.client);
   private payment = new Payment(this.client);
   private refund = new PaymentRefund(this.client);
+  private merchantOrder = new MerchantOrder(this.client);
 
   async getPreference(preferenceId: string) {
     try {
@@ -185,6 +204,10 @@ class PaymentService {
     }
 
     const { totalCents } = await buildPreferenceItemsForOrder(order);
+    const pixExpirationDate = resolvePixExpirationDate(order.createdAt);
+    const participantNames = order.registrations.map((r) => r.fullName).filter(Boolean);
+    const description = buildPaymentDescription(order.event?.title, participantNames);
+    const statementDescriptor = buildStatementDescriptor(order.event?.title, participantNames);
 
     const notificationUrl = resolveNotificationUrl();
 
@@ -207,9 +230,11 @@ class PaymentService {
     // Criar pagamento PIX associado ao orderId (via external_reference)
     const body: any = {
       transaction_amount: totalCents / 100,
-      description: `Pedido ${order.id}`,
+      description,
+      statement_descriptor: statementDescriptor,
       payment_method_id: "pix",
       external_reference: order.id,
+      date_of_expiration: pixExpirationDate.toISOString(),
       payer: {
         email: emailFallback,
         first_name: firstName || "Participante",
@@ -223,7 +248,38 @@ class PaymentService {
     if (notificationUrl) {
       body.notification_url = notificationUrl;
     }
+    if (order.registrations?.length) {
+      body.additional_info = {
+        items: order.registrations.map((registration: any) => ({
+          id: registration.id,
+          title: `${order.event?.title ?? "Inscricao"} - ${registration.fullName}`,
+          description: `${order.event?.title ?? "Inscricao"} - ${registration.fullName}`,
+          quantity: 1,
+          unit_price: (registration.priceCents ?? order.totalCents / Math.max(order.registrations.length, 1)) / 100
+        }))
+      };
+    }
+
     const payment = await this.payment.create({ body });
+
+    const desiredExpiresAt = resolveEffectiveExpirationDate(
+      order.paymentMethod as PaymentMethod,
+      order.createdAt,
+      order.expiresAt
+    );
+    if (
+      order.status === "PENDING" &&
+      (!order.expiresAt || order.expiresAt.getTime() < desiredExpiresAt.getTime())
+    ) {
+      await prisma.order
+        .update({
+          where: { id: order.id },
+          data: { expiresAt: desiredExpiresAt }
+        })
+        .catch((error) => {
+          logger.warn({ orderId, error }, "Falha ao atualizar expiracao do pedido para PIX");
+        });
+    }
 
     const pointOfInteraction = (payment as any).point_of_interaction;
     return {
@@ -244,6 +300,9 @@ class PaymentService {
     const nextVersion = (order.preferenceVersion ?? 0) + 1;
 
     const { items, totalCents } = await buildPreferenceItemsForOrder(order);
+    const participantNames = order.registrations.map((r) => r.fullName).filter(Boolean);
+    const description = buildPaymentDescription(order.event?.title, participantNames);
+    const statementDescriptor = buildStatementDescriptor(order.event?.title, participantNames);
 
     const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
     if (!appUrl) {
@@ -264,6 +323,8 @@ class PaymentService {
     if (!backUrls.success) {
       throw new AppError("URL de sucesso para retorno automático não configurada.", 500);
     }
+
+    const notificationUrl = resolveNotificationUrl();
 
     // Resolver dados do pagador para a Preferncia (Checkout Pro)
     const prefCpfRaw = (order.buyerCpf || order.registrations[0]?.cpf || "").toString();
@@ -300,8 +361,11 @@ class PaymentService {
         buyerCpf: order.buyerCpf,
         lotId: order.pricingLotId,
         preferenceVersion: nextVersion
-      }
+      },
+      ...(notificationUrl ? { notification_url: notificationUrl } : {}),
+      ...(statementDescriptor ? { statement_descriptor: statementDescriptor } : {})
     };
+    (preferencePayload as any).description = description;
 
     const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");
     if (successUrlIsHttps) {
@@ -329,7 +393,11 @@ class PaymentService {
       where: { id: order.id },
       data: {
         mpPreferenceId: preference.id ?? preference.init_point ?? undefined,
-        expiresAt: new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000),
+        expiresAt: resolveEffectiveExpirationDate(
+          order.paymentMethod as PaymentMethod,
+          order.createdAt,
+          order.expiresAt
+        ),
         preferenceVersion: nextVersion,
         totalCents
       }
@@ -421,6 +489,10 @@ class PaymentService {
 
     const bulkCpf = (buyerCpf || orders[0]?.buyerCpf || "").toString().replace(/\D/g, "");
     const bulkEmail = `${bulkCpf}@example.com`;
+    const participantNames = orders.flatMap((o) => o.registrations.map((r) => r.fullName)).filter(Boolean);
+    const description = buildPaymentDescription(eventNames.join(" / ") || orders[0]?.event?.title, participantNames);
+    const statementDescriptor = buildStatementDescriptor(eventNames[0] ?? orders[0]?.event?.title, participantNames);
+    const notificationUrl = resolveNotificationUrl();
     const preferencePayload: PreferenceCreateData["body"] = {
       external_reference: externalReference,
       items,
@@ -444,8 +516,11 @@ class PaymentService {
         buyerCpf,
         isBulk: true,
         preferenceVersion: 1
-      }
+      },
+      ...(notificationUrl ? { notification_url: notificationUrl } : {}),
+      ...(statementDescriptor ? { statement_descriptor: statementDescriptor } : {})
     };
+    (preferencePayload as any).description = description;
 
     const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");
     if (successUrlIsHttps) {
@@ -466,7 +541,11 @@ class PaymentService {
 
     // Atualizar todos os pedidos com a mesma preferência
     const preferenceId = preference.id ?? preference.init_point ?? undefined;
-    const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+    const paymentMethod = (orders[0]?.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
+    const referenceOrder = orders[0];
+    const expiresAt = referenceOrder
+      ? resolveEffectiveExpirationDate(paymentMethod, referenceOrder.createdAt, referenceOrder.expiresAt)
+      : resolveOrderExpirationDate(paymentMethod);
 
     await prisma.order.updateMany({
       where: { id: { in: orderIds } },
@@ -494,6 +573,19 @@ class PaymentService {
 
   async fetchPayment(paymentId: string) {
     return this.payment.get({ id: paymentId });
+  }
+
+  async fetchMerchantOrder(merchantOrderId: string) {
+    try {
+      return await this.merchantOrder.get({ merchantOrderId });
+    } catch (error: any) {
+      logger.error({ merchantOrderId, error }, "Falha ao recuperar merchant order no Mercado Pago");
+      const message =
+        error?.message ??
+        error?.cause?.[0]?.description ??
+        "Erro ao recuperar pedido Mercado Pago";
+      throw new AppError(message, Number(error?.status) || 502);
+    }
   }
 
   async findLatestPaymentByExternalReference(orderId: string) {

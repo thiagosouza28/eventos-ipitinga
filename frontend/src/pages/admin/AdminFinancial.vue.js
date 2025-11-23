@@ -94,7 +94,7 @@ const downloadEventReport = async () => {
         URL.revokeObjectURL(url);
     }
     catch (error) {
-        showError("Erro ao gerar relat�rio financeiro", error);
+        showError("Erro ao gerar relatório financeiro", error);
     }
     finally {
         downloadingReport.value = false;

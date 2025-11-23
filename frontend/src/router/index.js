@@ -7,6 +7,8 @@ const PendingOrders = () => import("../pages/public/PendingOrders.vue");
 const ReceiptLookup = () => import("../pages/public/ReceiptLookup.vue");
 const CheckinValidate = () => import("../pages/public/CheckinValidate.vue");
 const AdminLogin = () => import("../pages/admin/AdminLogin.vue");
+const AdminForgotPassword = () => import("../pages/admin/AdminForgotPassword.vue");
+const AdminForcePassword = () => import("../pages/admin/AdminForcePassword.vue");
 const AdminDashboard = () => import("../pages/admin/AdminDashboard.vue");
 const AdminEvents = () => import("../pages/admin/AdminEvents.vue");
 const AdminRegistrations = () => import("../pages/admin/AdminRegistrations.vue");
@@ -39,6 +41,13 @@ export const router = createRouter({
         { path: "/comprovante", name: "receipt", component: ReceiptLookup },
         { path: "/checkin/validate", name: "checkin-validate", component: CheckinValidate },
         { path: "/admin", name: "admin-login", component: AdminLogin },
+        { path: "/admin/esqueci-senha", name: "admin-forgot-password", component: AdminForgotPassword },
+        {
+            path: "/admin/alterar-senha",
+            name: "admin-force-password",
+            component: AdminForcePassword,
+            meta: { requiresAuth: true, allowPasswordReset: true }
+        },
         {
             path: "/admin/dashboard",
             name: "admin-dashboard",
@@ -146,6 +155,16 @@ router.beforeEach((to, _from, next) => {
     }
     if (to.meta.requiresAuth && !auth.isAuthenticated) {
         next({ name: "admin-login", query: { redirect: to.fullPath } });
+        return;
+    }
+    if (auth.isAuthenticated &&
+        (auth.user?.mustChangePassword) &&
+        !to.meta.allowPasswordReset &&
+        to.name !== "admin-force-password") {
+        next({
+            name: "admin-force-password",
+            query: { redirect: to.fullPath }
+        });
         return;
     }
     if (to.meta.requiresPermission && auth.isAuthenticated) {

@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div v-if="userPermissions.canList" class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
       :title="errorDialog.title"
@@ -514,12 +514,18 @@
         <button
           type="button"
           class="inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary-600 transition hover:translate-y-0.5 dark:text-primary-300"
+          :disabled="initialLoading"
           @click="refreshData"
         >
           Atualizar lista
         </button>
       </div>
+      <TableSkeleton
+        v-if="initialLoading"
+        helperText="🔄 Carregando usuários..."
+      />
       <div
+        v-else
         class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
       >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
@@ -621,6 +627,7 @@
       </div>
     </BaseCard>
   </div>
+  <AccessDeniedNotice v-else module="users" action="view" />
 </template>
 
 <script setup lang="ts">
@@ -631,6 +638,8 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
+import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { permissionModules, permissionActions } from "../../config/permission-schema";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
@@ -642,11 +651,14 @@ import {
   type PermissionFormEntry
 } from "../../utils/permission-matrix";
 import type { AdminUser, Role, PermissionAction } from "../../types/api";
+import { useModulePermissions } from "../../composables/usePermissions";
 
 const admin = useAdminStore();
 const catalog = useCatalogStore();
+const userPermissions = useModulePermissions("users");
 
 const showCreateForm = ref(false);
+const initialLoading = ref(true);
 const savingUser = ref(false);
 const lastTempPassword = ref<{ user: string; password: string } | null>(null);
 
@@ -777,6 +789,10 @@ const clearAllOverrides = () => {
 };
 
 const openPermissionDialog = async (user: AdminUser) => {
+  if (!userPermissions.canEdit.value) {
+    showError("Acesso negado", "Você não possui permissão para editar permissões.");
+    return;
+  }
   permissionDialog.user = user;
   permissionDialog.open = true;
   permissionDialog.loading = true;
@@ -798,6 +814,10 @@ const openPermissionDialog = async (user: AdminUser) => {
 };
 
 const savePermissionOverrides = async () => {
+  if (!userPermissions.canEdit.value) {
+    showError("Acesso negado", "Você não possui permissão para editar permissões.");
+    return;
+  }
   if (!permissionDialog.user) return;
   permissionDialog.saving = true;
   try {
@@ -917,6 +937,10 @@ const resetForm = () => {
 };
 
 const toggleCreateForm = () => {
+  if (!userPermissions.canCreate.value) {
+    showError("Acesso negado", "Você não possui permissão para criar usuários.");
+    return;
+  }
   showCreateForm.value = !showCreateForm.value;
   if (!showCreateForm.value) {
     resetForm();
@@ -951,6 +975,10 @@ const fileToBase64 = (file: File) =>
   });
 
 const handleCreateUser = async () => {
+  if (!userPermissions.canCreate.value) {
+    showError("Acesso negado", "Você não possui permissão para criar usuários.");
+    return;
+  }
   if (!validateForm()) return;
   savingUser.value = true;
   try {
@@ -988,6 +1016,10 @@ const handleCreateUser = async () => {
 };
 
 const openEditDialog = (user: AdminUser) => {
+  if (!userPermissions.canEdit.value) {
+    showError("Acesso negado", "Você não possui permissão para editar usuários.");
+    return;
+  }
   editDialog.userId = user.id;
   editDialog.form.name = user.name;
     editDialog.form.email = user.email;
@@ -995,7 +1027,7 @@ const openEditDialog = (user: AdminUser) => {
   editDialog.form.phone = user.phone ?? "";
   editDialog.form.role = user.role;
   editDialog.form.districtScopeId = user.districtScopeId ?? "";
-  editDialog.form.churchScopeId = user.churchScopeId ?? "";
+  editDialog.form.churchScopeId = user.churchId ?? user.churchScopeId ?? "";
   editDialog.form.ministryIds = user.ministries?.map((ministry) => ministry.id) ?? [];
   editDialog.form.profileId = user.profile?.id ?? "";
   editDialog.form.status = user.status ?? "ACTIVE";
@@ -1040,6 +1072,10 @@ const clearEditPhoto = () => {
 };
 
 const handleUpdateUser = async () => {
+  if (!userPermissions.canEdit.value) {
+    showError("Acesso negado", "Você não possui permissão para editar usuários.");
+    return;
+  }
   if (!editDialog.userId) return;
   editMinistryError.value = "";
   if (editRequiresMinistry.value && !editDialog.form.ministryIds.length) {
@@ -1090,11 +1126,19 @@ const handleUpdateUser = async () => {
 };
 
 const openResetDialog = (user: AdminUser) => {
+  if (!userPermissions.canEdit.value) {
+    showError("Acesso negado", "Você não possui permissão para editar usuários.");
+    return;
+  }
   passwordDialog.target = user;
   passwordDialog.open = true;
 };
 
 const handleConfirmReset = async () => {
+  if (!userPermissions.canEdit.value) {
+    showError("Acesso negado", "Você não possui permissão para editar usuários.");
+    return;
+  }
   if (!passwordDialog.target) return;
   passwordDialog.loading = true;
   try {
@@ -1114,14 +1158,23 @@ const handleConfirmReset = async () => {
 };
 
 const refreshData = async () => {
+  if (!userPermissions.canList.value) return;
+  initialLoading.value = true;
   try {
     await Promise.all([admin.loadUsers(), admin.loadProfiles()]);
   } catch (error: any) {
     showError("Falha ao carregar usuários", error.response?.data?.message ?? "Tente novamente mais tarde.");
+  } finally {
+    initialLoading.value = false;
   }
 };
 
 onMounted(async () => {
+  if (!userPermissions.canList.value) {
+    initialLoading.value = false;
+    return;
+  }
+  initialLoading.value = true;
   try {
     await Promise.all([
       admin.loadUsers(),
@@ -1132,6 +1185,8 @@ onMounted(async () => {
     ]);
   } catch (error: any) {
     showError("Falha ao carregar dados", error.response?.data?.message ?? "Tente novamente mais tarde.");
+  } finally {
+    initialLoading.value = false;
   }
 });
 

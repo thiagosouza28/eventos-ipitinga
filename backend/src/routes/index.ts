@@ -2,7 +2,10 @@
 
 import { authenticate } from "../middlewares/auth-middleware";
 import { authorize, authorizePermission } from "../middlewares/rbac-middleware";
-import { loginHandler, changePasswordHandler } from "../controllers/auth.controller";
+import { applyScope } from "../middlewares/scope-middleware";
+import { enforcePasswordUpdate } from "../middlewares/force-password-middleware";
+import { hydratePermissions } from "../middlewares/permissions-middleware";
+import { loginHandler, changePasswordHandler, recoverPasswordHandler } from "../controllers/auth.controller";
 import {
   createChurchHandler,
   listChurchesHandler,
@@ -145,12 +148,23 @@ router.get("/catalog/ministries", listMinistriesHandler);
 
 // AutenticaÃ§Ã£o
 router.post("/admin/login", loginHandler);
+router.post("/admin/password/recover", recoverPasswordHandler);
 
 // Admin protegido
-router.use("/admin", authenticate);
+router.use("/admin", authenticate, hydratePermissions, applyScope, enforcePasswordUpdate);
 
-router.get("/admin/system/config", authorize("AdminGeral"), getAdminSystemConfigHandler);
-router.put("/admin/system/config", authorize("AdminGeral"), updateSystemConfigHandler);
+router.get(
+  "/admin/system/config",
+  authorize("AdminGeral"),
+  authorizePermission("system", "view"),
+  getAdminSystemConfigHandler
+);
+router.put(
+  "/admin/system/config",
+  authorize("AdminGeral"),
+  authorizePermission("system", "edit"),
+  updateSystemConfigHandler
+);
 
 router.post("/admin/profile/change-password", changePasswordHandler);
 

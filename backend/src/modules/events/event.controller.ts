@@ -4,6 +4,7 @@ import { z } from "zod";
 import { eventService } from "./event.service";
 import { PaymentMethod } from "../../config/payment-methods";
 import { PendingPaymentValueRuleValues } from "../../config/pending-payment-value-rule";
+import { getScopedMinistryIds } from "../../utils/user-scope";
 
 const paymentMethodSchema = z.nativeEnum(PaymentMethod);
 const bannerFieldSchema = z
@@ -45,7 +46,8 @@ export const getEventBySlugHandler = async (request: Request, response: Response
 };
 
 export const listEventsAdminHandler = async (request: Request, response: Response) => {
-  const events = await eventService.listAdmin(request.user?.ministryIds);
+  const ministryIds = getScopedMinistryIds(request.user);
+  const events = await eventService.listAdmin(ministryIds);
   return response.json(events);
 };
 

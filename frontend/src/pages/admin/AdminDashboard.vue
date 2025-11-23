@@ -1,5 +1,7 @@
 <template>
   <div class="space-y-6">
+    <TableSkeleton v-if="loadingDashboard" helperText="📡 Carregando painel administrativo..." />
+    <template v-else>
     <BaseCard
       class="bg-gradient-to-r from-white via-[#f7f9ff] to-[#e7ecff] dark:from-[#131a2f] dark:via-[#0f162a] dark:to-[#0b1223]"
     >
@@ -109,11 +111,12 @@
         </table>
       </div>
     </BaseCard>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { CalendarDaysIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/vue/24/outline";
 
@@ -121,9 +124,11 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import { useAdminStore } from "../../stores/admin";
 import { formatDate } from "../../utils/format";
 import { useAuthStore } from "../../stores/auth";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 
 const admin = useAdminStore();
 const auth = useAuthStore();
+const loadingDashboard = ref(true);
 
 const canViewEvents = computed(() => auth.hasPermission("events", "view"));
 const canViewOrders = computed(() => auth.hasPermission("orders", "view"));
@@ -138,6 +143,8 @@ onMounted(async () => {
     await Promise.all(tasks);
   } catch (error) {
     console.error("Falha ao carregar dados iniciais do dashboard", error);
+  } finally {
+    loadingDashboard.value = false;
   }
 });
 

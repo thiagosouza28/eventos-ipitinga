@@ -10,10 +10,12 @@ type TokenPayload = {
   sub: string;
   role: Role;
   districtScopeId?: string | null;
-  churchScopeId?: string | null;
+  churchId?: string | null;
+  ministryId?: string | null;
   ministryIds?: string[];
   profileId?: string | null;
   permissions?: PermissionMap;
+  mustChangePassword?: boolean;
 };
 
 export const authenticate: RequestHandler = (request: Request, _response: Response, next: NextFunction) => {
@@ -33,10 +35,12 @@ export const authenticate: RequestHandler = (request: Request, _response: Respon
       id: decoded.sub,
       role: decoded.role,
       districtScopeId: decoded.districtScopeId,
-      churchScopeId: decoded.churchScopeId,
+      churchId: decoded.churchId,
+      ministryId: decoded.ministryId,
       ministryIds: decoded.ministryIds ?? [],
       profileId: decoded.profileId,
-      permissions: decoded.permissions
+      permissions: decoded.permissions,
+      mustChangePassword: decoded.mustChangePassword
     };
     return next();
   } catch (error) {

@@ -53,7 +53,12 @@ const envSchema = z.object({
   CRON_CANCEL_EXPIRED: z.string().default("*/5 * * * *"),
   ADMIN_EMAIL: z.string().email(),
   ADMIN_PASSWORD: z.string().min(8),
-  CHECKIN_CONFIRM_PASSWORD: z.string().min(4).optional()
+  CHECKIN_CONFIRM_PASSWORD: z.string().min(4).optional(),
+  SMTP_HOST: z.string().default("smtp.gmail.com"),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().email("SMTP_USER deve ser um e-mail v�lido"),
+  SMTP_PASS: z.string().min(1, "SMTP_PASS n�o pode ser vazio"),
+  EMAIL_FROM: z.string().email("EMAIL_FROM deve ser um e-mail v�lido")
 });
 
 const parsed = envSchema.safeParse({ ...testDefaults, ...process.env });

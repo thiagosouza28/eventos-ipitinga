@@ -315,7 +315,7 @@ const openEditDialog = (user) => {
     editDialog.form.phone = user.phone ?? "";
     editDialog.form.role = user.role;
     editDialog.form.districtScopeId = user.districtScopeId ?? "";
-    editDialog.form.churchScopeId = user.churchScopeId ?? "";
+    editDialog.form.churchScopeId = (user.churchId ?? user.churchScopeId) ?? "";
     editDialog.form.ministryIds = user.ministries?.map((ministry) => ministry.id) ?? [];
     editDialog.form.profileId = user.profile?.id ?? "";
     editDialog.form.status = user.status ?? "ACTIVE";

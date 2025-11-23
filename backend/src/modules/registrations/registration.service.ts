@@ -22,6 +22,7 @@ import { PaymentMethod, PAYMENT_METHOD_LABELS } from "../../config/payment-metho
 import { Gender, parseGender } from "../../config/gender";
 import { storageService } from "../../storage/storage.service";
 import { orderService } from "../orders/order.service";
+import { resolveOrderExpirationDate } from "../../utils/order-expiration";
 
 const receiptsDir = path.resolve(__dirname, "..", "..", "tmp", "receipts");
 
@@ -526,7 +527,7 @@ export class RegistrationService {
       throw new AppError("Inscricao sem pedido associado", 400);
     }
 
-    const expiresAt = new Date(Date.now() + env.ORDER_EXPIRATION_MINUTES * 60 * 1000);
+    const expiresAt = resolveOrderExpirationDate(registration.order.paymentMethod as PaymentMethod);
 
     await prisma.$transaction(async (tx) => {
       await tx.registration.update({

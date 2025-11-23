@@ -3,13 +3,15 @@ import { z } from "zod";
 import { financialService } from "./financial.service";
 import { generateFinancialEventReportPdf } from "../../pdf/financial-report.service";
 import { ensureEventMinistryAccess } from "../../utils/ministry-access";
+import { getScopedMinistryIds } from "../../utils/user-scope";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 
 export const getEventSummaryHandler = async (request: Request, response: Response) => {
   try {
     const { eventId } = request.params;
-    await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
+    const ministryIds = getScopedMinistryIds(request.user);
+    await ensureEventMinistryAccess(eventId, ministryIds);
     const summary = await financialService.getEventSummary(eventId);
     return response.json(summary);
   } catch (error: any) {
@@ -24,7 +26,8 @@ export const getEventSummaryHandler = async (request: Request, response: Respons
 export const getDistrictSummaryHandler = async (request: Request, response: Response) => {
   try {
     const { eventId, districtId } = request.params;
-    await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
+    const ministryIds = getScopedMinistryIds(request.user);
+    await ensureEventMinistryAccess(eventId, ministryIds);
     const summary = await financialService.getDistrictSummary(eventId, districtId);
     return response.json(summary);
   } catch (error: any) {
@@ -38,7 +41,8 @@ export const getDistrictSummaryHandler = async (request: Request, response: Resp
 export const getChurchSummaryHandler = async (request: Request, response: Response) => {
   try {
     const { eventId, churchId } = request.params;
-    await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
+    const ministryIds = getScopedMinistryIds(request.user);
+    await ensureEventMinistryAccess(eventId, ministryIds);
     const summary = await financialService.getChurchSummary(eventId, churchId);
     return response.json(summary);
   } catch (error: any) {
@@ -67,7 +71,8 @@ export const getGeneralSummaryHandler = async (request: Request, response: Respo
 export const downloadEventFinancialReportHandler = async (request: Request, response: Response) => {
   try {
     const { eventId } = request.params;
-    await ensureEventMinistryAccess(eventId, request.user?.ministryIds);
+    const ministryIds = getScopedMinistryIds(request.user);
+    await ensureEventMinistryAccess(eventId, ministryIds);
     const reportData = await financialService.getEventFinancialReportData(eventId);
     const generatedAt = new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "medium",

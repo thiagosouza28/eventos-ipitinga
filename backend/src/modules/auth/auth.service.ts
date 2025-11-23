@@ -1,27 +1,32 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { Secret, SignOptions } from "jsonwebtoken";
+import type { Prisma } from "@/prisma/generated/client";
 
 import { env } from "../../config/env";
 import { RolePermissionPresets } from "../../config/permissions";
 import { prisma } from "../../lib/prisma";
-import { UnauthorizedError } from "../../utils/errors";
+import { AppError, UnauthorizedError } from "../../utils/errors";
 import { buildPermissionMap, mergePermissionMap, toPermissionEntry } from "../../utils/permissions";
+import { sanitizeCpf } from "../../utils/mask";
+import { emailService } from "../../services/email.service";
+import { generateTemporaryPassword } from "../../utils/password";
+
+const userInclude = {
+  ministries: {
+    include: { ministry: true }
+  },
+  profile: {
+    include: { permissions: true }
+  },
+  permissionsOverride: true
+} as const;
+
+type UserWithRelations = Prisma.UserGetPayload<{ include: typeof userInclude }>;
 
 export class AuthService {
-  async login(email: string, password: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        ministries: {
-          include: { ministry: true }
-        },
-        profile: {
-          include: { permissions: true }
-        },
-        permissionsOverride: true
-      }
-    });
+  async login(identifier: string, password: string) {
+    const user = await this.findByIdentifier(identifier);
     if (!user) {
       throw new UnauthorizedError("Credenciais invalidas");
     }
@@ -34,6 +39,90 @@ export class AuthService {
       throw new UnauthorizedError("Credenciais invalidas");
     }
 
+    return this.buildSession(user);
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: userInclude
+    });
+    if (!user) {
+      throw new UnauthorizedError();
+    }
+
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      throw new UnauthorizedError("Senha atual incorreta");
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, Number(env.PASSWORD_SALT_ROUNDS));
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        isTemporaryPassword: false,
+        passwordUpdatedAt: new Date()
+      },
+      include: userInclude
+    });
+
+    return this.buildSession(updated);
+  }
+
+  async requestPasswordReset(identifier: string) {
+    const user = await this.findByIdentifier(identifier);
+    if (!user) {
+      // Evitar revelar se o usu�rio existe ou n�o
+      return;
+    }
+    if (!user.email) {
+      throw new AppError("Usu�rio sem e-mail cadastrado. Procure o administrador.", 400);
+    }
+
+    const temporaryPassword = generateTemporaryPassword();
+    const passwordHash = await bcrypt.hash(temporaryPassword, Number(env.PASSWORD_SALT_ROUNDS));
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        isTemporaryPassword: true,
+        passwordUpdatedAt: null
+      }
+    });
+
+    await emailService.sendTemporaryPasswordEmail({
+      to: user.email,
+      name: user.name,
+      temporaryPassword
+    });
+  }
+
+  private async findByIdentifier(identifier: string) {
+    const trimmed = identifier.trim();
+    if (!trimmed) return null;
+
+    const where = trimmed.includes("@")
+      ? { email: trimmed.toLowerCase() }
+      : (() => {
+          const sanitized = sanitizeCpf(trimmed);
+          if (!sanitized || sanitized.length !== 11) {
+            return null;
+          }
+          return { cpf: sanitized };
+        })();
+
+    if (!where) {
+      return null;
+    }
+
+    return prisma.user.findFirst({
+      where,
+      include: userInclude
+    });
+  }
+
+  private buildSession(user: NonNullable<UserWithRelations>) {
     const ministryIds = user.ministries?.map((relation) => relation.ministryId) ?? [];
     const profilePermissions = user.profile?.permissions ?? [];
     const basePermissions =
@@ -43,14 +132,18 @@ export class AuthService {
     const resolvedPermissions =
       overrideEntries.length > 0 ? mergePermissionMap(permissionMap, overrideEntries) : permissionMap;
 
+    const primaryMinistryId = user.ministryId ?? ministryIds[0] ?? null;
+
     const token = jwt.sign(
       {
         role: user.role,
         districtScopeId: user.districtScopeId,
-        churchScopeId: user.churchScopeId,
+        churchId: user.churchId,
+        ministryId: primaryMinistryId,
         ministryIds,
         profileId: user.profileId,
-        permissions: resolvedPermissions
+        permissions: resolvedPermissions,
+        mustChangePassword: user.isTemporaryPassword
       },
       env.JWT_SECRET as Secret,
       {
@@ -67,10 +160,12 @@ export class AuthService {
         email: user.email,
         role: user.role,
         districtScopeId: user.districtScopeId,
-        churchScopeId: user.churchScopeId,
+        churchId: user.churchId,
+        churchScopeId: user.churchId,
+        ministryId: primaryMinistryId,
         cpf: user.cpf,
         phone: user.phone,
-        mustChangePassword: user.mustChangePassword,
+        mustChangePassword: user.isTemporaryPassword,
         status: user.status,
         photoUrl: user.photoUrl,
         profile: user.profile
@@ -84,33 +179,13 @@ export class AuthService {
           : null,
         permissions: resolvedPermissions,
         permissionOverrides: overrideEntries,
-        ministries: user.ministries?.map((relation) => ({
-          id: relation.ministryId,
-          name: relation.ministry?.name ?? ""
-        })) ?? []
+        ministries:
+          user.ministries?.map((relation) => ({
+            id: relation.ministryId,
+            name: relation.ministry?.name ?? ""
+          })) ?? []
       }
     };
-  }
-
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedError();
-    }
-
-    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!matches) {
-      throw new UnauthorizedError("Senha atual incorreta");
-    }
-
-    const passwordHash = await bcrypt.hash(newPassword, Number(env.PASSWORD_SALT_ROUNDS));
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        passwordHash,
-        mustChangePassword: false
-      }
-    });
   }
 }
 

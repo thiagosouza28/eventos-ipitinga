@@ -1,5 +1,6 @@
 <template>
   <div :class="{ dark: isDark }">
+    <GlobalLoader />
     <div class="min-h-screen bg-[color:var(--background)] text-[color:var(--text)] transition-colors">
       <template v-if="isAdminLayout">
         <div class="flex min-h-screen">
@@ -177,7 +178,7 @@
 ...
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
+import { RouterLink, RouterView, useRoute, useRouter, type RouteLocationRaw } from "vue-router";
 import { storeToRefs } from "pinia";
 import {
   ArrowRightOnRectangleIcon,
@@ -202,6 +203,7 @@ import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./stores/auth";
 import { useSystemConfigStore } from "./stores/system-config";
 import AdminSidebar from "./components/admin/AdminSidebar.vue";
+import type { PermissionAction, Role } from "./types/api";
 
 const { isDark, toggleTheme } = useTheme();
 const router = useRouter();
@@ -214,26 +216,50 @@ const currentTime = ref(new Date());
 const isSidebarOpen = ref(true);
 let timer: number | undefined;
 
-const adminMenuItems = [
-  { label: "Dashboard", to: { name: "admin-dashboard" }, icon: Squares2X2Icon },
-  { label: "Eventos", to: { name: "admin-events" }, icon: CalendarDaysIcon },
-  { label: "Distritos", to: { name: "admin-districts" }, icon: MapPinIcon },
-  { label: "Igrejas", to: { name: "admin-churches" }, icon: BuildingOffice2Icon },
-  { label: "Ministérios", to: { name: "admin-ministries" }, icon: UsersIcon },
-  { label: "Usuários", to: { name: "admin-users" }, icon: UserPlusIcon },
-  { label: "Permissões", to: { name: "admin-profiles" }, icon: ShieldCheckIcon },
-  { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon },
-  { label: "Inscrições", to: { name: "admin-registrations" }, icon: UsersIcon },
-  { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon },
-  { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon },
-  { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon }
+type MenuDefinition = {
+  label: string;
+  to: RouteLocationRaw;
+  icon: typeof Squares2X2Icon;
+  module?: string;
+  action?: PermissionAction;
+  requiresRole?: Role;
+};
+
+const baseAdminMenu: MenuDefinition[] = [
+  { label: "Dashboard", to: { name: "admin-dashboard" }, icon: Squares2X2Icon, module: "dashboard" },
+  { label: "Eventos", to: { name: "admin-events" }, icon: CalendarDaysIcon, module: "events" },
+  { label: "Distritos", to: { name: "admin-districts" }, icon: MapPinIcon, module: "districts" },
+  { label: "Igrejas", to: { name: "admin-churches" }, icon: BuildingOffice2Icon, module: "churches" },
+  { label: "Ministérios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
+  { label: "Usuários", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
+  { label: "Permissões", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
+  { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon, module: "orders" },
+  { label: "Inscrições", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
+  { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
+  { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
+  { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
 ];
+
+const adminMenuItems = computed(() =>
+  baseAdminMenu.filter((item) => {
+    if (item.requiresRole && auth.user?.role !== item.requiresRole) {
+      return false;
+    }
+    if (!item.module) {
+      return true;
+    }
+    return auth.hasPermission(item.module, item.action ?? "view");
+  })
+);
+
+const adminStandaloneRoutes = new Set(["admin-login", "admin-forgot-password", "admin-force-password"]);
 
 const isAdminLayout = computed(() => {
   if (!route.path.startsWith("/admin")) {
     return false;
   }
-  return route.name !== "admin-login";
+  const currentName = typeof route.name === "string" ? route.name : "";
+  return !adminStandaloneRoutes.has(currentName);
 });
 
 const toggleSidebar = () => {

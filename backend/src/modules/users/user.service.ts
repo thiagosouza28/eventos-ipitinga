@@ -1,4 +1,3 @@
-import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
 import { UserStatus } from "@/prisma/generated/client";
 
@@ -8,11 +7,7 @@ import { auditService } from "../../services/audit.service";
 import { env } from "../../config/env";
 import { storageService } from "../../storage/storage.service";
 import { toPermissionEntry } from "../../utils/permissions";
-
-const generateTemporaryPassword = () => {
-  const candidate = randomBytes(8).toString("base64url");
-  return candidate.slice(0, 10);
-};
+import { generateTemporaryPassword } from "../../utils/password";
 
 type UserInput = {
   name: string;
@@ -46,7 +41,7 @@ const syncMinistries = async (userId: string, ministryIds?: string[]) => {
 
 const userIncludes = {
   districtScope: true,
-  churchScope: true,
+  church: true,
   ministries: {
     include: { ministry: true }
   },
@@ -71,6 +66,8 @@ const ensureActiveProfile = async (profileId?: string | null) => {
 
 const serializeUser = (user: any) => ({
   ...user,
+  churchScope: user.church ?? user.churchScope ?? null,
+  churchId: user.churchId ?? user.churchScopeId ?? null,
   ministries: user.ministries?.map((relation: any) => ({
     id: relation.ministryId,
     name: relation.ministry?.name ?? ""
@@ -121,6 +118,8 @@ export class UserService {
       : null;
     const profileId = await ensureActiveProfile(payload.profileId ?? null);
 
+    const primaryMinistryId = payload.ministryIds?.[0] ?? null;
+
     const user = await prisma.user.create({
       data: {
         name: payload.name.trim(),
@@ -129,12 +128,14 @@ export class UserService {
         phone: payload.phone?.trim() ?? null,
         role: payload.role,
         districtScopeId: payload.districtScopeId ?? null,
-        churchScopeId: payload.churchScopeId ?? null,
+        churchId: payload.churchScopeId ?? null,
+        ministryId: primaryMinistryId,
         photoUrl: storedPhoto,
         profileId,
         status: payload.status ?? UserStatus.ACTIVE,
         passwordHash,
-        mustChangePassword: true
+        isTemporaryPassword: true,
+        passwordUpdatedAt: null
       },
       include: userIncludes
     });
@@ -211,7 +212,8 @@ export class UserService {
         phone: payload.phone !== undefined ? payload.phone?.trim() ?? null : undefined,
         role: payload.role,
         districtScopeId: payload.districtScopeId ?? undefined,
-        churchScopeId: payload.churchScopeId ?? undefined,
+        churchId: payload.churchScopeId ?? undefined,
+        ministryId: payload.ministryIds ? payload.ministryIds[0] ?? null : undefined,
         photoUrl: photoUrlUpdate,
         profileId: profileIdUpdate,
         status: payload.status ?? undefined
@@ -290,7 +292,8 @@ export class UserService {
       where: { id },
       data: {
         passwordHash,
-        mustChangePassword: true
+        isTemporaryPassword: true,
+        passwordUpdatedAt: null
       }
     });
 

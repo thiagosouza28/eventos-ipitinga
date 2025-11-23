@@ -8,10 +8,12 @@ declare global {
       id: string;
       role: Role;
       districtScopeId?: string | null;
-      churchScopeId?: string | null;
+      churchId?: string | null;
+      ministryId?: string | null;
       ministryIds?: string[];
       profileId?: string | null;
       permissions?: PermissionMap;
+      mustChangePassword?: boolean;
     }
 
     interface Request {

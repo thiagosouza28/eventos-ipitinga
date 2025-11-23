@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="space-y-6" data-uppercase-scope>
+  <div v-if="registrationPermissions.canList" class="space-y-6" data-uppercase-scope>
     <ErrorDialog
       :model-value="errorDialog.open"
       :title="errorDialog.title"
@@ -29,6 +29,7 @@
             Dashboard
           </RouterLink>
           <button
+            v-if="registrationPermissions.canCreate"
             type="button"
             class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
             @click="openAddDialog"
@@ -220,11 +221,15 @@
           </p>
           <button
             @click="downloadReportPdf"
-            :disabled="!canDownloadReport"
+            :disabled="!canDownloadReport || reportDownloadState.loading || !registrationPermissions.canReports"
             type="button"
-            class="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
           >
-            Baixar PDF
+            <span
+              v-if="reportDownloadState.loading"
+              class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
+            />
+            <span>{{ reportDownloadState.loading ? "Gerando..." : "Baixar PDF" }}</span>
           </button>
         </div>
       </div>
@@ -234,7 +239,11 @@
     <BaseCard
       class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
     >
-      <div v-if="displayedRegistrations.length === 0" class="p-6 text-sm text-neutral-500 dark:text-neutral-400">
+      <TableSkeleton
+        v-if="isApplying && admin.registrations.length === 0"
+        helperText="🔄 Buscando inscrições..."
+      />
+      <div v-else-if="displayedRegistrations.length === 0" class="p-6 text-sm text-neutral-500 dark:text-neutral-400">
         Nenhuma inscrição encontrada.
       </div>
       <div
@@ -319,44 +328,59 @@
               </td>
               <td class="px-5 py-4 align-top text-right">
                 <div class="inline-flex flex-wrap justify-end gap-2 text-xs font-semibold uppercase tracking-wide">
-                  <button class="text-primary-600 hover:text-primary-500" @click="openEdit(registration)">Editar</button>
                   <button
-                    v-if="isPaymentLinkVisible(registration)"
+                    v-if="registrationPermissions.canEdit"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openEdit(registration)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    v-if="isPaymentLinkVisible(registration) && registrationPermissions.canEdit"
                     class="text-primary-600 hover:text-primary-500"
                     @click="copyPaymentLink(registration)"
                   >
                     Link pagamento
                   </button>
                   <button
-                    v-if="registration.paymentMethod === 'CASH' && registration.status === 'PENDING_PAYMENT' && registration.orderId"
+                    v-if="
+                      registration.paymentMethod === 'CASH' &&
+                      registration.status === 'PENDING_PAYMENT' &&
+                      registration.orderId &&
+                      registrationPermissions.canFinancial
+                    "
                     class="text-primary-600 hover:text-primary-500"
                     @click="openConfirm('confirm-cash', registration)"
                   >
                     Confirmar pagamento
                   </button>
                   <button
-                    v-if="canCancelRegistration(registration.status) && registration.status === 'PENDING_PAYMENT'"
+                    v-if="
+                      canCancelRegistration(registration.status) &&
+                      registration.status === 'PENDING_PAYMENT' &&
+                      registrationPermissions.canDeactivate
+                    "
                     class="text-red-600 hover:text-red-500"
                     @click="openConfirm('cancel', registration)"
                   >
                     Cancelar
                   </button>
                   <button
-                    v-if="registration.status === 'PAID'"
+                    v-if="registration.status === 'PAID' && registrationPermissions.canFinancial"
                     class="text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200"
                     @click="openConfirm('refund', registration)"
                   >
                     Estornar
                   </button>
                   <button
-                    v-if="registration.status === 'CANCELED'"
+                    v-if="registration.status === 'CANCELED' && registrationPermissions.canApprove"
                     class="text-primary-600 hover:text-primary-500"
                     @click="openConfirm('reactivate', registration)"
                   >
                     Reativar
                   </button>
                   <button
-                    v-if="canDeleteRegistration(registration.status)"
+                    v-if="canDeleteRegistration(registration.status) && registrationPermissions.canDelete"
                     class="text-red-600 hover:text-red-500"
                     @click="openConfirm('delete', registration)"
                   >
@@ -628,8 +652,19 @@
         </div>
       </div>
     </div>
+    <div
+      v-if="reportDownloadState.loading"
+      class="fixed inset-0 z-[50] flex items-center justify-center bg-black/50"
+    >
+      <div class="rounded-lg bg-white px-6 py-4 text-sm shadow dark:bg-neutral-900">
+        <div class="flex items-center gap-3 text-neutral-700 dark:text-neutral-100">
+          <svg class="h-5 w-5 animate-spin text-neutral-900 dark:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+          <span>Gerando relatório em PDF...</span>
+        </div>
+      </div>
+    </div>
   </div>
-  
+  <AccessDeniedNotice v-else module="registrations" action="view" />
 </template>
 
 <script setup lang="ts">
@@ -639,6 +674,8 @@ import { RouterLink } from 'vue-router'
 import DateField from '../../components/forms/DateField.vue'
 import BaseCard from '../../components/ui/BaseCard.vue'
 import ErrorDialog from '../../components/ui/ErrorDialog.vue'
+import AccessDeniedNotice from '../../components/admin/AccessDeniedNotice.vue'
+import TableSkeleton from '../../components/ui/TableSkeleton.vue'
 import { useAdminStore } from '../../stores/admin'
 import { useCatalogStore } from '../../stores/catalog'
 import { useAuthStore } from '../../stores/auth'
@@ -648,10 +685,12 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog.vue'
 import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf'
 import { paymentMethodLabel } from '../../config/paymentMethods'
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto'
+import { useModulePermissions } from '../../composables/usePermissions'
 
 const admin = useAdminStore()
 const catalog = useCatalogStore()
 const auth = useAuthStore()
+const registrationPermissions = useModulePermissions('registrations')
 
 const filters = reactive({
   eventId: '',
@@ -718,6 +757,7 @@ const buildFilterParams = () => ({
 })
 
 const applyFilters = async () => {
+  if (!registrationPermissions.canList.value) { return }
   if (isApplying.value) { pendingApply.value = true; return }
   if (applyDebounce) { window.clearTimeout(applyDebounce); applyDebounce = null }
   isApplying.value = true
@@ -757,39 +797,62 @@ const reportType = ref<'event' | 'church'>('event')
 const reportTemplate = ref<'standard' | 'event'>('standard')
 const reportLayout = ref<'single' | 'two' | 'four'>('single')
 const reportFilters = reactive({ eventId: '', districtId: '', churchId: '' })
+const reportDownloadState = reactive({ loading: false })
 const canDownloadReport = computed(() => {
   if (reportType.value === 'event') return !!reportFilters.eventId
   return !!reportFilters.districtId && !!reportFilters.churchId
 })
-watch(reportType, () => { reportFilters.eventId = ''; reportFilters.districtId = ''; reportFilters.churchId = '' })
+watch(reportType, () => {
+  reportFilters.eventId = '';
+  reportFilters.districtId = '';
+  reportFilters.churchId = '';
+})
 watch(() => reportFilters.districtId, async (value) => {
   try { await catalog.loadChurches(value || undefined) } catch (e) { /* noop */ }
   if (reportFilters.churchId && !catalog.churches.some(c => c.id === reportFilters.churchId)) reportFilters.churchId = ''
 })
 const downloadReportPdf = async () => {
+  if (reportDownloadState.loading) return
+  if (!registrationPermissions.canReports.value) {
+    showError('Acesso negado', new Error('Você não possui permissão para gerar relatórios de inscrições.'))
+    return
+  }
+  const currentType = reportType.value
+  if (currentType === 'event') {
+    if (!reportFilters.eventId) {
+      showError('Selecione o evento', new Error('Evento obrigatório'))
+      return
+    }
+  } else if (!reportFilters.districtId || !reportFilters.churchId) {
+    showError('Selecione distrito e igreja', new Error('Campos obrigatórios'))
+    return
+  }
+
+  reportDownloadState.loading = true
   try {
-    // Montar filtros específicos do relatório
     const params: Record<string, string> = {}
-    if (reportType.value === 'event') {
-      if (!reportFilters.eventId) { showError('Selecione o evento', new Error('Evento obrigatório')); return }
+    if (currentType === 'event') {
       params.eventId = reportFilters.eventId
     } else {
-      if (!reportFilters.districtId || !reportFilters.churchId) { showError('Selecione distrito e igreja', new Error('Campos obrigatórios')); return }
       params.districtId = reportFilters.districtId
       params.churchId = reportFilters.churchId
     }
-    const resp = await admin.downloadRegistrationReport({ ...params, layout: reportLayout.value }, reportType.value, reportTemplate.value)
+    const payloadParams =
+      reportTemplate.value === 'event' ? { ...params, layout: reportLayout.value } : params
+    const resp = await admin.downloadRegistrationReport(payloadParams, currentType, reportTemplate.value)
     const blob = new Blob([resp.data], { type: 'application/pdf' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `relatorio-inscrições-${reportType.value}.pdf`
+    a.download = `relatorio-inscrições-${currentType}.pdf`
     document.body.appendChild(a)
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
   } catch (e) {
     showError('Falha ao gerar relatório', e)
+  } finally {
+    reportDownloadState.loading = false
   }
 }
 
@@ -816,7 +879,6 @@ const findEventPriceCents = (eventId: string) => {
 const findDistrictName = (id: string) => catalog.districts.find((d) => d.id === id)?.name ?? 'Não informado'
 const findChurchName = (id: string) => catalog.churches.find((c) => c.id === id)?.name ?? 'Não informado'
 
-const brDateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' })
 type DateParts = { year: number; month: number; day: number }
 const parseDateParts = (value: string | Date | null | undefined): DateParts | null => {
   if (!value) return null
@@ -839,11 +901,20 @@ const parseDateParts = (value: string | Date | null | undefined): DateParts | nu
     day: source.getUTCDate()
   }
 }
+const formatDateDisplay = (parts: DateParts) => {
+  const day = String(parts.day).padStart(2, '0')
+  const month = String(parts.month).padStart(2, '0')
+  return `${day}/${month}/${parts.year}`
+}
+const formatDateInputValue = (value: string | Date | null | undefined) => {
+  const parts = parseDateParts(value)
+  if (!parts) return ''
+  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
+}
 function formatBirthDate(value: string | Date | null | undefined) {
   const parts = parseDateParts(value)
   if (!parts) return 'N?o informado'
-  const normalized = new Date(Date.UTC(parts.year, parts.month - 1, parts.day))
-  return brDateFormatter.format(normalized)
+  return formatDateDisplay(parts)
 }
 
 function calculateAge(value?: string | Date | null) {
@@ -944,6 +1015,10 @@ const resetAddForm = (paymentMethod: 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR' = 
 }
 
 const openAddDialog = () => {
+  if (!registrationPermissions.canCreate.value) {
+    showError('Acesso negado', new Error('Você não possui permissão para criar inscrições.'))
+    return
+  }
   resetAddForm()
   addDialog.open = true
 }
@@ -1052,6 +1127,10 @@ const clearAddPhoto = () => {
 }
 
 const saveNewRegistration = async () => {
+  if (!registrationPermissions.canCreate.value) {
+    showError('Acesso negado', new Error('Você não possui permissão para criar inscrições.'))
+    return
+  }
   try {
     if (!addForm.eventId) { showError('Evento obrigat�rio', new Error('Selecione o evento')); return }
     if (!addForm.fullName || addForm.fullName.trim().length < 3) { showError('Nome inv�lido', new Error('Informe o nome completo')); return }
@@ -1169,9 +1248,13 @@ const onCpfInput = (e: Event) => {
 }
 
 const openEdit = (registration: Registration) => {
+  if (!registrationPermissions.canEdit.value) {
+    showError('Acesso negado', new Error('Você não possui permissão para editar inscrições.'))
+    return
+  }
   editDialog.original = { ...registration }
   editForm.fullName = registration.fullName
-  editForm.birthDate = new Date(registration.birthDate).toISOString().slice(0,10)
+  editForm.birthDate = formatDateInputValue(registration.birthDate)
   editForm.cpf = formatCPF(registration.cpf)
   editForm.districtId = registration.districtId
   editForm.churchId = registration.churchId
@@ -1210,12 +1293,16 @@ const clearEditPhoto = () => {
 
 const saveRegistration = async () => {
   if (!editDialog.original) return
+  if (!registrationPermissions.canEdit.value) {
+    showError('Acesso negado', new Error('Você não possui permissão para editar inscrições.'))
+    return
+  }
   const original = editDialog.original
   const payload: Record<string, unknown> = {}
   try {
     if (!validateCPF(editForm.cpf)) { showError('CPF invalido', new Error('Informe um CPF valido')); return }
     if (editForm.fullName.trim() && editForm.fullName.trim() !== original.fullName) payload.fullName = editForm.fullName.trim()
-    const currentBirth = new Date(original.birthDate).toISOString().slice(0,10)
+    const currentBirth = formatDateInputValue(original.birthDate)
     if (editForm.birthDate && editForm.birthDate !== currentBirth) payload.birthDate = editForm.birthDate
     const sanitized = normalizeCPF(editForm.cpf)
     if (sanitized && sanitized !== original.cpf) payload.cpf = sanitized
@@ -1232,6 +1319,10 @@ const isPaymentLinkVisible = (registration: Registration) =>
 
 const copyPaymentLink = async (registration: Registration) => {
   if (!isPaymentLinkVisible(registration)) return
+  if (!registrationPermissions.canEdit.value) {
+    showError('Acesso negado', new Error('Você não possui permissão para editar inscrições.'))
+    return
+  }
   const slug = findEventSlug(registration.eventId)
   if (!slug) { showError('Não foi possível gerar link', new Error('Evento sem slug disponível.')); return }
   try {
@@ -1258,7 +1349,19 @@ const confirmState = reactive({ open: false, action: null as ConfirmAction | nul
 const resetConfirmState = () => { confirmState.open = false; confirmState.action = null; confirmState.registration = null; confirmState.title = ''; confirmState.description = ''; confirmState.confirmLabel = 'Confirmar'; confirmState.cancelLabel = 'Cancelar'; confirmState.type = 'default' }
 const handleDialogVisibility = (v: boolean) => { if (v) { confirmState.open = true; return } resetConfirmState() }
 
+const canExecuteAction = (action: ConfirmAction) => {
+  if (action === 'delete') return registrationPermissions.canDelete.value
+  if (action === 'cancel') return registrationPermissions.canDeactivate.value
+  if (action === 'refund' || action === 'confirm-cash') return registrationPermissions.canFinancial.value
+  if (action === 'reactivate') return registrationPermissions.canApprove.value
+  return true
+}
+
 const openConfirm = (action: ConfirmAction, registration: Registration) => {
+  if (!canExecuteAction(action)) {
+    showError('Acesso negado', new Error('Você não possui permissão para essa ação.'))
+    return
+  }
   confirmState.action = action
   confirmState.registration = registration
   confirmState.open = true
@@ -1283,6 +1386,11 @@ const executeConfirmAction = async () => {
   if (!confirmState.registration || !confirmState.action) { resetConfirmState(); return }
   const registration = confirmState.registration
   const action = confirmState.action
+  if (!canExecuteAction(action)) {
+    showError('Acesso negado', new Error('Você não possui permissão para essa ação.'))
+    resetConfirmState()
+    return
+  }
   resetConfirmState()
   try {
     if (action === 'cancel') await admin.cancelRegistration(registration.id)

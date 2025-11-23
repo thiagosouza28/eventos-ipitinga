@@ -2496,12 +2496,14 @@ export namespace Prisma {
     events: number
     users: number
     registrations: number
+    primaryUsers: number
   }
 
   export type MinistryCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     events?: boolean | MinistryCountOutputTypeCountEventsArgs
     users?: boolean | MinistryCountOutputTypeCountUsersArgs
     registrations?: boolean | MinistryCountOutputTypeCountRegistrationsArgs
+    primaryUsers?: boolean | MinistryCountOutputTypeCountPrimaryUsersArgs
   }
 
   // Custom InputTypes
@@ -2534,6 +2536,13 @@ export namespace Prisma {
    */
   export type MinistryCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: RegistrationWhereInput
+  }
+
+  /**
+   * MinistryCountOutputType without action
+   */
+  export type MinistryCountOutputTypeCountPrimaryUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
   }
 
 
@@ -10761,10 +10770,12 @@ export namespace Prisma {
     passwordHash: string | null
     role: string | null
     districtScopeId: string | null
-    churchScopeId: string | null
+    churchId: string | null
+    ministryId: string | null
     createdAt: Date | null
     cpf: string | null
-    mustChangePassword: boolean | null
+    isTemporaryPassword: boolean | null
+    passwordUpdatedAt: Date | null
     phone: string | null
     photoUrl: string | null
     profileId: string | null
@@ -10778,10 +10789,12 @@ export namespace Prisma {
     passwordHash: string | null
     role: string | null
     districtScopeId: string | null
-    churchScopeId: string | null
+    churchId: string | null
+    ministryId: string | null
     createdAt: Date | null
     cpf: string | null
-    mustChangePassword: boolean | null
+    isTemporaryPassword: boolean | null
+    passwordUpdatedAt: Date | null
     phone: string | null
     photoUrl: string | null
     profileId: string | null
@@ -10795,10 +10808,12 @@ export namespace Prisma {
     passwordHash: number
     role: number
     districtScopeId: number
-    churchScopeId: number
+    churchId: number
+    ministryId: number
     createdAt: number
     cpf: number
-    mustChangePassword: number
+    isTemporaryPassword: number
+    passwordUpdatedAt: number
     phone: number
     photoUrl: number
     profileId: number
@@ -10814,10 +10829,12 @@ export namespace Prisma {
     passwordHash?: true
     role?: true
     districtScopeId?: true
-    churchScopeId?: true
+    churchId?: true
+    ministryId?: true
     createdAt?: true
     cpf?: true
-    mustChangePassword?: true
+    isTemporaryPassword?: true
+    passwordUpdatedAt?: true
     phone?: true
     photoUrl?: true
     profileId?: true
@@ -10831,10 +10848,12 @@ export namespace Prisma {
     passwordHash?: true
     role?: true
     districtScopeId?: true
-    churchScopeId?: true
+    churchId?: true
+    ministryId?: true
     createdAt?: true
     cpf?: true
-    mustChangePassword?: true
+    isTemporaryPassword?: true
+    passwordUpdatedAt?: true
     phone?: true
     photoUrl?: true
     profileId?: true
@@ -10848,10 +10867,12 @@ export namespace Prisma {
     passwordHash?: true
     role?: true
     districtScopeId?: true
-    churchScopeId?: true
+    churchId?: true
+    ministryId?: true
     createdAt?: true
     cpf?: true
-    mustChangePassword?: true
+    isTemporaryPassword?: true
+    passwordUpdatedAt?: true
     phone?: true
     photoUrl?: true
     profileId?: true
@@ -10938,10 +10959,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId: string | null
-    churchScopeId: string | null
+    churchId: string | null
+    ministryId: string | null
     createdAt: Date
     cpf: string | null
-    mustChangePassword: boolean
+    isTemporaryPassword: boolean
+    passwordUpdatedAt: Date | null
     phone: string | null
     photoUrl: string | null
     profileId: string | null
@@ -10972,10 +10995,12 @@ export namespace Prisma {
     passwordHash?: boolean
     role?: boolean
     districtScopeId?: boolean
-    churchScopeId?: boolean
+    churchId?: boolean
+    ministryId?: boolean
     createdAt?: boolean
     cpf?: boolean
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: boolean
     phone?: boolean
     photoUrl?: boolean
     profileId?: boolean
@@ -10984,8 +11009,9 @@ export namespace Prisma {
     eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
     ministries?: boolean | User$ministriesArgs<ExtArgs>
     systemConfigsUpdated?: boolean | User$systemConfigsUpdatedArgs<ExtArgs>
-    churchScope?: boolean | User$churchScopeArgs<ExtArgs>
+    church?: boolean | User$churchArgs<ExtArgs>
     districtScope?: boolean | User$districtScopeArgs<ExtArgs>
+    primaryMinistry?: boolean | User$primaryMinistryArgs<ExtArgs>
     profile?: boolean | User$profileArgs<ExtArgs>
     permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -10999,10 +11025,12 @@ export namespace Prisma {
     passwordHash?: boolean
     role?: boolean
     districtScopeId?: boolean
-    churchScopeId?: boolean
+    churchId?: boolean
+    ministryId?: boolean
     createdAt?: boolean
     cpf?: boolean
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: boolean
     phone?: boolean
     photoUrl?: boolean
     profileId?: boolean
@@ -11014,8 +11042,9 @@ export namespace Prisma {
     eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
     ministries?: boolean | User$ministriesArgs<ExtArgs>
     systemConfigsUpdated?: boolean | User$systemConfigsUpdatedArgs<ExtArgs>
-    churchScope?: boolean | User$churchScopeArgs<ExtArgs>
+    church?: boolean | User$churchArgs<ExtArgs>
     districtScope?: boolean | User$districtScopeArgs<ExtArgs>
+    primaryMinistry?: boolean | User$primaryMinistryArgs<ExtArgs>
     profile?: boolean | User$profileArgs<ExtArgs>
     permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -11028,8 +11057,9 @@ export namespace Prisma {
       eventsCreated: Prisma.$EventPayload<ExtArgs>[]
       ministries: Prisma.$MinistryUserPayload<ExtArgs>[]
       systemConfigsUpdated: Prisma.$SystemConfigPayload<ExtArgs>[]
-      churchScope: Prisma.$ChurchPayload<ExtArgs> | null
+      church: Prisma.$ChurchPayload<ExtArgs> | null
       districtScope: Prisma.$DistrictPayload<ExtArgs> | null
+      primaryMinistry: Prisma.$MinistryPayload<ExtArgs> | null
       profile: Prisma.$ProfilePayload<ExtArgs> | null
       permissionsOverride: Prisma.$UserPermissionPayload<ExtArgs>[]
     }
@@ -11040,10 +11070,12 @@ export namespace Prisma {
       passwordHash: string
       role: string
       districtScopeId: string | null
-      churchScopeId: string | null
+      churchId: string | null
+      ministryId: string | null
       createdAt: Date
       cpf: string | null
-      mustChangePassword: boolean
+      isTemporaryPassword: boolean
+      passwordUpdatedAt: Date | null
       phone: string | null
       photoUrl: string | null
       profileId: string | null
@@ -11392,8 +11424,9 @@ export namespace Prisma {
     eventsCreated<T extends User$eventsCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$eventsCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
     ministries<T extends User$ministriesArgs<ExtArgs> = {}>(args?: Subset<T, User$ministriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MinistryUserPayload<ExtArgs>, T, "findMany"> | Null>
     systemConfigsUpdated<T extends User$systemConfigsUpdatedArgs<ExtArgs> = {}>(args?: Subset<T, User$systemConfigsUpdatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemConfigPayload<ExtArgs>, T, "findMany"> | Null>
-    churchScope<T extends User$churchScopeArgs<ExtArgs> = {}>(args?: Subset<T, User$churchScopeArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    church<T extends User$churchArgs<ExtArgs> = {}>(args?: Subset<T, User$churchArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     districtScope<T extends User$districtScopeArgs<ExtArgs> = {}>(args?: Subset<T, User$districtScopeArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    primaryMinistry<T extends User$primaryMinistryArgs<ExtArgs> = {}>(args?: Subset<T, User$primaryMinistryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     profile<T extends User$profileArgs<ExtArgs> = {}>(args?: Subset<T, User$profileArgs<ExtArgs>>): Prisma__ProfileClient<$Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     permissionsOverride<T extends User$permissionsOverrideArgs<ExtArgs> = {}>(args?: Subset<T, User$permissionsOverrideArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany"> | Null>
     /**
@@ -11431,10 +11464,12 @@ export namespace Prisma {
     readonly passwordHash: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'String'>
     readonly districtScopeId: FieldRef<"User", 'String'>
-    readonly churchScopeId: FieldRef<"User", 'String'>
+    readonly churchId: FieldRef<"User", 'String'>
+    readonly ministryId: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly cpf: FieldRef<"User", 'String'>
-    readonly mustChangePassword: FieldRef<"User", 'Boolean'>
+    readonly isTemporaryPassword: FieldRef<"User", 'Boolean'>
+    readonly passwordUpdatedAt: FieldRef<"User", 'DateTime'>
     readonly phone: FieldRef<"User", 'String'>
     readonly photoUrl: FieldRef<"User", 'String'>
     readonly profileId: FieldRef<"User", 'String'>
@@ -11818,9 +11853,9 @@ export namespace Prisma {
   }
 
   /**
-   * User.churchScope
+   * User.church
    */
-  export type User$churchScopeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type User$churchArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Church
      */
@@ -11845,6 +11880,21 @@ export namespace Prisma {
      */
     include?: DistrictInclude<ExtArgs> | null
     where?: DistrictWhereInput
+  }
+
+  /**
+   * User.primaryMinistry
+   */
+  export type User$primaryMinistryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Ministry
+     */
+    select?: MinistrySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MinistryInclude<ExtArgs> | null
+    where?: MinistryWhereInput
   }
 
   /**
@@ -14891,6 +14941,7 @@ export namespace Prisma {
     events?: boolean | Ministry$eventsArgs<ExtArgs>
     users?: boolean | Ministry$usersArgs<ExtArgs>
     registrations?: boolean | Ministry$registrationsArgs<ExtArgs>
+    primaryUsers?: boolean | Ministry$primaryUsersArgs<ExtArgs>
     _count?: boolean | MinistryCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["ministry"]>
 
@@ -14908,6 +14959,7 @@ export namespace Prisma {
     events?: boolean | Ministry$eventsArgs<ExtArgs>
     users?: boolean | Ministry$usersArgs<ExtArgs>
     registrations?: boolean | Ministry$registrationsArgs<ExtArgs>
+    primaryUsers?: boolean | Ministry$primaryUsersArgs<ExtArgs>
     _count?: boolean | MinistryCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -14917,6 +14969,7 @@ export namespace Prisma {
       events: Prisma.$EventPayload<ExtArgs>[]
       users: Prisma.$MinistryUserPayload<ExtArgs>[]
       registrations: Prisma.$RegistrationPayload<ExtArgs>[]
+      primaryUsers: Prisma.$UserPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -15268,6 +15321,7 @@ export namespace Prisma {
     events<T extends Ministry$eventsArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
     users<T extends Ministry$usersArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MinistryUserPayload<ExtArgs>, T, "findMany"> | Null>
     registrations<T extends Ministry$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
+    primaryUsers<T extends Ministry$primaryUsersArgs<ExtArgs> = {}>(args?: Subset<T, Ministry$primaryUsersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -15659,6 +15713,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+  }
+
+  /**
+   * Ministry.primaryUsers
+   */
+  export type Ministry$primaryUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
@@ -19565,10 +19639,12 @@ export namespace Prisma {
     passwordHash: 'passwordHash',
     role: 'role',
     districtScopeId: 'districtScopeId',
-    churchScopeId: 'churchScopeId',
+    churchId: 'churchId',
+    ministryId: 'ministryId',
     createdAt: 'createdAt',
     cpf: 'cpf',
-    mustChangePassword: 'mustChangePassword',
+    isTemporaryPassword: 'isTemporaryPassword',
+    passwordUpdatedAt: 'passwordUpdatedAt',
     phone: 'phone',
     photoUrl: 'photoUrl',
     profileId: 'profileId',
@@ -20540,10 +20616,12 @@ export namespace Prisma {
     passwordHash?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
     districtScopeId?: StringNullableFilter<"User"> | string | null
-    churchScopeId?: StringNullableFilter<"User"> | string | null
+    churchId?: StringNullableFilter<"User"> | string | null
+    ministryId?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     cpf?: StringNullableFilter<"User"> | string | null
-    mustChangePassword?: BoolFilter<"User"> | boolean
+    isTemporaryPassword?: BoolFilter<"User"> | boolean
+    passwordUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     phone?: StringNullableFilter<"User"> | string | null
     photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
@@ -20552,8 +20630,9 @@ export namespace Prisma {
     eventsCreated?: EventListRelationFilter
     ministries?: MinistryUserListRelationFilter
     systemConfigsUpdated?: SystemConfigListRelationFilter
-    churchScope?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
+    church?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
     districtScope?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    primaryMinistry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     permissionsOverride?: UserPermissionListRelationFilter
   }
@@ -20565,10 +20644,12 @@ export namespace Prisma {
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrderInput | SortOrder
-    churchScopeId?: SortOrderInput | SortOrder
+    churchId?: SortOrderInput | SortOrder
+    ministryId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     cpf?: SortOrderInput | SortOrder
-    mustChangePassword?: SortOrder
+    isTemporaryPassword?: SortOrder
+    passwordUpdatedAt?: SortOrderInput | SortOrder
     phone?: SortOrderInput | SortOrder
     photoUrl?: SortOrderInput | SortOrder
     profileId?: SortOrderInput | SortOrder
@@ -20577,8 +20658,9 @@ export namespace Prisma {
     eventsCreated?: EventOrderByRelationAggregateInput
     ministries?: MinistryUserOrderByRelationAggregateInput
     systemConfigsUpdated?: SystemConfigOrderByRelationAggregateInput
-    churchScope?: ChurchOrderByWithRelationInput
+    church?: ChurchOrderByWithRelationInput
     districtScope?: DistrictOrderByWithRelationInput
+    primaryMinistry?: MinistryOrderByWithRelationInput
     profile?: ProfileOrderByWithRelationInput
     permissionsOverride?: UserPermissionOrderByRelationAggregateInput
   }
@@ -20594,9 +20676,11 @@ export namespace Prisma {
     passwordHash?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
     districtScopeId?: StringNullableFilter<"User"> | string | null
-    churchScopeId?: StringNullableFilter<"User"> | string | null
+    churchId?: StringNullableFilter<"User"> | string | null
+    ministryId?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
-    mustChangePassword?: BoolFilter<"User"> | boolean
+    isTemporaryPassword?: BoolFilter<"User"> | boolean
+    passwordUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     phone?: StringNullableFilter<"User"> | string | null
     photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
@@ -20605,8 +20689,9 @@ export namespace Prisma {
     eventsCreated?: EventListRelationFilter
     ministries?: MinistryUserListRelationFilter
     systemConfigsUpdated?: SystemConfigListRelationFilter
-    churchScope?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
+    church?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
     districtScope?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    primaryMinistry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     permissionsOverride?: UserPermissionListRelationFilter
   }, "id" | "email" | "cpf">
@@ -20618,10 +20703,12 @@ export namespace Prisma {
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrderInput | SortOrder
-    churchScopeId?: SortOrderInput | SortOrder
+    churchId?: SortOrderInput | SortOrder
+    ministryId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     cpf?: SortOrderInput | SortOrder
-    mustChangePassword?: SortOrder
+    isTemporaryPassword?: SortOrder
+    passwordUpdatedAt?: SortOrderInput | SortOrder
     phone?: SortOrderInput | SortOrder
     photoUrl?: SortOrderInput | SortOrder
     profileId?: SortOrderInput | SortOrder
@@ -20641,10 +20728,12 @@ export namespace Prisma {
     passwordHash?: StringWithAggregatesFilter<"User"> | string
     role?: StringWithAggregatesFilter<"User"> | string
     districtScopeId?: StringNullableWithAggregatesFilter<"User"> | string | null
-    churchScopeId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    churchId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    ministryId?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     cpf?: StringNullableWithAggregatesFilter<"User"> | string | null
-    mustChangePassword?: BoolWithAggregatesFilter<"User"> | boolean
+    isTemporaryPassword?: BoolWithAggregatesFilter<"User"> | boolean
+    passwordUpdatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     phone?: StringNullableWithAggregatesFilter<"User"> | string | null
     photoUrl?: StringNullableWithAggregatesFilter<"User"> | string | null
     profileId?: StringNullableWithAggregatesFilter<"User"> | string | null
@@ -20872,6 +20961,7 @@ export namespace Prisma {
     events?: EventListRelationFilter
     users?: MinistryUserListRelationFilter
     registrations?: RegistrationListRelationFilter
+    primaryUsers?: UserListRelationFilter
   }
 
   export type MinistryOrderByWithRelationInput = {
@@ -20884,6 +20974,7 @@ export namespace Prisma {
     events?: EventOrderByRelationAggregateInput
     users?: MinistryUserOrderByRelationAggregateInput
     registrations?: RegistrationOrderByRelationAggregateInput
+    primaryUsers?: UserOrderByRelationAggregateInput
   }
 
   export type MinistryWhereUniqueInput = Prisma.AtLeast<{
@@ -20899,6 +20990,7 @@ export namespace Prisma {
     events?: EventListRelationFilter
     users?: MinistryUserListRelationFilter
     registrations?: RegistrationListRelationFilter
+    primaryUsers?: UserListRelationFilter
   }, "id" | "name">
 
   export type MinistryOrderByWithAggregationInput = {
@@ -21302,7 +21394,7 @@ export namespace Prisma {
     createdAt?: Date | string
     district: DistrictCreateNestedOneWithoutChurchesInput
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
-    users?: UserCreateNestedManyWithoutChurchScopeInput
+    users?: UserCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateInput = {
@@ -21317,7 +21409,7 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
-    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
+    users?: UserUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUpdateInput = {
@@ -21332,7 +21424,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
-    users?: UserUpdateManyWithoutChurchScopeNestedInput
+    users?: UserUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateInput = {
@@ -21347,7 +21439,7 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
-    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
+    users?: UserUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchCreateManyInput = {
@@ -22066,7 +22158,8 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -22074,8 +22167,9 @@ export namespace Prisma {
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
@@ -22087,10 +22181,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -22110,7 +22206,8 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -22118,8 +22215,9 @@ export namespace Prisma {
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
@@ -22131,10 +22229,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -22153,10 +22253,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -22171,7 +22273,8 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -22184,10 +22287,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -22422,6 +22527,7 @@ export namespace Prisma {
     events?: EventCreateNestedManyWithoutMinistryInput
     users?: MinistryUserCreateNestedManyWithoutMinistryInput
     registrations?: RegistrationCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryUncheckedCreateInput = {
@@ -22434,6 +22540,7 @@ export namespace Prisma {
     events?: EventUncheckedCreateNestedManyWithoutMinistryInput
     users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserUncheckedCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryUpdateInput = {
@@ -22446,6 +22553,7 @@ export namespace Prisma {
     events?: EventUpdateManyWithoutMinistryNestedInput
     users?: MinistryUserUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type MinistryUncheckedUpdateInput = {
@@ -22458,6 +22566,7 @@ export namespace Prisma {
     events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
     users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUncheckedUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type MinistryCreateManyInput = {
@@ -23599,10 +23708,12 @@ export namespace Prisma {
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrder
-    churchScopeId?: SortOrder
+    churchId?: SortOrder
+    ministryId?: SortOrder
     createdAt?: SortOrder
     cpf?: SortOrder
-    mustChangePassword?: SortOrder
+    isTemporaryPassword?: SortOrder
+    passwordUpdatedAt?: SortOrder
     phone?: SortOrder
     photoUrl?: SortOrder
     profileId?: SortOrder
@@ -23616,10 +23727,12 @@ export namespace Prisma {
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrder
-    churchScopeId?: SortOrder
+    churchId?: SortOrder
+    ministryId?: SortOrder
     createdAt?: SortOrder
     cpf?: SortOrder
-    mustChangePassword?: SortOrder
+    isTemporaryPassword?: SortOrder
+    passwordUpdatedAt?: SortOrder
     phone?: SortOrder
     photoUrl?: SortOrder
     profileId?: SortOrder
@@ -23633,10 +23746,12 @@ export namespace Prisma {
     passwordHash?: SortOrder
     role?: SortOrder
     districtScopeId?: SortOrder
-    churchScopeId?: SortOrder
+    churchId?: SortOrder
+    ministryId?: SortOrder
     createdAt?: SortOrder
     cpf?: SortOrder
-    mustChangePassword?: SortOrder
+    isTemporaryPassword?: SortOrder
+    passwordUpdatedAt?: SortOrder
     phone?: SortOrder
     photoUrl?: SortOrder
     profileId?: SortOrder
@@ -24171,10 +24286,10 @@ export namespace Prisma {
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
-  export type UserCreateNestedManyWithoutChurchScopeInput = {
-    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
-    createMany?: UserCreateManyChurchScopeInputEnvelope
+  export type UserCreateNestedManyWithoutChurchInput = {
+    create?: XOR<UserCreateWithoutChurchInput, UserUncheckedCreateWithoutChurchInput> | UserCreateWithoutChurchInput[] | UserUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutChurchInput | UserCreateOrConnectWithoutChurchInput[]
+    createMany?: UserCreateManyChurchInputEnvelope
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
@@ -24185,10 +24300,10 @@ export namespace Prisma {
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
-  export type UserUncheckedCreateNestedManyWithoutChurchScopeInput = {
-    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
-    createMany?: UserCreateManyChurchScopeInputEnvelope
+  export type UserUncheckedCreateNestedManyWithoutChurchInput = {
+    create?: XOR<UserCreateWithoutChurchInput, UserUncheckedCreateWithoutChurchInput> | UserCreateWithoutChurchInput[] | UserUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutChurchInput | UserCreateOrConnectWithoutChurchInput[]
+    createMany?: UserCreateManyChurchInputEnvelope
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
@@ -24218,17 +24333,17 @@ export namespace Prisma {
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
-  export type UserUpdateManyWithoutChurchScopeNestedInput = {
-    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
-    upsert?: UserUpsertWithWhereUniqueWithoutChurchScopeInput | UserUpsertWithWhereUniqueWithoutChurchScopeInput[]
-    createMany?: UserCreateManyChurchScopeInputEnvelope
+  export type UserUpdateManyWithoutChurchNestedInput = {
+    create?: XOR<UserCreateWithoutChurchInput, UserUncheckedCreateWithoutChurchInput> | UserCreateWithoutChurchInput[] | UserUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutChurchInput | UserCreateOrConnectWithoutChurchInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutChurchInput | UserUpsertWithWhereUniqueWithoutChurchInput[]
+    createMany?: UserCreateManyChurchInputEnvelope
     set?: UserWhereUniqueInput | UserWhereUniqueInput[]
     disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
     delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    update?: UserUpdateWithWhereUniqueWithoutChurchScopeInput | UserUpdateWithWhereUniqueWithoutChurchScopeInput[]
-    updateMany?: UserUpdateManyWithWhereWithoutChurchScopeInput | UserUpdateManyWithWhereWithoutChurchScopeInput[]
+    update?: UserUpdateWithWhereUniqueWithoutChurchInput | UserUpdateWithWhereUniqueWithoutChurchInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutChurchInput | UserUpdateManyWithWhereWithoutChurchInput[]
     deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
@@ -24246,17 +24361,17 @@ export namespace Prisma {
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
-  export type UserUncheckedUpdateManyWithoutChurchScopeNestedInput = {
-    create?: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput> | UserCreateWithoutChurchScopeInput[] | UserUncheckedCreateWithoutChurchScopeInput[]
-    connectOrCreate?: UserCreateOrConnectWithoutChurchScopeInput | UserCreateOrConnectWithoutChurchScopeInput[]
-    upsert?: UserUpsertWithWhereUniqueWithoutChurchScopeInput | UserUpsertWithWhereUniqueWithoutChurchScopeInput[]
-    createMany?: UserCreateManyChurchScopeInputEnvelope
+  export type UserUncheckedUpdateManyWithoutChurchNestedInput = {
+    create?: XOR<UserCreateWithoutChurchInput, UserUncheckedCreateWithoutChurchInput> | UserCreateWithoutChurchInput[] | UserUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutChurchInput | UserCreateOrConnectWithoutChurchInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutChurchInput | UserUpsertWithWhereUniqueWithoutChurchInput[]
+    createMany?: UserCreateManyChurchInputEnvelope
     set?: UserWhereUniqueInput | UserWhereUniqueInput[]
     disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
     delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
-    update?: UserUpdateWithWhereUniqueWithoutChurchScopeInput | UserUpdateWithWhereUniqueWithoutChurchScopeInput[]
-    updateMany?: UserUpdateManyWithWhereWithoutChurchScopeInput | UserUpdateManyWithWhereWithoutChurchScopeInput[]
+    update?: UserUpdateWithWhereUniqueWithoutChurchInput | UserUpdateWithWhereUniqueWithoutChurchInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutChurchInput | UserUpdateManyWithWhereWithoutChurchInput[]
     deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
@@ -24850,6 +24965,12 @@ export namespace Prisma {
     connect?: DistrictWhereUniqueInput
   }
 
+  export type MinistryCreateNestedOneWithoutPrimaryUsersInput = {
+    create?: XOR<MinistryCreateWithoutPrimaryUsersInput, MinistryUncheckedCreateWithoutPrimaryUsersInput>
+    connectOrCreate?: MinistryCreateOrConnectWithoutPrimaryUsersInput
+    connect?: MinistryWhereUniqueInput
+  }
+
   export type ProfileCreateNestedOneWithoutUsersInput = {
     create?: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
     connectOrCreate?: ProfileCreateOrConnectWithoutUsersInput
@@ -24976,6 +25097,16 @@ export namespace Prisma {
     delete?: DistrictWhereInput | boolean
     connect?: DistrictWhereUniqueInput
     update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutUsersInput, DistrictUpdateWithoutUsersInput>, DistrictUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type MinistryUpdateOneWithoutPrimaryUsersNestedInput = {
+    create?: XOR<MinistryCreateWithoutPrimaryUsersInput, MinistryUncheckedCreateWithoutPrimaryUsersInput>
+    connectOrCreate?: MinistryCreateOrConnectWithoutPrimaryUsersInput
+    upsert?: MinistryUpsertWithoutPrimaryUsersInput
+    disconnect?: MinistryWhereInput | boolean
+    delete?: MinistryWhereInput | boolean
+    connect?: MinistryWhereUniqueInput
+    update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutPrimaryUsersInput, MinistryUpdateWithoutPrimaryUsersInput>, MinistryUncheckedUpdateWithoutPrimaryUsersInput>
   }
 
   export type ProfileUpdateOneWithoutUsersNestedInput = {
@@ -25179,6 +25310,13 @@ export namespace Prisma {
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
   }
 
+  export type UserCreateNestedManyWithoutPrimaryMinistryInput = {
+    create?: XOR<UserCreateWithoutPrimaryMinistryInput, UserUncheckedCreateWithoutPrimaryMinistryInput> | UserCreateWithoutPrimaryMinistryInput[] | UserUncheckedCreateWithoutPrimaryMinistryInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPrimaryMinistryInput | UserCreateOrConnectWithoutPrimaryMinistryInput[]
+    createMany?: UserCreateManyPrimaryMinistryInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
   export type EventUncheckedCreateNestedManyWithoutMinistryInput = {
     create?: XOR<EventCreateWithoutMinistryInput, EventUncheckedCreateWithoutMinistryInput> | EventCreateWithoutMinistryInput[] | EventUncheckedCreateWithoutMinistryInput[]
     connectOrCreate?: EventCreateOrConnectWithoutMinistryInput | EventCreateOrConnectWithoutMinistryInput[]
@@ -25198,6 +25336,13 @@ export namespace Prisma {
     connectOrCreate?: RegistrationCreateOrConnectWithoutMinistryInput | RegistrationCreateOrConnectWithoutMinistryInput[]
     createMany?: RegistrationCreateManyMinistryInputEnvelope
     connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type UserUncheckedCreateNestedManyWithoutPrimaryMinistryInput = {
+    create?: XOR<UserCreateWithoutPrimaryMinistryInput, UserUncheckedCreateWithoutPrimaryMinistryInput> | UserCreateWithoutPrimaryMinistryInput[] | UserUncheckedCreateWithoutPrimaryMinistryInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPrimaryMinistryInput | UserCreateOrConnectWithoutPrimaryMinistryInput[]
+    createMany?: UserCreateManyPrimaryMinistryInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
   export type EventUpdateManyWithoutMinistryNestedInput = {
@@ -25242,6 +25387,20 @@ export namespace Prisma {
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
   }
 
+  export type UserUpdateManyWithoutPrimaryMinistryNestedInput = {
+    create?: XOR<UserCreateWithoutPrimaryMinistryInput, UserUncheckedCreateWithoutPrimaryMinistryInput> | UserCreateWithoutPrimaryMinistryInput[] | UserUncheckedCreateWithoutPrimaryMinistryInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPrimaryMinistryInput | UserCreateOrConnectWithoutPrimaryMinistryInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutPrimaryMinistryInput | UserUpsertWithWhereUniqueWithoutPrimaryMinistryInput[]
+    createMany?: UserCreateManyPrimaryMinistryInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutPrimaryMinistryInput | UserUpdateWithWhereUniqueWithoutPrimaryMinistryInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutPrimaryMinistryInput | UserUpdateManyWithWhereWithoutPrimaryMinistryInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
+  }
+
   export type EventUncheckedUpdateManyWithoutMinistryNestedInput = {
     create?: XOR<EventCreateWithoutMinistryInput, EventUncheckedCreateWithoutMinistryInput> | EventCreateWithoutMinistryInput[] | EventUncheckedCreateWithoutMinistryInput[]
     connectOrCreate?: EventCreateOrConnectWithoutMinistryInput | EventCreateOrConnectWithoutMinistryInput[]
@@ -25282,6 +25441,20 @@ export namespace Prisma {
     update?: RegistrationUpdateWithWhereUniqueWithoutMinistryInput | RegistrationUpdateWithWhereUniqueWithoutMinistryInput[]
     updateMany?: RegistrationUpdateManyWithWhereWithoutMinistryInput | RegistrationUpdateManyWithWhereWithoutMinistryInput[]
     deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type UserUncheckedUpdateManyWithoutPrimaryMinistryNestedInput = {
+    create?: XOR<UserCreateWithoutPrimaryMinistryInput, UserUncheckedCreateWithoutPrimaryMinistryInput> | UserCreateWithoutPrimaryMinistryInput[] | UserUncheckedCreateWithoutPrimaryMinistryInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutPrimaryMinistryInput | UserCreateOrConnectWithoutPrimaryMinistryInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutPrimaryMinistryInput | UserUpsertWithWhereUniqueWithoutPrimaryMinistryInput[]
+    createMany?: UserCreateManyPrimaryMinistryInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutPrimaryMinistryInput | UserUpdateWithWhereUniqueWithoutPrimaryMinistryInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutPrimaryMinistryInput | UserUpdateManyWithWhereWithoutPrimaryMinistryInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
   export type MinistryCreateNestedOneWithoutUsersInput = {
@@ -25675,7 +25848,7 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
-    users?: UserCreateNestedManyWithoutChurchScopeInput
+    users?: UserCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateWithoutDistrictInput = {
@@ -25689,7 +25862,7 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
-    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
+    users?: UserUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchCreateOrConnectWithoutDistrictInput = {
@@ -25764,7 +25937,8 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -25772,7 +25946,8 @@ export namespace Prisma {
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
@@ -25783,10 +25958,12 @@ export namespace Prisma {
     email: string
     passwordHash: string
     role: string
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -25907,10 +26084,12 @@ export namespace Prisma {
     passwordHash?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
     districtScopeId?: StringNullableFilter<"User"> | string | null
-    churchScopeId?: StringNullableFilter<"User"> | string | null
+    churchId?: StringNullableFilter<"User"> | string | null
+    ministryId?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     cpf?: StringNullableFilter<"User"> | string | null
-    mustChangePassword?: BoolFilter<"User"> | boolean
+    isTemporaryPassword?: BoolFilter<"User"> | boolean
+    passwordUpdatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     phone?: StringNullableFilter<"User"> | string | null
     photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
@@ -25994,7 +26173,7 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type UserCreateWithoutChurchScopeInput = {
+  export type UserCreateWithoutChurchInput = {
     id?: string
     name: string
     email: string
@@ -26002,7 +26181,8 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -26011,20 +26191,23 @@ export namespace Prisma {
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
-  export type UserUncheckedCreateWithoutChurchScopeInput = {
+  export type UserUncheckedCreateWithoutChurchInput = {
     id?: string
     name: string
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -26036,13 +26219,13 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
   }
 
-  export type UserCreateOrConnectWithoutChurchScopeInput = {
+  export type UserCreateOrConnectWithoutChurchInput = {
     where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput>
+    create: XOR<UserCreateWithoutChurchInput, UserUncheckedCreateWithoutChurchInput>
   }
 
-  export type UserCreateManyChurchScopeInputEnvelope = {
-    data: UserCreateManyChurchScopeInput | UserCreateManyChurchScopeInput[]
+  export type UserCreateManyChurchInputEnvelope = {
+    data: UserCreateManyChurchInput | UserCreateManyChurchInput[]
     skipDuplicates?: boolean
   }
 
@@ -26091,20 +26274,20 @@ export namespace Prisma {
     data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutChurchInput>
   }
 
-  export type UserUpsertWithWhereUniqueWithoutChurchScopeInput = {
+  export type UserUpsertWithWhereUniqueWithoutChurchInput = {
     where: UserWhereUniqueInput
-    update: XOR<UserUpdateWithoutChurchScopeInput, UserUncheckedUpdateWithoutChurchScopeInput>
-    create: XOR<UserCreateWithoutChurchScopeInput, UserUncheckedCreateWithoutChurchScopeInput>
+    update: XOR<UserUpdateWithoutChurchInput, UserUncheckedUpdateWithoutChurchInput>
+    create: XOR<UserCreateWithoutChurchInput, UserUncheckedCreateWithoutChurchInput>
   }
 
-  export type UserUpdateWithWhereUniqueWithoutChurchScopeInput = {
+  export type UserUpdateWithWhereUniqueWithoutChurchInput = {
     where: UserWhereUniqueInput
-    data: XOR<UserUpdateWithoutChurchScopeInput, UserUncheckedUpdateWithoutChurchScopeInput>
+    data: XOR<UserUpdateWithoutChurchInput, UserUncheckedUpdateWithoutChurchInput>
   }
 
-  export type UserUpdateManyWithWhereWithoutChurchScopeInput = {
+  export type UserUpdateManyWithWhereWithoutChurchInput = {
     where: UserScalarWhereInput
-    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutChurchScopeInput>
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutChurchInput>
   }
 
   export type UserCreateWithoutEventsCreatedInput = {
@@ -26115,15 +26298,17 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
@@ -26135,10 +26320,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -26163,6 +26350,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     users?: MinistryUserCreateNestedManyWithoutMinistryInput
     registrations?: RegistrationCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryUncheckedCreateWithoutEventsInput = {
@@ -26174,6 +26362,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserUncheckedCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryCreateOrConnectWithoutEventsInput = {
@@ -26372,15 +26561,17 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
@@ -26392,10 +26583,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26426,6 +26619,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     users?: MinistryUserUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type MinistryUncheckedUpdateWithoutEventsInput = {
@@ -26437,6 +26631,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUncheckedUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type EventLotUpsertWithWhereUniqueWithoutEventInput = {
@@ -26945,7 +27140,7 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     district: DistrictCreateNestedOneWithoutChurchesInput
-    users?: UserCreateNestedManyWithoutChurchScopeInput
+    users?: UserCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateWithoutRegistrationsInput = {
@@ -26959,7 +27154,7 @@ export namespace Prisma {
     directorWhatsapp?: string | null
     directorPhotoUrl?: string | null
     createdAt?: Date | string
-    users?: UserUncheckedCreateNestedManyWithoutChurchScopeInput
+    users?: UserUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchCreateOrConnectWithoutRegistrationsInput = {
@@ -27050,6 +27245,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     events?: EventCreateNestedManyWithoutMinistryInput
     users?: MinistryUserCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryUncheckedCreateWithoutRegistrationsInput = {
@@ -27061,6 +27257,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     events?: EventUncheckedCreateNestedManyWithoutMinistryInput
     users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserUncheckedCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryCreateOrConnectWithoutRegistrationsInput = {
@@ -27155,7 +27352,7 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
-    users?: UserUpdateManyWithoutChurchScopeNestedInput
+    users?: UserUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateWithoutRegistrationsInput = {
@@ -27169,7 +27366,7 @@ export namespace Prisma {
     directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
+    users?: UserUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type DistrictUpsertWithoutRegistrationsInput = {
@@ -27278,6 +27475,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUpdateManyWithoutMinistryNestedInput
     users?: MinistryUserUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type MinistryUncheckedUpdateWithoutRegistrationsInput = {
@@ -27289,6 +27487,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
     users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUncheckedUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type OrderUpsertWithoutRegistrationsInput = {
@@ -27666,15 +27865,17 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
@@ -27686,10 +27887,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -27724,15 +27927,17 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
@@ -27744,10 +27949,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27940,6 +28147,35 @@ export namespace Prisma {
   export type DistrictCreateOrConnectWithoutUsersInput = {
     where: DistrictWhereUniqueInput
     create: XOR<DistrictCreateWithoutUsersInput, DistrictUncheckedCreateWithoutUsersInput>
+  }
+
+  export type MinistryCreateWithoutPrimaryUsersInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    events?: EventCreateNestedManyWithoutMinistryInput
+    users?: MinistryUserCreateNestedManyWithoutMinistryInput
+    registrations?: RegistrationCreateNestedManyWithoutMinistryInput
+  }
+
+  export type MinistryUncheckedCreateWithoutPrimaryUsersInput = {
+    id?: string
+    name: string
+    description?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    events?: EventUncheckedCreateNestedManyWithoutMinistryInput
+    users?: MinistryUserUncheckedCreateNestedManyWithoutMinistryInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
+  }
+
+  export type MinistryCreateOrConnectWithoutPrimaryUsersInput = {
+    where: MinistryWhereUniqueInput
+    create: XOR<MinistryCreateWithoutPrimaryUsersInput, MinistryUncheckedCreateWithoutPrimaryUsersInput>
   }
 
   export type ProfileCreateWithoutUsersInput = {
@@ -28195,6 +28431,41 @@ export namespace Prisma {
     registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
   }
 
+  export type MinistryUpsertWithoutPrimaryUsersInput = {
+    update: XOR<MinistryUpdateWithoutPrimaryUsersInput, MinistryUncheckedUpdateWithoutPrimaryUsersInput>
+    create: XOR<MinistryCreateWithoutPrimaryUsersInput, MinistryUncheckedCreateWithoutPrimaryUsersInput>
+    where?: MinistryWhereInput
+  }
+
+  export type MinistryUpdateToOneWithWhereWithoutPrimaryUsersInput = {
+    where?: MinistryWhereInput
+    data: XOR<MinistryUpdateWithoutPrimaryUsersInput, MinistryUncheckedUpdateWithoutPrimaryUsersInput>
+  }
+
+  export type MinistryUpdateWithoutPrimaryUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    events?: EventUpdateManyWithoutMinistryNestedInput
+    users?: MinistryUserUpdateManyWithoutMinistryNestedInput
+    registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
+  }
+
+  export type MinistryUncheckedUpdateWithoutPrimaryUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
+    users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
+  }
+
   export type ProfileUpsertWithoutUsersInput = {
     update: XOR<ProfileUpdateWithoutUsersInput, ProfileUncheckedUpdateWithoutUsersInput>
     create: XOR<ProfileCreateWithoutUsersInput, ProfileUncheckedCreateWithoutUsersInput>
@@ -28269,15 +28540,17 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
@@ -28289,10 +28562,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -28327,15 +28602,17 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
@@ -28347,10 +28624,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28777,6 +29056,62 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type UserCreateWithoutPrimaryMinistryInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutPrimaryMinistryInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutPrimaryMinistryInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutPrimaryMinistryInput, UserUncheckedCreateWithoutPrimaryMinistryInput>
+  }
+
+  export type UserCreateManyPrimaryMinistryInputEnvelope = {
+    data: UserCreateManyPrimaryMinistryInput | UserCreateManyPrimaryMinistryInput[]
+    skipDuplicates?: boolean
+  }
+
   export type EventUpsertWithWhereUniqueWithoutMinistryInput = {
     where: EventWhereUniqueInput
     update: XOR<EventUpdateWithoutMinistryInput, EventUncheckedUpdateWithoutMinistryInput>
@@ -28825,6 +29160,22 @@ export namespace Prisma {
     data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutMinistryInput>
   }
 
+  export type UserUpsertWithWhereUniqueWithoutPrimaryMinistryInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutPrimaryMinistryInput, UserUncheckedUpdateWithoutPrimaryMinistryInput>
+    create: XOR<UserCreateWithoutPrimaryMinistryInput, UserUncheckedCreateWithoutPrimaryMinistryInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutPrimaryMinistryInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutPrimaryMinistryInput, UserUncheckedUpdateWithoutPrimaryMinistryInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutPrimaryMinistryInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutPrimaryMinistryInput>
+  }
+
   export type MinistryCreateWithoutUsersInput = {
     id?: string
     name: string
@@ -28834,6 +29185,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     events?: EventCreateNestedManyWithoutMinistryInput
     registrations?: RegistrationCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryUncheckedCreateWithoutUsersInput = {
@@ -28845,6 +29197,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     events?: EventUncheckedCreateNestedManyWithoutMinistryInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutMinistryInput
+    primaryUsers?: UserUncheckedCreateNestedManyWithoutPrimaryMinistryInput
   }
 
   export type MinistryCreateOrConnectWithoutUsersInput = {
@@ -28860,15 +29213,17 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
@@ -28880,10 +29235,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -28919,6 +29276,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type MinistryUncheckedUpdateWithoutUsersInput = {
@@ -28930,6 +29288,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     events?: EventUncheckedUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
+    primaryUsers?: UserUncheckedUpdateManyWithoutPrimaryMinistryNestedInput
   }
 
   export type UserUpsertWithoutMinistriesInput = {
@@ -28951,15 +29310,17 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
@@ -28971,10 +29332,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29033,7 +29396,8 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -29041,8 +29405,9 @@ export namespace Prisma {
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
   }
 
@@ -29053,10 +29418,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -29192,7 +29559,8 @@ export namespace Prisma {
     role: string
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -29200,8 +29568,9 @@ export namespace Prisma {
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
-    churchScope?: ChurchCreateNestedOneWithoutUsersInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
   }
 
@@ -29212,10 +29581,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -29250,7 +29621,8 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -29258,8 +29630,9 @@ export namespace Prisma {
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
   }
 
@@ -29270,10 +29643,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29323,10 +29698,12 @@ export namespace Prisma {
     email: string
     passwordHash: string
     role: string
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -29344,7 +29721,7 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
-    users?: UserUpdateManyWithoutChurchScopeNestedInput
+    users?: UserUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateWithoutDistrictInput = {
@@ -29358,7 +29735,7 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
-    users?: UserUncheckedUpdateManyWithoutChurchScopeNestedInput
+    users?: UserUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateManyWithoutDistrictInput = {
@@ -29446,7 +29823,8 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -29454,7 +29832,8 @@ export namespace Prisma {
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
@@ -29465,10 +29844,12 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29486,10 +29867,12 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29517,16 +29900,18 @@ export namespace Prisma {
     ministryId?: string | null
   }
 
-  export type UserCreateManyChurchScopeInput = {
+  export type UserCreateManyChurchInput = {
     id?: string
     name: string
     email: string
     passwordHash: string
     role: string
     districtScopeId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     profileId?: string | null
@@ -29598,7 +29983,7 @@ export namespace Prisma {
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
-  export type UserUpdateWithoutChurchScopeInput = {
+  export type UserUpdateWithoutChurchInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
@@ -29606,7 +29991,8 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -29615,20 +30001,23 @@ export namespace Prisma {
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
-  export type UserUncheckedUpdateWithoutChurchScopeInput = {
+  export type UserUncheckedUpdateWithoutChurchInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -29640,16 +30029,18 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
   }
 
-  export type UserUncheckedUpdateManyWithoutChurchScopeInput = {
+  export type UserUncheckedUpdateManyWithoutChurchInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -30463,6 +30854,24 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type UserCreateManyPrimaryMinistryInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+  }
+
   export type EventUpdateWithoutMinistryInput = {
     id?: StringFieldUpdateOperationsInput | string
     title?: StringFieldUpdateOperationsInput | string
@@ -30608,6 +31017,70 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type UserUpdateWithoutPrimaryMinistryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutPrimaryMinistryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutPrimaryMinistryInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+  }
+
   export type ProfilePermissionCreateManyProfileInput = {
     id?: string
     module: string
@@ -30630,10 +31103,12 @@ export namespace Prisma {
     passwordHash: string
     role: string
     districtScopeId?: string | null
-    churchScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
     createdAt?: Date | string
     cpf?: string | null
-    mustChangePassword?: boolean
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
@@ -30692,7 +31167,8 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -30700,8 +31176,9 @@ export namespace Prisma {
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
-    churchScope?: ChurchUpdateOneWithoutUsersNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
   }
 
@@ -30712,10 +31189,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
@@ -30733,10 +31212,12 @@ export namespace Prisma {
     passwordHash?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
-    churchScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cpf?: NullableStringFieldUpdateOperationsInput | string | null
-    mustChangePassword?: BoolFieldUpdateOperationsInput | boolean
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
