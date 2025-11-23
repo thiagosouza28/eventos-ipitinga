@@ -28,8 +28,9 @@ export const hydratePermissions = async (request: Request, _response: Response, 
   }
 
   const profilePermissions = user.profile?.permissions ?? [];
+  const roleKey = user.role as keyof typeof RolePermissionPresets;
   const basePermissions =
-    profilePermissions.length > 0 ? profilePermissions : RolePermissionPresets[user.role] ?? [];
+    profilePermissions.length > 0 ? profilePermissions : RolePermissionPresets[roleKey] ?? [];
   const permissionMap = buildPermissionMap(basePermissions);
   const overrideEntries = user.permissionsOverride?.map(toPermissionEntry) ?? [];
   const resolvedPermissions =

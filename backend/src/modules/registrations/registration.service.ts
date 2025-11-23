@@ -690,7 +690,7 @@ export class RegistrationService {
       createdAt: registration.createdAt,
       paymentMethod: paymentMethodLabel,
       paymentDate,
-      photoUrl: toPublicPhotoUrl(registration.photoUrl),
+      photoUrl: toPublicPhotoUrl(registration.photoUrl) ?? "",
       priceCents: registration.priceCents ?? 0,
       feeCents: registration.order?.feeCents ?? 0,
       totalCents: registration.order?.totalCents ?? registration.priceCents ?? 0,
@@ -948,11 +948,13 @@ export class RegistrationService {
       }
     }
 
+    const resolvedLayout = layout === "four" ? "two" : layout;
+
     const pdfBuffer = await generateRegistrationEventSheetPdf({
       generatedAt: brDateTimeFormatter.format(new Date()),
       context: { title: contextTitle, footerText: contextTitle ?? undefined },
       participants,
-      layout
+      layout: resolvedLayout
     });
 
     return pdfBuffer;

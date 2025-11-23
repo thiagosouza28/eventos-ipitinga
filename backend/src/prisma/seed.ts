@@ -129,7 +129,7 @@ type EnsureUserInput = {
   password: string;
   role: Role;
   districtScopeId?: string | null;
-  churchScopeId?: string | null;
+  churchId?: string | null;
   profileId?: string | null;
 };
 
@@ -139,7 +139,7 @@ const ensureUser = async ({
   password,
   role,
   districtScopeId,
-  churchScopeId,
+  churchId,
   profileId
 }: EnsureUserInput) => {
   const passwordHash = await bcrypt.hash(password, env.PASSWORD_SALT_ROUNDS);
@@ -151,7 +151,7 @@ const ensureUser = async ({
       passwordHash,
       role,
       districtScopeId: districtScopeId ?? null,
-      churchScopeId: churchScopeId ?? null,
+      churchId: churchId ?? null,
       profileId: profileId ?? null
     },
     update: {
@@ -159,7 +159,7 @@ const ensureUser = async ({
       role,
       passwordHash,
       districtScopeId: districtScopeId ?? null,
-      churchScopeId: churchScopeId ?? null,
+      churchId: churchId ?? null,
       profileId: profileId ?? null
     }
   });
@@ -245,7 +245,7 @@ const run = async () => {
       email: "diretora.central@catre.local",
       password: env.ADMIN_PASSWORD,
       role: "DiretorLocal",
-      churchScopeId: centralChurch.id,
+      churchId: centralChurch.id,
       profileId: profileMap.DiretorLocal
     },
     {
@@ -253,7 +253,7 @@ const run = async () => {
       email: "diretora.esperanca@catre.local",
       password: env.ADMIN_PASSWORD,
       role: "DiretorLocal",
-      churchScopeId: hopeChurch.id,
+      churchId: hopeChurch.id,
       profileId: profileMap.DiretorLocal
     },
     {
@@ -295,7 +295,7 @@ const run = async () => {
       Email: user.email,
       Role: user.role,
       Distrito: user.districtScopeId ?? "-",
-      Igreja: user.churchScopeId ?? "-"
+      Igreja: user.churchId ?? "-"
     }))
   );
 };

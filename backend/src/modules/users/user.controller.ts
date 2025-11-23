@@ -92,7 +92,16 @@ export const listUserPermissionsHandler = async (request: Request, response: Res
 export const updateUserPermissionsHandler = async (request: Request, response: Response) => {
   const { permissions } = userPermissionsSchema.parse(request.body);
   const normalized = permissions.map((entry) =>
-    normalizePermissionPayload(entry.module, entry)
+    normalizePermissionPayload(entry.module, {
+      view: entry.canView,
+      create: entry.canCreate,
+      edit: entry.canEdit,
+      delete: entry.canDelete,
+      approve: entry.canApprove,
+      deactivate: entry.canDeactivate,
+      reports: entry.canReport,
+      financial: entry.canFinancial
+    })
   );
   const result = await userPermissionService.upsert(request.params.id, normalized, request.user?.id);
   return response.json(result);

@@ -8,10 +8,6 @@ import {
   type SystemConfigSettings
 } from "./system-config.types";
 
-type SystemConfigWithAuthor = Prisma.SystemConfigGetPayload<{
-  include: { updatedBy: { select: { id: true; name: string; email: string } } };
-}>;
-
 export type SystemConfigDto = {
   id: string;
   updatedAt: Date;
@@ -26,6 +22,8 @@ const includeAuthor = {
     }
   }
 } satisfies Prisma.SystemConfigDefaultArgs;
+
+type SystemConfigWithAuthor = Prisma.SystemConfigGetPayload<typeof includeAuthor>;
 
 class SystemConfigService {
   private async findOrCreateConfig() {
