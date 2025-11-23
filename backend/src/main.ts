@@ -1,3 +1,5 @@
+import "tsconfig-paths/register";
+
 import { spawn } from "child_process";
 import { existsSync } from "fs";
 import path from "path";
