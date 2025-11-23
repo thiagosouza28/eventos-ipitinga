@@ -18,6 +18,8 @@ export const createApp = () => {
   const app = express();
 
   app.disable("x-powered-by");
+  // Confiar nos cabeçalhos X-Forwarded-* quando atrás de proxy/ALB
+  app.set("trust proxy", true);
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" }
