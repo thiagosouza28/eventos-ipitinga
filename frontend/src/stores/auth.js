@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import { useLoaderStore } from "./loader";
 const STORAGE_KEY = "catre-auth";
 const ROLE_KEY = "catre-role";
 export const useAuthStore = defineStore("auth", () => {
@@ -43,24 +44,32 @@ export const useAuthStore = defineStore("auth", () => {
         user.value = payload.user;
         persist();
     };
+    const withLoader = async (action) => {
+        const loader = useLoaderStore();
+        loader.show("Processando autenticacao...");
+        try {
+            return await action();
+        }
+        finally {
+            loader.hide();
+        }
+    };
     const signIn = async (identifier, password) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/login`, {
+        const response = await withLoader(() => axios.post(`${API_BASE_URL}/admin/login`, {
             identifier,
             password
-        });
+        }));
         setSession(response.data);
     };
     const changePassword = async (currentPassword, newPassword) => {
-        const response = await axios.post(`${API_BASE_URL}/admin/profile/change-password`, {
+        const response = await withLoader(() => axios.post(`${API_BASE_URL}/admin/profile/change-password`, {
             currentPassword,
             newPassword
-        }, {
-            headers: token.value ? { Authorization: `Bearer ${token.value}` } : undefined
-        });
+        }, { headers: { Authorization: token.value ? `Bearer ${token.value}` : undefined } }));
         setSession(response.data);
     };
     const requestPasswordReset = async (identifier) => {
-        await axios.post(`${API_BASE_URL}/admin/password/recover`, { identifier });
+        await withLoader(() => axios.post(`${API_BASE_URL}/admin/password/recover`, { identifier }));
     };
     const signOut = () => {
         token.value = null;
@@ -69,7 +78,6 @@ export const useAuthStore = defineStore("auth", () => {
     };
     loadFromStorage();
     const role = computed(() => user.value?.role ?? null);
-    const permissionMap = computed(() => user.value?.permissions ?? {});
     const hasPermission = (module, action = "view") => {
         if (!user.value) {
             return false;

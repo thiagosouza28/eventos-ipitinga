@@ -62,6 +62,7 @@
     </BaseCard>
 
     <BaseCard>
+      <div class="hidden md:block">
       <table class="w-full table-auto text-left text-sm">
         <thead class="text-xs uppercase tracking-wide text-neutral-500">
           <tr>
@@ -151,8 +152,83 @@
             </td>
           </tr>
           </template>
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-6 flex flex-col gap-4 md:hidden">
+        <div
+          v-for="order in admin.orders"
+          :key="order.id"
+          class="rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Pedido</p>
+              <p class="text-base font-semibold text-neutral-900 dark:text-white">#{{ order.id.slice(0, 8) }}</p>
+              <p class="text-xs text-neutral-500">{{ order.registrations.length }} inscrições</p>
+            </div>
+            <span
+              :class="['rounded-full px-3 py-1 text-xs font-semibold uppercase', statusBadge(order.status)]"
+            >
+              {{ order.status }}
+            </span>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Evento</p>
+              <p>{{ findEventTitle(order.eventId) }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">CPF comprador</p>
+              <p>{{ maskCpf(order.buyerCpf) }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Total</p>
+              <p>{{ formatCurrency(order.totalCents) }}</p>
+            </div>
+            <div class="text-right">
+              <button
+                class="w-full rounded-full border border-neutral-300 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                @click="toggleOrderDetails(order.id)"
+              >
+                {{ expandedOrderId === order.id ? "Ocultar" : "Ver inscrições" }}
+              </button>
+            </div>
+          </div>
+          <div v-if="expandedOrderId === order.id" class="mt-4 space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-300">
+              Inscrições do pedido
+            </p>
+            <div v-if="order.registrations.length === 0" class="rounded-2xl border border-dashed border-neutral-300 p-3 text-xs text-neutral-500 dark:border-neutral-700">
+              Nenhuma inscrição vinculada a este pedido.
+            </div>
+            <div v-else class="space-y-3">
+              <div
+                v-for="registration in order.registrations"
+                :key="registration.id"
+                class="rounded-2xl border border-neutral-200 p-3 text-xs dark:border-neutral-700"
+              >
+                <p class="font-semibold text-neutral-800 dark:text-neutral-100">{{ registration.fullName }}</p>
+                <p class="text-neutral-500">
+                  CPF: {{ maskCpf(registration.cpf) }} • {{ formatCurrency(registration.priceCents ?? 0) }}
+                </p>
+                <p class="text-neutral-500">
+                  Igreja: {{ findChurchName(registration.churchId) }} / {{ findDistrictName(registration.districtId) }}
+                </p>
+                <span
+                  class="mt-2 inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase"
+                  :class="registrationStatusBadge(registration.status)"
+                >
+                  {{ registration.status }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="!admin.orders.length" class="rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+          Nenhum pedido encontrado para o filtro selecionado.
+        </div>
+      </div>
     </BaseCard>
   </div>
 </template>

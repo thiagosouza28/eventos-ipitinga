@@ -73,11 +73,11 @@ export class AuthService {
   async requestPasswordReset(identifier: string) {
     const user = await this.findByIdentifier(identifier);
     if (!user) {
-      // Evitar revelar se o usu�rio existe ou n�o
+      // Evitar revelar se o usuário existe ou não
       return;
     }
     if (!user.email) {
-      throw new AppError("Usu�rio sem e-mail cadastrado. Procure o administrador.", 400);
+      throw new AppError("Usuário sem e-mail cadastrado. Procure o administrador.", 400);
     }
 
     const temporaryPassword = generateTemporaryPassword();

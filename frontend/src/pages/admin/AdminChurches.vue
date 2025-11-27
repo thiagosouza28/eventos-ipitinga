@@ -239,7 +239,7 @@
       </div>
 
       <div
-        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
+        class="mt-6 hidden overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40 md:block"
       >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead
@@ -323,6 +323,75 @@
           </tbody>
         </table>
       </div>
+      <div class="mt-6 flex flex-col gap-4 md:hidden">
+        <div
+          v-for="church in filteredChurches"
+          :key="church.id"
+          class="rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100"
+        >
+          <div class="flex items-start gap-3">
+            <div class="h-14 w-14 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/5">
+              <img
+                :src="resolvePhoto(church.directorPhotoUrl)"
+                :alt="`Foto do diretor jovem da igreja ${church.name}`"
+                class="h-full w-full object-cover"
+              />
+            </div>
+            <div class="flex-1">
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Diretor</p>
+              <p class="text-base font-semibold text-neutral-900 dark:text-white">
+                {{ church.directorName ?? "Não informado" }}
+              </p>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">Contato principal</p>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">CPF</p>
+              <p>{{ church.directorCpf ? formatCPF(String(church.directorCpf)) : "Não informado" }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Whatsapp</p>
+              <p>
+                {{
+                  church.directorWhatsapp
+                    ? formatPhone(String(church.directorWhatsapp))
+                    : "Não informado"
+                }}
+              </p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Igreja</p>
+              <p>{{ church.name }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Distrito</p>
+              <p>{{ findDistrictName(church.districtId) }}</p>
+            </div>
+            <div class="col-span-2">
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Pastor distrital</p>
+              <p>{{ findDistrictPastorName(church.districtId) ?? "Não informado" }}</p>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold">
+            <button
+              class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+              @click="startChurchEdit(church)"
+            >
+              Editar
+            </button>
+            <button
+              class="rounded-full border border-red-200 px-4 py-2 text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
+              @click="confirmDeleteChurch(church)"
+            >
+              Excluir
+            </button>
+          </div>
+        </div>
+        <div v-if="!filteredChurches.length" class="rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+          Nenhuma igreja encontrada para o filtro selecionado.
+        </div>
+      </div>
     </BaseCard>
   </div>
 </template>
@@ -338,7 +407,7 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
-import type { Church, District } from "../../types/api";
+import type { Church } from "../../types/api";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
 import { formatPhone } from "../../utils/format";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";

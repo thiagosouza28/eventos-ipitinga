@@ -58,7 +58,7 @@
       />
       <div
         v-else
-        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
+        class="mt-6 hidden overflow-hidden rounded-sm border border-white/40 bg-white/60 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40 md:block"
       >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead class="bg-white/50 text-[11px] uppercase tracking-wide text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
@@ -146,6 +146,85 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div v-if="!loadingEvents" class="mt-6 flex flex-col gap-4 md:hidden">
+        <div
+          v-for="event in admin.events"
+          :key="event.id"
+          class="rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Título</p>
+              <p class="text-base font-semibold text-neutral-900 dark:text-white">{{ event.title }}</p>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">Slug: {{ event.slug }}</p>
+            </div>
+            <span
+              :class="[
+                'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide',
+                event.isActive
+                  ? 'bg-[#e4ecff] text-[#1f4fff] dark:bg-[rgba(86,129,255,0.35)] dark:text-[#f6f8ff]'
+                  : 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+              ]"
+            >
+              {{ event.isActive ? "Ativo" : "Inativo" }}
+            </span>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Início</p>
+              <p>{{ formatDate(event.startDate) }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Fim</p>
+              <p>{{ formatDate(event.endDate) }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Valor vigente</p>
+              <p>{{ event.isFree ? "Gratuito" : formatCurrency(event.currentPriceCents ?? event.priceCents) }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Lote atual</p>
+              <p>{{ event.currentLot?.name ?? "--" }}</p>
+            </div>
+            <div class="col-span-2">
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Regra de valor pendente</p>
+              <p>{{ getPendingPaymentValueRuleLabel(event.pendingPaymentValueRule) }}</p>
+            </div>
+          </div>
+          <div class="mt-4 flex flex-col gap-2">
+            <button
+              class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2 text-xs font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-100 dark:hover:bg-white/10"
+              @click="openDetails(event)"
+            >
+              Detalhes
+            </button>
+            <div v-if="eventPermissions.canEdit" class="grid grid-cols-2 gap-2 text-xs font-semibold">
+              <button
+                class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+                @click="startEdit(event)"
+              >
+                Editar
+              </button>
+              <button
+                class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+                @click="toggleActive(event)"
+              >
+                {{ event.isActive ? "Desativar" : "Ativar" }}
+              </button>
+            </div>
+            <button
+              v-if="eventPermissions.canDelete"
+              class="rounded-full border border-red-200 px-4 py-2 text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
+              @click="openDelete(event)"
+            >
+              Excluir
+            </button>
+          </div>
+        </div>
+        <div v-if="!admin.events.length" class="rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+          Nenhum evento cadastrado até o momento.
+        </div>
       </div>
     </BaseCard>
 
@@ -899,7 +978,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { ArrowUturnLeftIcon, PlusIcon } from "@heroicons/vue/24/outline";
 

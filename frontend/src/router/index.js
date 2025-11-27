@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth";
+import { useLoaderStore } from "../stores/loader";
 const EventLanding = () => import("../pages/public/EventLanding.vue");
 const EventFlow = () => import("../pages/public/EventFlow.vue");
 const PaymentPage = () => import("../pages/public/PaymentPage.vue");
@@ -19,6 +20,7 @@ const AdminDistricts = () => import("../pages/admin/AdminDistricts.vue");
 const AdminChurches = () => import("../pages/admin/AdminChurches.vue");
 const AdminMinistries = () => import("../pages/admin/AdminMinistries.vue");
 const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
+const AdminReports = () => import("../pages/admin/AdminReports.vue");
 const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
 const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
@@ -103,6 +105,13 @@ export const router = createRouter({
             meta: { requiresAuth: true, requiresPermission: { module: "registrations", action: "view" } }
         },
         {
+            path: "/admin/reports/:tab?",
+            name: "admin-reports",
+            component: AdminReports,
+            props: true,
+            meta: { requiresAuth: true, requiresPermission: { module: "reports", action: "view" } }
+        },
+        {
             path: "/admin/orders",
             name: "admin-orders",
             component: AdminOrders,
@@ -147,8 +156,18 @@ export const router = createRouter({
         }
     ]
 });
-router.beforeEach((to, _from, next) => {
+const shouldTriggerRouteLoader = (to, from) => {
+    if (!from.name) {
+        return true;
+    }
+    return to.fullPath !== from.fullPath;
+};
+router.beforeEach((to, from, next) => {
     const auth = useAuthStore();
+    const loader = useLoaderStore();
+    if (shouldTriggerRouteLoader(to, from)) {
+        loader.show("Carregando pagina...");
+    }
     if (to.name === "admin-login" && auth.isAuthenticated) {
         next({ name: "admin-dashboard" });
         return;
@@ -158,7 +177,7 @@ router.beforeEach((to, _from, next) => {
         return;
     }
     if (auth.isAuthenticated &&
-        (auth.user?.mustChangePassword) &&
+        auth.user?.mustChangePassword &&
         !to.meta.allowPasswordReset &&
         to.name !== "admin-force-password") {
         next({
@@ -183,7 +202,7 @@ router.beforeEach((to, _from, next) => {
     }
     if (to.meta.requiresRole && auth.isAuthenticated) {
         const requiredRole = to.meta.requiresRole;
-        if ((auth.user?.role) !== requiredRole) {
+        if (auth.user?.role !== requiredRole) {
             next({
                 name: "admin-access-denied",
                 query: {
@@ -195,5 +214,13 @@ router.beforeEach((to, _from, next) => {
         }
     }
     next();
+});
+router.afterEach(() => {
+    const loader = useLoaderStore();
+    loader.hide();
+});
+router.onError(() => {
+    const loader = useLoaderStore();
+    loader.hide();
 });
 //# sourceMappingURL=index.js.map

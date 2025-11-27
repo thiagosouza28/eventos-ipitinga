@@ -1,4 +1,5 @@
-import { randomUUID } from "crypto";
+﻿import { randomUUID } from "crypto";
+import type { User as ExpressUser } from "express";
 
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
 import { prisma } from "../../lib/prisma";
@@ -170,7 +171,15 @@ export class OrderService {
     buyerCpf: string;
     people: BatchPerson[];
     paymentMethod?: PaymentMethod;
-  }, actorId?: string, actorRole?: string) {
+  }, actor?: ExpressUser | undefined) {
+    const actorId = actor?.id;
+    const actorRole = actor?.role;
+    const actorDistrictId = actor?.districtScopeId ?? null;
+    const actorChurchId = actor?.churchId ?? null;
+    const isDirectorLocal = actorRole === "DiretorLocal";
+    if (isDirectorLocal && (!actorDistrictId || !actorChurchId)) {
+      throw new AppError("Diretor local sem igreja ou distrito definido.", 400);
+    }
     if (!payload.people.length) {
       throw new AppError("Informe ao menos uma inscricao", 400);
     }
@@ -190,12 +199,12 @@ export class OrderService {
     let resolvedMethod =
       requestedMethod && (allowedMethods.includes(requestedMethod) || ((actorRole === "AdminGeral" || actorRole === "AdminDistrital") && AdminOnlyPaymentMethods.includes(requestedMethod as any))) ? requestedMethod : fallbackMethod;
 
-    // Verificar se método é exclusivo de admin
+    // Verificar se mÃ©todo Ã© exclusivo de admin
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
       if (!actorId || !actorRole) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
       }
-      // Verificar se o usuário é admin (AdminGeral ou AdminDistrital)
+      // Verificar se o usuÃ¡rio Ã© admin (AdminGeral ou AdminDistrital)
       const isAdmin = actorRole === "AdminGeral" || actorRole === "AdminDistrital";
       if (!isAdmin) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
@@ -205,9 +214,9 @@ export class OrderService {
     const isFreeEvent = Boolean((event as any).isFree);
     const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
     
-    // Se for método gratuito, não usar PIX_MP mesmo para eventos gratuitos
+    // Se for mÃ©todo gratuito, nÃ£o usar PIX_MP mesmo para eventos gratuitos
     if (isFreePaymentMethod) {
-      // Método gratuito já está definido
+      // MÃ©todo gratuito jÃ¡ estÃ¡ definido
     } else if (isFreeEvent) {
       resolvedMethod = PaymentMethod.PIX_MP;
     }
@@ -220,7 +229,7 @@ export class OrderService {
       throw new AppError("Nenhum lote disponivel para inscricao no momento", 400);
     }
 
-    // Se for método de pagamento gratuito, o valor é sempre 0
+    // Se for mÃ©todo de pagamento gratuito, o valor Ã© sempre 0
     const unitPriceCents = (isFreeEvent || isFreePaymentMethod)
       ? 0
       : Math.max(activeLot?.priceCents ?? 0, 0);
@@ -236,6 +245,8 @@ export class OrderService {
 
     const peoplePrepared = await Promise.all(
       payload.people.map(async (person) => {
+        const lockedDistrictId = isDirectorLocal && actorDistrictId ? actorDistrictId : person.districtId;
+        const lockedChurchId = isDirectorLocal && actorChurchId ? actorChurchId : person.churchId;
         const cpf = sanitizeCpf(person.cpf);
         const storedPhoto = person.photoUrl
           ? await storageService.saveBase64Image(person.photoUrl)
@@ -244,6 +255,8 @@ export class OrderService {
           ...person,
           fullName: person.fullName.trim().toUpperCase(),
           cpf,
+          districtId: lockedDistrictId,
+          churchId: lockedChurchId,
           storedPhoto,
           gender: parseGender(person.gender)
         };
@@ -254,7 +267,7 @@ export class OrderService {
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
     const registrations = await prisma.$transaction(async (tx) => {
-      // Se for método gratuito, marcar como pago automaticamente
+      // Se for mÃ©todo gratuito, marcar como pago automaticamente
       const orderStatus = (isFreeEvent || isFreePaymentMethod) ? OrderStatus.PAID : OrderStatus.PENDING;
       const paidAtValue = (isFreeEvent || isFreePaymentMethod) ? new Date() : null;
       const order = await tx.order.create({
@@ -282,11 +295,11 @@ export class OrderService {
 
         // Garantir que a data de nascimento seja salva como UTC midnight do dia correto
         // Quando recebemos "1998-11-05", queremos salvar como "1998-11-05T00:00:00.000Z"
-        // Isso garante que ao formatar usando UTC, a data será exibida corretamente
+        // Isso garante que ao formatar usando UTC, a data serÃ¡ exibida corretamente
         const birthDateParts = person.birthDate.split('-');
         const birthDateUTC = new Date(Date.UTC(
           parseInt(birthDateParts[0], 10), // ano
-          parseInt(birthDateParts[1], 10) - 1, // mês (0-indexed)
+          parseInt(birthDateParts[1], 10) - 1, // mÃªs (0-indexed)
           parseInt(birthDateParts[2], 10) // dia
         ));
 
@@ -389,8 +402,8 @@ export class OrderService {
       include: { registrations: true, event: true }
     });
     if (!order) throw new NotFoundError("Pedido nao encontrado");
-    if (order.status === "CANCELED" || order.status === "EXPIRED") {
-      throw new AppError("Pedido expirado ou cancelado", 400);
+    if (order.status === OrderStatus.CANCELED) {
+      throw new AppError("Pedido cancelado", 400);
     }
     const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
     const effectiveExpiration = resolveEffectiveExpirationDate(
@@ -398,22 +411,12 @@ export class OrderService {
       order.createdAt,
       order.expiresAt
     );
-    if (order.status === OrderStatus.PENDING && effectiveExpiration <= new Date()) {
-      await prisma
-        .$transaction([
-          prisma.registration.updateMany({
-            where: { orderId, status: { in: [RegistrationStatus.PENDING_PAYMENT, RegistrationStatus.DRAFT] } },
-            data: { status: RegistrationStatus.CANCELED }
-          }),
-          prisma.order.update({
-            where: { id: orderId },
-            data: { status: OrderStatus.EXPIRED }
-          })
-        ])
-        .catch(() => undefined);
-      throw new AppError("Pedido expirado ou cancelado", 400);
-    }
+    const now = new Date();
+    const hasExpired =
+      order.status === OrderStatus.EXPIRED ||
+      (order.status === OrderStatus.PENDING && effectiveExpiration <= now);
     if (
+      !hasExpired &&
       order.status === OrderStatus.PENDING &&
       (!order.expiresAt || order.expiresAt.getTime() !== effectiveExpiration.getTime())
     ) {
@@ -512,6 +515,31 @@ export class OrderService {
     }
 
     const latestPayment = await paymentService.findLatestPaymentByExternalReference(orderId);
+    const invalidPaymentStatus =
+      latestPayment?.status &&
+      ["cancelled", "canceled", "rejected", "refunded", "charged_back", "expired"].includes(
+        latestPayment.status.toLowerCase()
+      );
+    let forcedNewPayment = false;
+    if (hasExpired || invalidPaymentStatus) {
+      forcedNewPayment = true;
+      const nextExpiration = resolveOrderExpirationDate(paymentMethod, new Date());
+      await prisma.order
+        .update({
+          where: { id: orderId },
+          data: {
+            status: OrderStatus.PENDING,
+            expiresAt: nextExpiration,
+            mpPreferenceId: null,
+            mpPaymentId: null
+          }
+        })
+        .catch(() => undefined);
+      order.status = OrderStatus.PENDING;
+      order.expiresAt = nextExpiration;
+      order.mpPreferenceId = null;
+      order.mpPaymentId = null;
+    }
     const latestStatus = latestPayment?.status;
     if (latestPayment?.id && (latestStatus === "approved" || latestStatus === "authorized")) {
       let metadataVersion: number | null = null;
@@ -547,7 +575,7 @@ export class OrderService {
       }
     }
 
-    const shouldRefreshPreference = needsPriceUpdate;
+    const shouldRefreshPreference = needsPriceUpdate || forcedNewPayment;
 
     let preference;
     if (!shouldRefreshPreference && order.mpPreferenceId && order.expiresAt && order.expiresAt > new Date()) {
@@ -562,13 +590,16 @@ export class OrderService {
       preference ?? (await paymentService.createPreference(orderId));
 
     // Tentar obter/garantir dados de PIX (qr_code e base64)
-    let pixQrData = (payment as any)?.pixQrData;
+    let pixQrData = forcedNewPayment ? undefined : (payment as any)?.pixQrData;
 
-    // Se j houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
-    if (latestPayment?.id && !pixQrData) {
+    // Se já houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
+    if (latestPayment?.id && !pixQrData && !forcedNewPayment) {
       try {
         const details = await paymentService.fetchPayment(String(latestPayment.id));
-        pixQrData = (details as any)?.point_of_interaction?.transaction_data ?? pixQrData;
+        const paymentVersion = extractPreferenceVersion((details as any)?.metadata);
+        if (!paymentVersion || paymentVersion === order.preferenceVersion) {
+          pixQrData = (details as any)?.point_of_interaction?.transaction_data ?? pixQrData;
+        }
       } catch (error) {
         logger.warn({ orderId, paymentId: latestPayment.id, error }, "Falha ao recuperar QR do pagamento existente");
       }
@@ -593,7 +624,8 @@ export class OrderService {
       participantCount,
       participants,
       totalCents,
-      receipts: []
+      receipts: [],
+      pixReactivated: forcedNewPayment
     };
   }
 
@@ -607,7 +639,7 @@ export class OrderService {
     const hasFeeCents = columnNames.includes("feeCents");
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
-    // Usar select para evitar problemas com colunas que podem não existir
+    // Usar select para evitar problemas com colunas que podem nÃ£o existir
     return prisma.order.findMany({
       where: {
         eventId: filters.eventId,
@@ -653,9 +685,9 @@ export class OrderService {
     });
   }
 
-  // Gera um pagamento exclusivo para uma inscrição específica.
-  // Se a inscrição pertencer a um pedido com outras inscrições, move-a para um novo pedido (split)
-  // e invalida a preferência antiga do pedido original. Se já estiver sozinha, apenas gera nova preferência.
+  // Gera um pagamento exclusivo para uma inscriÃ§Ã£o especÃ­fica.
+  // Se a inscriÃ§Ã£o pertencer a um pedido com outras inscriÃ§Ãµes, move-a para um novo pedido (split)
+  // e invalida a preferÃªncia antiga do pedido original. Se jÃ¡ estiver sozinha, apenas gera nova preferÃªncia.
   async createIndividualPaymentForRegistration(registrationId: string) {
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
@@ -672,66 +704,54 @@ export class OrderService {
     }
 
     const oldOrderId = registration.orderId;
-    // Ver quantas inscrições existem no pedido atual
-    const countInOldOrder = await prisma.registration.count({ where: { orderId: oldOrderId } });
-
-    let targetOrderId = oldOrderId;
-    // Sempre invalidar versão antiga do pedido atual para impedir reuso de links
-    await prisma.order.update({
-      where: { id: oldOrderId },
-      data: {
-        preferenceVersion: { increment: 1 },
-        // Remover a preferencia antiga para forcar geracao de nova quando necessario
-        mpPreferenceId: null
-      }
-    }).catch(() => undefined);
-
-    if (countInOldOrder > 1) {
-      // Criar novo pedido apenas para esta inscrição
-      const priceCents = registration.priceCents && registration.priceCents > 0
+    const priceCents =
+      registration.priceCents && registration.priceCents > 0
         ? registration.priceCents
         : registration.event.priceCents ?? 0;
-      const orderId = randomUUID();
-      const expiresAt = resolveOrderExpirationDate(registration.order.paymentMethod as PaymentMethod);
+    const paymentMethod = (registration.order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
+    const expiresAt = resolveOrderExpirationDate(paymentMethod);
+    const buyerCpf = sanitizeCpf(registration.order.buyerCpf ?? registration.cpf);
+    const newOrderId = randomUUID();
 
-      await prisma.$transaction(async (tx) => {
-        await tx.order.create({
-          data: {
-            id: orderId,
-            eventId: registration.eventId,
-            buyerCpf: sanitizeCpf(registration.cpf),
-            totalCents: priceCents,
-            status: OrderStatus.PENDING,
-            paymentMethod: registration.order.paymentMethod as any ?? 'PIX_MP',
-            externalReference: orderId,
-            expiresAt
-          }
-        });
-
-        // Reatribuir inscricao
-        await tx.registration.update({
-          where: { id: registrationId },
-          data: { orderId: orderId, paymentMethod: registration.order.paymentMethod as any ?? 'PIX_MP' }
-        });
-
-        // Atualizar valor do pedido antigo
-        const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
-        const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
-        await tx.order.update({
-          where: { id: oldOrderId },
-          data: {
-            totalCents: newTotal,
-            status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
-            mpPreferenceId: null
-          }
-        });
-        targetOrderId = orderId;
+    await prisma.$transaction(async (tx) => {
+      await tx.order.create({
+        data: {
+          id: newOrderId,
+          eventId: registration.eventId,
+          buyerCpf,
+          totalCents: priceCents,
+          status: OrderStatus.PENDING,
+          paymentMethod,
+          externalReference: newOrderId,
+          expiresAt,
+          mpPreferenceId: null,
+          mpPaymentId: null,
+          preferenceVersion: 0
+        }
       });
-    }
 
-    // Gerar/garantir preferencia para o pedido alvo
-    const payment = await paymentService.createPreference(targetOrderId);
-    return { orderId: targetOrderId, payment };
+      await tx.registration.update({
+        where: { id: registrationId },
+        data: { orderId: newOrderId, paymentMethod }
+      });
+
+      const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
+      const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
+
+      await tx.order.update({
+        where: { id: oldOrderId },
+        data: {
+          totalCents: newTotal,
+          status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
+          mpPreferenceId: null,
+          mpPaymentId: null,
+          preferenceVersion: { increment: 1 }
+        }
+      });
+    });
+
+    const payment = await paymentService.createPreference(newOrderId);
+    return { orderId: newOrderId, payment };
   }
   async markPaid(
     orderId: string,
@@ -801,9 +821,9 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId, paymentId, error },
-          "Falha ao calcular taxas do Mercado Pago. Usando valores padrão."
+          "Falha ao calcular taxas do Mercado Pago. Usando valores padrÃ£o."
         );
-        // Em caso de erro, não aplicar taxas (assumir 0)
+        // Em caso de erro, nÃ£o aplicar taxas (assumir 0)
       }
     }
 
@@ -981,4 +1001,5 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
+
 

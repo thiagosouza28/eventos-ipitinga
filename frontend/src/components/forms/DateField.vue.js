@@ -10,7 +10,7 @@ const props = withDefaults(defineProps(), {
 const emit = defineEmits();
 const attrs = useAttrs();
 const forwardedAttrs = computed(() => {
-    const { class: _class, ...rest } = attrs;
+    const { class: ignoredClass, ...rest } = attrs;
     return rest;
 });
 const resolveClassValue = (value) => {

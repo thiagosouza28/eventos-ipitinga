@@ -56,9 +56,9 @@ const envSchema = z.object({
   CHECKIN_CONFIRM_PASSWORD: z.string().min(4).optional(),
   SMTP_HOST: z.string().default("smtp.gmail.com"),
   SMTP_PORT: z.coerce.number().default(587),
-  SMTP_USER: z.string().email("SMTP_USER deve ser um e-mail v�lido"),
-  SMTP_PASS: z.string().min(1, "SMTP_PASS n�o pode ser vazio"),
-  EMAIL_FROM: z.string().email("EMAIL_FROM deve ser um e-mail v�lido")
+  SMTP_USER: z.string().email("SMTP_USER deve ser um e-mail válido"),
+  SMTP_PASS: z.string().min(1, "SMTP_PASS não pode ser vazio"),
+  EMAIL_FROM: z.string().email("EMAIL_FROM deve ser um e-mail válido")
 });
 
 const parsed = envSchema.safeParse({ ...testDefaults, ...process.env });
@@ -69,6 +69,17 @@ if (!parsed.success) {
 }
 
 const rawEnv = parsed.data;
+
+const ensureHttpsUrl = (label: string, url: string) => {
+  if (!url.toLowerCase().startsWith("https://")) {
+    throw new Error(`${label} deve usar HTTPS quando o ambiente estiver em produção.`);
+  }
+};
+
+if (rawEnv.NODE_ENV === "production") {
+  ensureHttpsUrl("APP_URL", rawEnv.APP_URL);
+  ensureHttpsUrl("API_URL", rawEnv.API_URL);
+}
 
 const resolveSqliteUrl = (url: string) => {
   if (!url.startsWith("file:")) return url;

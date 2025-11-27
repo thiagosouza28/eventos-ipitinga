@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="px-4 py-10 lg:py-16">
     <div class="mx-auto w-full max-w-5xl space-y-6">
       <BaseCard
@@ -273,7 +273,7 @@ const toggleOrder = (orderId: string) => {
 };
 
 // Função para pagamento individual - processa APENAS o pedido específico
-// NÃO usa selectedOrders, processa diretamente o orderId passado
+// N�fO usa selectedOrders, processa diretamente o orderId passado
 const handleIndividualPayment = async (orderId: string, eventSlug?: string, domEvent?: Event) => {
   // Prevenir qualquer propagação de evento que possa interferir
   if (domEvent) {
@@ -286,7 +286,7 @@ const handleIndividualPayment = async (orderId: string, eventSlug?: string, domE
   selectedOrders.value = [];
   
   // Usar apenas o orderId passado como parâmetro
-  // NÃO usar selectedOrders.value de forma alguma
+  // N�fO usar selectedOrders.value de forma alguma
   const singleOrderId = String(orderId); // Garantir que usamos apenas este ID como string
   
   // Aguardar nextTick para garantir que a limpeza de selectedOrders seja processada
@@ -677,3 +677,4 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+

@@ -169,6 +169,10 @@ export const useAdminStore = defineStore("admin", () => {
         const response = await api.post(`/admin/registrations/${registrationId}/payment-link`);
         return response.data;
     };
+    const getRegistrationReceiptLink = async (registrationId) => {
+        const response = await api.get(`/admin/registrations/${registrationId}/receipt-link`);
+        return response.data;
+    };
     const getRegistrationHistory = async (registrationId) => {
         const response = await api.get(`/admin/registrations/${registrationId}/history`);
         return response.data;
@@ -290,6 +294,7 @@ export const useAdminStore = defineStore("admin", () => {
         confirmOrderPayment,
         getOrderPayment,
         regenerateRegistrationPaymentLink,
+        getRegistrationReceiptLink,
         getRegistrationHistory,
         loadOrders,
         loadDashboard,

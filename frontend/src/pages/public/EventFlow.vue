@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="eventStore.loading">
     <LoadingSpinner />
   </div>
@@ -55,6 +55,23 @@
             >
               {{ priceInfo.helper }}
             </p>
+            <div class="mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+              <p v-if="daysToNextLot !== null">
+                Próximo lote em
+                <span class="font-semibold text-neutral-800 dark:text-white">
+                  {{ formatDayCount(daysToNextLot) }}
+                </span>
+              </p>
+              <p v-else>
+                Nenhum próximo lote programado.
+              </p>
+              <p v-if="daysToLastLotEnd !== null">
+                Todos os lotes encerram em
+                <span class="font-semibold text-neutral-800 dark:text-white">
+                  {{ formatDayCount(daysToLastLotEnd) }}
+                </span>
+              </p>
+            </div>
           </div>
         </div>
         <div class="flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
@@ -117,7 +134,7 @@
               :to="{ name: 'pending-orders', params: { cpf: buyerCpf } }"
               class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50"
             >
-              Ver todas as pendÃªncias
+              Ver todas as pend�fªncias
               <IconArrowRight class="ml-1 h-3 w-3" />
             </RouterLink>
           </div>
@@ -815,6 +832,39 @@ const nextLotInfo = computed(() => {
     price: formatCurrency(nextLot.value.priceCents)
   };
 });
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const diffInDaysFromNow = (value?: string | null) => {
+  if (!value) return null;
+  const target = new Date(value).getTime();
+  if (Number.isNaN(target)) return null;
+  const diff = Math.ceil((target - Date.now()) / MS_PER_DAY);
+  return diff < 0 ? 0 : diff;
+};
+const sortedLots = computed(() => {
+  const lots = eventStore.event?.lots ?? [];
+  return lots
+    .slice()
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+});
+const lastLotEndDate = computed(() => {
+  if (!sortedLots.value.length) {
+    return eventStore.event?.startDate ?? null;
+  }
+  return sortedLots.value.reduce((latest: string | null, lot) => {
+    const candidate = lot.endsAt ?? lot.startsAt;
+    if (!latest) {
+      return candidate;
+    }
+    return new Date(candidate).getTime() > new Date(latest).getTime() ? candidate : latest;
+  }, sortedLots.value[0].endsAt ?? sortedLots.value[0].startsAt);
+});
+const daysToNextLot = computed(() => diffInDaysFromNow(nextLot.value?.startsAt));
+const daysToLastLotEnd = computed(() => diffInDaysFromNow(lastLotEndDate.value));
+const formatDayCount = (value: number | null) => {
+  if (value === null) return "";
+  if (value <= 0) return "menos de 1 dia";
+  return value === 1 ? "1 dia" : `${value} dias`;
+};
   const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
   const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
   const eventBannerError = ref(false);
@@ -929,8 +979,7 @@ const disableStatePersistence = () => {
   const selectedDistrictId = ref("");
   const selectedChurchId = ref("");
   const selectedPaymentMethod = ref<PaymentMethod>("PIX_MP");
-  const pendingOrder = ref<PendingOrder | null>(null);
-  const people = reactive<PersonForm[]>([]);
+    const people = reactive<PersonForm[]>([]);
   const participantCpfErrors = reactive<string[]>([]);
   const participantCpfRefs = ref<(HTMLInputElement | null)[]>([]);
   const submitting = ref(false);
@@ -981,11 +1030,11 @@ const disableStatePersistence = () => {
       eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    // Filtrar mÃ©todos exclusivos de admin se nÃ£o for admin
+    // Filtrar m�f©todos exclusivos de admin se n�f£o for admin
     const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
     return PAYMENT_METHODS.filter((option) => {
       if (!allowed.includes(option.value)) return false;
-      // Se for mÃ©todo exclusivo de admin e usuÃ¡rio nÃ£o for admin, nÃ£o mostrar
+      // Se for m�f©todo exclusivo de admin e usu�f¡rio n�f£o for admin, n�f£o mostrar
       if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
         return false;
       }
@@ -1626,9 +1675,9 @@ const disableStatePersistence = () => {
         payload
       );
       disableStatePersistence();
-      // Se for mÃ©todo gratuito, nÃ£o redirecionar para pÃ¡gina de pagamento
+      // Se for m�f©todo gratuito, n�f£o redirecionar para p�f¡gina de pagamento
       if (isFreePaymentSelected.value && response.payment?.isFree) {
-        // Redirecionar para pÃ¡gina de evento com mensagem de sucesso
+        // Redirecionar para p�f¡gina de evento com mensagem de sucesso
         router.push({
           name: "event",
           params: { slug: props.slug },
@@ -1772,10 +1821,7 @@ const disableStatePersistence = () => {
       } catch {}
     }, 5000);
   };
-
-  const stopInlinePolling = () => {
-    if (inlinePollHandle.value) { clearInterval(inlinePollHandle.value); inlinePollHandle.value = null; }
-  };</script>
+</script>
 
 <style scoped>
 input[data-quantity-input]::-webkit-outer-spin-button,
@@ -1788,5 +1834,8 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
+
+
+
 
 

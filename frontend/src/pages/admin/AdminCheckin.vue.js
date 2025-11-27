@@ -5,9 +5,14 @@ import { QrcodeStream } from "vue-qrcode-reader";
 import { formatCPF } from "../../utils/cpf";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import DateField from "../../components/forms/DateField.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
+import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useModulePermissions } from "../../composables/usePermissions";
 const route = useRoute();
 const admin = useAdminStore();
+const checkinPermissions = useModulePermissions("checkin");
+const loadingDashboard = ref(true);
 const initialRouteEvent = typeof route.params.eventId === "string" && route.params.eventId.length
     ? String(route.params.eventId)
     : null;
@@ -30,9 +35,9 @@ const pendingHistory = ref([]);
 const historyLoading = ref(false);
 let feedbackTimer = null;
 const cameraConstraints = computed(() => ({
-    facingMode: facingMode.value === "environment"
-        ? { ideal: "environment" }
-        : { ideal: "user" }
+    facingMode: facingMode.value === "environment" ? { ideal: "environment" } : { ideal: "user" },
+    width: { ideal: 1280 },
+    height: { ideal: 720 }
 }));
 const awaitingScanConfirmation = computed(() => pendingCheckin.value?.source === "scan" && pendingCheckin.value.status === "READY");
 const cameraPaused = computed(() => isProcessing.value ||
@@ -54,7 +59,7 @@ const fallbackEventInfo = computed(() => {
     if (!registration)
         return null;
     const details = [registration.eventLocation, registration.eventPeriod]
-        .filter((value) => value && value !== "Nao informado")
+        .filter((value) => value && value !== "Não informado")
         .join(" - ");
     return {
         title: registration.eventTitle || "Evento",
@@ -112,7 +117,7 @@ const summaryCards = computed(() => {
         },
         {
             key: "TOTAL",
-            title: "Inscricoes",
+            title: "Inscrições",
             label: "Total encontradas",
             value: total,
             accent: "from-neutral-600 to-neutral-800",
@@ -243,10 +248,14 @@ const loadDashboard = async (eventIdParam) => {
     }
     activeEventId.value = resolved;
     try {
+        loadingDashboard.value = true;
         await admin.loadDashboard(resolved);
     }
     catch (error) {
         console.error("Erro ao carregar painel de check-in", error);
+    }
+    finally {
+        loadingDashboard.value = false;
     }
 };
 const restartCamera = () => {
@@ -410,379 +419,413 @@ const confirmPending = async () => {
     }
 };
 onMounted(async () => {
+    if (!checkinPermissions.canList.value) {
+        loadingDashboard.value = false;
+        return;
+    }
     await loadDashboard();
 });
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-6" },
-});
-/** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-// @ts-ignore
-const __VLS_0 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-    ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
-}));
-const __VLS_1 = __VLS_0({
-    ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_0));
-__VLS_2.slots.default;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "max-w-2xl" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-    ...{ class: "text-3xl font-semibold text-neutral-900 dark:text-white" },
-});
-(__VLS_ctx.currentEventTitle);
-__VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "mt-1 text-sm text-neutral-600 dark:text-neutral-400" },
-});
-if (__VLS_ctx.currentEventDetails) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "mt-2 text-xs text-neutral-500 dark:text-neutral-400" },
-    });
-    (__VLS_ctx.currentEventDetails);
-}
-const __VLS_3 = {}.RouterLink;
-/** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-// @ts-ignore
-const __VLS_4 = __VLS_asFunctionalComponent(__VLS_3, new __VLS_3({
-    to: "/admin/dashboard",
-    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-}));
-const __VLS_5 = __VLS_4({
-    to: "/admin/dashboard",
-    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_4));
-__VLS_6.slots.default;
-var __VLS_6;
-if (__VLS_ctx.summaryCards.length) {
+if (__VLS_ctx.checkinPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" },
+        ...{ class: "space-y-6" },
     });
-    for (const [card] of __VLS_getVForSourceType((__VLS_ctx.summaryCards))) {
+    if (__VLS_ctx.loadingDashboard) {
+        /** @type {[typeof TableSkeleton, ]} */ ;
+        // @ts-ignore
+        const __VLS_0 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+            helperText: "📡 Carregando painel de check-in...",
+        }));
+        const __VLS_1 = __VLS_0({
+            helperText: "📡 Carregando painel de check-in...",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_0));
+    }
+    else {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_3 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
+        }));
+        const __VLS_4 = __VLS_3({
+            ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_3));
+        __VLS_5.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            key: (card.key),
-            ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+            ...{ class: "flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "max-w-2xl" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
+            ...{ class: "text-3xl font-semibold text-neutral-900 dark:text-white" },
+        });
+        (__VLS_ctx.currentEventTitle);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "mt-1 text-sm text-neutral-600 dark:text-neutral-400" },
+        });
+        if (__VLS_ctx.currentEventDetails) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-2 text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (__VLS_ctx.currentEventDetails);
+        }
+        const __VLS_6 = {}.RouterLink;
+        /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+        // @ts-ignore
+        const __VLS_7 = __VLS_asFunctionalComponent(__VLS_6, new __VLS_6({
+            to: "/admin/dashboard",
+            ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        }));
+        const __VLS_8 = __VLS_7({
+            to: "/admin/dashboard",
+            ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_7));
+        __VLS_9.slots.default;
+        var __VLS_9;
+        if (__VLS_ctx.summaryCards.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" },
+            });
+            for (const [card] of __VLS_getVForSourceType((__VLS_ctx.summaryCards))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    key: (card.key),
+                    ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex items-center justify-between" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
+                });
+                (card.title);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white" },
+                    ...{ class: (card.accent) },
+                });
+                (card.icon);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "mt-2 text-2xl font-bold" },
+                    ...{ class: (card.emphasisClass) },
+                });
+                (card.value);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                });
+                (card.label);
+            }
+        }
+        var __VLS_5;
+    }
+    if (!__VLS_ctx.loadingDashboard) {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_10 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }));
+        const __VLS_11 = __VLS_10({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_10));
+        __VLS_12.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "grid gap-6 lg:grid-cols-12" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-4 lg:col-span-7" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center justify-between" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+            ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "rounded-2xl border border-dashed border-neutral-300/70 bg-white/70 p-3 shadow-inner dark:border-white/20 dark:bg-white/5" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "relative w-full overflow-hidden rounded-2xl bg-black/40" },
+        });
+        const __VLS_13 = {}.QrcodeStream;
+        /** @type {[typeof __VLS_components.QrcodeStream, typeof __VLS_components.QrcodeStream, ]} */ ;
+        // @ts-ignore
+        const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
+            ...{ 'onDecode': {} },
+            ...{ 'onInit': {} },
+            ...{ class: "h-[200px] w-full sm:h-[260px]" },
+            key: (__VLS_ctx.streamKey),
+            constraints: (__VLS_ctx.cameraConstraints),
+            paused: (__VLS_ctx.cameraPaused),
+        }));
+        const __VLS_15 = __VLS_14({
+            ...{ 'onDecode': {} },
+            ...{ 'onInit': {} },
+            ...{ class: "h-[200px] w-full sm:h-[260px]" },
+            key: (__VLS_ctx.streamKey),
+            constraints: (__VLS_ctx.cameraConstraints),
+            paused: (__VLS_ctx.cameraPaused),
+        }, ...__VLS_functionalComponentArgsRest(__VLS_14));
+        let __VLS_17;
+        let __VLS_18;
+        let __VLS_19;
+        const __VLS_20 = {
+            onDecode: (__VLS_ctx.onDecode)
+        };
+        const __VLS_21 = {
+            onInit: (__VLS_ctx.onInit)
+        };
+        __VLS_16.slots.default;
+        if (__VLS_ctx.cameraStatus) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex h-full min-h-[180px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400 sm:min-h-[220px]" },
+            });
+            (__VLS_ctx.cameraStatus);
+        }
+        var __VLS_16;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-wrap items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.restartCamera) },
+            type: "button",
+            ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
+            disabled: (__VLS_ctx.isRestarting),
+        });
+        (__VLS_ctx.isRestarting ? "Reiniciando..." : "Recarregar câmera");
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.toggleFacingMode) },
+            type: "button",
+            ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
+            disabled: (__VLS_ctx.isProcessing),
+        });
+        (__VLS_ctx.facingMode === "environment" ? "frontal" : "traseira");
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-4 lg:col-span-5" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+            ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+            ...{ onSubmit: (__VLS_ctx.manualLookup) },
+            ...{ class: "grid gap-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            ...{ onInput: (__VLS_ctx.handleCpfInputChange) },
+            value: (__VLS_ctx.cpf),
+            type: "text",
+            placeholder: "000.000.000-00",
+            inputmode: "numeric",
+            maxlength: "14",
+            autocomplete: "off",
+            ...{ class: "mt-2 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+            required: true,
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
+        });
+        /** @type {[typeof DateField, ]} */ ;
+        // @ts-ignore
+        const __VLS_22 = __VLS_asFunctionalComponent(DateField, new DateField({
+            modelValue: (__VLS_ctx.birthDate),
+            required: true,
+            ...{ class: "mt-2" },
+        }));
+        const __VLS_23 = __VLS_22({
+            modelValue: (__VLS_ctx.birthDate),
+            required: true,
+            ...{ class: "mt-2" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_22));
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            type: "submit",
+            ...{ class: "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
+            disabled: (__VLS_ctx.manualLoading || __VLS_ctx.isProcessing || __VLS_ctx.confirming),
+        });
+        (__VLS_ctx.manualLoading ? "Buscando..." : "Buscar participante");
+        if (__VLS_ctx.feedback) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "rounded-2xl px-4 py-3 text-sm" },
+                ...{ class: (__VLS_ctx.feedbackClass) },
+            });
+            (__VLS_ctx.feedback);
+        }
+        var __VLS_12;
+    }
+    if (__VLS_ctx.pendingCheckin) {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }));
+        const __VLS_26 = __VLS_25({
+            ...{ class: "space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_25));
+        __VLS_27.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-col gap-4 md:flex-row md:items-start" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex w-full max-w-[160px] items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800" },
+        });
+        if (__VLS_ctx.pendingCheckin.registration.photoUrl) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                src: (__VLS_ctx.pendingCheckin.registration.photoUrl),
+                alt: "Foto do participante",
+                ...{ class: "h-40 w-full object-cover" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "px-3 text-center text-xs text-neutral-500 dark:text-neutral-300" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-wrap items-center gap-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
+            ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        (__VLS_ctx.pendingCheckin.registration.fullName);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: ([
+                    'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide',
+                    __VLS_ctx.pendingStatusInfo?.className ?? 'bg-neutral-200 text-neutral-600'
+                ]) },
+        });
+        (__VLS_ctx.pendingStatusInfo?.label ?? "");
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
+        });
+        (__VLS_ctx.displayCpf(__VLS_ctx.pendingCheckin.registration.cpf));
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        (__VLS_ctx.pendingCheckin.registration.eventTitle);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        (__VLS_ctx.pendingCheckin.registration.eventPeriod);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        (__VLS_ctx.pendingCheckin.registration.churchName);
+        (__VLS_ctx.pendingCheckin.registration.districtName);
+        if (__VLS_ctx.pendingStatusInfo?.description) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (__VLS_ctx.pendingStatusInfo.description);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "rounded-xl border border-neutral-200 bg-white/80 p-4 dark:border-neutral-700 dark:bg-neutral-900/40" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex items-center justify-between" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
+            ...{ class: "text-sm font-semibold text-neutral-800 dark:text-neutral-100" },
         });
-        (card.title);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white" },
-            ...{ class: (card.accent) },
-        });
-        (card.icon);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "mt-2 text-2xl font-bold" },
-            ...{ class: (card.emphasisClass) },
-        });
-        (card.value);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-        });
-        (card.label);
-    }
-}
-var __VLS_2;
-/** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-// @ts-ignore
-const __VLS_7 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-    ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-}));
-const __VLS_8 = __VLS_7({
-    ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_7));
-__VLS_9.slots.default;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "grid gap-6 lg:grid-cols-12" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-4 lg:col-span-7" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex items-center justify-between" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-    ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rounded-2xl border border-dashed border-neutral-300/70 bg-white/70 p-3 shadow-inner dark:border-white/20 dark:bg-white/5" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "relative w-full overflow-hidden rounded-2xl bg-black/40" },
-});
-const __VLS_10 = {}.QrcodeStream;
-/** @type {[typeof __VLS_components.QrcodeStream, typeof __VLS_components.QrcodeStream, ]} */ ;
-// @ts-ignore
-const __VLS_11 = __VLS_asFunctionalComponent(__VLS_10, new __VLS_10({
-    ...{ 'onDecode': {} },
-    ...{ 'onInit': {} },
-    ...{ class: "h-[200px] w-full sm:h-[260px]" },
-    key: (__VLS_ctx.streamKey),
-    constraints: (__VLS_ctx.cameraConstraints),
-    paused: (__VLS_ctx.cameraPaused),
-}));
-const __VLS_12 = __VLS_11({
-    ...{ 'onDecode': {} },
-    ...{ 'onInit': {} },
-    ...{ class: "h-[200px] w-full sm:h-[260px]" },
-    key: (__VLS_ctx.streamKey),
-    constraints: (__VLS_ctx.cameraConstraints),
-    paused: (__VLS_ctx.cameraPaused),
-}, ...__VLS_functionalComponentArgsRest(__VLS_11));
-let __VLS_14;
-let __VLS_15;
-let __VLS_16;
-const __VLS_17 = {
-    onDecode: (__VLS_ctx.onDecode)
-};
-const __VLS_18 = {
-    onInit: (__VLS_ctx.onInit)
-};
-__VLS_13.slots.default;
-if (__VLS_ctx.cameraStatus) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex h-full min-h-[180px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400 sm:min-h-[220px]" },
-    });
-    (__VLS_ctx.cameraStatus);
-}
-var __VLS_13;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-wrap items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.restartCamera) },
-    type: "button",
-    ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
-    disabled: (__VLS_ctx.isRestarting),
-});
-(__VLS_ctx.isRestarting ? "Reiniciando..." : "Recarregar c�mera");
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.toggleFacingMode) },
-    type: "button",
-    ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
-    disabled: (__VLS_ctx.isProcessing),
-});
-(__VLS_ctx.facingMode === "environment" ? "frontal" : "traseira");
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-4 lg:col-span-5" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-    ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-    ...{ onSubmit: (__VLS_ctx.manualLookup) },
-    ...{ class: "grid gap-4" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    ...{ onInput: (__VLS_ctx.handleCpfInputChange) },
-    value: (__VLS_ctx.cpf),
-    type: "text",
-    placeholder: "000.000.000-00",
-    inputmode: "numeric",
-    maxlength: "14",
-    autocomplete: "off",
-    ...{ class: "mt-2 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
-    required: true,
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
-});
-/** @type {[typeof DateField, ]} */ ;
-// @ts-ignore
-const __VLS_19 = __VLS_asFunctionalComponent(DateField, new DateField({
-    modelValue: (__VLS_ctx.birthDate),
-    required: true,
-    ...{ class: "mt-2" },
-}));
-const __VLS_20 = __VLS_19({
-    modelValue: (__VLS_ctx.birthDate),
-    required: true,
-    ...{ class: "mt-2" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_19));
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    type: "submit",
-    ...{ class: "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
-    disabled: (__VLS_ctx.manualLoading || __VLS_ctx.isProcessing || __VLS_ctx.confirming),
-});
-(__VLS_ctx.manualLoading ? "Buscando..." : "Buscar participante");
-if (__VLS_ctx.feedback) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl px-4 py-3 text-sm" },
-        ...{ class: (__VLS_ctx.feedbackClass) },
-    });
-    (__VLS_ctx.feedback);
-}
-var __VLS_9;
-if (__VLS_ctx.pendingCheckin) {
-    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-    // @ts-ignore
-    const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }));
-    const __VLS_23 = __VLS_22({
-        ...{ class: "space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_22));
-    __VLS_24.slots.default;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-col gap-4 md:flex-row md:items-start" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex w-full max-w-[160px] items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800" },
-    });
-    if (__VLS_ctx.pendingCheckin.registration.photoUrl) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
-            src: (__VLS_ctx.pendingCheckin.registration.photoUrl),
-            alt: "Foto do participante",
-            ...{ class: "h-40 w-full object-cover" },
-        });
-    }
-    else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "px-3 text-center text-xs text-neutral-500 dark:text-neutral-300" },
-        });
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-wrap items-center gap-2" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
-        ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
-    });
-    (__VLS_ctx.pendingCheckin.registration.fullName);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: ([
-                'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide',
-                __VLS_ctx.pendingStatusInfo?.className ?? 'bg-neutral-200 text-neutral-600'
-            ]) },
-    });
-    (__VLS_ctx.pendingStatusInfo?.label ?? "");
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
-    });
-    (__VLS_ctx.displayCpf(__VLS_ctx.pendingCheckin.registration.cpf));
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-    (__VLS_ctx.pendingCheckin.registration.eventTitle);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-    (__VLS_ctx.pendingCheckin.registration.eventPeriod);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-    (__VLS_ctx.pendingCheckin.registration.churchName);
-    (__VLS_ctx.pendingCheckin.registration.districtName);
-    if (__VLS_ctx.pendingStatusInfo?.description) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-        });
-        (__VLS_ctx.pendingStatusInfo.description);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-xl border border-neutral-200 bg-white/80 p-4 dark:border-neutral-700 dark:bg-neutral-900/40" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex items-center justify-between" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-sm font-semibold text-neutral-800 dark:text-neutral-100" },
-    });
-    if (__VLS_ctx.historyLoading) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "text-xs text-neutral-400 dark:text-neutral-500" },
-        });
-    }
-    if (__VLS_ctx.latestHistory.length) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.ul, __VLS_intrinsicElements.ul)({
-            ...{ class: "mt-3 space-y-3" },
-        });
-        for (const [item] of __VLS_getVForSourceType((__VLS_ctx.latestHistory))) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.li, __VLS_intrinsicElements.li)({
-                key: (item.type + item.at),
-                ...{ class: "border-l-2 border-neutral-200 pl-3 text-sm text-neutral-600 dark:border-neutral-700 dark:text-neutral-300" },
+        if (__VLS_ctx.historyLoading) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-xs text-neutral-400 dark:text-neutral-500" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "font-medium text-neutral-800 dark:text-neutral-100" },
-            });
-            (__VLS_ctx.formatHistoryLabel(item));
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-            });
-            (__VLS_ctx.formatDateTime(item.at));
         }
-    }
-    else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "mt-3 text-xs text-neutral-500 dark:text-neutral-400" },
+        if (__VLS_ctx.latestHistory.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.ul, __VLS_intrinsicElements.ul)({
+                ...{ class: "mt-3 space-y-3" },
+            });
+            for (const [item] of __VLS_getVForSourceType((__VLS_ctx.latestHistory))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.li, __VLS_intrinsicElements.li)({
+                    key: (item.type + item.at),
+                    ...{ class: "border-l-2 border-neutral-200 pl-3 text-sm text-neutral-600 dark:border-neutral-700 dark:text-neutral-300" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "font-medium text-neutral-800 dark:text-neutral-100" },
+                });
+                (__VLS_ctx.formatHistoryLabel(item));
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                });
+                (__VLS_ctx.formatDateTime(item.at));
+            }
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-3 text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-wrap gap-3" },
         });
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-wrap gap-3" },
-    });
-    if (__VLS_ctx.pendingCheckin.status === 'READY') {
+        if (__VLS_ctx.pendingCheckin.status === 'READY') {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.confirmPending) },
+                type: "button",
+                ...{ class: "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
+                disabled: (__VLS_ctx.confirming),
+            });
+            (__VLS_ctx.confirming ? "Confirmando..." : "Confirmar presenca");
+        }
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.confirmPending) },
+            ...{ onClick: (__VLS_ctx.cancelPending) },
             type: "button",
-            ...{ class: "inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
+            ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
             disabled: (__VLS_ctx.confirming),
         });
-        (__VLS_ctx.confirming ? "Confirmando..." : "Confirmar presenca");
+        (__VLS_ctx.pendingCheckin.status === "READY" ? "Cancelar" : "Fechar");
+        var __VLS_27;
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.cancelPending) },
-        type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-        disabled: (__VLS_ctx.confirming),
-    });
-    (__VLS_ctx.pendingCheckin.status === "READY" ? "Cancelar" : "Fechar");
-    var __VLS_24;
+    if (__VLS_ctx.admin.dashboard && !__VLS_ctx.loadingDashboard) {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_28 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }));
+        const __VLS_29 = __VLS_28({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_28));
+        __VLS_30.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+            ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.ul, __VLS_intrinsicElements.ul)({
+            ...{ class: "mt-4 space-y-2 text-sm text-neutral-500" },
+        });
+        for (const [item] of __VLS_getVForSourceType((__VLS_ctx.admin.dashboard.latest))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.li, __VLS_intrinsicElements.li)({
+                key: (item.id),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
+            });
+            (item.fullName);
+            (__VLS_ctx.formatDateTime(item.checkinAt));
+        }
+        var __VLS_30;
+    }
 }
-if (__VLS_ctx.admin.dashboard) {
-    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+else {
+    /** @type {[typeof AccessDeniedNotice, ]} */ ;
     // @ts-ignore
-    const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+    const __VLS_31 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
+        module: "checkin",
+        action: "view",
     }));
-    const __VLS_26 = __VLS_25({
-        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_25));
-    __VLS_27.slots.default;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-        ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.ul, __VLS_intrinsicElements.ul)({
-        ...{ class: "mt-4 space-y-2 text-sm text-neutral-500" },
-    });
-    for (const [item] of __VLS_getVForSourceType((__VLS_ctx.admin.dashboard.latest))) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.li, __VLS_intrinsicElements.li)({
-            key: (item.id),
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
-        });
-        (item.fullName);
-        (__VLS_ctx.formatDateTime(item.checkinAt));
-    }
-    var __VLS_27;
+    const __VLS_32 = __VLS_31({
+        module: "checkin",
+        action: "view",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_31));
+    var __VLS_34 = {};
+    var __VLS_33;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
@@ -1188,7 +1231,11 @@ const __VLS_self = (await import('vue')).defineComponent({
             QrcodeStream: QrcodeStream,
             BaseCard: BaseCard,
             DateField: DateField,
+            TableSkeleton: TableSkeleton,
+            AccessDeniedNotice: AccessDeniedNotice,
             admin: admin,
+            checkinPermissions: checkinPermissions,
+            loadingDashboard: loadingDashboard,
             cpf: cpf,
             birthDate: birthDate,
             feedback: feedback,

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders, type AxiosInstance } from "axios";
 import { storeToRefs } from "pinia";
 
 import { API_BASE_URL } from "../config/api";
@@ -10,32 +10,52 @@ const api = axios.create({
   timeout: 10000
 });
 
-api.interceptors.request.use((config) => {
-  const auth = useAuthStore();
-  const loader = useLoaderStore();
-  if (auth.token) {
-    config.headers.Authorization = `Bearer ${auth.token}`;
-  }
-  loader.start(loader.messageForMethod(config.method));
-  return config;
-});
+const clientsWithInterceptors = new WeakSet<AxiosInstance>();
 
-api.interceptors.response.use(
-  (response) => {
-    const loader = useLoaderStore();
-    loader.stop();
-    return response;
-  },
-  (error) => {
-    const loader = useLoaderStore();
-    loader.stop();
-    if (error.response?.status === 401) {
-      const auth = useAuthStore();
-      auth.signOut();
-    }
-    return Promise.reject(error);
+const attachLoaderInterceptors = (client: AxiosInstance) => {
+  if (clientsWithInterceptors.has(client)) {
+    return;
   }
-);
+
+  client.interceptors.request.use((config) => {
+    const auth = useAuthStore();
+    const loader = useLoaderStore();
+    if (!config.headers) {
+      config.headers = new AxiosHeaders();
+    }
+    if (auth.token) {
+      if (config.headers instanceof AxiosHeaders) {
+        config.headers.set("Authorization", `Bearer ${auth.token}`);
+      } else {
+        (config.headers as Record<string, string>).Authorization = `Bearer ${auth.token}`;
+      }
+    }
+    loader.start(loader.messageForMethod(config.method));
+    return config;
+  });
+
+  client.interceptors.response.use(
+    (response) => {
+      const loader = useLoaderStore();
+      loader.stop();
+      return response;
+    },
+    (error) => {
+      const loader = useLoaderStore();
+      loader.stop();
+      if (error.response?.status === 401) {
+        const auth = useAuthStore();
+        auth.signOut();
+      }
+      return Promise.reject(error);
+    }
+  );
+
+  clientsWithInterceptors.add(client);
+};
+
+attachLoaderInterceptors(api);
+attachLoaderInterceptors(axios);
 
 export const useApi = () => {
   const auth = useAuthStore();

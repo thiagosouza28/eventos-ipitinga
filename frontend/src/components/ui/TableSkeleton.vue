@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="space-y-3 rounded-2xl border border-[color:var(--border-card)] bg-[color:var(--surface-card)] p-4 shadow-inner">
     <div
       v-for="n in rows"
@@ -24,14 +24,17 @@
 </template>
 
 <script setup lang="ts">
-const props = withDefaults(
+withDefaults(
   defineProps<{
     rows?: number;
     helperText?: string;
   }>(),
   {
     rows: 4,
-    helperText: "⏳ Carregando informações..."
+    helperText: "Carregando informações..."
   }
 );
 </script>
+
+
+

@@ -1,20 +1,26 @@
-<template>
+﻿<template>
   <div :class="{ dark: isDark }">
-    <GlobalLoader />
+    <LoadingOverlay />
     <div class="min-h-screen bg-[color:var(--background)] text-[color:var(--text)] transition-colors">
       <template v-if="isAdminLayout">
-        <div class="flex min-h-screen">
+        <div class="flex min-h-screen flex-col md:flex-row">
           <AdminSidebar :is-open="isSidebarOpen" :menu-items="adminMenuItems" @toggle="toggleSidebar" />
-          <div class="flex-1 min-h-screen bg-[#F3F6FB] dark:bg-[#050816]">
-            <header class="sticky top-0 z-30 px-6 pt-6">
-              <div class="flex items-center justify-between rounded-[36px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-6 py-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)]">
-                <RouterLink to="/" class="flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white">
-                  <div class="inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-[rgba(255,255,255,0.1)] dark:from-[#1b2140] dark:to-[#11152A]">
-                    <img v-if="activeBrandLogo" :src="activeBrandLogo" alt="Logotipo CATRE" class="h-full w-full object-contain p-1.5" />
-                    <span v-else class="font-semibold text-[#5a6bff] dark:text-white">CI</span>
-                  </div>
-                  <span class="text-base font-semibold sm:text-lg">CATRE Ipitinga</span>
-                </RouterLink>
+          <div class="flex min-h-screen flex-1 flex-col bg-[#F3F6FB] dark:bg-[#050816]">
+            <header class="sticky top-0 z-30 px-4 pt-4 sm:px-6 sm:pt-6">
+              <div
+                class="flex flex-wrap items-center justify-between gap-3 rounded-[32px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-4 py-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)]"
+              >
+                <div class="flex min-w-0 flex-1 items-center gap-3">
+                  <RouterLink to="/" class="flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white">
+                    <div
+                      class="inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-[rgba(255,255,255,0.1)] dark:from-[#1b2140] dark:to-[#11152A]"
+                    >
+                      <img v-if="activeBrandLogo" :src="activeBrandLogo" alt="Logotipo CATRE" class="h-full w-full object-contain p-1.5" />
+                      <span v-else class="font-semibold text-[#5a6bff] dark:text-white">CI</span>
+                    </div>
+                    <span class="text-base font-semibold sm:text-lg">CATRE Ipitinga</span>
+                  </RouterLink>
+                </div>
                 <div class="flex flex-1 items-center justify-end gap-2 sm:gap-3">
                   <div v-if="greetingMessage" class="hidden flex-col text-right leading-tight sm:flex">
                     <span class="text-sm font-semibold text-[#1f2937] dark:text-white">{{ greetingMessage }}</span>
@@ -56,11 +62,23 @@
                     <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
                     <span>Sair</span>
                   </button>
+                  <button
+                    type="button"
+                    class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white md:hidden dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25"
+                    :aria-pressed="isSidebarOpen"
+                    @click="toggleSidebar"
+                  >
+                    <Bars3Icon v-if="!isSidebarOpen" class="h-6 w-6" aria-hidden="true" />
+                    <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
+                    <span class="sr-only">Alternar menu administrativo</span>
+                  </button>
                 </div>
               </div>
             </header>
-            <main class="px-6 pb-10 pt-10">
-              <RouterView />
+            <main class="flex-1 px-4 pb-16 pt-8 sm:px-6 md:px-8 lg:px-10">
+              <div class="mx-auto w-full max-w-[1900px] space-y-6">
+                <RouterView />
+              </div>
             </main>
           </div>
         </div>
@@ -168,7 +186,7 @@
             <RouterView />
           </main>
           <footer class="mt-auto border-t border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)] py-6 text-center text-sm text-[color:var(--text-muted)]">
-            &copy; {{ new Date().getFullYear() }} CATRE Ipitinga. Sistema de inscrições e check-in.
+            &copy; {{ new Date().getFullYear() }} CATRE Ipitinga. Sistema de Inscrições e check-in.
           </footer>
         </div>
       </template>
@@ -190,6 +208,7 @@ import {
   Cog6ToothIcon,
   MapPinIcon,
   MoonIcon,
+  PresentationChartBarIcon,
   QrCodeIcon,
   ShieldCheckIcon,
   Squares2X2Icon,
@@ -202,6 +221,7 @@ import {
 import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./stores/auth";
 import { useSystemConfigStore } from "./stores/system-config";
+import LoadingOverlay from "./components/ui/LoadingOverlay.vue";
 import AdminSidebar from "./components/admin/AdminSidebar.vue";
 import type { PermissionAction, Role } from "./types/api";
 
@@ -214,7 +234,17 @@ const { config: systemConfig } = storeToRefs(systemConfigStore);
 const mobileMenuOpen = ref(false);
 const currentTime = ref(new Date());
 const isSidebarOpen = ref(true);
+const mobileViewportBreakpoint = 768;
 let timer: number | undefined;
+
+const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < mobileViewportBreakpoint;
+
+const lockBodyScroll = (locked: boolean) => {
+  if (typeof document === "undefined") {
+    return;
+  }
+  document.body.style.overflow = locked ? "hidden" : "";
+};
 
 type MenuDefinition = {
   label: string;
@@ -235,6 +265,7 @@ const baseAdminMenu: MenuDefinition[] = [
   { label: "Permissões", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
   { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon, module: "orders" },
   { label: "Inscrições", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
+  { label: "Relatórios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
   { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
   { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
   { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
@@ -262,6 +293,19 @@ const isAdminLayout = computed(() => {
   return !adminStandaloneRoutes.has(currentName);
 });
 
+const handleViewportResize = () => {
+  if (!isAdminLayout.value) {
+    lockBodyScroll(false);
+    return;
+  }
+  if (isMobileViewport()) {
+    isSidebarOpen.value = false;
+    lockBodyScroll(false);
+  } else {
+    lockBodyScroll(false);
+  }
+};
+
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
 };
@@ -272,10 +316,25 @@ watch(
     if (!isAdminLayout.value) {
       return;
     }
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
+    if (typeof window !== "undefined" && window.innerWidth < mobileViewportBreakpoint) {
       isSidebarOpen.value = false;
     }
   }
+);
+
+watch(
+  () => isSidebarOpen.value,
+  (isOpen) => {
+    if (!isAdminLayout.value) {
+      return;
+    }
+    if (isMobileViewport()) {
+      lockBodyScroll(isOpen);
+    } else {
+      lockBodyScroll(false);
+    }
+  },
+  { immediate: true }
 );
 
 const activeBrandLogo = computed(() => {
@@ -316,18 +375,27 @@ const greetingMessage = computed(() => {
 });
 
 onMounted(() => {
-  if (typeof window !== "undefined" && window.innerWidth < 768) {
-    isSidebarOpen.value = false;
+  if (typeof window !== "undefined") {
+    if (isMobileViewport()) {
+      isSidebarOpen.value = false;
+    }
+    window.addEventListener("resize", handleViewportResize);
   }
-  timer = window.setInterval(() => {
-    currentTime.value = new Date();
-  }, 60 * 1000);
+  if (typeof window !== "undefined") {
+    timer = window.setInterval(() => {
+      currentTime.value = new Date();
+    }, 60 * 1000);
+  }
 });
 
 onBeforeUnmount(() => {
   if (timer) {
     window.clearInterval(timer);
   }
+  if (typeof window !== "undefined") {
+    window.removeEventListener("resize", handleViewportResize);
+  }
+  lockBodyScroll(false);
 });
 
 const handleSignOut = () => {
@@ -369,3 +437,14 @@ const closeMobileMenu = () => {
   opacity: 0;
 }
 </style>
+
+
+
+
+
+
+
+
+
+
+

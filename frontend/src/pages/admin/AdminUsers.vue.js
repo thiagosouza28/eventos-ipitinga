@@ -5,13 +5,18 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
+import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { permissionModules, permissionActions } from "../../config/permission-schema";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
 import { createPermissionMatrix, hydrateMatrixFromEntries, toPermissionPayload, toggleMatrixPermission } from "../../utils/permission-matrix";
+import { useModulePermissions } from "../../composables/usePermissions";
 const admin = useAdminStore();
 const catalog = useCatalogStore();
+const userPermissions = useModulePermissions("users");
 const showCreateForm = ref(false);
+const initialLoading = ref(true);
 const savingUser = ref(false);
 const lastTempPassword = ref(null);
 const form = reactive({
@@ -107,6 +112,10 @@ const clearAllOverrides = () => {
     permissionDialog.enabledOverrides = {};
 };
 const openPermissionDialog = async (user) => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Você não possui permissão para editar permissões.");
+        return;
+    }
     permissionDialog.user = user;
     permissionDialog.open = true;
     permissionDialog.loading = true;
@@ -120,8 +129,8 @@ const openPermissionDialog = async (user) => {
         }, {});
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel carregar as permissǒes do usuario.";
-        showError("Falha ao carregar permissǒes", message);
+        const message = error.response?.data?.message ?? "Não foi possível carregar as permissões do usuário.";
+        showError("Falha ao carregar permissões", message);
         resetPermissionDialog();
     }
     finally {
@@ -129,6 +138,10 @@ const openPermissionDialog = async (user) => {
     }
 };
 const savePermissionOverrides = async () => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Você não possui permissão para editar permissões.");
+        return;
+    }
     if (!permissionDialog.user)
         return;
     permissionDialog.saving = true;
@@ -140,8 +153,8 @@ const savePermissionOverrides = async () => {
         resetPermissionDialog();
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel salvar as permissǒes.";
-        showError("Falha ao salvar permissǒes", message);
+        const message = error.response?.data?.message ?? "Não foi possível salvar as permissões.";
+        showError("Falha ao salvar permissões", message);
     }
     finally {
         permissionDialog.saving = false;
@@ -239,6 +252,10 @@ const resetForm = () => {
     form.status = "ACTIVE";
 };
 const toggleCreateForm = () => {
+    if (!userPermissions.canCreate.value) {
+        showError("Acesso negado", "Você não possui permissão para criar usuários.");
+        return;
+    }
     showCreateForm.value = !showCreateForm.value;
     if (!showCreateForm.value) {
         resetForm();
@@ -268,6 +285,10 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
     reader.readAsDataURL(file);
 });
 const handleCreateUser = async () => {
+    if (!userPermissions.canCreate.value) {
+        showError("Acesso negado", "Você não possui permissão para criar usuários.");
+        return;
+    }
     if (!validateForm())
         return;
     savingUser.value = true;
@@ -308,6 +329,10 @@ const handleCreateUser = async () => {
     }
 };
 const openEditDialog = (user) => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        return;
+    }
     editDialog.userId = user.id;
     editDialog.form.name = user.name;
     editDialog.form.email = user.email;
@@ -315,7 +340,7 @@ const openEditDialog = (user) => {
     editDialog.form.phone = user.phone ?? "";
     editDialog.form.role = user.role;
     editDialog.form.districtScopeId = user.districtScopeId ?? "";
-    editDialog.form.churchScopeId = (user.churchId ?? user.churchScopeId) ?? "";
+    editDialog.form.churchScopeId = user.churchId ?? user.churchScopeId ?? "";
     editDialog.form.ministryIds = user.ministries?.map((ministry) => ministry.id) ?? [];
     editDialog.form.profileId = user.profile?.id ?? "";
     editDialog.form.status = user.status ?? "ACTIVE";
@@ -361,6 +386,10 @@ const clearEditPhoto = () => {
     editDialog.photoPreview = "";
 };
 const handleUpdateUser = async () => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        return;
+    }
     if (!editDialog.userId)
         return;
     editMinistryError.value = "";
@@ -407,18 +436,26 @@ const handleUpdateUser = async () => {
         closeEditDialog();
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel atualizar o usuario.";
-        showError("Erro ao atualizar usuario", message);
+        const message = error.response?.data?.message ?? "Não foi possível atualizar o usuário.";
+        showError("Erro ao atualizar usuário", message);
     }
     finally {
         editDialog.loading = false;
     }
 };
 const openResetDialog = (user) => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        return;
+    }
     passwordDialog.target = user;
     passwordDialog.open = true;
 };
 const handleConfirmReset = async () => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        return;
+    }
     if (!passwordDialog.target)
         return;
     passwordDialog.loading = true;
@@ -430,7 +467,7 @@ const handleConfirmReset = async () => {
         };
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel resetar a senha.";
+        const message = error.response?.data?.message ?? "Não foi possível resetar a senha.";
         showError("Erro ao resetar senha", message);
     }
     finally {
@@ -440,14 +477,25 @@ const handleConfirmReset = async () => {
     }
 };
 const refreshData = async () => {
+    if (!userPermissions.canList.value)
+        return;
+    initialLoading.value = true;
     try {
         await Promise.all([admin.loadUsers(), admin.loadProfiles()]);
     }
     catch (error) {
-        showError("Falha ao carregar usuarios", error.response?.data?.message ?? "Tente novamente mais tarde.");
+        showError("Falha ao carregar usuários", error.response?.data?.message ?? "Tente novamente mais tarde.");
+    }
+    finally {
+        initialLoading.value = false;
     }
 };
 onMounted(async () => {
+    if (!userPermissions.canList.value) {
+        initialLoading.value = false;
+        return;
+    }
+    initialLoading.value = true;
     try {
         await Promise.all([
             admin.loadUsers(),
@@ -459,6 +507,9 @@ onMounted(async () => {
     }
     catch (error) {
         showError("Falha ao carregar dados", error.response?.data?.message ?? "Tente novamente mais tarde.");
+    }
+    finally {
+        initialLoading.value = false;
     }
 });
 watch(() => form.role, () => {
@@ -473,624 +524,155 @@ debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-6" },
-});
-/** @type {[typeof ErrorDialog, ]} */ ;
-// @ts-ignore
-const __VLS_0 = __VLS_asFunctionalComponent(ErrorDialog, new ErrorDialog({
-    ...{ 'onUpdate:modelValue': {} },
-    modelValue: (__VLS_ctx.errorDialog.open),
-    title: (__VLS_ctx.errorDialog.title),
-    message: (__VLS_ctx.errorDialog.message),
-    details: (__VLS_ctx.errorDialog.details),
-}));
-const __VLS_1 = __VLS_0({
-    ...{ 'onUpdate:modelValue': {} },
-    modelValue: (__VLS_ctx.errorDialog.open),
-    title: (__VLS_ctx.errorDialog.title),
-    message: (__VLS_ctx.errorDialog.message),
-    details: (__VLS_ctx.errorDialog.details),
-}, ...__VLS_functionalComponentArgsRest(__VLS_0));
-let __VLS_3;
-let __VLS_4;
-let __VLS_5;
-const __VLS_6 = {
-    'onUpdate:modelValue': (...[$event]) => {
-        __VLS_ctx.errorDialog.open = $event;
-    }
-};
-var __VLS_2;
-/** @type {[typeof ConfirmDialog, ]} */ ;
-// @ts-ignore
-const __VLS_7 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
-    ...{ 'onConfirm': {} },
-    ...{ 'onCancel': {} },
-    modelValue: (__VLS_ctx.passwordDialog.open),
-    title: "Resetar senha",
-    description: "Gerar uma nova senha temporaria para este usuario? A senha atual sera invalidada.",
-    confirmLabel: "Gerar nova senha",
-    cancelLabel: "Cancelar",
-    loading: (__VLS_ctx.passwordDialog.loading),
-}));
-const __VLS_8 = __VLS_7({
-    ...{ 'onConfirm': {} },
-    ...{ 'onCancel': {} },
-    modelValue: (__VLS_ctx.passwordDialog.open),
-    title: "Resetar senha",
-    description: "Gerar uma nova senha temporaria para este usuario? A senha atual sera invalidada.",
-    confirmLabel: "Gerar nova senha",
-    cancelLabel: "Cancelar",
-    loading: (__VLS_ctx.passwordDialog.loading),
-}, ...__VLS_functionalComponentArgsRest(__VLS_7));
-let __VLS_10;
-let __VLS_11;
-let __VLS_12;
-const __VLS_13 = {
-    onConfirm: (__VLS_ctx.handleConfirmReset)
-};
-const __VLS_14 = {
-    onCancel: (...[$event]) => {
-        __VLS_ctx.passwordDialog.open = false;
-    }
-};
-var __VLS_9;
-/** @type {[typeof Modal, typeof Modal, ]} */ ;
-// @ts-ignore
-const __VLS_15 = __VLS_asFunctionalComponent(Modal, new Modal({
-    ...{ 'onUpdate:modelValue': {} },
-    modelValue: (__VLS_ctx.editDialog.open),
-    title: "Editar usuario",
-}));
-const __VLS_16 = __VLS_15({
-    ...{ 'onUpdate:modelValue': {} },
-    modelValue: (__VLS_ctx.editDialog.open),
-    title: "Editar usuario",
-}, ...__VLS_functionalComponentArgsRest(__VLS_15));
-let __VLS_18;
-let __VLS_19;
-let __VLS_20;
-const __VLS_21 = {
-    'onUpdate:modelValue': ((value) => {
-        __VLS_ctx.editDialog.open = value;
-        if (!value)
-            __VLS_ctx.closeEditDialog();
-    })
-};
-__VLS_17.slots.default;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-    ...{ onSubmit: (__VLS_ctx.handleUpdateUser) },
-    ...{ class: "space-y-4" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "grid gap-4 md:grid-cols-2" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    value: (__VLS_ctx.editDialog.form.name),
-    type: "text",
-    required: true,
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    type: "email",
-    required: true,
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-(__VLS_ctx.editDialog.form.email);
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    value: (__VLS_ctx.editDialog.form.cpf),
-    type: "text",
-    maxlength: "14",
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    value: (__VLS_ctx.editDialog.form.phone),
-    type: "text",
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-    ...{ onChange: (...[$event]) => {
-            __VLS_ctx.onEditRoleChange($event.target.value);
-        } },
-    value: (__VLS_ctx.editRoleSelectValue),
-    required: true,
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-for (const [option] of __VLS_getVForSourceType((__VLS_ctx.baseRoleOptions))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        key: (option.value),
-        value: (option.value),
-    });
-    (option.label);
-}
-if (__VLS_ctx.catalog.ministries.length) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.optgroup, __VLS_intrinsicElements.optgroup)({
-        label: "Coordenadores por ministério",
-    });
-    for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (ministry.id),
-            value: (`CoordenadorMinisterio:${ministry.id}`),
-        });
-        (ministry.name);
-    }
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-    value: (__VLS_ctx.editDialog.form.profileId),
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-    value: "",
-});
-for (const [profile] of __VLS_getVForSourceType((__VLS_ctx.admin.profiles))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        key: (profile.id),
-        value: (profile.id),
-    });
-    (profile.name);
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-if (__VLS_ctx.editRequiresDistrict) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "text-[10px] font-medium text-primary-600 dark:text-primary-300" },
-    });
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-    value: (__VLS_ctx.editDialog.form.districtScopeId),
-    required: (__VLS_ctx.editRequiresDistrict),
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-    value: "",
-});
-for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        key: (district.id),
-        value: (district.id),
-    });
-    (district.name);
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-if (__VLS_ctx.editRequiresChurch) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "text-[10px] font-medium text-primary-600 dark:text-primary-300" },
-    });
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-    value: (__VLS_ctx.editDialog.form.churchScopeId),
-    required: (__VLS_ctx.editRequiresChurch),
-    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-    value: "",
-});
-for (const [church] of __VLS_getVForSourceType((__VLS_ctx.catalog.churches))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        key: (church.id),
-        value: (church.id),
-    });
-    (church.name);
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "md:col-span-2" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "mt-2 flex items-center gap-4" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "h-14 w-14 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800" },
-});
-if (__VLS_ctx.editDialog.photoPreview) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
-        src: (__VLS_ctx.editDialog.photoPreview),
-        alt: "Foto do usuario",
-        ...{ class: "h-full w-full object-cover" },
-    });
-}
-else {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "flex h-full w-full items-center justify-center text-sm text-neutral-500" },
-    });
-    (__VLS_ctx.userInitials(__VLS_ctx.editDialog.form.name));
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-2" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-    ...{ class: "inline-flex cursor-pointer items-center rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    ...{ onChange: (__VLS_ctx.handleEditPhotoChange) },
-    type: "file",
-    accept: "image/*",
-    ...{ class: "hidden" },
-});
-if (__VLS_ctx.editDialog.photoPreview) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.clearEditPhoto) },
-        type: "button",
-        ...{ class: "text-xs text-red-500 hover:text-red-400" },
-    });
-}
-if (__VLS_ctx.editRequiresMinistry) {
+if (__VLS_ctx.userPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "md:col-span-2" },
+        ...{ class: "space-y-6" },
     });
+    /** @type {[typeof ErrorDialog, ]} */ ;
+    // @ts-ignore
+    const __VLS_0 = __VLS_asFunctionalComponent(ErrorDialog, new ErrorDialog({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.errorDialog.open),
+        title: (__VLS_ctx.errorDialog.title),
+        message: (__VLS_ctx.errorDialog.message),
+        details: (__VLS_ctx.errorDialog.details),
+    }));
+    const __VLS_1 = __VLS_0({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.errorDialog.open),
+        title: (__VLS_ctx.errorDialog.title),
+        message: (__VLS_ctx.errorDialog.message),
+        details: (__VLS_ctx.errorDialog.details),
+    }, ...__VLS_functionalComponentArgsRest(__VLS_0));
+    let __VLS_3;
+    let __VLS_4;
+    let __VLS_5;
+    const __VLS_6 = {
+        'onUpdate:modelValue': (...[$event]) => {
+            if (!(__VLS_ctx.userPermissions.canList))
+                return;
+            __VLS_ctx.errorDialog.open = $event;
+        }
+    };
+    var __VLS_2;
+    /** @type {[typeof ConfirmDialog, ]} */ ;
+    // @ts-ignore
+    const __VLS_7 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
+        ...{ 'onConfirm': {} },
+        ...{ 'onCancel': {} },
+        modelValue: (__VLS_ctx.passwordDialog.open),
+        title: "Resetar senha",
+        description: "Gerar uma nova senha temporaria para este usuario? A senha atual sera invalidada.",
+        confirmLabel: "Gerar nova senha",
+        cancelLabel: "Cancelar",
+        loading: (__VLS_ctx.passwordDialog.loading),
+    }));
+    const __VLS_8 = __VLS_7({
+        ...{ 'onConfirm': {} },
+        ...{ 'onCancel': {} },
+        modelValue: (__VLS_ctx.passwordDialog.open),
+        title: "Resetar senha",
+        description: "Gerar uma nova senha temporaria para este usuario? A senha atual sera invalidada.",
+        confirmLabel: "Gerar nova senha",
+        cancelLabel: "Cancelar",
+        loading: (__VLS_ctx.passwordDialog.loading),
+    }, ...__VLS_functionalComponentArgsRest(__VLS_7));
+    let __VLS_10;
+    let __VLS_11;
+    let __VLS_12;
+    const __VLS_13 = {
+        onConfirm: (__VLS_ctx.handleConfirmReset)
+    };
+    const __VLS_14 = {
+        onCancel: (...[$event]) => {
+            if (!(__VLS_ctx.userPermissions.canList))
+                return;
+            __VLS_ctx.passwordDialog.open = false;
+        }
+    };
+    var __VLS_9;
+    /** @type {[typeof Modal, typeof Modal, ]} */ ;
+    // @ts-ignore
+    const __VLS_15 = __VLS_asFunctionalComponent(Modal, new Modal({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.editDialog.open),
+        title: "Editar usuario",
+    }));
+    const __VLS_16 = __VLS_15({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.editDialog.open),
+        title: "Editar usuario",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_15));
+    let __VLS_18;
+    let __VLS_19;
+    let __VLS_20;
+    const __VLS_21 = {
+        'onUpdate:modelValue': ((value) => {
+            __VLS_ctx.editDialog.open = value;
+            if (!value)
+                __VLS_ctx.closeEditDialog();
+        })
+    };
+    __VLS_17.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+        ...{ onSubmit: (__VLS_ctx.handleUpdateUser) },
+        ...{ class: "space-y-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "grid gap-4 md:grid-cols-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "mt-2 grid gap-2 sm:grid-cols-2" },
-    });
-    for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            key: (ministry.id),
-            ...{ class: "flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-neutral-700" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            type: "checkbox",
-            value: (ministry.id),
-            ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
-        });
-        (__VLS_ctx.editDialog.form.ministryIds);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-        (ministry.name);
-    }
-    if (__VLS_ctx.editMinistryError) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "mt-1 text-xs text-red-500" },
-        });
-        (__VLS_ctx.editMinistryError);
-    }
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-2 sm:flex-row sm:justify-end" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.closeEditDialog) },
-    type: "button",
-    ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    type: "submit",
-    disabled: (__VLS_ctx.editDialog.loading),
-    ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-60" },
-});
-if (__VLS_ctx.editDialog.loading) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-        ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
-    });
-}
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-(__VLS_ctx.editDialog.loading ? "Salvando..." : "Salvar alteracoes");
-var __VLS_17;
-/** @type {[typeof Modal, typeof Modal, ]} */ ;
-// @ts-ignore
-const __VLS_22 = __VLS_asFunctionalComponent(Modal, new Modal({
-    ...{ 'onUpdate:modelValue': {} },
-    modelValue: (__VLS_ctx.permissionDialog.open),
-    title: "Permissões personalizadas",
-}));
-const __VLS_23 = __VLS_22({
-    ...{ 'onUpdate:modelValue': {} },
-    modelValue: (__VLS_ctx.permissionDialog.open),
-    title: "Permissões personalizadas",
-}, ...__VLS_functionalComponentArgsRest(__VLS_22));
-let __VLS_25;
-let __VLS_26;
-let __VLS_27;
-const __VLS_28 = {
-    'onUpdate:modelValue': ((value) => {
-        __VLS_ctx.permissionDialog.open = value;
-        if (!value)
-            __VLS_ctx.resetPermissionDialog();
-    })
-};
-__VLS_24.slots.default;
-if (__VLS_ctx.permissionDialog.loading) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex h-24 items-center justify-center text-sm text-neutral-500 dark:text-neutral-300" },
-    });
-}
-else if (__VLS_ctx.permissionDialog.user) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-4" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-sm text-neutral-600 dark:text-neutral-300" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "font-semibold text-primary-600 dark:text-primary-200" },
-    });
-    (__VLS_ctx.permissionDialog.user.name);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "font-semibold" },
-    });
-    (__VLS_ctx.permissionDialog.user.profile?.name ?? "sem perfil definido");
-    for (const [module] of __VLS_getVForSourceType((__VLS_ctx.permissionModules))) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            key: (module.key),
-            ...{ class: "rounded-2xl border border-neutral-100 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex flex-wrap items-center justify-between gap-3" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-sm font-semibold text-neutral-900 dark:text-white" },
-        });
-        (module.label);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-[11px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "font-semibold text-neutral-600 dark:text-neutral-300" },
-        });
-        (__VLS_ctx.permissionDialog.user.profile?.name ?? "Padrāo");
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "inline-flex items-center gap-2 text-xs font-semibold text-primary-600 dark:text-primary-300" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-            ...{ onChange: (...[$event]) => {
-                    if (!!(__VLS_ctx.permissionDialog.loading))
-                        return;
-                    if (!(__VLS_ctx.permissionDialog.user))
-                        return;
-                    __VLS_ctx.toggleModuleOverride(module.key, $event.target.checked);
-                } },
-            ...{ class: "h-4 w-4 rounded border-primary-200 text-primary-600 focus:ring-primary-500" },
-            type: "checkbox",
-            checked: (__VLS_ctx.isModuleOverridden(module.key)),
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "mt-3 grid gap-2 sm:grid-cols-2" },
-        });
-        for (const [action] of __VLS_getVForSourceType((__VLS_ctx.permissionActions))) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                key: (`${module.key}-${action.key}`),
-                ...{ class: "inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-xs text-neutral-600 dark:border-white/10 dark:text-neutral-200" },
-                ...{ class: ({ 'opacity-60': !__VLS_ctx.isModuleOverridden(module.key) }) },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                ...{ onChange: (...[$event]) => {
-                        if (!!(__VLS_ctx.permissionDialog.loading))
-                            return;
-                        if (!(__VLS_ctx.permissionDialog.user))
-                            return;
-                        __VLS_ctx.handlePermissionOverrideChange(module.key, action.key, $event.target.checked);
-                    } },
-                ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
-                type: "checkbox",
-                disabled: (!__VLS_ctx.isModuleOverridden(module.key)),
-                checked: (__VLS_ctx.overrideHasPermission(module.key, action.key)),
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            (action.label);
-            if (__VLS_ctx.profileHasPermission(module.key, action.key)) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                    ...{ class: "ml-auto inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500 dark:bg-white/10 dark:text-neutral-300" },
-                });
-            }
-        }
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-wrap items-center justify-between gap-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.clearAllOverrides) },
-        type: "button",
-        ...{ class: "text-xs font-semibold text-neutral-500 underline-offset-2 transition hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex gap-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.resetPermissionDialog) },
-        type: "button",
-        ...{ class: "rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-white/10 dark:text-neutral-200" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.savePermissionOverrides) },
-        type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-50" },
-        disabled: (__VLS_ctx.permissionDialog.saving),
-    });
-    if (__VLS_ctx.permissionDialog.saving) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
-        });
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.permissionDialog.saving ? "Salvando..." : "Salvar ajustes");
-}
-var __VLS_24;
-/** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-// @ts-ignore
-const __VLS_29 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-    ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
-}));
-const __VLS_30 = __VLS_29({
-    ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_29));
-__VLS_31.slots.default;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "max-w-2xl" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-    ...{ class: "text-3xl font-semibold text-neutral-900 dark:text-white" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "mt-1 text-sm text-neutral-600 dark:text-neutral-400" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center" },
-});
-const __VLS_32 = {}.RouterLink;
-/** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-// @ts-ignore
-const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
-    to: "/admin/dashboard",
-    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-}));
-const __VLS_34 = __VLS_33({
-    to: "/admin/dashboard",
-    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_33));
-__VLS_35.slots.default;
-var __VLS_35;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.toggleCreateForm) },
-    type: "button",
-    ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5" },
-});
-(__VLS_ctx.showCreateForm ? "Fechar formulario" : "+ Novo usuario");
-var __VLS_31;
-if (__VLS_ctx.lastTempPassword) {
-    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-    // @ts-ignore
-    const __VLS_36 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }));
-    const __VLS_37 = __VLS_36({
-        ...{ class: "border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_36));
-    __VLS_38.slots.default;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-sm font-semibold text-neutral-800 dark:text-neutral-100" },
-    });
-    (__VLS_ctx.lastTempPassword.user);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "rounded-2xl bg-neutral-900/90 px-5 py-2 font-mono text-base tracking-wide text-white shadow-inner shadow-black/20" },
-    });
-    (__VLS_ctx.lastTempPassword.password);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-    });
-    var __VLS_38;
-}
-if (__VLS_ctx.showCreateForm) {
-    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-    // @ts-ignore
-    const __VLS_39 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }));
-    const __VLS_40 = __VLS_39({
-        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_39));
-    __VLS_41.slots.default;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-        ...{ onSubmit: (__VLS_ctx.handleCreateUser) },
-        ...{ class: "space-y-5" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "grid gap-5 md:grid-cols-2" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
-    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        value: (__VLS_ctx.form.name),
+        value: (__VLS_ctx.editDialog.form.name),
         type: "text",
         required: true,
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         type: "email",
         required: true,
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
-    (__VLS_ctx.form.email);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    (__VLS_ctx.editDialog.form.email);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        value: (__VLS_ctx.form.cpf),
+        value: (__VLS_ctx.editDialog.form.cpf),
         type: "text",
         maxlength: "14",
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        value: (__VLS_ctx.form.phone),
+        value: (__VLS_ctx.editDialog.form.phone),
         type: "text",
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         ...{ onChange: (...[$event]) => {
-                if (!(__VLS_ctx.showCreateForm))
+                if (!(__VLS_ctx.userPermissions.canList))
                     return;
-                __VLS_ctx.onCreateRoleChange($event.target.value);
+                __VLS_ctx.onEditRoleChange($event.target.value);
             } },
-        value: (__VLS_ctx.createRoleSelectValue),
+        value: (__VLS_ctx.editRoleSelectValue),
         required: true,
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
     for (const [option] of __VLS_getVForSourceType((__VLS_ctx.baseRoleOptions))) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
@@ -1111,15 +693,13 @@ if (__VLS_ctx.showCreateForm) {
             (ministry.name);
         }
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.form.profileId),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        value: (__VLS_ctx.editDialog.form.profileId),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -1131,22 +711,20 @@ if (__VLS_ctx.showCreateForm) {
         });
         (profile.name);
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    if (__VLS_ctx.requiresDistrict) {
+    if (__VLS_ctx.editRequiresDistrict) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "text-[10px] font-medium text-primary-600 dark:text-primary-300" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.form.districtScopeId),
-        required: (__VLS_ctx.requiresDistrict),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        value: (__VLS_ctx.editDialog.form.districtScopeId),
+        required: (__VLS_ctx.editRequiresDistrict),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -1158,22 +736,20 @@ if (__VLS_ctx.showCreateForm) {
         });
         (district.name);
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2" },
-    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    if (__VLS_ctx.requiresChurch) {
+    if (__VLS_ctx.editRequiresChurch) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "text-[10px] font-medium text-primary-600 dark:text-primary-300" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.form.churchScopeId),
-        required: (__VLS_ctx.requiresChurch),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        value: (__VLS_ctx.editDialog.form.churchScopeId),
+        required: (__VLS_ctx.editRequiresChurch),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -1185,219 +761,866 @@ if (__VLS_ctx.showCreateForm) {
         });
         (church.name);
     }
-    if (__VLS_ctx.requiresMinistry) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "space-y-2 md:col-span-2" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "mt-1 grid gap-2 sm:grid-cols-2" },
-        });
-        for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                key: (ministry.id),
-                ...{ class: "flex items-center gap-2 rounded-2xl border border-neutral-200/80 bg-white/70 px-4 py-2 text-sm text-neutral-700 shadow-inner transition dark:border-white/10 dark:bg-white/5 dark:text-white" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                type: "checkbox",
-                value: (ministry.id),
-                ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
-            });
-            (__VLS_ctx.form.ministryIds);
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            (ministry.name);
-        }
-        if (__VLS_ctx.ministryError) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-xs text-red-500 dark:text-red-400" },
-            });
-            (__VLS_ctx.ministryError);
-        }
-    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end" },
+        ...{ class: "md:col-span-2" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.toggleCreateForm) },
-        type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        type: "submit",
-        disabled: (__VLS_ctx.savingUser),
-        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:opacity-70" },
-    });
-    if (__VLS_ctx.savingUser) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
-        });
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.savingUser ? "Salvando..." : "Criar usuario");
-    var __VLS_41;
-}
-/** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-// @ts-ignore
-const __VLS_42 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-    ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-}));
-const __VLS_43 = __VLS_42({
-    ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_42));
-__VLS_44.slots.default;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-    ...{ class: "text-2xl font-semibold text-neutral-900 dark:text-white" },
-});
-(__VLS_ctx.admin.users.length);
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.refreshData) },
-    type: "button",
-    ...{ class: "inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary-600 transition hover:translate-y-0.5 dark:text-primary-300" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "mt-6 overflow-hidden rounded-3xl border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.table, __VLS_intrinsicElements.table)({
-    ...{ class: "w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.thead, __VLS_intrinsicElements.thead)({
-    ...{ class: "bg-white/60 text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-    ...{ class: "px-5 py-3" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-    ...{ class: "px-5 py-3" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-    ...{ class: "px-5 py-3" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-    ...{ class: "px-5 py-3" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-    ...{ class: "px-5 py-3" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-    ...{ class: "px-5 py-3 text-right" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({
-    ...{ class: "divide-y divide-neutral-100 dark:divide-white/5" },
-});
-for (const [user] of __VLS_getVForSourceType((__VLS_ctx.admin.users))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
-        key: (user.id),
-        ...{ class: "transition hover:bg-white/80 dark:hover:bg-white/5" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-4" },
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex items-center gap-3" },
+        ...{ class: "mt-2 flex items-center gap-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/10" },
+        ...{ class: "h-14 w-14 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-800" },
     });
-    if (user.photoUrl) {
+    if (__VLS_ctx.editDialog.photoPreview) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
-            src: (user.photoUrl),
+            src: (__VLS_ctx.editDialog.photoPreview),
             alt: "Foto do usuario",
             ...{ class: "h-full w-full object-cover" },
         });
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "flex h-full w-full items-center justify-center text-xs font-semibold text-neutral-500 dark:text-neutral-300" },
+            ...{ class: "flex h-full w-full items-center justify-center text-sm text-neutral-500" },
         });
-        (__VLS_ctx.userInitials(user.name));
+        (__VLS_ctx.userInitials(__VLS_ctx.editDialog.form.name));
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-2" },
     });
-    (user.name);
-    if (user.cpf) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "inline-flex cursor-pointer items-center rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        ...{ onChange: (__VLS_ctx.handleEditPhotoChange) },
+        type: "file",
+        accept: "image/*",
+        ...{ class: "hidden" },
+    });
+    if (__VLS_ctx.editDialog.photoPreview) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.clearEditPhoto) },
+            type: "button",
+            ...{ class: "text-xs text-red-500 hover:text-red-400" },
+        });
+    }
+    if (__VLS_ctx.editRequiresMinistry) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "md:col-span-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-2 grid gap-2 sm:grid-cols-2" },
+        });
+        for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                key: (ministry.id),
+                ...{ class: "flex items-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-neutral-700" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                type: "checkbox",
+                value: (ministry.id),
+                ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
+            });
+            (__VLS_ctx.editDialog.form.ministryIds);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (ministry.name);
+        }
+        if (__VLS_ctx.editMinistryError) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-1 text-xs text-red-500" },
+            });
+            (__VLS_ctx.editMinistryError);
+        }
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-2 sm:flex-row sm:justify-end" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.closeEditDialog) },
+        type: "button",
+        ...{ class: "rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        type: "submit",
+        disabled: (__VLS_ctx.editDialog.loading),
+        ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-60" },
+    });
+    if (__VLS_ctx.editDialog.loading) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    (__VLS_ctx.editDialog.loading ? "Salvando..." : "Salvar alterações");
+    var __VLS_17;
+    /** @type {[typeof Modal, typeof Modal, ]} */ ;
+    // @ts-ignore
+    const __VLS_22 = __VLS_asFunctionalComponent(Modal, new Modal({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.permissionDialog.open),
+        title: "Permissões personalizadas",
+    }));
+    const __VLS_23 = __VLS_22({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.permissionDialog.open),
+        title: "Permissões personalizadas",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_22));
+    let __VLS_25;
+    let __VLS_26;
+    let __VLS_27;
+    const __VLS_28 = {
+        'onUpdate:modelValue': ((value) => {
+            __VLS_ctx.permissionDialog.open = value;
+            if (!value)
+                __VLS_ctx.resetPermissionDialog();
+        })
+    };
+    __VLS_24.slots.default;
+    if (__VLS_ctx.permissionDialog.loading) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex h-24 items-center justify-center text-sm text-neutral-500 dark:text-neutral-300" },
+        });
+    }
+    else if (__VLS_ctx.permissionDialog.user) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm text-neutral-600 dark:text-neutral-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold text-primary-600 dark:text-primary-200" },
+        });
+        (__VLS_ctx.permissionDialog.user.name);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold" },
+        });
+        (__VLS_ctx.permissionDialog.user.profile?.name ?? "sem perfil definido");
+        for (const [module] of __VLS_getVForSourceType((__VLS_ctx.permissionModules))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                key: (module.key),
+                ...{ class: "rounded-2xl border border-neutral-100 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex flex-wrap items-center justify-between gap-3" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-900 dark:text-white" },
+            });
+            (module.label);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[11px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "font-semibold text-neutral-600 dark:text-neutral-300" },
+            });
+            (__VLS_ctx.permissionDialog.user.profile?.name ?? "Padrāo");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "inline-flex items-center gap-2 text-xs font-semibold text-primary-600 dark:text-primary-300" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                ...{ onChange: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.permissionDialog.loading))
+                            return;
+                        if (!(__VLS_ctx.permissionDialog.user))
+                            return;
+                        __VLS_ctx.toggleModuleOverride(module.key, $event.target.checked);
+                    } },
+                ...{ class: "h-4 w-4 rounded border-primary-200 text-primary-600 focus:ring-primary-500" },
+                type: "checkbox",
+                checked: (__VLS_ctx.isModuleOverridden(module.key)),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-3 grid gap-2 sm:grid-cols-2" },
+            });
+            for (const [action] of __VLS_getVForSourceType((__VLS_ctx.permissionActions))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                    key: (`${module.key}-${action.key}`),
+                    ...{ class: "inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-xs text-neutral-600 dark:border-white/10 dark:text-neutral-200" },
+                    ...{ class: ({ 'opacity-60': !__VLS_ctx.isModuleOverridden(module.key) }) },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                    ...{ onChange: (...[$event]) => {
+                            if (!(__VLS_ctx.userPermissions.canList))
+                                return;
+                            if (!!(__VLS_ctx.permissionDialog.loading))
+                                return;
+                            if (!(__VLS_ctx.permissionDialog.user))
+                                return;
+                            __VLS_ctx.handlePermissionOverrideChange(module.key, action.key, $event.target.checked);
+                        } },
+                    ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
+                    type: "checkbox",
+                    disabled: (!__VLS_ctx.isModuleOverridden(module.key)),
+                    checked: (__VLS_ctx.overrideHasPermission(module.key, action.key)),
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (action.label);
+                if (__VLS_ctx.profileHasPermission(module.key, action.key)) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "ml-auto inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500 dark:bg-white/10 dark:text-neutral-300" },
+                    });
+                }
+            }
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-wrap items-center justify-between gap-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.clearAllOverrides) },
+            type: "button",
+            ...{ class: "text-xs font-semibold text-neutral-500 underline-offset-2 transition hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex gap-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.resetPermissionDialog) },
+            type: "button",
+            ...{ class: "rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-white/10 dark:text-neutral-200" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.savePermissionOverrides) },
+            type: "button",
+            ...{ class: "inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-50" },
+            disabled: (__VLS_ctx.permissionDialog.saving),
+        });
+        if (__VLS_ctx.permissionDialog.saving) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        (__VLS_ctx.permissionDialog.saving ? "Salvando..." : "Salvar ajustes");
+    }
+    var __VLS_24;
+    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+    // @ts-ignore
+    const __VLS_29 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
+    }));
+    const __VLS_30 = __VLS_29({
+        ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_29));
+    __VLS_31.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "max-w-2xl" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
+        ...{ class: "text-3xl font-semibold text-neutral-900 dark:text-white" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-sm text-neutral-600 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center" },
+    });
+    const __VLS_32 = {}.RouterLink;
+    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+    // @ts-ignore
+    const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
+        to: "/admin/dashboard",
+        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+    }));
+    const __VLS_34 = __VLS_33({
+        to: "/admin/dashboard",
+        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_33));
+    __VLS_35.slots.default;
+    var __VLS_35;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.toggleCreateForm) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5" },
+    });
+    (__VLS_ctx.showCreateForm ? "Fechar formulário" : "+ Novo usuário");
+    var __VLS_31;
+    if (__VLS_ctx.lastTempPassword) {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_36 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }));
+        const __VLS_37 = __VLS_36({
+            ...{ class: "border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_36));
+        __VLS_38.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        (__VLS_ctx.lastTempPassword.user);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "rounded-2xl bg-neutral-900/90 px-5 py-2 font-mono text-base tracking-wide text-white shadow-inner shadow-black/20" },
+        });
+        (__VLS_ctx.lastTempPassword.password);
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
         });
-        (__VLS_ctx.maskCpf(user.cpf));
+        var __VLS_38;
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
-    });
-    (user.email);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
-    });
-    (__VLS_ctx.roleLabel(user.role));
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
-    });
-    if (user.ministries?.length) {
+    if (__VLS_ctx.showCreateForm) {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_39 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }));
+        const __VLS_40 = __VLS_39({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_39));
+        __VLS_41.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+            ...{ onSubmit: (__VLS_ctx.handleCreateUser) },
+            ...{ class: "space-y-5" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "grid gap-5 md:grid-cols-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            value: (__VLS_ctx.form.name),
+            type: "text",
+            required: true,
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            type: "email",
+            required: true,
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        (__VLS_ctx.form.email);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            value: (__VLS_ctx.form.cpf),
+            type: "text",
+            maxlength: "14",
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            value: (__VLS_ctx.form.phone),
+            type: "text",
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            ...{ onChange: (...[$event]) => {
+                    if (!(__VLS_ctx.userPermissions.canList))
+                        return;
+                    if (!(__VLS_ctx.showCreateForm))
+                        return;
+                    __VLS_ctx.onCreateRoleChange($event.target.value);
+                } },
+            value: (__VLS_ctx.createRoleSelectValue),
+            required: true,
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        for (const [option] of __VLS_getVForSourceType((__VLS_ctx.baseRoleOptions))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (option.value),
+                value: (option.value),
+            });
+            (option.label);
+        }
+        if (__VLS_ctx.catalog.ministries.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.optgroup, __VLS_intrinsicElements.optgroup)({
+                label: "Coordenadores por ministério",
+            });
+            for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                    key: (ministry.id),
+                    value: (`CoordenadorMinisterio:${ministry.id}`),
+                });
+                (ministry.name);
+            }
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.form.profileId),
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            value: "",
+        });
+        for (const [profile] of __VLS_getVForSourceType((__VLS_ctx.admin.profiles))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (profile.id),
+                value: (profile.id),
+            });
+            (profile.name);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-        (user.ministries.map((m) => m.name).join(", "));
+        if (__VLS_ctx.requiresDistrict) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-[10px] font-medium text-primary-600 dark:text-primary-300" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.form.districtScopeId),
+            required: (__VLS_ctx.requiresDistrict),
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            value: "",
+        });
+        for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (district.id),
+                value: (district.id),
+            });
+            (district.name);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center justify-between text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        if (__VLS_ctx.requiresChurch) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-[10px] font-medium text-primary-600 dark:text-primary-300" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.form.churchScopeId),
+            required: (__VLS_ctx.requiresChurch),
+            ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            value: "",
+        });
+        for (const [church] of __VLS_getVForSourceType((__VLS_ctx.catalog.churches))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (church.id),
+                value: (church.id),
+            });
+            (church.name);
+        }
+        if (__VLS_ctx.requiresMinistry) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-2 md:col-span-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-1 grid gap-2 sm:grid-cols-2" },
+            });
+            for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                    key: (ministry.id),
+                    ...{ class: "flex items-center gap-2 rounded-2xl border border-neutral-200/80 bg-white/70 px-4 py-2 text-sm text-neutral-700 shadow-inner transition dark:border-white/10 dark:bg-white/5 dark:text-white" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                    type: "checkbox",
+                    value: (ministry.id),
+                    ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
+                });
+                (__VLS_ctx.form.ministryIds);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (ministry.name);
+            }
+            if (__VLS_ctx.ministryError) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-xs text-red-500 dark:text-red-400" },
+                });
+                (__VLS_ctx.ministryError);
+            }
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.toggleCreateForm) },
+            type: "button",
+            ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            type: "submit",
+            disabled: (__VLS_ctx.savingUser),
+            ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:opacity-70" },
+        });
+        if (__VLS_ctx.savingUser) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        (__VLS_ctx.savingUser ? "Salvando..." : "Criar usuario");
+        var __VLS_41;
+    }
+    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+    // @ts-ignore
+    const __VLS_42 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+    }));
+    const __VLS_43 = __VLS_42({
+        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_42));
+    __VLS_44.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+        ...{ class: "text-2xl font-semibold text-neutral-900 dark:text-white" },
+    });
+    (__VLS_ctx.admin.users.length);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.refreshData) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center gap-2 text-sm font-semibold text-primary-600 transition hover:translate-y-0.5 dark:text-primary-300" },
+        disabled: (__VLS_ctx.initialLoading),
+    });
+    if (__VLS_ctx.initialLoading) {
+        /** @type {[typeof TableSkeleton, ]} */ ;
+        // @ts-ignore
+        const __VLS_45 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+            helperText: "🔄 Carregando usuários...",
+        }));
+        const __VLS_46 = __VLS_45({
+            helperText: "🔄 Carregando usuários...",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_45));
     }
     else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "text-neutral-400 dark:text-neutral-500" },
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-6 hidden overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30 md:block" },
         });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.table, __VLS_intrinsicElements.table)({
+            ...{ class: "w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.thead, __VLS_intrinsicElements.thead)({
+            ...{ class: "bg-white/60 text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-5 py-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-5 py-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-5 py-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-5 py-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-5 py-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-5 py-3 text-right" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({
+            ...{ class: "divide-y divide-neutral-100 dark:divide-white/5" },
+        });
+        for (const [user] of __VLS_getVForSourceType((__VLS_ctx.admin.users))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
+                key: (user.id),
+                ...{ class: "transition hover:bg-white/80 dark:hover:bg-white/5" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center gap-3" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/10" },
+            });
+            if (user.photoUrl) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                    src: (user.photoUrl),
+                    alt: "Foto do usuario",
+                    ...{ class: "h-full w-full object-cover" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "flex h-full w-full items-center justify-center text-xs font-semibold text-neutral-500 dark:text-neutral-300" },
+                });
+                (__VLS_ctx.userInitials(user.name));
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+            });
+            (user.name);
+            if (user.cpf) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                });
+                (__VLS_ctx.maskCpf(user.cpf));
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
+            });
+            (user.email);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
+            });
+            (__VLS_ctx.roleLabel(user.role));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
+            });
+            if (user.ministries?.length) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (user.ministries.map((m) => m.name).join(", "));
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "text-neutral-400 dark:text-neutral-500" },
+                });
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase" },
+                ...{ class: (user.mustChangePassword
+                        ? 'bg-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
+                        : 'bg-emerald-200/70 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100') },
+            });
+            (user.mustChangePassword ? 'Trocar senha' : 'Ativo');
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-4 text-right" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "inline-flex flex-wrap items-center justify-end gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.initialLoading))
+                            return;
+                        __VLS_ctx.openPermissionDialog(user);
+                    } },
+                type: "button",
+                ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.initialLoading))
+                            return;
+                        __VLS_ctx.openEditDialog(user);
+                    } },
+                type: "button",
+                ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.initialLoading))
+                            return;
+                        __VLS_ctx.openResetDialog(user);
+                    } },
+                type: "button",
+                ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
+            });
+        }
+        if (!__VLS_ctx.admin.users.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-6 text-sm text-neutral-500 dark:text-neutral-400" },
+                colspan: "6",
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-6 flex flex-col gap-4 md:hidden" },
+        });
+        for (const [user] of __VLS_getVForSourceType((__VLS_ctx.admin.users))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                key: (user.id),
+                ...{ class: "rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center gap-3" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/10" },
+            });
+            if (user.photoUrl) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                    src: (user.photoUrl),
+                    alt: "Foto do usuario",
+                    ...{ class: "h-full w-full object-cover" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "flex h-full w-full items-center justify-center text-xs font-semibold text-neutral-500 dark:text-neutral-300" },
+                });
+                (__VLS_ctx.userInitials(user.name));
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+            });
+            (user.name);
+            if (user.cpf) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                });
+                (__VLS_ctx.maskCpf(user.cpf));
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (user.email);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            (__VLS_ctx.roleLabel(user.role));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            (user.mustChangePassword ? "Trocar senha" : "Ativo");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "col-span-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            if (user.ministries?.length) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (user.ministries.map((m) => m.name).join(", "));
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "text-neutral-400 dark:text-neutral-500" },
+                });
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-4 grid grid-cols-1 gap-2 text-xs font-semibold" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.initialLoading))
+                            return;
+                        __VLS_ctx.openPermissionDialog(user);
+                    } },
+                type: "button",
+                ...{ class: "rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "grid grid-cols-2 gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.initialLoading))
+                            return;
+                        __VLS_ctx.openEditDialog(user);
+                    } },
+                type: "button",
+                ...{ class: "rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.userPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.initialLoading))
+                            return;
+                        __VLS_ctx.openResetDialog(user);
+                    } },
+                type: "button",
+                ...{ class: "rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30" },
+            });
+        }
+        if (!__VLS_ctx.admin.users.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400" },
+            });
+        }
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-4" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase" },
-        ...{ class: (user.mustChangePassword
-                ? 'bg-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
-                : 'bg-emerald-200/70 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100') },
-    });
-    (user.mustChangePassword ? 'Trocar senha' : 'Ativo');
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-4 text-right" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "inline-flex flex-wrap items-center justify-end gap-2" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
-                __VLS_ctx.openPermissionDialog(user);
-            } },
-        type: "button",
-        ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
-                __VLS_ctx.openEditDialog(user);
-            } },
-        type: "button",
-        ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
-                __VLS_ctx.openResetDialog(user);
-            } },
-        type: "button",
-        ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
-    });
+    var __VLS_44;
 }
-if (!__VLS_ctx.admin.users.length) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-        ...{ class: "px-5 py-6 text-sm text-neutral-500 dark:text-neutral-400" },
-        colspan: "6",
-    });
+else {
+    /** @type {[typeof AccessDeniedNotice, ]} */ ;
+    // @ts-ignore
+    const __VLS_48 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
+        module: "users",
+        action: "view",
+    }));
+    const __VLS_49 = __VLS_48({
+        module: "users",
+        action: "view",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_48));
+    var __VLS_51 = {};
+    var __VLS_50;
 }
-var __VLS_44;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
@@ -2225,8 +2448,9 @@ var __VLS_44;
 /** @type {__VLS_StyleScopedClasses['hover:translate-y-0.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
 /** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/70']} */ ;
@@ -2235,6 +2459,7 @@ var __VLS_44;
 /** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-950/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:block']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['table-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-left']} */ ;
@@ -2388,6 +2613,127 @@ var __VLS_44;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-950/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-shrink-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid-cols-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
@@ -2397,11 +2743,15 @@ const __VLS_self = (await import('vue')).defineComponent({
             ErrorDialog: ErrorDialog,
             ConfirmDialog: ConfirmDialog,
             Modal: Modal,
+            TableSkeleton: TableSkeleton,
+            AccessDeniedNotice: AccessDeniedNotice,
             permissionModules: permissionModules,
             permissionActions: permissionActions,
             admin: admin,
             catalog: catalog,
+            userPermissions: userPermissions,
             showCreateForm: showCreateForm,
+            initialLoading: initialLoading,
             savingUser: savingUser,
             lastTempPassword: lastTempPassword,
             form: form,

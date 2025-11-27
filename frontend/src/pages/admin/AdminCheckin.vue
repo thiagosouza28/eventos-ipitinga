@@ -88,7 +88,7 @@
               @click="restartCamera"
               :disabled="isRestarting"
             >
-              {{ isRestarting ? "Reiniciando..." : "Recarregar c�mera" }}
+              {{ isRestarting ? "Reiniciando..." : "Recarregar câmera" }}
             </button>
             <button
               type="button"
@@ -96,7 +96,7 @@
               @click="toggleFacingMode"
               :disabled="isProcessing"
             >
-              Usar c�mera {{ facingMode === "environment" ? "frontal" : "traseira" }}
+              Usar câmera {{ facingMode === "environment" ? "frontal" : "traseira" }}
             </button>
           </div>
         </div>
@@ -326,7 +326,7 @@ const pendingHistory = ref<CheckinHistoryEvent[]>([]);
 const historyLoading = ref(false);
 let feedbackTimer: number | null = null;
 
-const cameraConstraints = computed<MediaTrackConstraints>(() => ({
+const cameraConstraints = computed(() => ({
   facingMode: facingMode.value === "environment" ? { ideal: "environment" } : { ideal: "user" },
   width: { ideal: 1280 },
   height: { ideal: 720 }

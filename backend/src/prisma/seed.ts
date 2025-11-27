@@ -200,12 +200,12 @@ const run = async () => {
 
   const financeProfile = await ensureProfile(
     "Tesoureiro",
-    "Respons�vel pelo caixa e relat�rios financeiros.",
+    "Responsável pelo caixa e relatórios financeiros.",
     RolePermissionPresets.Tesoureiro
   );
   const ministryCoordinatorProfile = await ensureProfile(
-    "Coordenador de Minist�rio",
-    "Gere inscri��es do seu minist�rio.",
+    "Coordenador de Ministério",
+    "Gere inscrições do seu ministério.",
     RolePermissionPresets.CoordenadorMinisterio
   );
   const profileMap: Record<Role, string> = {

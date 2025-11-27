@@ -72,7 +72,7 @@ const validateLink = async () => {
     catch (error) {
         errorMessage.value =
             error?.response?.data?.message ??
-                "Nao foi possivel validar o check-in. Procure a equipe de recepcao.";
+                "Não foi possível validar o check-in. Procure a equipe de recepção.";
     }
     finally {
         loading.value = false;
@@ -94,7 +94,7 @@ const confirmPresence = async () => {
     }
     catch (error) {
         confirmError.value =
-            error?.response?.data?.message ?? "Nao foi possivel confirmar o check-in. Verifique a senha.";
+            error?.response?.data?.message ?? "Não foi possível confirmar o check-in. Verifique a senha.";
     }
     finally {
         confirming.value = false;

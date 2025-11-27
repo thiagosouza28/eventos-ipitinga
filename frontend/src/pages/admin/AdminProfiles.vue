@@ -196,7 +196,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive } from "vue";
+import { onMounted, reactive } from "vue";
 
 import ProfileForm from "../../components/admin/ProfileForm.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -205,13 +205,8 @@ import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import { permissionModules } from "../../config/permission-schema";
 import { useAdminStore } from "../../stores/admin";
-import type { AdminProfile, PermissionAction, PermissionState } from "../../types/api";
-import {
-  createPermissionMatrix,
-  hydrateMatrixFromEntries,
-  toPermissionPayload,
-  type PermissionFormEntry
-} from "../../utils/permission-matrix";
+import type { AdminProfile } from "../../types/api";
+import { createPermissionMatrix, hydrateMatrixFromEntries, toPermissionPayload } from "../../utils/permission-matrix";
 
 const admin = useAdminStore();
 

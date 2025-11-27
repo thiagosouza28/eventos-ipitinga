@@ -8,7 +8,7 @@ import { useAuthStore } from "../../stores/auth";
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const email = ref("");
+const identifier = ref("");
 const password = ref("");
 const showPassword = ref(false);
 const rememberMe = ref(false);
@@ -21,7 +21,7 @@ onMounted(() => {
     if (remembered) {
         try {
             const data = JSON.parse(remembered);
-            email.value = data.email || "";
+            identifier.value = data.identifier || data.email || "";
             password.value = data.password || "";
             rememberMe.value = true;
         }
@@ -34,6 +34,10 @@ onMounted(() => {
     }
 });
 const redirectAuthenticated = () => {
+    if (auth.user?.mustChangePassword) {
+        router.replace({ name: "admin-force-password" });
+        return;
+    }
     router.replace(route.query.redirect ?? "/admin/dashboard");
 };
 watch(() => auth.isAuthenticated, (isAuthenticated) => {
@@ -45,10 +49,10 @@ const handleSubmit = async () => {
     try {
         errorMessage.value = "";
         loading.value = true;
-        await auth.signIn(email.value, password.value);
+        await auth.signIn(identifier.value, password.value);
         // Salvar credenciais se "Lembrar-me" estiver marcado
         if (rememberMe.value) {
-            localStorage.setItem(REMEMBER_ME_KEY, JSON.stringify({ email: email.value, password: password.value }));
+            localStorage.setItem(REMEMBER_ME_KEY, JSON.stringify({ identifier: identifier.value, password: password.value }));
         }
         else {
             localStorage.removeItem(REMEMBER_ME_KEY);
@@ -96,12 +100,13 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements
     ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-    type: "email",
+    value: (__VLS_ctx.identifier),
+    type: "text",
     required: true,
     disabled: (__VLS_ctx.loading),
     ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-50" },
+    placeholder: "000.000.000-00 ou email@dominio.com",
 });
-(__VLS_ctx.email);
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
@@ -186,6 +191,22 @@ if (__VLS_ctx.loading) {
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
 (__VLS_ctx.loading ? "Entrando..." : "Entrar");
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "flex flex-col items-center gap-2 text-sm text-neutral-500" },
+});
+const __VLS_9 = {}.RouterLink;
+/** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+// @ts-ignore
+const __VLS_10 = __VLS_asFunctionalComponent(__VLS_9, new __VLS_9({
+    ...{ class: "text-primary-600 transition hover:text-primary-500" },
+    to: ({ name: 'admin-forgot-password' }),
+}));
+const __VLS_11 = __VLS_10({
+    ...{ class: "text-primary-600 transition hover:text-primary-500" },
+    to: ({ name: 'admin-forgot-password' }),
+}, ...__VLS_functionalComponentArgsRest(__VLS_10));
+__VLS_12.slots.default;
+var __VLS_12;
 if (__VLS_ctx.errorMessage) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-sm text-red-500" },
@@ -283,6 +304,15 @@ var __VLS_2;
 /** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
 /** @type {__VLS_StyleScopedClasses['opacity-25']} */ ;
 /** @type {__VLS_StyleScopedClasses['opacity-75']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 var __VLS_dollars;
@@ -292,7 +322,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             BaseCard: BaseCard,
             IconEye: IconEye,
             IconEyeSlash: IconEyeSlash,
-            email: email,
+            identifier: identifier,
             password: password,
             showPassword: showPassword,
             rememberMe: rememberMe,

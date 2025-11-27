@@ -12,6 +12,7 @@
       >
         <transition name="modal-content">
           <div
+            v-if="modelValue"
             class="w-full max-w-[92vw] max-h-[96vh] overflow-y-auto rounded-[var(--modal-radius)] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] p-6 text-[color:var(--text-base)] shadow-xl sm:p-8 xl:max-w-[1800px]"
             :style="{ boxShadow: 'var(--modal-shadow)' }"
           >

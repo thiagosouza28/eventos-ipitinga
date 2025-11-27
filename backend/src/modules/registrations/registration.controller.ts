@@ -150,6 +150,12 @@ export const reactivateRegistrationHandler = async (request: Request, response: 
   return response.json(result);
 };
 
+export const getRegistrationReceiptLinkHandler = async (request: Request, response: Response) => {
+  const { id } = request.params;
+  const link = await registrationService.getReceiptLink(id);
+  return response.json(link);
+};
+
 export const deleteRegistrationHandler = async (request: Request, response: Response) => {
   await registrationService.delete(request.params.id);
   return response.status(204).send();

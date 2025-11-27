@@ -175,7 +175,7 @@
           <strong class="text-red-600 dark:text-red-400">-{{ formatCurrency(eventMpFees) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Receita l�quida</p>
+          <p>Receita líquida</p>
           <strong class="text-primary-600 dark:text-primary-300">
             {{ formatCurrency(eventSummary.totals.netCents) }}
           </strong>
@@ -199,7 +199,7 @@
           </strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Total geral (l�quido)</p>
+          <p>Total geral (líquido)</p>
           <strong>{{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}</strong>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
 type LoaderMessage = {
@@ -6,30 +6,42 @@ type LoaderMessage = {
   icon?: string;
 };
 
+type LoaderMessagePayload = LoaderMessage | string | undefined;
+
 const DEFAULT_MESSAGE: LoaderMessage = {
-  text: "⏳ Carregando informações..."
+  text: "Processando..."
 };
 
 const REQUEST_MESSAGES: Record<string, LoaderMessage> = {
-  get: { text: "🔄 Buscando dados..." },
-  post: { text: "📡 Enviando informações..." },
-  put: { text: "📡 Atualizando informações..." },
-  patch: { text: "📡 Atualizando informações..." },
-  delete: { text: "🗑️ Processando exclusão..." }
+  get: { text: "Carregando dados..." },
+  post: { text: "Salvando..." },
+  put: { text: "Atualizando informacoes..." },
+  patch: { text: "Atualizando informacoes..." },
+  delete: { text: "Processando exclusao..." }
+};
+
+const resolveMessage = (payload?: LoaderMessagePayload): LoaderMessage => {
+  if (typeof payload === "string") {
+    return { text: payload };
+  }
+  if (payload && typeof payload === "object") {
+    return { ...DEFAULT_MESSAGE, ...payload };
+  }
+  return { ...DEFAULT_MESSAGE };
 };
 
 export const useLoaderStore = defineStore("loader", () => {
   const activeRequests = ref(0);
-  const message = ref<LoaderMessage>(DEFAULT_MESSAGE);
+  const message = ref<LoaderMessage>(resolveMessage());
   const manualLock = ref(false);
 
   const isVisible = computed(() => manualLock.value || activeRequests.value > 0);
 
-  const setMessage = (payload?: LoaderMessage) => {
-    message.value = payload ?? DEFAULT_MESSAGE;
+  const setMessage = (payload?: LoaderMessagePayload) => {
+    message.value = resolveMessage(payload);
   };
 
-  const start = (payload?: LoaderMessage) => {
+  const start = (payload?: LoaderMessagePayload) => {
     activeRequests.value += 1;
     setMessage(payload);
   };
@@ -41,7 +53,7 @@ export const useLoaderStore = defineStore("loader", () => {
     }
   };
 
-  const show = (payload?: LoaderMessage) => {
+  const show = (payload?: LoaderMessagePayload) => {
     manualLock.value = true;
     setMessage(payload);
   };
@@ -54,8 +66,11 @@ export const useLoaderStore = defineStore("loader", () => {
   };
 
   const messageForMethod = (method?: string) => {
-    if (!method) return DEFAULT_MESSAGE;
-    return REQUEST_MESSAGES[method.toLowerCase()] ?? DEFAULT_MESSAGE;
+    if (!method) {
+      return resolveMessage();
+    }
+    const normalized = method.toLowerCase();
+    return resolveMessage(REQUEST_MESSAGES[normalized]);
   };
 
   return {

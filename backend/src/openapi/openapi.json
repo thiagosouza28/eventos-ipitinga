@@ -438,7 +438,7 @@
       "get": {
         "tags": ["Admin"],
         "security": [{ "bearerAuth": [] }],
-        "summary": "Listagem de inscri����es com filtros",
+        "summary": "Listagem de inscrições com filtros",
         "parameters": [
           { "name": "eventId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
           { "name": "districtId", "in": "query", "schema": { "type": "string", "format": "uuid" } },
@@ -452,7 +452,7 @@
       "get": {
         "tags": ["Admin"],
         "security": [{ "bearerAuth": [] }],
-        "summary": "Resumo agregado das inscri����es",
+        "summary": "Resumo agregado das inscrições",
         "parameters": [
           { "name": "groupBy", "in": "query", "required": true, "schema": { "type": "string", "enum": ["event", "church"] } },
           { "name": "eventId", "in": "query", "schema": { "type": "string", "format": "uuid" } },

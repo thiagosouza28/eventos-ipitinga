@@ -114,7 +114,7 @@
         </p>
       </div>
       <div
-        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
+        class="mt-6 hidden overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40 md:block"
       >
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead
@@ -162,6 +162,44 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="mt-6 flex flex-col gap-4 md:hidden">
+        <div
+          v-for="district in catalog.districts"
+          :key="district.id"
+          class="rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Nome</p>
+              <p class="text-base font-semibold text-neutral-900 dark:text-white">{{ district.name }}</p>
+            </div>
+            <span class="rounded-full border border-[color:var(--border-card)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-300">
+              Distrito
+            </span>
+          </div>
+          <div class="mt-4 text-xs text-neutral-500 dark:text-neutral-400">
+            <p class="font-semibold text-neutral-800 dark:text-neutral-100">Pastor distrital</p>
+            <p class="mt-1 text-base text-neutral-900 dark:text-white">{{ district.pastorName || "Não informado" }}</p>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold">
+            <button
+              class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+              @click="startDistrictEdit(district)"
+            >
+              Editar
+            </button>
+            <button
+              class="rounded-full border border-red-200 px-4 py-2 text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
+              @click="confirmDeleteDistrict(district)"
+            >
+              Excluir
+            </button>
+          </div>
+        </div>
+        <div v-if="!catalog.districts.length" class="rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+          Nenhum distrito cadastrado até o momento.
+        </div>
       </div>
     </BaseCard>
   </div>

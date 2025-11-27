@@ -1,11 +1,11 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
 import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
-import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
+import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
@@ -20,6 +20,34 @@ const showExpenseForm = ref(false);
 const editingExpense = ref(null);
 const submitting = ref(false);
 const downloadingReport = ref(false);
+const generalMpFees = computed(() => {
+    const totals = generalSummary.value?.totals;
+    if (!totals)
+        return 0;
+    if (typeof totals.feesCents === "number")
+        return totals.feesCents;
+    const pixFees = totals.pix?.feesCents;
+    if (typeof pixFees === "number")
+        return pixFees;
+    if (typeof totals.grossCents === "number" && typeof totals.netCents === "number") {
+        return totals.grossCents - totals.netCents;
+    }
+    return 0;
+});
+const eventMpFees = computed(() => {
+    const totals = eventSummary.value?.totals;
+    if (!totals)
+        return 0;
+    if (typeof totals.feesCents === "number")
+        return totals.feesCents;
+    const pixFees = totals.pix?.feesCents;
+    if (typeof pixFees === "number")
+        return pixFees;
+    if (typeof totals.grossCents === "number" && typeof totals.netCents === "number") {
+        return totals.grossCents - totals.netCents;
+    }
+    return 0;
+});
 const expenseForm = ref({
     description: "",
     date: new Date().toISOString().split("T")[0],
@@ -284,13 +312,16 @@ __VLS_13.slots.default;
 var __VLS_13;
 var __VLS_9;
 if (__VLS_ctx.loading) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex justify-center py-8" },
-    });
-    /** @type {[typeof LoadingSpinner, ]} */ ;
+    /** @type {[typeof TableSkeleton, ]} */ ;
     // @ts-ignore
-    const __VLS_14 = __VLS_asFunctionalComponent(LoadingSpinner, new LoadingSpinner({}));
-    const __VLS_15 = __VLS_14({}, ...__VLS_functionalComponentArgsRest(__VLS_14));
+    const __VLS_14 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+        rows: (3),
+        helperText: "📡 Carregando dados financeiros...",
+    }));
+    const __VLS_15 = __VLS_14({
+        rows: (3),
+        helperText: "📡 Carregando dados financeiros...",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_14));
 }
 if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
@@ -337,7 +368,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency((__VLS_ctx.generalSummary.totals.pix?.feesCents || (__VLS_ctx.generalSummary.totals.grossCents - __VLS_ctx.generalSummary.totals.netCents) || __VLS_ctx.generalSummary.totals.feesCents) || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalMpFees));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -511,7 +542,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({
         ...{ class: "text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency((__VLS_ctx.eventSummary.totals.pix?.feesCents || (__VLS_ctx.eventSummary.totals.grossCents - __VLS_ctx.eventSummary.totals.netCents) || __VLS_ctx.eventSummary.totals.feesCents) || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventMpFees));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
@@ -874,9 +905,6 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-8']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
@@ -1573,7 +1601,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             BaseCard: BaseCard,
             ErrorDialog: ErrorDialog,
             ConfirmDialog: ConfirmDialog,
-            LoadingSpinner: LoadingSpinner,
+            TableSkeleton: TableSkeleton,
             formatCurrency: formatCurrency,
             formatDate: formatDate,
             admin: admin,
@@ -1586,6 +1614,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             editingExpense: editingExpense,
             submitting: submitting,
             downloadingReport: downloadingReport,
+            generalMpFees: generalMpFees,
+            eventMpFees: eventMpFees,
             expenseForm: expenseForm,
             confirmDelete: confirmDelete,
             errorDialog: errorDialog,

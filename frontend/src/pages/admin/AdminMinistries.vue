@@ -124,9 +124,7 @@
           Atualize nomes, descrições e status para manter o painel sempre sincronizado com a realidade das equipes.
         </p>
       </div>
-      <div
-        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40"
-      >
+      <div class="mt-6 hidden overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/40 md:block">
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead
             class="bg-white/60 text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400"
@@ -192,6 +190,48 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      <div class="mt-6 flex flex-col gap-4 md:hidden">
+        <div
+          v-for="ministry in catalog.ministries"
+          :key="ministry.id"
+          class="rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Ministério</p>
+              <p class="text-base font-semibold text-neutral-900 dark:text-white">{{ ministry.name }}</p>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ ministry.description || "Sem descrição" }}</p>
+            </div>
+            <span
+              :class="[
+                'rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide',
+                ministry.isActive
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200'
+                  : 'bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
+              ]"
+            >
+              {{ ministry.isActive ? "Ativo" : "Inativo" }}
+            </span>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-2 text-xs font-semibold">
+            <button
+              class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+              @click="startMinistryEdit(ministry)"
+            >
+              Editar
+            </button>
+            <button
+              class="rounded-full border border-red-200 px-4 py-2 text-red-600 transition hover:bg-red-50 dark:border-red-600 dark:text-red-300 dark:hover:bg-red-900/30"
+              @click="confirmDeleteMinistry(ministry)"
+            >
+              Excluir
+            </button>
+          </div>
+        </div>
+        <div v-if="!catalog.ministries.length" class="rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+          Nenhum ministério cadastrado até o momento.
+        </div>
       </div>
     </BaseCard>
   </div>
@@ -346,3 +386,4 @@ onMounted(async () => {
   }
 });
 </script>
+

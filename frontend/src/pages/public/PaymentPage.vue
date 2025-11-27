@@ -1,4 +1,4 @@
-<template>
+﻿ï»¿<template>
   <div class="space-y-6">
     <BaseCard>
       <div class="space-y-3">
@@ -6,8 +6,8 @@
         <p class="text-neutral-500 dark:text-neutral-400">
           {{
             isFreeEvent
-              ? "Este evento é gratuito. As inscrições foram confirmadas automaticamente e nenhum pagamento é necessário."
-              : "Conclua o pagamento para garantir as inscrições. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente."
+              ? "Este evento Ã© gratuito. As inscriÃ§Ãµes foram confirmadas automaticamente e nenhum pagamento Ã© necessÃ¡rio."
+              : "Conclua o pagamento para garantir as inscriÃ§Ãµes. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente."
           }}
         </p>
       </div>
@@ -42,7 +42,7 @@
               <span>{{ eventStore.event?.title ?? "Carregando..." }}</span>
             </div>
               <div>
-                <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscrição</span>
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscriÃ§Ã£o</span>
                 <span>{{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents) }}</span>
               </div>
               <div>
@@ -114,7 +114,7 @@
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <article
-                  v-for="(receipt, index) in receiptLinks"
+                  v-for="receipt in receiptLinks"
                   :key="receipt.registrationId"
                   class="rounded-2xl border border-white/70 bg-white/90 p-4 text-neutral-700 shadow dark:border-emerald-500/20 dark:bg-emerald-900/40 dark:text-emerald-50"
                 >
@@ -141,7 +141,7 @@
                     :disabled="downloadingReceipts"
                     @click="handleSingleReceiptDownload(receipt.registrationId)"
                   >
-                    <span class="h-4 w-4" aria-hidden="true">↓</span>
+                    <span class="h-4 w-4" aria-hidden="true">ï¿½?"</span>
                     Baixar comprovante
                   </button>
                 </article>
@@ -168,13 +168,13 @@
             <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Pagamento manual</h2>
             <p>
               Forma selecionada: <strong>{{ paymentMethodName }}</strong>.
-              Apresente o comprovante desta inscricão para a tesouraria e realize o pagamento do valor total informado acima.
+              Apresente o comprovante desta inscricÃ£o para a tesouraria e realize o pagamento do valor total informado acima.
             </p>
             <p v-if="manualInstructions" class="text-neutral-500 dark:text-neutral-400">
               {{ manualInstructions }}
             </p>
             <p class="text-xs text-neutral-400 dark:text-neutral-500">
-              Após a confirmação pela tesouraria, este painel será atualizado automaticamente.
+              ApÃ³s a confirmaÃ§Ã£o pela tesouraria, este painel serÃ¡ atualizado automaticamente.
             </p>
             <RouterLink
               :to="{ name: 'event', params: { slug: props.slug } }"
@@ -197,6 +197,12 @@
                   Copiar codigo
                 </button>
               </header>
+              <p
+                v-if="pixWasReactivated"
+                class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200"
+              >
+                Este PIX foi reativado. Use apenas o novo QR Code.
+              </p>
               <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900/80">
                 <img
                   v-if="payment.pixQrData?.qr_code_base64"
@@ -219,14 +225,14 @@
                   :value="payment.pixQrData.qr_code"
                 />
                 <p v-else class="text-sm text-neutral-400">
-                  O QR Code será exibido assim que a preferência de pagamento for criada.
+                  O QR Code serÃ¡ exibido assim que a preferÃªncia de pagamento for criada.
                 </p>
               </div>
             </section>
 
             <section v-if="!isPixPayment && !isManualPayment" class="space-y-3">`n              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.
+                Prefere cartÃ£o? Abra o checkout seguro do Mercado Pago em uma nova aba.
               </p>
               <button
                 v-if="payment.initPoint"
@@ -237,7 +243,7 @@
                 Abrir checkout
               </button>
               <p v-if="!isPaid" class="text-xs text-neutral-400">
-                Assim que o pagamento for aprovado, o status muda automaticamente. Se já pagou, clique abaixo para verificar manualmente.
+                Assim que o pagamento for aprovado, o status muda automaticamente. Se jÃ¡ pagou, clique abaixo para verificar manualmente.
               </p>
               <button
                 v-if="!isPaid"
@@ -254,9 +260,9 @@
         </div>
         <div v-else-if="isFreeEvent" class="flex-1 space-y-6">
           <section class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-300">
-            <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Nenhuma ação necessária</h2>
+            <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Nenhuma aÃ§Ã£o necessÃ¡ria</h2>
             <p class="mt-2">
-              Suas inscrições estão confirmadas. Os recibos serão gerados automaticamente e você poderá consultá-los na área de comprovantes.
+              Suas inscriÃ§Ãµes estÃ£o confirmadas. Os recibos serÃ£o gerados automaticamente e vocÃª poderÃ¡ consultÃ¡-los na Ã¡rea de comprovantes.
             </p>
           </section>
         </div>
@@ -266,13 +272,13 @@
     <BaseCard v-if="isPaid">
       <div class="space-y-3">
         <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-          {{ isFreeEvent ? "Inscrições confirmadas" : "Pagamento confirmado" }}
+          {{ isFreeEvent ? "InscriÃ§Ãµes confirmadas" : "Pagamento confirmado" }}
         </h2>
         <p class="text-sm text-neutral-500 dark:text-neutral-400">
           {{
             isFreeEvent
-              ? "Os recibos estão disponíveis para consulta com o CPF e a data de nascimento dos participantes."
-              : "Os recibos são gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes."
+              ? "Os recibos estÃ£o disponÃ­veis para consulta com o CPF e a data de nascimento dos participantes."
+              : "Os recibos sÃ£o gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes."
           }}
         </p>
         <RouterLink
@@ -287,7 +293,7 @@
     <BaseCard v-if="payment">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div class="space-y-1">
-          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscrição</h2>
+          <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscriÃ§Ã£o</h2>
           <p class="text-sm text-neutral-500 dark:text-neutral-400">
             Limpamos os dados anteriores deste dispositivo. Clique abaixo para iniciar um novo preenchimento.
           </p>
@@ -297,7 +303,7 @@
           class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500"
           @click="handleStartNewRegistration"
         >
-          Nova inscrição
+          Nova inscriÃ§Ã£o
         </button>
       </div>
     </BaseCard>
@@ -345,6 +351,7 @@ type PaymentResponse = {
   paidAt?: string | null;
   isManual?: boolean;
   receipts?: PaymentReceiptLink[];
+  pixReactivated?: boolean;
 };
 
 const props = defineProps<{ slug: string; orderId: string }>();
@@ -477,9 +484,9 @@ const manualInstructions = computed(() => {
     case "CASH":
       return "Dirija-se ao caixa indicado e informe o CPF utilizado na inscricao para concluir o pagamento.";
     case "CARD_FULL":
-      return "O pagamento será efetuado presencialmente via máquina de cartão. Lembre-se de levar um documento com foto.";
+      return "O pagamento serÃ¡ efetuado presencialmente via mÃ¡quina de cartÃ£o. Lembre-se de levar um documento com foto.";
     case "CARD_INSTALLMENTS":
-      return "O parcelamento é realizado presencialmente e as taxas são repassadas ao participante.";
+      return "O parcelamento Ã© realizado presencialmente e as taxas sÃ£o repassadas ao participante.";
     default:
       return "";
   }
@@ -555,8 +562,8 @@ const downloadReceipts = async (mode: "auto" | "manual" = "manual") => {
     console.error("Erro ao baixar comprovantes", error);
     receiptDownloadError.value =
       mode === "auto"
-        ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botão abaixo para tentar novamente."
-        : "Não foi possível baixar os comprovantes. Tente novamente.";
+        ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botÃ£o abaixo para tentar novamente."
+        : "NÃ£o foi possÃ­vel baixar os comprovantes. Tente novamente.";
     return false;
   } finally {
     downloadingReceipts.value = false;
@@ -578,7 +585,7 @@ const handleSingleReceiptDownload = async (registrationId: string) => {
   if (!hasReceiptLinks.value || downloadingReceipts.value) return;
   const index = receiptLinks.value.findIndex((receipt) => receipt.registrationId === registrationId);
   if (index < 0) {
-    receiptDownloadError.value = "Não encontramos este comprovante. Atualize a página e tente novamente.";
+    receiptDownloadError.value = "NÃ£o encontramos este comprovante. Atualize a pÃ¡gina e tente novamente.";
     return;
   }
   downloadingReceipts.value = true;
@@ -587,35 +594,35 @@ const handleSingleReceiptDownload = async (registrationId: string) => {
     await downloadSingleReceipt(receiptLinks.value[index], index);
   } catch (error) {
     console.error("Erro ao baixar comprovante individual", error);
-    receiptDownloadError.value = "Não foi possível baixar este comprovante. Tente novamente.";
+    receiptDownloadError.value = "NÃ£o foi possÃ­vel baixar este comprovante. Tente novamente.";
   } finally {
     downloadingReceipts.value = false;
   }
 };
 
 const statusTitle = computed(() => {
-  if (isFreeEvent.value) return "Inscrições confirmadas";
+  if (isFreeEvent.value) return "InscriÃ§Ãµes confirmadas";
   if (isManualPayment.value) {
     if (isPaid.value) return "Pagamento registrado";
-    return "Pagamento pendente de confirmação";
+    return "Pagamento pendente de confirmaÃ§Ã£o";
   }
   if (isPaid.value) return "Pagamento aprovado";
   if (payment.value?.status === "CANCELED") return "Pagamento cancelado";
-  return "Aguardando confirmação";
+  return "Aguardando confirmaÃ§Ã£o";
 });
 
 const statusMessage = computed(() => {
   if (isFreeEvent.value) {
-    return "Este evento é gratuito. Suas inscrições foram confirmadas automaticamente, sem necessidade de pagamento.";
+    return "Este evento Ã© gratuito. Suas inscriÃ§Ãµes foram confirmadas automaticamente, sem necessidade de pagamento.";
   }
   if (isManualPayment.value) {
     if (isPaid.value) {
-      return "Pagamento registrado pela tesouraria. As inscrições estão confirmadas.";
+      return "Pagamento registrado pela tesouraria. As inscriÃ§Ãµes estÃ£o confirmadas.";
     }
     return "Apresente este comprovante na tesouraria para concluir o pagamento. Assim que o recebimento for registrado, atualizaremos automaticamente.";
   }
   if (isPaid.value) {
-    return "Tudo certo! As inscrições foram confirmadas e os recibos serão disponibilizados em instantes.";
+    return "Tudo certo! As inscriÃ§Ãµes foram confirmadas e os recibos serÃ£o disponibilizados em instantes.";
   }
   if (payment.value?.status === "CANCELED") {
     return "O pagamento foi cancelado pelo Mercado Pago. Gere um novo checkout para tentar novamente.";
@@ -624,6 +631,7 @@ const statusMessage = computed(() => {
 });
 
 const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
+const pixWasReactivated = computed(() => Boolean(payment.value?.pixReactivated));
 
 const statusIcon = computed(() => {
   if (isFreeEvent.value || isPaid.value) return "OK";
@@ -691,16 +699,16 @@ const copyPixCode = async () => {
   alert("Codigo Pix copiado!");
 };
 
-// Função para abrir checkout - garante que apenas este pedido seja processado
+// FunÃ§Ã£o para abrir checkout - garante que apenas este pedido seja processado
 const handleOpenCheckout = () => {
-  // Garantir que temos o initPoint para APENAS este pedido específico
+  // Garantir que temos o initPoint para APENAS este pedido especÃ­fico
   if (!payment.value?.initPoint) {
-    console.error("initPoint não disponível para o pedido", props.orderId);
+    console.error("initPoint nÃ£o disponÃ­vel para o pedido", props.orderId);
     return;
   }
   
   // Usar APENAS o initPoint do pagamento atual, que foi gerado para props.orderId
-  // Não usar nenhum estado compartilhado ou seleção de outros pedidos
+  // NÃ£o usar nenhum estado compartilhado ou seleÃ§Ã£o de outros pedidos
   const singleOrderInitPoint = payment.value.initPoint;
   
   // Abrir em nova aba o checkout para APENAS este pedido
@@ -713,7 +721,7 @@ const startPolling = () => {
     await loadPayment();
     if (isPaid.value || payment.value?.status === "CANCELED") {
       stopPolling();
-      // Se foi pago, recarregar a página após 2 segundos para mostrar confirmação
+      // Se foi pago, recarregar a pÃ¡gina apÃ³s 2 segundos para mostrar confirmaÃ§Ã£o
       if (isPaid.value) {
         setTimeout(() => {
           window.location.reload();
@@ -761,4 +769,6 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
+
+
 

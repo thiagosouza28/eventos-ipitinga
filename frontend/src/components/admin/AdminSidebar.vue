@@ -4,7 +4,7 @@
     :style="{ width: isOpen ? '200px' : '80px' }"
   >
     <aside
-      class="sticky top-0 flex h-screen flex-col rounded-r-[36px] rounded-l-[32px] bg-gradient-to-b from-[#f7f8ff] via-[#f0f4ff] to-[#e9efff] px-4 py-6 text-sm text-[#69708f] shadow-[0_20px_60px_rgba(106,120,255,0.18)] transition-all duration-300 dark:from-[#0f1427] dark:via-[#0b1121] dark:to-[#060915]"
+      class="sticky top-0 flex h-screen flex-col rounded-r-[36px] rounded-l-[32px] bg-[color:var(--app-shell-bg)] px-4 py-6 text-sm text-[color:var(--text-muted)] shadow-[0_20px_60px_rgba(15,23,42,0.15)] transition-all duration-300 dark:bg-[color:var(--surface-card)]"
     >
       <button
         type="button"
@@ -44,9 +44,10 @@
 
   <transition name="sidebar-overlay">
     <div v-if="isOpen" class="fixed inset-0 z-40 flex md:hidden">
-      <div class="absolute inset-0 bg-black/40" @click="$emit('toggle')" />
-      <aside class="relative ml-0 flex h-full w-64 flex-col rounded-r-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] px-4 py-6 shadow-2xl">
-        <div class="flex items-center justify-between">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="$emit('toggle')" />
+      <transition name="sidebar-drawer">
+        <aside class="relative ml-0 flex h-full w-72 flex-col rounded-r-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] px-5 py-6 shadow-2xl">
+          <div class="flex items-center justify-between">
           <p class="text-sm font-semibold text-[color:var(--text)]">Menu</p>
           <button
             type="button"
@@ -57,20 +58,21 @@
             <span class="sr-only">Fechar menu</span>
           </button>
         </div>
-        <nav class="mt-6 flex flex-col space-y-4 overflow-y-auto">
-          <RouterLink
-            v-for="item in menuItems"
-            :key="`mobile-${item.label}`"
-            :to="item.to"
-            class="flex items-center rounded-2xl px-3 py-2 text-base font-medium transition hover:bg-[color:var(--surface-card-alt)]"
-            :class="[isActive(item.to) ? 'text-[color:var(--primary)]' : 'text-[color:var(--text-muted)]']"
-            @click="$emit('toggle')"
-          >
-            <component :is="item.icon" class="h-5 w-5 text-[color:var(--text-muted)]" />
-            <span class="ml-3">{{ item.label }}</span>
-          </RouterLink>
-        </nav>
-      </aside>
+          <nav class="mt-6 flex flex-1 flex-col space-y-3 overflow-y-auto pr-1">
+            <RouterLink
+              v-for="item in menuItems"
+              :key="`mobile-${item.label}`"
+              :to="item.to"
+              class="flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold transition hover:bg-[color:var(--surface-card-alt)]"
+              :class="[isActive(item.to) ? 'text-[color:var(--primary)]' : 'text-[color:var(--text-muted)]']"
+              @click="$emit('toggle')"
+            >
+              <component :is="item.icon" class="h-5 w-5 text-[color:var(--text-muted)]" />
+              <span>{{ item.label }}</span>
+            </RouterLink>
+          </nav>
+        </aside>
+      </transition>
     </div>
   </transition>
 </template>
@@ -126,5 +128,14 @@ const isActive = (to: RouteLocationRaw) => isRouteActive(to);
 .sidebar-overlay-enter-from,
 .sidebar-overlay-leave-to {
   opacity: 0;
+}
+.sidebar-drawer-enter-active,
+.sidebar-drawer-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.sidebar-drawer-enter-from,
+.sidebar-drawer-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
 }
 </style>

@@ -61,7 +61,8 @@ import {
   updateRegistrationHandler,
   markRegistrationsPaidHandler,
   regenerateRegistrationPaymentLinkHandler,
-  getRegistrationHistoryHandler
+  getRegistrationHistoryHandler,
+  getRegistrationReceiptLinkHandler
 } from "../controllers/registration.controller";
 import {
   downloadReceiptHandler,
@@ -304,6 +305,11 @@ router.get(
   "/admin/registrations/:id/history",
   authorizePermission("registrations", "view"),
   getRegistrationHistoryHandler
+);
+router.get(
+  "/admin/registrations/:id/receipt-link",
+  authorizePermission("registrations", "view"),
+  getRegistrationReceiptLinkHandler
 );
 
 router.get("/admin/checkin/:eventId", authorizePermission("checkin", "view"), getCheckinDashboardHandler);

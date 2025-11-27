@@ -20,11 +20,11 @@ export const useEventStore = defineStore("event", () => {
     };
     const checkPendingOrder = async (buyerCpf) => {
         if (!event.value) {
-            throw new Error("Evento nǜo carregado");
+            throw new Error("Evento não carregado");
         }
         const sanitizedCpf = (buyerCpf ?? "").toString().replace(/\D/g, "");
         if (!sanitizedCpf) {
-            throw new Error("CPF Ǹ obrigat��rio");
+            throw new Error("CPF é obrigatório");
         }
         const response = await api.post("/inscriptions/start", {
             eventId: event.value.id,
@@ -47,7 +47,7 @@ export const useEventStore = defineStore("event", () => {
     };
     const createBatchOrder = async (buyerCpf, paymentMethod, people) => {
         if (!event.value)
-            throw new Error("Evento nao carregado");
+            throw new Error("Evento não carregado");
         const response = await api.post("/inscriptions/batch", {
             eventId: event.value.id,
             buyerCpf,

@@ -124,124 +124,13 @@
       </form>
     </BaseCard>
 
-    <!-- Relatório em PDF -->
-    <BaseCard
-      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
-    >
-      <div class="space-y-5">
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
-              Tipo de relatório
-            </label>
-            <select
-              v-model="reportType"
-              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-            >
-              <option value="event">Por evento</option>
-              <option value="church">Por igreja</option>
-            </select>
-          </div>
-          <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
-              Modelo
-            </label>
-            <select
-              v-model="reportTemplate"
-              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-            >
-              <option value="standard">Gerencial (detalhado)</option>
-              <option value="event">Para evento (assinatura)</option>
-            </select>
-          </div>
-          <div v-if="reportTemplate === 'event'" class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
-              Densidade
-            </label>
-            <select
-              v-model="reportLayout"
-              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-            >
-              <option value="single">1 por página</option>
-              <option value="two">2 por página</option>
-              <option value="four">4 por página</option>
-            </select>
-          </div>
-          <div v-if="reportType === 'event'" class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
-              Evento
-            </label>
-            <select
-              v-model="reportFilters.eventId"
-              class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-            >
-              <option disabled value="">Selecione</option>
-              <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
-            </select>
-          </div>
-          <template v-else>
-            <div class="space-y-2">
-              <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
-                Distrito
-              </label>
-              <select
-                v-model="reportFilters.districtId"
-                class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-              >
-                <option disabled value="">Selecione</option>
-                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
-                  {{ district.name }}
-                </option>
-              </select>
-            </div>
-            <div class="space-y-2">
-              <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
-                Igreja
-              </label>
-              <select
-                v-model="reportFilters.churchId"
-                :disabled="!reportFilters.districtId"
-                class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-              >
-                <option :value="''">{{ reportFilters.districtId ? "Selecione" : "Selecione o distrito" }}</option>
-                <option
-                  v-for="church in churchesByDistrict(reportFilters.districtId)"
-                  :key="church.id"
-                  :value="church.id"
-                >
-                  {{ church.name }}
-                </option>
-              </select>
-            </div>
-          </template>
-        </div>
-        <div class="flex flex-col justify-end gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p class="text-xs text-neutral-500 dark:text-neutral-400">
-            Gere rapidamente relatórios gerenciais ou listas de assinatura para os eventos.
-          </p>
-          <button
-            @click="downloadReportPdf"
-            :disabled="!canDownloadReport || reportDownloadState.loading || !registrationPermissions.canReports"
-            type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:translate-y-0.5 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
-          >
-            <span
-              v-if="reportDownloadState.loading"
-              class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
-            />
-            <span>{{ reportDownloadState.loading ? "Gerando..." : "Baixar PDF" }}</span>
-          </button>
-        </div>
-      </div>
-    </BaseCard>
-
     <!-- Lista de inscrições -->
     <BaseCard
       class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
     >
       <TableSkeleton
         v-if="isApplying && admin.registrations.length === 0"
-        helperText="🔄 Buscando inscrições..."
+        helperText="?? Buscando inscrições..."
       />
       <div v-else-if="displayedRegistrations.length === 0" class="p-6 text-sm text-neutral-500 dark:text-neutral-400">
         Nenhuma inscrição encontrada.
@@ -343,6 +232,17 @@
                     Link pagamento
                   </button>
                   <button
+                    v-if="canEmitReceipt(registration)"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="downloadReceipt(registration)"
+                  >
+                    <span
+                      v-if="receiptDownloadState.downloadingId === registration.id"
+                      class="mr-1 inline-block h-3 w-3 animate-spin rounded-full border border-current border-b-transparent"
+                    />
+                    Comprovante
+                  </button>
+                  <button
                     v-if="
                       registration.paymentMethod === 'CASH' &&
                       registration.status === 'PENDING_PAYMENT' &&
@@ -394,19 +294,19 @@
       </div>
     </BaseCard>
 
-    <!-- Modal de adi��o -->
+    <!-- Modal de adição -->
     <div v-if="addDialog.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <div class="w-full max-w-4xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900">
-        <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscri��o</h3>
+        <h3 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Nova inscrição</h3>
         <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Informe os dados do respons�vel e do participante para gerar a inscri��o.
+          Informe os dados do responsável e do participante para gerar a inscrição.
         </p>
         <form @submit.prevent="saveNewRegistration" class="mt-4 grid gap-4 md:grid-cols-2">
           <div class="md:col-span-2">
-            <p class="text-xs font-semibold uppercase text-neutral-500">Respons�vel</p>
+            <p class="text-xs font-semibold uppercase text-neutral-500">responsável</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF do respons�vel</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF do responsável</label>
             <input
               :value="addForm.responsibleCpf"
               @input="onResponsibleCpfInput"
@@ -426,7 +326,7 @@
             </p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Telefone do respons�vel</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Telefone do responsável</label>
             <input
               :value="addForm.responsiblePhone"
               @input="onResponsiblePhoneInput"
@@ -463,7 +363,7 @@
             v-if="addDialog.paymentMethod === 'PIX_MP'"
             class="md:col-span-2 rounded-md bg-primary-50 px-3 py-2 text-xs text-primary-700 dark:bg-primary-500/10 dark:text-primary-200"
           >
-            Ser� gerado um link de pagamento PIX ap�s salvar. O link ser� aberto e copiado automaticamente.
+            Será gerado um link de pagamento PIX após salvar. O link Será aberto e copiado automaticamente.
           </div>
           <div class="md:col-span-2 mt-4">
             <p class="text-xs font-semibold uppercase text-neutral-500">Participante</p>
@@ -490,7 +390,7 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">G�nero</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Gênero</label>
             <select v-model="addForm.gender" required class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
               <option value="" disabled>Selecione</option>
               <option v-for="option in genderOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
@@ -520,7 +420,7 @@
                 @change="handleAddPhotoChange"
               />
               <div class="flex items-center gap-2">
-                <img :src="addPhotoPreview || DEFAULT_PHOTO_DATA_URL" alt="Pr�-visualiza��o" class="h-20 w-20 rounded-lg object-cover" />
+                <img :src="addPhotoPreview || DEFAULT_PHOTO_DATA_URL" alt="Pré-visualização" class="h-20 w-20 rounded-lg object-cover" />
                 <button
                   v-if="addPhotoPreview"
                   type="button"
@@ -534,10 +434,10 @@
           </div>
           <div class="md:col-span-2 flex flex-col gap-2 text-xs text-neutral-500 dark:text-neutral-400">
             <span v-if="responsibleLookup.status === 'success'">
-              Igreja identificada automaticamente pelo CPF do respons�vel. Ajuste se necess�rio.
+              Igreja identificada automaticamente pelo CPF do responsável. Ajuste se necessário.
             </span>
             <span v-else>
-              Informe o CPF do respons�vel da igreja selecionada para valida��o.
+              Informe o CPF do responsável da igreja selecionada para validação.
             </span>
           </div>
           <div class="md:col-span-2 flex justify-end gap-3">
@@ -545,7 +445,7 @@
               Cancelar
             </button>
             <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">
-              Salvar inscri��o
+              Salvar inscrição
             </button>
           </div>
         </form>
@@ -652,17 +552,6 @@
         </div>
       </div>
     </div>
-    <div
-      v-if="reportDownloadState.loading"
-      class="fixed inset-0 z-[50] flex items-center justify-center bg-black/50"
-    >
-      <div class="rounded-lg bg-white px-6 py-4 text-sm shadow dark:bg-neutral-900">
-        <div class="flex items-center gap-3 text-neutral-700 dark:text-neutral-100">
-          <svg class="h-5 w-5 animate-spin text-neutral-900 dark:text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
-          <span>Gerando relatório em PDF...</span>
-        </div>
-      </div>
-    </div>
   </div>
   <AccessDeniedNotice v-else module="registrations" action="view" />
 </template>
@@ -678,7 +567,6 @@ import AccessDeniedNotice from '../../components/admin/AccessDeniedNotice.vue'
 import TableSkeleton from '../../components/ui/TableSkeleton.vue'
 import { useAdminStore } from '../../stores/admin'
 import { useCatalogStore } from '../../stores/catalog'
-import { useAuthStore } from '../../stores/auth'
 import type { Church, Registration } from '../../types/api'
 import { formatCurrency } from '../../utils/format'
 import ConfirmDialog from '../../components/ui/ConfirmDialog.vue'
@@ -689,7 +577,6 @@ import { useModulePermissions } from '../../composables/usePermissions'
 
 const admin = useAdminStore()
 const catalog = useCatalogStore()
-const auth = useAuthStore()
 const registrationPermissions = useModulePermissions('registrations')
 
 const filters = reactive({
@@ -792,70 +679,6 @@ watch(() => filters.eventId, () => { if (filtersReady.value) scheduleApply() })
 watch(() => filters.churchId, () => { if (filtersReady.value) scheduleApply() })
 watch(() => filters.status, () => { if (filtersReady.value) scheduleApply() })
 
-// Relatório PDF
-const reportType = ref<'event' | 'church'>('event')
-const reportTemplate = ref<'standard' | 'event'>('standard')
-const reportLayout = ref<'single' | 'two' | 'four'>('single')
-const reportFilters = reactive({ eventId: '', districtId: '', churchId: '' })
-const reportDownloadState = reactive({ loading: false })
-const canDownloadReport = computed(() => {
-  if (reportType.value === 'event') return !!reportFilters.eventId
-  return !!reportFilters.districtId && !!reportFilters.churchId
-})
-watch(reportType, () => {
-  reportFilters.eventId = '';
-  reportFilters.districtId = '';
-  reportFilters.churchId = '';
-})
-watch(() => reportFilters.districtId, async (value) => {
-  try { await catalog.loadChurches(value || undefined) } catch (e) { /* noop */ }
-  if (reportFilters.churchId && !catalog.churches.some(c => c.id === reportFilters.churchId)) reportFilters.churchId = ''
-})
-const downloadReportPdf = async () => {
-  if (reportDownloadState.loading) return
-  if (!registrationPermissions.canReports.value) {
-    showError('Acesso negado', new Error('Você não possui permissão para gerar relatórios de inscrições.'))
-    return
-  }
-  const currentType = reportType.value
-  if (currentType === 'event') {
-    if (!reportFilters.eventId) {
-      showError('Selecione o evento', new Error('Evento obrigatório'))
-      return
-    }
-  } else if (!reportFilters.districtId || !reportFilters.churchId) {
-    showError('Selecione distrito e igreja', new Error('Campos obrigatórios'))
-    return
-  }
-
-  reportDownloadState.loading = true
-  try {
-    const params: Record<string, string> = {}
-    if (currentType === 'event') {
-      params.eventId = reportFilters.eventId
-    } else {
-      params.districtId = reportFilters.districtId
-      params.churchId = reportFilters.churchId
-    }
-    const payloadParams =
-      reportTemplate.value === 'event' ? { ...params, layout: reportLayout.value } : params
-    const resp = await admin.downloadRegistrationReport(payloadParams, currentType, reportTemplate.value)
-    const blob = new Blob([resp.data], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `relatorio-inscrições-${currentType}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  } catch (e) {
-    showError('Falha ao gerar relatório', e)
-  } finally {
-    reportDownloadState.loading = false
-  }
-}
-
 onMounted(async () => {
   try {
     await Promise.all([admin.loadEvents(), catalog.loadDistricts(), catalog.loadChurches()])
@@ -913,7 +736,7 @@ const formatDateInputValue = (value: string | Date | null | undefined) => {
 }
 function formatBirthDate(value: string | Date | null | undefined) {
   const parts = parseDateParts(value)
-  if (!parts) return 'N?o informado'
+  if (!parts) return 'Não informado'
   return formatDateDisplay(parts)
 }
 
@@ -992,9 +815,10 @@ const addForm = reactive({
   photoUrl: null as string | null
 })
 const addPhotoPreview = ref<string | null>(null)
+const defaultResponsibleMessage = 'Informe o CPF do responsável para validar a igreja.'
 const responsibleLookup = reactive<{ status: 'idle' | 'success' | 'error'; message: string }>({
   status: 'idle',
-  message: ''
+  message: defaultResponsibleMessage
 })
 
 const resetAddForm = (paymentMethod: 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR' = 'PIX_MP') => {
@@ -1011,7 +835,7 @@ const resetAddForm = (paymentMethod: 'PIX_MP' | 'CASH' | 'FREE_PREVIOUS_YEAR' = 
   addForm.photoUrl = null
   addPhotoPreview.value = null
   responsibleLookup.status = 'idle'
-  responsibleLookup.message = ''
+  responsibleLookup.message = defaultResponsibleMessage
 }
 
 const openAddDialog = () => {
@@ -1046,7 +870,7 @@ const onResponsibleCpfInput = (e: Event) => {
   const el = e.target as HTMLInputElement
   addForm.responsibleCpf = formatCpfInputValue(el.value)
   responsibleLookup.status = 'idle'
-  responsibleLookup.message = ''
+  responsibleLookup.message = defaultResponsibleMessage
 }
 
 const formatPhoneInputValue = (value: string) => {
@@ -1132,15 +956,15 @@ const saveNewRegistration = async () => {
     return
   }
   try {
-    if (!addForm.eventId) { showError('Evento obrigat�rio', new Error('Selecione o evento')); return }
-    if (!addForm.fullName || addForm.fullName.trim().length < 3) { showError('Nome inv�lido', new Error('Informe o nome completo')); return }
-    if (!addForm.birthDate) { showError('Nascimento inv�lido', new Error('Informe a data')); return }
-    if (!addForm.gender) { showError('Dados incompletos', new Error('Selecione o g�nero do participante')); return }
-    if (!validateCPF(addForm.cpf)) { showError('CPF inv�lido', new Error('Informe um CPF v�lido para o participante')); return }
-    if (!validateCPF(addForm.responsibleCpf)) { showError('CPF do respons�vel inv�lido', new Error('Informe um CPF v�lido do respons�vel')); return }
-    if (!addForm.districtId || !addForm.churchId) { showError('Local inv�lido', new Error('Selecione distrito e igreja')); return }
+    if (!addForm.eventId) { showError('Evento obrigatório', new Error('Selecione o evento')); return }
+    if (!addForm.fullName || addForm.fullName.trim().length < 3) { showError('Nome inválido', new Error('Informe o nome completo')); return }
+    if (!addForm.birthDate) { showError('Nascimento inválido', new Error('Informe a data')); return }
+    if (!addForm.gender) { showError('Dados incompletos', new Error('Selecione o gênero do participante')); return }
+    if (!validateCPF(addForm.cpf)) { showError('CPF inválido', new Error('Informe um CPF válido para o participante')); return }
+    if (!validateCPF(addForm.responsibleCpf)) { showError('CPF do responsável inválido', new Error('Informe um CPF válido do responsável')); return }
+    if (!addForm.districtId || !addForm.churchId) { showError('Local inválido', new Error('Selecione distrito e igreja')); return }
     const phoneDigits = addForm.responsiblePhone.replace(/\\D/g, '')
-    if (phoneDigits.length < 10) { showError('Telefone inv�lido', new Error('Informe o telefone do respons�vel')); return }
+    if (phoneDigits.length < 10) { showError('Telefone inválido', new Error('Informe o telefone do responsável')); return }
 
     const result = await admin.createAdminRegistration({
       eventId: addForm.eventId,
@@ -1168,7 +992,7 @@ const saveNewRegistration = async () => {
     closeAdd()
     scheduleApply(true)
   } catch (error) {
-    showError('Falha ao criar inscri��o', error)
+    showError('Falha ao criar inscrição', error)
   }
 }
 
@@ -1191,17 +1015,6 @@ const paymentMethodShort = (method?: string | null) => {
   return paymentMethodLabel(method)
 }
 
-// Confirmar pagamento em dinheiro para inscrições já criadas
-const confirmCash = async (registration: Registration) => {
-  try {
-    if (!registration.orderId) { showError('Não foi possível confirmar pagamento', new Error('Inscrição sem pedido associado.')); return }
-    await admin.confirmOrderPayment(registration.orderId, { manualReference: 'CASH-ADMIN', paidAt: new Date().toISOString() })
-  } catch (e) {
-    showError('Falha ao confirmar pagamento', e)
-  }
-}
-
-const selected = ref<Registration | null>(null)
 const editDialog = reactive({ open: false, original: null as Registration | null })
 const editForm = reactive({ fullName: '', birthDate: '', cpf: '', districtId: '', churchId: '', photoUrl: '' as string | null | '' })
 const historyLoading = ref(false)
@@ -1311,7 +1124,7 @@ const saveRegistration = async () => {
     if (editForm.photoUrl !== undefined && editForm.photoUrl !== (original.photoUrl || '')) payload.photoUrl = editForm.photoUrl || null
     await admin.updateRegistration(original.id, payload)
     closeEdit()
-  } catch (e) { showError('Falha ao atualizar inscricao', e) }
+  } catch (e) { showError('Falha ao atualizar inscrição', e) }
 }
 
 const isPaymentLinkVisible = (registration: Registration) =>
@@ -1366,11 +1179,11 @@ const openConfirm = (action: ConfirmAction, registration: Registration) => {
   confirmState.registration = registration
   confirmState.open = true
   confirmState.cancelLabel = 'Voltar'
-  if (action === 'cancel') { confirmState.title = 'Cancelar inscricao'; confirmState.description = 'Cancelar a inscricao de ' + registration.fullName + '? Esta acao não pode ser desfeita.'; confirmState.confirmLabel = 'Cancelar'; confirmState.type = 'danger' }
-  else if (action === 'refund') { confirmState.title = 'Estornar inscricao'; confirmState.description = 'Confirmar estorno da inscricao de ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar estorno'; confirmState.type = 'default' }
+  if (action === 'cancel') { confirmState.title = 'Cancelar inscrição'; confirmState.description = 'Cancelar a inscrição de ' + registration.fullName + '? Esta ação não pode ser desfeita.'; confirmState.confirmLabel = 'Cancelar'; confirmState.type = 'danger' }
+  else if (action === 'refund') { confirmState.title = 'Estornar inscrição'; confirmState.description = 'Confirmar estorno da inscrição de ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar estorno'; confirmState.type = 'default' }
   else if (action === 'confirm-cash') { confirmState.title = 'Confirmar pagamento em dinheiro'; confirmState.description = 'Confirmar recebimento manual em dinheiro para ' + registration.fullName + '?'; confirmState.confirmLabel = 'Confirmar pagamento'; confirmState.type = 'default' }
-  else if (action === 'reactivate') { confirmState.title = 'Reativar inscricao'; confirmState.description = 'Reativar a inscricao de ' + registration.fullName + ' e gerar um novo link de pagamento?'; confirmState.confirmLabel = 'Reativar'; confirmState.type = 'default' }
-  else { confirmState.title = 'Excluir inscricao'; confirmState.description = 'Excluir a inscricao de ' + registration.fullName + '? O registro sera removido permanentemente.'; confirmState.confirmLabel = 'Excluir'; confirmState.type = 'danger' }
+  else if (action === 'reactivate') { confirmState.title = 'Reativar inscrição'; confirmState.description = 'Reativar a inscrição de ' + registration.fullName + ' e gerar um novo link de pagamento?'; confirmState.confirmLabel = 'Reativar'; confirmState.type = 'default' }
+  else { confirmState.title = 'Excluir inscrição'; confirmState.description = 'Excluir a inscrição de ' + registration.fullName + '? O registro será removido permanentemente.'; confirmState.confirmLabel = 'Excluir'; confirmState.type = 'danger' }
 }
 
 const processing = reactive({ open: false, message: 'Processando pagamento...' })
@@ -1422,16 +1235,45 @@ const executeConfirmAction = async () => {
     }
   } catch (e) {
     const titles: Record<ConfirmAction,string> = {
-      cancel: 'Falha ao cancelar inscricao',
-      refund: 'Falha ao estornar inscricao',
-      delete: 'Falha ao excluir inscricao',
+      cancel: 'Falha ao cancelar inscrição',
+      refund: 'Falha ao estornar inscrição',
+      delete: 'Falha ao excluir inscrição',
       'confirm-cash': 'Falha ao confirmar pagamento',
-      reactivate: 'Falha ao reativar inscricao'
+      reactivate: 'Falha ao reativar inscrição'
     }
     if (action === 'confirm-cash') { showError('Falha ao confirmar pagamento', e); return }
     showError(titles[action], e)
   }
 }
+
+const receiptDownloadState = reactive({ downloadingId: '' })
+const receivableStatuses = new Set<Registration['status']>(['PAID', 'CHECKED_IN', 'REFUNDED'])
+const canEmitReceipt = (registration: Registration) =>
+  receivableStatuses.has(registration.status) && registrationPermissions.canReports.value
+
+const downloadReceipt = async (registration: Registration) => {
+  if (!canEmitReceipt(registration)) return
+  receiptDownloadState.downloadingId = registration.id
+  try {
+    const response = await admin.getRegistrationReceiptLink(registration.id)
+    const url = response?.url
+    if (!url) {
+      showError('Comprovante indisponível', new Error('Não foi possível gerar o link do comprovante.'))
+      return
+    }
+    window.open(url, '_blank')
+  } catch (error) {
+    showError('Falha ao gerar comprovante', error)
+  } finally {
+    receiptDownloadState.downloadingId = ''
+  }
+}
 </script>
+
+
+
+
+
+
 
 

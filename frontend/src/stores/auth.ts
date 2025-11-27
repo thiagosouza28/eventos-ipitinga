@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+﻿import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import axios from "axios";
 
@@ -77,7 +77,7 @@ export const useAuthStore = defineStore("auth", () => {
 
   const withLoader = async <T>(action: () => Promise<T>) => {
     const loader = useLoaderStore();
-    loader.show({ text: "🔐 Processando autenticação..." });
+    loader.show("Processando autenticacao...");
     try {
       return await action();
     } finally {
@@ -122,9 +122,6 @@ export const useAuthStore = defineStore("auth", () => {
   loadFromStorage();
 
   const role = computed<Role | null>(() => user.value?.role ?? null);
-  const permissionMap = computed<Record<string, PermissionState>>(
-    () => user.value?.permissions ?? {}
-  );
 
   const hasPermission = (module: string, action: PermissionAction = "view") => {
     if (!user.value) {
@@ -166,4 +163,6 @@ export const useAuthStore = defineStore("auth", () => {
     signOut
   };
 });
+
+
 

@@ -17,7 +17,11 @@ const payment = ref(null);
 const loadingStatus = ref(false);
 const pollHandle = ref(null);
 const PAID_STATUSES = new Set(["PAID", "APPROVED"]);
-const isPaidStatus = (status) => (status ? PAID_STATUSES.has(status) : false);
+const isPaidStatus = (status) => {
+    if (!status)
+        return false;
+    return PAID_STATUSES.has(status.toUpperCase());
+};
 const receiptDownloadStorageKey = `order:${props.orderId}:receipts-downloaded`;
 const readStoredReceiptState = () => {
     if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") {
@@ -113,9 +117,9 @@ const manualInstructions = computed(() => {
         case "CASH":
             return "Dirija-se ao caixa indicado e informe o CPF utilizado na inscricao para concluir o pagamento.";
         case "CARD_FULL":
-            return "O pagamento será efetuado presencialmente via máquina de cartão. Lembre-se de levar um documento com foto.";
+            return "O pagamento serÃ¡ efetuado presencialmente via mÃ¡quina de cartÃ£o. Lembre-se de levar um documento com foto.";
         case "CARD_INSTALLMENTS":
-            return "O parcelamento e realizado presencialmente e as taxas sao repassadas ao participante.";
+            return "O parcelamento Ã© realizado presencialmente e as taxas sÃ£o repassadas ao participante.";
         default:
             return "";
     }
@@ -190,8 +194,8 @@ const downloadReceipts = async (mode = "manual") => {
         console.error("Erro ao baixar comprovantes", error);
         receiptDownloadError.value =
             mode === "auto"
-                ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botao abaixo para tentar novamente."
-                : "Nao foi possivel baixar os comprovantes. Tente novamente.";
+                ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botÃ£o abaixo para tentar novamente."
+                : "NÃ£o foi possÃ­vel baixar os comprovantes. Tente novamente.";
         return false;
     }
     finally {
@@ -214,7 +218,7 @@ const handleSingleReceiptDownload = async (registrationId) => {
         return;
     const index = receiptLinks.value.findIndex((receipt) => receipt.registrationId === registrationId);
     if (index < 0) {
-        receiptDownloadError.value = "Nao encontramos este comprovante. Atualize a pagina e tente novamente.";
+        receiptDownloadError.value = "NÃ£o encontramos este comprovante. Atualize a pÃ¡gina e tente novamente.";
         return;
     }
     downloadingReceipts.value = true;
@@ -224,7 +228,7 @@ const handleSingleReceiptDownload = async (registrationId) => {
     }
     catch (error) {
         console.error("Erro ao baixar comprovante individual", error);
-        receiptDownloadError.value = "Nao foi possivel baixar este comprovante. Tente novamente.";
+        receiptDownloadError.value = "NÃ£o foi possÃ­vel baixar este comprovante. Tente novamente.";
     }
     finally {
         downloadingReceipts.value = false;
@@ -232,30 +236,30 @@ const handleSingleReceiptDownload = async (registrationId) => {
 };
 const statusTitle = computed(() => {
     if (isFreeEvent.value)
-        return "Inscricoes confirmadas";
+        return "InscriÃ§Ãµes confirmadas";
     if (isManualPayment.value) {
         if (isPaid.value)
             return "Pagamento registrado";
-        return "Pagamento pendente de confirmação";
+        return "Pagamento pendente de confirmaÃ§Ã£o";
     }
     if (isPaid.value)
         return "Pagamento aprovado";
     if (payment.value?.status === "CANCELED")
         return "Pagamento cancelado";
-    return "Aguardando confirmação";
+    return "Aguardando confirmaÃ§Ã£o";
 });
 const statusMessage = computed(() => {
     if (isFreeEvent.value) {
-        return "Este evento e gratuito. Suas inscricoes foram confirmadas automaticamente, sem necessidade de pagamento.";
+        return "Este evento Ã© gratuito. Suas inscriÃ§Ãµes foram confirmadas automaticamente, sem necessidade de pagamento.";
     }
     if (isManualPayment.value) {
         if (isPaid.value) {
-            return "Pagamento registrado pela tesouraria. As inscricoes estao confirmadas.";
+            return "Pagamento registrado pela tesouraria. As inscriÃ§Ãµes estÃ£o confirmadas.";
         }
         return "Apresente este comprovante na tesouraria para concluir o pagamento. Assim que o recebimento for registrado, atualizaremos automaticamente.";
     }
     if (isPaid.value) {
-        return "Tudo certo! As inscricoes foram confirmadas e os recibos serao disponibilizados em instantes.";
+        return "Tudo certo! As inscriÃ§Ãµes foram confirmadas e os recibos serÃ£o disponibilizados em instantes.";
     }
     if (payment.value?.status === "CANCELED") {
         return "O pagamento foi cancelado pelo Mercado Pago. Gere um novo checkout para tentar novamente.";
@@ -263,6 +267,7 @@ const statusMessage = computed(() => {
     return "Estamos monitorando o Mercado Pago. Assim que o pagamento for aprovado, atualizaremos automaticamente.";
 });
 const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
+const pixWasReactivated = computed(() => Boolean(payment.value?.pixReactivated));
 const statusIcon = computed(() => {
     if (isFreeEvent.value || isPaid.value)
         return "OK";
@@ -330,15 +335,15 @@ const copyPixCode = async () => {
     await navigator.clipboard.writeText(payment.value.pixQrData.qr_code);
     alert("Codigo Pix copiado!");
 };
-// Função para abrir checkout - garante que apenas este pedido seja processado
+// FunÃ§Ã£o para abrir checkout - garante que apenas este pedido seja processado
 const handleOpenCheckout = () => {
-    // Garantir que temos o initPoint para APENAS este pedido específico
+    // Garantir que temos o initPoint para APENAS este pedido especÃ­fico
     if (!payment.value?.initPoint) {
-        console.error("initPoint não disponível para o pedido", props.orderId);
+        console.error("initPoint nÃ£o disponÃ­vel para o pedido", props.orderId);
         return;
     }
     // Usar APENAS o initPoint do pagamento atual, que foi gerado para props.orderId
-    // Não usar nenhum estado compartilhado ou seleção de outros pedidos
+    // NÃ£o usar nenhum estado compartilhado ou seleÃ§Ã£o de outros pedidos
     const singleOrderInitPoint = payment.value.initPoint;
     // Abrir em nova aba o checkout para APENAS este pedido
     window.open(singleOrderInitPoint, "_blank", "noopener,noreferrer");
@@ -349,7 +354,7 @@ const startPolling = () => {
         await loadPayment();
         if (isPaid.value || payment.value?.status === "CANCELED") {
             stopPolling();
-            // Se foi pago, recarregar a página após 2 segundos para mostrar confirmação
+            // Se foi pago, recarregar a pÃ¡gina apÃ³s 2 segundos para mostrar confirmaÃ§Ã£o
             if (isPaid.value) {
                 setTimeout(() => {
                     window.location.reload();
@@ -410,8 +415,8 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
     ...{ class: "text-neutral-500 dark:text-neutral-400" },
 });
 (__VLS_ctx.isFreeEvent
-    ? "Este evento é gratuito. As inscrições foram confirmadas automaticamente e nenhum pagamento é necessário."
-    : "Conclua o pagamento para garantir as inscrições. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente.");
+    ? "Este evento Ã© gratuito. As inscriÃ§Ãµes foram confirmadas automaticamente e nenhum pagamento Ã© necessÃ¡rio."
+    : "Conclua o pagamento para garantir as inscriÃ§Ãµes. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente.");
 var __VLS_2;
 if (__VLS_ctx.payment) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
@@ -565,7 +570,7 @@ if (__VLS_ctx.payment) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "grid gap-4 sm:grid-cols-2" },
         });
-        for (const [receipt, index] of __VLS_getVForSourceType((__VLS_ctx.receiptLinks))) {
+        for (const [receipt] of __VLS_getVForSourceType((__VLS_ctx.receiptLinks))) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.article, __VLS_intrinsicElements.article)({
                 key: (receipt.registrationId),
                 ...{ class: "rounded-2xl border border-white/70 bg-white/90 p-4 text-neutral-700 shadow dark:border-emerald-500/20 dark:bg-emerald-900/40 dark:text-emerald-50" },
@@ -672,6 +677,11 @@ if (__VLS_ctx.payment) {
                 ...{ class: "text-sm text-primary-600 hover:text-primary-500 disabled:text-neutral-400" },
                 disabled: (!__VLS_ctx.payment.pixQrData),
             });
+            if (__VLS_ctx.pixWasReactivated) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-200" },
+                });
+            }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900/80" },
             });
@@ -805,13 +815,13 @@ if (__VLS_ctx.isPaid) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
         ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
     });
-    (__VLS_ctx.isFreeEvent ? "Inscricoes confirmadas" : "Pagamento confirmado");
+    (__VLS_ctx.isFreeEvent ? "InscriÃ§Ãµes confirmadas" : "Pagamento confirmado");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
     });
     (__VLS_ctx.isFreeEvent
-        ? "Os recibos estao disponiveis para consulta com o CPF e a data de nascimento dos participantes."
-        : "Os recibos são gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes.");
+        ? "Os recibos estÃ£o disponÃ­veis para consulta com o CPF e a data de nascimento dos participantes."
+        : "Os recibos sÃ£o gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes.");
     const __VLS_13 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
@@ -1159,6 +1169,19 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-amber-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-amber-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-amber-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-amber-400/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-amber-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-amber-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
@@ -1345,6 +1368,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             statusTitle: statusTitle,
             statusMessage: statusMessage,
             isPixPayment: isPixPayment,
+            pixWasReactivated: pixWasReactivated,
             statusIcon: statusIcon,
             statusStyles: statusStyles,
             totalFormatted: totalFormatted,

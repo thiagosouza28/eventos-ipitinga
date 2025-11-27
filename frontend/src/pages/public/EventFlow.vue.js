@@ -85,6 +85,43 @@ const nextLotInfo = computed(() => {
         price: formatCurrency(nextLot.value.priceCents)
     };
 });
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const diffInDaysFromNow = (value) => {
+    if (!value)
+        return null;
+    const target = new Date(value).getTime();
+    if (Number.isNaN(target))
+        return null;
+    const diff = Math.ceil((target - Date.now()) / MS_PER_DAY);
+    return diff < 0 ? 0 : diff;
+};
+const sortedLots = computed(() => {
+    const lots = eventStore.event?.lots ?? [];
+    return lots
+        .slice()
+        .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+});
+const lastLotEndDate = computed(() => {
+    if (!sortedLots.value.length) {
+        return eventStore.event?.startDate ?? null;
+    }
+    return sortedLots.value.reduce((latest, lot) => {
+        const candidate = lot.endsAt ?? lot.startsAt;
+        if (!latest) {
+            return candidate;
+        }
+        return new Date(candidate).getTime() > new Date(latest).getTime() ? candidate : latest;
+    }, sortedLots.value[0].endsAt ?? sortedLots.value[0].startsAt);
+});
+const daysToNextLot = computed(() => diffInDaysFromNow(nextLot.value?.startsAt));
+const daysToLastLotEnd = computed(() => diffInDaysFromNow(lastLotEndDate.value));
+const formatDayCount = (value) => {
+    if (value === null)
+        return "";
+    if (value <= 0)
+        return "menos de 1 dia";
+    return value === 1 ? "1 dia" : `${value} dias`;
+};
 const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
 const uploadsBaseUrl = `${apiOrigin.replace(/\/$/, "")}/uploads`;
 const eventBannerError = ref(false);
@@ -155,7 +192,7 @@ const loadPersistedState = () => {
             currentStep.value = saved.currentStep;
     }
     catch (error) {
-        console.warn("Nao foi possivel carregar o estado salvo do formulario", error);
+        console.warn("Não foi possível carregar o estado salvo do formulário", error);
     }
 };
 const persistState = () => {
@@ -177,7 +214,7 @@ const persistState = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
     catch (error) {
-        console.warn("Nao foi possivel salvar o estado local do formulario", error);
+        console.warn("Não foi possível salvar o estado local do formulário", error);
     }
 };
 const clearPersistedState = () => {
@@ -207,7 +244,6 @@ const pendingOrders = ref([]);
 const selectedDistrictId = ref("");
 const selectedChurchId = ref("");
 const selectedPaymentMethod = ref("PIX_MP");
-const pendingOrder = ref(null);
 const people = reactive([]);
 const participantCpfErrors = reactive([]);
 const participantCpfRefs = ref([]);
@@ -236,7 +272,7 @@ const steps = computed(() => {
         { title: "CPF", description: "Verifique pedidos pendentes" },
         { title: "Unidade", description: "Escolha distrito e igreja" },
         { title: "Participantes", description: "Dados individuais" },
-        { title: "Revisao", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
+        { title: "Revisão", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
     ];
     if (!isFreeEvent.value) {
         base.push({ title: "Pagamento", description: "Pix com QR Code" });
@@ -252,12 +288,12 @@ const paymentOptions = computed(() => {
     const allowed = eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    // Filtrar mÃ©todos exclusivos de admin se nÃ£o for admin
+    // Filtrar m�f©todos exclusivos de admin se n�f£o for admin
     const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
     return PAYMENT_METHODS.filter((option) => {
         if (!allowed.includes(option.value))
             return false;
-        // Se for mÃ©todo exclusivo de admin e usuÃ¡rio nÃ£o for admin, nÃ£o mostrar
+        // Se for m�f©todo exclusivo de admin e usu�f¡rio n�f£o for admin, n�f£o mostrar
         if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
             return false;
         }
@@ -283,6 +319,19 @@ const getPersonChurchOptions = (districtId) => churchesByDistrict.value.get(dist
 const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "Não informado";
 const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
 const getGenderLabel = (value) => genderOptions.find((option) => option.value === value)?.label ?? value;
+const formatBirthDateLabel = (birthDate) => {
+    if (!birthDate)
+        return "--";
+    const match = birthDate.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+        const [, year, month, day] = match;
+        return `${day}/${month}/${year}`;
+    }
+    const date = new Date(birthDate);
+    if (Number.isNaN(date.getTime()))
+        return "--";
+    return date.toLocaleDateString("pt-BR");
+};
 const calculateAgeYears = (birthDate) => {
     if (!birthDate)
         return null;
@@ -785,9 +834,9 @@ const submitBatch = async () => {
         }));
         const response = await eventStore.createBatchOrder(normalizeCPF(buyerCpf.value), selectedPaymentMethod.value, payload);
         disableStatePersistence();
-        // Se for mÃ©todo gratuito, nÃ£o redirecionar para pÃ¡gina de pagamento
+        // Se for m�f©todo gratuito, n�f£o redirecionar para p�f¡gina de pagamento
         if (isFreePaymentSelected.value && response.payment?.isFree) {
-            // Redirecionar para pÃ¡gina de evento com mensagem de sucesso
+            // Redirecionar para p�f¡gina de evento com mensagem de sucesso
             router.push({
                 name: "event",
                 params: { slug: props.slug },
@@ -914,12 +963,6 @@ const startInlinePolling = () => {
         catch { }
     }, 5000);
 };
-const stopInlinePolling = () => {
-    if (inlinePollHandle.value) {
-        clearInterval(inlinePollHandle.value);
-        inlinePollHandle.value = null;
-    }
-};
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -948,6 +991,7 @@ else if (!__VLS_ctx.eventStore.event) {
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "space-y-6" },
+        'data-uppercase-scope': true,
     });
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
@@ -1018,6 +1062,26 @@ else {
             ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
         });
         (__VLS_ctx.priceInfo.helper);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    if (__VLS_ctx.daysToNextLot !== null) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold text-neutral-800 dark:text-white" },
+        });
+        (__VLS_ctx.formatDayCount(__VLS_ctx.daysToNextLot));
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+    }
+    if (__VLS_ctx.daysToLastLotEnd !== null) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold text-neutral-800 dark:text-white" },
+        });
+        (__VLS_ctx.formatDayCount(__VLS_ctx.daysToLastLotEnd));
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400" },
@@ -1324,12 +1388,12 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
             });
-            (__VLS_ctx.selectedDistrict?.name ?? "Nao selecionado");
+            (__VLS_ctx.selectedDistrict?.name ?? "Não selecionado");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
             });
-            (__VLS_ctx.selectedChurch?.name ?? "Nao selecionada");
+            (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
@@ -1597,17 +1661,17 @@ else {
                 ...{ class: "text-sm text-neutral-500" },
             });
             (__VLS_ctx.isFreeEvent
-                ? "Confira as informacoes antes de confirmar as inscricoes."
-                : "Confira as informacoes antes de prosseguir com o pagamento.");
+                ? "Confira as informações antes de confirmar as inscrições."
+                : "Confira as informações antes de prosseguir com o pagamento.");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             (__VLS_ctx.buyerCpf);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            (__VLS_ctx.selectedDistrict?.name ?? "Nao selecionado");
+            (__VLS_ctx.selectedDistrict?.name ?? "Não selecionado");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            (__VLS_ctx.selectedChurch?.name ?? "Nao selecionada");
+            (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
             if (!__VLS_ctx.isFreeEvent) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60" },
@@ -1702,7 +1766,7 @@ else {
                     ...{ class: "mt-3 grid gap-1 text-sm text-neutral-500 sm:grid-cols-2" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-                (__VLS_ctx.formatDate(person.birthDate));
+                (__VLS_ctx.formatBirthDateLabel(person.birthDate));
                 if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
                     (__VLS_ctx.calculateAgeYears(person.birthDate));
@@ -2033,6 +2097,17 @@ else {
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
@@ -2799,6 +2874,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             priceInfo: priceInfo,
             currentLotName: currentLotName,
             nextLotInfo: nextLotInfo,
+            daysToNextLot: daysToNextLot,
+            daysToLastLotEnd: daysToLastLotEnd,
+            formatDayCount: formatDayCount,
             eventBannerError: eventBannerError,
             resolvedBannerUrl: resolvedBannerUrl,
             hasBannerImage: hasBannerImage,
@@ -2835,6 +2913,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             getDistrictName: getDistrictName,
             getChurchName: getChurchName,
             getGenderLabel: getGenderLabel,
+            formatBirthDateLabel: formatBirthDateLabel,
             calculateAgeYears: calculateAgeYears,
             setParticipantCpfRef: setParticipantCpfRef,
             onPersonDistrictChange: onPersonDistrictChange,

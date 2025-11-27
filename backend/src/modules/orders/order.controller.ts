@@ -117,9 +117,7 @@ export const startInscriptionHandler = async (request: Request, response: Respon
 export const createBatchInscriptionHandler = async (request: Request, response: Response) => {
   try {
     const payload = batchSchema.parse(request.body);
-    const actorId = request.user?.id;
-    const actorRole = request.user?.role;
-    const result = await orderService.createBatch(payload, actorId, actorRole);
+    const result = await orderService.createBatch(payload, request.user);
     return response.status(201).json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {

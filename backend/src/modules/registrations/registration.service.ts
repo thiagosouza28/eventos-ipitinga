@@ -720,6 +720,25 @@ export class RegistrationService {
     }
   }
 
+  async getReceiptLink(registrationId: string) {
+    const registration = await prisma.registration.findUnique({
+      where: { id: registrationId },
+      select: { status: true, receiptPdfUrl: true }
+    });
+    if (!registration) {
+      throw new NotFoundError("Inscricao nao encontrada");
+    }
+    if (
+      ![RegistrationStatus.PAID, RegistrationStatus.CHECKED_IN, RegistrationStatus.REFUNDED].includes(
+        registration.status as RegistrationStatus
+      )
+    ) {
+      throw new AppError("Comprovante disponivel apenas para inscricoes pagas", 400);
+    }
+    const { url: receiptUrl } = buildReceiptLink(registrationId, registration.receiptPdfUrl);
+    return { url: receiptUrl };
+  }
+
   async lookupReceipts(cpf: string, birthDate: string) {
     const sanitizedCpf = sanitizeCpf(cpf);
     const birth = new Date(birthDate);

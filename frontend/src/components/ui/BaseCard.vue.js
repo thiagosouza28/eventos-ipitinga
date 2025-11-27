@@ -4,19 +4,19 @@ const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "rounded-[26px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] p-5 text-[color:var(--text-base)] shadow transition sm:p-6" },
-    ...{ style: ({ boxShadow: 'var(--card-shadow)' }) },
+    ...{ class: "rounded-[28px] border border-[color:var(--border-card)] bg-[color:var(--card)]/95 p-7 text-[color:var(--text)] shadow-[0_25px_80px_rgba(15,23,42,0.08)] backdrop-blur-md transition dark:shadow-[0_30px_80px_rgba(0,0,0,0.55)]" },
 });
 var __VLS_0 = {};
-/** @type {__VLS_StyleScopedClasses['rounded-[26px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-[28px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-[color:var(--border-card)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-[color:var(--surface-card)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-base)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[color:var(--card)]/95']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-7']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-[0_25px_80px_rgba(15,23,42,0.08)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['backdrop-blur-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:p-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-[0_30px_80px_rgba(0,0,0,0.55)]']} */ ;
 // @ts-ignore
 var __VLS_1 = __VLS_0;
 var __VLS_dollars;

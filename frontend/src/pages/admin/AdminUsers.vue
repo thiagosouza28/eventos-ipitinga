@@ -524,11 +524,11 @@
         v-if="initialLoading"
         helperText="🔄 Carregando usuários..."
       />
-      <div
-        v-else
-        class="mt-6 overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30"
-      >
-        <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
+      <div v-else>
+        <div
+          class="mt-6 hidden overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30 md:block"
+        >
+          <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead
             class="bg-white/60 text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400"
           >
@@ -624,6 +624,83 @@
             </tr>
           </tbody>
         </table>
+        </div>
+        <div class="mt-6 flex flex-col gap-4 md:hidden">
+          <div
+            v-for="user in admin.users"
+            :key="user.id"
+            class="rounded-3xl border border-white/10 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-25px_rgba(15,23,42,0.75)] dark:border-white/5 dark:bg-neutral-950/40 dark:text-neutral-100"
+          >
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-white/70 bg-white/40 shadow-inner dark:border-white/10 dark:bg-white/10">
+                <img
+                  v-if="user.photoUrl"
+                  :src="user.photoUrl"
+                  alt="Foto do usuario"
+                  class="h-full w-full object-cover"
+                />
+                <span
+                  v-else
+                  class="flex h-full w-full items-center justify-center text-xs font-semibold text-neutral-500 dark:text-neutral-300"
+                >
+                  {{ userInitials(user.name) }}
+                </span>
+              </div>
+              <div>
+                <p class="font-semibold text-neutral-900 dark:text-white">{{ user.name }}</p>
+                <p v-if="user.cpf" class="text-xs text-neutral-500 dark:text-neutral-400">
+                  CPF: {{ maskCpf(user.cpf) }}
+                </p>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ user.email }}</p>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+              <div>
+                <p class="font-semibold text-neutral-800 dark:text-neutral-100">Perfil</p>
+                <p>{{ roleLabel(user.role) }}</p>
+              </div>
+              <div>
+                <p class="font-semibold text-neutral-800 dark:text-neutral-100">Status</p>
+                <p>{{ user.mustChangePassword ? "Trocar senha" : "Ativo" }}</p>
+              </div>
+              <div class="col-span-2">
+                <p class="font-semibold text-neutral-800 dark:text-neutral-100">Ministérios</p>
+                <p>
+                  <span v-if="user.ministries?.length">{{ user.ministries.map((m) => m.name).join(", ") }}</span>
+                  <span v-else class="text-neutral-400 dark:text-neutral-500">--</span>
+                </p>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 gap-2 text-xs font-semibold">
+              <button
+                type="button"
+                class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+                @click="openPermissionDialog(user)"
+              >
+                Permissões
+              </button>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+                  @click="openEditDialog(user)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30"
+                  @click="openResetDialog(user)"
+                >
+                  Resetar senha
+                </button>
+              </div>
+            </div>
+          </div>
+          <div v-if="!admin.users.length" class="rounded-3xl border border-dashed border-neutral-200 p-4 text-center text-sm text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">
+            Nenhum usuário cadastrado até o momento.
+          </div>
+        </div>
       </div>
     </BaseCard>
   </div>
