@@ -1,0 +1,3237 @@
+{
+    "item": [
+        {
+            "name": "events",
+            "description": "",
+            "item": [
+                {
+                    "id": "d1bbca52-c42f-4489-b4de-1f9e4592905a",
+                    "name": "Lista eventos pÃºblicos ativos",
+                    "request": {
+                        "name": "Lista eventos pÃºblicos ativos",
+                        "description": {},
+                        "url": {
+                            "path": [
+                                "events"
+                            ],
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "query": [],
+                            "variable": []
+                        },
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "method": "GET",
+                        "body": {},
+                        "auth": null
+                    },
+                    "response": [
+                        {
+                            "id": "55518eb1-7c42-4279-a04a-f56b94889042",
+                            "name": "Lista de eventos",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "events"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {}
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "[\n  {\n    \"id\": \"<uuid>\",\n    \"title\": \"<string>\",\n    \"description\": \"<string>\",\n    \"startDate\": \"<dateTime>\",\n    \"endDate\": \"<dateTime>\",\n    \"location\": \"<string>\",\n    \"priceCents\": \"<integer>\",\n    \"minAgeYears\": \"<integer>\",\n    \"isActive\": \"<boolean>\",\n    \"slug\": \"<string>\"\n  },\n  {\n    \"id\": \"<uuid>\",\n    \"title\": \"<string>\",\n    \"description\": \"<string>\",\n    \"startDate\": \"<dateTime>\",\n    \"endDate\": \"<dateTime>\",\n    \"location\": \"<string>\",\n    \"priceCents\": \"<integer>\",\n    \"minAgeYears\": \"<integer>\",\n    \"isActive\": \"<boolean>\",\n    \"slug\": \"<string>\"\n  }\n]",
+                            "cookie": [],
+                            "_postman_previewlanguage": "json"
+                        }
+                    ],
+                    "event": [],
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    }
+                },
+                {
+                    "name": "{slug}",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "07e247e4-f53a-4d9f-92bd-ff42891d2e2f",
+                            "name": "Detalhes pÃºblicos do evento",
+                            "request": {
+                                "name": "Detalhes pÃºblicos do evento",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "events",
+                                        ":slug"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": [
+                                        {
+                                            "type": "any",
+                                            "value": "<string>",
+                                            "key": "slug",
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "(Required) ",
+                                                "type": "text/plain"
+                                            }
+                                        }
+                                    ]
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {},
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "6cf9aecf-dbc5-40cc-a5f5-6b1cd9f16ed4",
+                                    "name": "Evento retornado",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "events",
+                                                ":slug"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "type": "any",
+                                                    "value": "<string>",
+                                                    "key": "slug"
+                                                }
+                                            ]
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"id\": \"<uuid>\",\n  \"title\": \"<string>\",\n  \"description\": \"<string>\",\n  \"startDate\": \"<dateTime>\",\n  \"endDate\": \"<dateTime>\",\n  \"location\": \"<string>\",\n  \"priceCents\": \"<integer>\",\n  \"minAgeYears\": \"<integer>\",\n  \"isActive\": \"<boolean>\",\n  \"slug\": \"<string>\"\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "56a6cc46-bd81-4199-84e8-fc27a09a7495",
+                                    "name": "Evento nÃ£o encontrado",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "events",
+                                                ":slug"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "type": "any",
+                                                    "value": "<string>",
+                                                    "key": "slug"
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "Not Found",
+                                    "code": 404,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "inscriptions",
+            "description": "",
+            "item": [
+                {
+                    "name": "start",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "5f9521ae-42ad-4975-bf71-8573989f8633",
+                            "name": "Verifica pendÃªncia de pedido",
+                            "request": {
+                                "name": "Verifica pendÃªncia de pedido",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "inscriptions",
+                                        "start"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"eventId\": \"<uuid>\",\n  \"buyerCpf\": \"<string>\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "2c572fcc-cf2a-47e6-8141-2eee66b583e2",
+                                    "name": "Pedido pendente ou null",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "inscriptions",
+                                                "start"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"eventId\": \"<uuid>\",\n  \"buyerCpf\": \"<string>\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "batch",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "3202d494-1c1c-4192-acc8-6d0205b0f8a6",
+                            "name": "Cria pedido e inscriÃ§Ãµes em lote",
+                            "request": {
+                                "name": "Cria pedido e inscriÃ§Ãµes em lote",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "inscriptions",
+                                        "batch"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"eventId\": \"<uuid>\",\n  \"buyerCpf\": \"<string>\",\n  \"people\": [\n    {\n      \"fullName\": \"<string>\",\n      \"cpf\": \"<string>\",\n      \"birthDate\": \"<date>\",\n      \"districtId\": \"<uuid>\",\n      \"churchId\": \"<uuid>\",\n      \"photoUrl\": \"<string>\"\n    },\n    {\n      \"fullName\": \"<string>\",\n      \"cpf\": \"<string>\",\n      \"birthDate\": \"<date>\",\n      \"districtId\": \"<uuid>\",\n      \"churchId\": \"<uuid>\",\n      \"photoUrl\": \"<string>\"\n    }\n  ]\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "2e598729-4351-46df-874a-11581d0b6292",
+                                    "name": "Pedido criado com sucesso",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "inscriptions",
+                                                "batch"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"eventId\": \"<uuid>\",\n  \"buyerCpf\": \"<string>\",\n  \"people\": [\n    {\n      \"fullName\": \"<string>\",\n      \"cpf\": \"<string>\",\n      \"birthDate\": \"<date>\",\n      \"districtId\": \"<uuid>\",\n      \"churchId\": \"<uuid>\",\n      \"photoUrl\": \"<string>\"\n    },\n    {\n      \"fullName\": \"<string>\",\n      \"cpf\": \"<string>\",\n      \"birthDate\": \"<date>\",\n      \"districtId\": \"<uuid>\",\n      \"churchId\": \"<uuid>\",\n      \"photoUrl\": \"<string>\"\n    }\n  ]\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "payments",
+            "description": "",
+            "item": [
+                {
+                    "name": "order",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "{orderId}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "a9ec8cb9-4a3d-4ead-a16a-6c93b467932e",
+                                    "name": "Recupera dados de pagamento de um pedido",
+                                    "request": {
+                                        "name": "Recupera dados de pagamento de um pedido",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "payments",
+                                                "order",
+                                                ":orderId"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "orderId",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {},
+                                        "auth": null
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "23672ac4-4b98-482b-9efe-5619c3ace646",
+                                            "name": "Informações de pagamento e participantes",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "payments",
+                                                        "order",
+                                                        ":orderId"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "orderId"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "GET",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                }
+                                            ],
+                                            "body": "{\n  \"status\": \"<string>\",\n  \"paymentId\": \"<string>\",\n  \"participantCount\": \"<integer>\",\n  \"participants\": [\n    {\n      \"id\": \"<uuid>\",\n      \"fullName\": \"<string>\",\n      \"status\": \"REFUNDED\"\n    },\n    {\n      \"id\": \"<uuid>\",\n      \"fullName\": \"<string>\",\n      \"status\": \"PAID\"\n    }\n  ]\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        },
+                                        {
+                                            "id": "3c1d01a3-2b4b-45d9-922e-1b1d2b99c4c8",
+                                            "name": "Pedido não encontrado",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "payments",
+                                                        "order",
+                                                        ":orderId"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "orderId"
+                                                        }
+                                                    ]
+                                                },
+                                                "method": "GET",
+                                                "body": {}
+                                            },
+                                            "status": "Not Found",
+                                            "code": 404,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "webhooks",
+            "description": "",
+            "item": [
+                {
+                    "name": "mercadopago",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "28e18fb6-3a2d-42b5-bd6d-5407c73bb4ee",
+                            "name": "Webhook Mercado Pago",
+                            "request": {
+                                "name": "Webhook Mercado Pago",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "webhooks",
+                                        "mercadopago"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "POST",
+                                "body": {},
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "e9a5351e-ef7f-4919-8048-81660829d5ea",
+                                    "name": "Webhook processado",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "webhooks",
+                                                "mercadopago"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "method": "POST",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "receipts",
+            "description": "",
+            "item": [
+                {
+                    "name": "lookup",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "75cb2d98-ae31-4068-9583-60a4ec3d4f19",
+                            "name": "Consulta recibos por CPF e data de nascimento",
+                            "request": {
+                                "name": "Consulta recibos por CPF e data de nascimento",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "receipts",
+                                        "lookup"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"cpf\": \"<string>\",\n  \"birthDate\": \"<date>\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "62d37d79-9add-44c1-b601-a043d7bf1661",
+                                    "name": "Lista de recibos",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "receipts",
+                                                "lookup"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"cpf\": \"<string>\",\n  \"birthDate\": \"<date>\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "{registrationId}.pdf",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "fd557359-eea1-4ef8-9349-6c1ef37afd8b",
+                            "name": "Download de recibo PDF com token",
+                            "request": {
+                                "name": "Download de recibo PDF com token",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "receipts",
+                                        "{{registrationId}}.pdf"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "(Required) ",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "token",
+                                            "value": "<string>"
+                                        }
+                                    ],
+                                    "variable": []
+                                },
+                                "method": "GET",
+                                "body": {},
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "229f5c27-d10a-494f-8103-aba4d0a8e1cf",
+                                    "name": "PDF stream",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "receipts",
+                                                "{{registrationId}}.pdf"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "token",
+                                                    "value": "<string>"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "54429b2d-1878-4f18-b623-cebc6de169e1",
+                                    "name": "Token invalido",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "receipts",
+                                                "{{registrationId}}.pdf"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "token",
+                                                    "value": "<string>"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "Forbidden",
+                                    "code": 403,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "checkin",
+            "description": "",
+            "item": [
+                {
+                    "name": "validate",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "1a00d89f-efbb-43e1-b096-a05cae10468e",
+                            "name": "Valida link publico de check-in",
+                            "request": {
+                                "name": "Valida link publico de check-in",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "checkin",
+                                        "validate"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "(Required) ",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "rid",
+                                            "value": "<uuid>"
+                                        },
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "(Required) ",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "sig",
+                                            "value": "<string>"
+                                        }
+                                    ],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "GET",
+                                "body": {},
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "812e39e7-c490-4147-a8f6-d49818d39db8",
+                                    "name": "Resultado da validacao",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "checkin",
+                                                "validate"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "rid",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "sig",
+                                                    "value": "<string>"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"status\": \"ALREADY_CONFIRMED\",\n  \"registration\": {\n    \"id\": \"<uuid>\",\n    \"fullName\": \"<string>\",\n    \"eventTitle\": \"<string>\",\n    \"eventLocation\": \"<string>\",\n    \"eventPeriod\": \"<string>\",\n    \"districtName\": \"<string>\",\n    \"churchName\": \"<string>\",\n    \"checkinAt\": \"<dateTime>\"\n  }\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "17a91a97-12ad-4799-8d3c-d46f6922c766",
+                                    "name": "Link invalido ou pagamento pendente",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "checkin",
+                                                "validate"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "rid",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "sig",
+                                                    "value": "<string>"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "Bad Request",
+                                    "code": 400,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "3676f4bf-334c-4729-9506-db1acfffcfde",
+                                    "name": "Inscricao nao encontrada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "checkin",
+                                                "validate"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "rid",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "sig",
+                                                    "value": "<string>"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "Not Found",
+                                    "code": 404,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "confirm",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "0757d93d-4f6a-42fe-a658-2bc0294d1f1b",
+                            "name": "Confirma presenca via link com senha",
+                            "request": {
+                                "name": "Confirma presenca via link com senha",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "checkin",
+                                        "confirm"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"rid\": \"<uuid>\",\n  \"sig\": \"<string>\",\n  \"password\": \"<string>\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "59ddb38a-6d78-4b73-8e19-6e390fe9b39c",
+                                    "name": "Check-in confirmado ou já processado",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "checkin",
+                                                "confirm"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"rid\": \"<uuid>\",\n  \"sig\": \"<string>\",\n  \"password\": \"<string>\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"status\": \"CONFIRMED\",\n  \"registration\": {\n    \"id\": \"<uuid>\",\n    \"fullName\": \"<string>\",\n    \"eventTitle\": \"<string>\",\n    \"eventLocation\": \"<string>\",\n    \"eventPeriod\": \"<string>\",\n    \"districtName\": \"<string>\",\n    \"churchName\": \"<string>\",\n    \"checkinAt\": \"<dateTime>\"\n  }\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "f1beb3e1-5dcc-49de-a1af-4fe5173f5666",
+                                    "name": "Senha invalida ou pagamento pendente",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "checkin",
+                                                "confirm"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"rid\": \"<uuid>\",\n  \"sig\": \"<string>\",\n  \"password\": \"<string>\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Bad Request",
+                                    "code": 400,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "a265f997-eaeb-46f0-b7c7-e3215d007e64",
+                                    "name": "Inscricao nao encontrada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "checkin",
+                                                "confirm"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"rid\": \"<uuid>\",\n  \"sig\": \"<string>\",\n  \"password\": \"<string>\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Not Found",
+                                    "code": 404,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "admin",
+            "description": "",
+            "item": [
+                {
+                    "name": "login",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "af771703-3314-4732-b7ee-abfbf63b89e5",
+                            "name": "AutenticaÃ§Ã£o de usuÃ¡rio administrador",
+                            "request": {
+                                "name": "AutenticaÃ§Ã£o de usuÃ¡rio administrador",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "login"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<string>\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "05540090-24fa-4f8e-8b77-f0897837aa95",
+                                    "name": "Token JWT emitido",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "login"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<string>\"\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "districts",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "6039f8ae-4756-4ec1-8f83-a7ef8295918e",
+                            "name": "Lista distritos",
+                            "request": {
+                                "name": "Lista distritos",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "districts"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "GET",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "3c52c100-386c-4d2f-bbdb-5d280489ecae",
+                                    "name": "Lista retornada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "districts"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "id": "ebef5b81-a3d9-442f-a3a2-9bcc8617d080",
+                            "name": "Cria distrito",
+                            "request": {
+                                "name": "Cria distrito",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "districts"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "POST",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "985979bf-47d9-446e-bbf2-e41b9b70eb71",
+                                    "name": "Distrito criado",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "districts"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {}
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "name": "{id}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "08d16f92-8b79-4f02-abf8-923da5f9b80f",
+                                    "name": "Atualiza distrito",
+                                    "request": {
+                                        "name": "Atualiza distrito",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "districts",
+                                                ":id"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "id",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "method": "PATCH",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "0913c51b-8576-4710-96b5-80609b91b375",
+                                            "name": "Atualizado",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "districts",
+                                                        ":id"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "PATCH",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "churches",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "f707fa6a-84c0-4306-ae7c-d5945c4944fb",
+                            "name": "Lista igrejas",
+                            "request": {
+                                "name": "Lista igrejas",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "churches"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "GET",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "f95222b8-75bf-4c7d-af86-3bbd60ccb766",
+                                    "name": "Lista retornada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "churches"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "id": "3b1e0368-1ad8-4d93-989b-203e4a6b3582",
+                            "name": "Cria igreja",
+                            "request": {
+                                "name": "Cria igreja",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "churches"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "POST",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "dd7c9d8c-7424-454d-94af-81a7873a7243",
+                                    "name": "Igreja criada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "churches"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {}
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "name": "{id}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "a267a175-2b55-4c67-8c88-20be13c142f0",
+                                    "name": "Atualiza igreja",
+                                    "request": {
+                                        "name": "Atualiza igreja",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "churches",
+                                                ":id"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "id",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "method": "PATCH",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "eb1dfae7-605a-4513-a3c2-10623b912c1b",
+                                            "name": "Atualizado",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "churches",
+                                                        ":id"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "PATCH",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "events",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "6c960fef-d759-4268-a1b1-5f5dd45f09d2",
+                            "name": "Lista eventos",
+                            "request": {
+                                "name": "Lista eventos",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "events"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "GET",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "1cb6a7a1-35fc-4ca3-b4e3-dcc3d0ad62fe",
+                                    "name": "Lista retornada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "events"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "id": "4ee06790-f329-49d8-800b-acae1bf4ad79",
+                            "name": "Cria evento",
+                            "request": {
+                                "name": "Cria evento",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "events"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "POST",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "76bb7e2c-a1a0-4b69-bc23-ae6955585076",
+                                    "name": "Evento criado",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "events"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {}
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "name": "{id}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "b0ad107a-69d8-45cc-8395-cc51e06ab650",
+                                    "name": "Atualiza evento",
+                                    "request": {
+                                        "name": "Atualiza evento",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "events",
+                                                ":id"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "id",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "method": "PATCH",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "41970a23-489e-4ccf-a7ad-20bb063ebf34",
+                                            "name": "Evento atualizado",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "events",
+                                                        ":id"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "PATCH",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "orders",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "e6f51619-9c22-4fdc-802d-3d863b9a891d",
+                            "name": "Listagem de pedidos",
+                            "request": {
+                                "name": "Listagem de pedidos",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "orders"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "method": "GET",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "b7b93e44-293b-4e45-95d2-5ab2600dd7d3",
+                                    "name": "Lista retornada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "orders"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "name": "{id}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "name": "mark-paid",
+                                    "description": "",
+                                    "item": [
+                                        {
+                                            "id": "c299fa88-15d7-45c8-8d8a-c21d4ee8e014",
+                                            "name": "Marca pedido como pago manualmente",
+                                            "request": {
+                                                "name": "Marca pedido como pago manualmente",
+                                                "description": {},
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "orders",
+                                                        ":id",
+                                                        "mark-paid"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id",
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            }
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"paymentId\": \"<string>\"\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                },
+                                                "auth": {
+                                                    "type": "bearer",
+                                                    "bearer": [
+                                                        {
+                                                            "key": "token",
+                                                            "value": "{{bearerToken}}"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "response": [
+                                                {
+                                                    "id": "1385e56a-98ee-48b9-ba73-63777d4c0f2a",
+                                                    "name": "Pedido marcado como pago",
+                                                    "originalRequest": {
+                                                        "url": {
+                                                            "path": [
+                                                                "admin",
+                                                                "orders",
+                                                                ":id",
+                                                                "mark-paid"
+                                                            ],
+                                                            "host": [
+                                                                "{{baseUrl}}"
+                                                            ],
+                                                            "query": [],
+                                                            "variable": [
+                                                                {
+                                                                    "disabled": false,
+                                                                    "description": {
+                                                                        "content": "(Required) ",
+                                                                        "type": "text/plain"
+                                                                    },
+                                                                    "type": "any",
+                                                                    "value": "<uuid>",
+                                                                    "key": "id"
+                                                                }
+                                                            ]
+                                                        },
+                                                        "header": [
+                                                            {
+                                                                "key": "Content-Type",
+                                                                "value": "application/json"
+                                                            },
+                                                            {
+                                                                "description": {
+                                                                    "content": "Added as a part of security scheme: bearer",
+                                                                    "type": "text/plain"
+                                                                },
+                                                                "key": "Authorization",
+                                                                "value": "Bearer <token>"
+                                                            }
+                                                        ],
+                                                        "method": "POST",
+                                                        "body": {
+                                                            "mode": "raw",
+                                                            "raw": "{\n  \"paymentId\": \"<string>\"\n}",
+                                                            "options": {
+                                                                "raw": {
+                                                                    "headerFamily": "json",
+                                                                    "language": "json"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "status": "OK",
+                                                    "code": 200,
+                                                    "header": [],
+                                                    "cookie": [],
+                                                    "_postman_previewlanguage": "text"
+                                                }
+                                            ],
+                                            "event": [],
+                                            "protocolProfileBehavior": {
+                                                "disableBodyPruning": true
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "registrations",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "e904bfbd-daba-4979-b497-2baafe84bfbd",
+                            "name": "Listagem de inscrições com filtros",
+                            "request": {
+                                "name": "Listagem de inscrições com filtros",
+                                "description": {},
+                                "url": {
+                                    "path": [
+                                        "admin",
+                                        "registrations"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "eventId",
+                                            "value": "<uuid>"
+                                        },
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "districtId",
+                                            "value": "<uuid>"
+                                        },
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": "",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "churchId",
+                                            "value": "<uuid>"
+                                        },
+                                        {
+                                            "disabled": false,
+                                            "description": {
+                                                "content": " (This can only be one of DRAFT,PENDING_PAYMENT,PAID,CANCELED,REFUNDED,CHECKED_IN)",
+                                                "type": "text/plain"
+                                            },
+                                            "key": "status",
+                                            "value": "REFUNDED"
+                                        }
+                                    ],
+                                    "variable": []
+                                },
+                                "method": "GET",
+                                "body": {},
+                                "auth": {
+                                    "type": "bearer",
+                                    "bearer": [
+                                        {
+                                            "key": "token",
+                                            "value": "{{bearerToken}}"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [
+                                {
+                                    "id": "0a4cd68d-de44-4b03-8f07-8d059a6a6b10",
+                                    "name": "Lista retornada",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "registrations"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "eventId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "districtId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "churchId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": " (This can only be one of DRAFT,PENDING_PAYMENT,PAID,CANCELED,REFUNDED,CHECKED_IN)",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "status",
+                                                    "value": "REFUNDED"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "description": {
+                                                    "content": "Added as a part of security scheme: bearer",
+                                                    "type": "text/plain"
+                                                },
+                                                "key": "Authorization",
+                                                "value": "Bearer <token>"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {}
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        },
+                        {
+                            "name": "report",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "35a677b2-0234-4c6a-b4b4-57c34683f251",
+                                    "name": "Resumo agregado das inscrições",
+                                    "request": {
+                                        "name": "Resumo agregado das inscrições",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "registrations",
+                                                "report"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required)  (This can only be one of event,church)",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "groupBy",
+                                                    "value": "church"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "eventId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "districtId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "churchId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": " (This can only be one of DRAFT,PENDING_PAYMENT,PAID,CANCELED,REFUNDED,CHECKED_IN)",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "status",
+                                                    "value": "REFUNDED"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "7e6b18aa-f023-452f-8136-d3b4fea04caf",
+                                            "name": "Dados agregados por evento ou igreja",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "registrations",
+                                                        "report"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required)  (This can only be one of event,church)",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "groupBy",
+                                                            "value": "church"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "eventId",
+                                                            "value": "<uuid>"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "districtId",
+                                                            "value": "<uuid>"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "churchId",
+                                                            "value": "<uuid>"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": " (This can only be one of DRAFT,PENDING_PAYMENT,PAID,CANCELED,REFUNDED,CHECKED_IN)",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "status",
+                                                            "value": "REFUNDED"
+                                                        }
+                                                    ],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "GET",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                }
+                                            ],
+                                            "body": "{\n  \"groupBy\": \"church\",\n  \"items\": [\n    {\n      \"id\": \"<string>\",\n      \"name\": \"<string>\",\n      \"period\": \"<string>\",\n      \"districtName\": \"<string>\",\n      \"totals\": {\n        \"key_0\": \"<integer>\",\n        \"key_1\": \"<integer>\"\n      }\n    },\n    {\n      \"id\": \"<string>\",\n      \"name\": \"<string>\",\n      \"period\": \"<string>\",\n      \"districtName\": \"<string>\",\n      \"totals\": {\n        \"key_0\": \"<integer>\",\n        \"key_1\": \"<integer>\"\n      }\n    }\n  ]\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "report.pdf",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "adf6c851-0d91-487f-9023-ad99a4ba1b80",
+                                    "name": "Gera relatório detalhado em PDF com participantes",
+                                    "request": {
+                                        "name": "Gera relatório detalhado em PDF com participantes",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "registrations",
+                                                "report.pdf"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required)  (This can only be one of event,church)",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "groupBy",
+                                                    "value": "church"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "eventId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "districtId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "churchId",
+                                                    "value": "<uuid>"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": " (This can only be one of DRAFT,PENDING_PAYMENT,PAID,CANCELED,REFUNDED,CHECKED_IN)",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "status",
+                                                    "value": "REFUNDED"
+                                                }
+                                            ],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/pdf"
+                                            }
+                                        ],
+                                        "method": "GET",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "fb40ba9d-a92d-4e9c-9fdd-2df36e3e78ef",
+                                            "name": "PDF contendo inscritos detalhados",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "registrations",
+                                                        "report.pdf"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required)  (This can only be one of event,church)",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "groupBy",
+                                                            "value": "church"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "eventId",
+                                                            "value": "<uuid>"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "districtId",
+                                                            "value": "<uuid>"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "churchId",
+                                                            "value": "<uuid>"
+                                                        },
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": " (This can only be one of DRAFT,PENDING_PAYMENT,PAID,CANCELED,REFUNDED,CHECKED_IN)",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "key": "status",
+                                                            "value": "REFUNDED"
+                                                        }
+                                                    ],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/pdf"
+                                                    },
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "GET",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/pdf"
+                                                }
+                                            ],
+                                            "body": "<binary>",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "{id}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "5b2823b3-61bb-4a9c-83e8-cb22b17022a8",
+                                    "name": "Atualiza dados de uma inscriÃ§Ã£o",
+                                    "request": {
+                                        "name": "Atualiza dados de uma inscriÃ§Ã£o",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "registrations",
+                                                ":id"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "id",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "method": "PATCH",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "3d63bf19-a244-4e13-9690-1d2ef16ea8ab",
+                                            "name": "InscriÃ§Ã£o atualizada",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "registrations",
+                                                        ":id"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "PATCH",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                },
+                                {
+                                    "name": "cancel",
+                                    "description": "",
+                                    "item": [
+                                        {
+                                            "id": "765cee90-809e-43bd-ac77-93a11e0a4974",
+                                            "name": "Cancela inscriÃ§Ã£o",
+                                            "request": {
+                                                "name": "Cancela inscriÃ§Ã£o",
+                                                "description": {},
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "registrations",
+                                                        ":id",
+                                                        "cancel"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "type": "any",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "method": "POST",
+                                                "body": {},
+                                                "auth": {
+                                                    "type": "bearer",
+                                                    "bearer": [
+                                                        {
+                                                            "key": "token",
+                                                            "value": "{{bearerToken}}"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "response": [
+                                                {
+                                                    "id": "1da3610e-19cd-45df-a864-6c914e54487d",
+                                                    "name": "Cancelada",
+                                                    "originalRequest": {
+                                                        "url": {
+                                                            "path": [
+                                                                "admin",
+                                                                "registrations",
+                                                                ":id",
+                                                                "cancel"
+                                                            ],
+                                                            "host": [
+                                                                "{{baseUrl}}"
+                                                            ],
+                                                            "query": [],
+                                                            "variable": []
+                                                        },
+                                                        "header": [
+                                                            {
+                                                                "description": {
+                                                                    "content": "Added as a part of security scheme: bearer",
+                                                                    "type": "text/plain"
+                                                                },
+                                                                "key": "Authorization",
+                                                                "value": "Bearer <token>"
+                                                            }
+                                                        ],
+                                                        "method": "POST",
+                                                        "body": {}
+                                                    },
+                                                    "status": "OK",
+                                                    "code": 200,
+                                                    "header": [],
+                                                    "cookie": [],
+                                                    "_postman_previewlanguage": "text"
+                                                }
+                                            ],
+                                            "event": [],
+                                            "protocolProfileBehavior": {
+                                                "disableBodyPruning": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "refund",
+                                    "description": "",
+                                    "item": [
+                                        {
+                                            "id": "24e33506-88cb-4e0b-a173-7edbf5583501",
+                                            "name": "Solicita estorno parcial",
+                                            "request": {
+                                                "name": "Solicita estorno parcial",
+                                                "description": {},
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "registrations",
+                                                        ":id",
+                                                        "refund"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "type": "any",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "method": "POST",
+                                                "body": {},
+                                                "auth": {
+                                                    "type": "bearer",
+                                                    "bearer": [
+                                                        {
+                                                            "key": "token",
+                                                            "value": "{{bearerToken}}"
+                                                        }
+                                                    ]
+                                                }
+                                            },
+                                            "response": [
+                                                {
+                                                    "id": "d069a6b3-0801-495f-89f3-3544cd543cac",
+                                                    "name": "Estorno processado",
+                                                    "originalRequest": {
+                                                        "url": {
+                                                            "path": [
+                                                                "admin",
+                                                                "registrations",
+                                                                ":id",
+                                                                "refund"
+                                                            ],
+                                                            "host": [
+                                                                "{{baseUrl}}"
+                                                            ],
+                                                            "query": [],
+                                                            "variable": []
+                                                        },
+                                                        "header": [
+                                                            {
+                                                                "description": {
+                                                                    "content": "Added as a part of security scheme: bearer",
+                                                                    "type": "text/plain"
+                                                                },
+                                                                "key": "Authorization",
+                                                                "value": "Bearer <token>"
+                                                            }
+                                                        ],
+                                                        "method": "POST",
+                                                        "body": {}
+                                                    },
+                                                    "status": "OK",
+                                                    "code": 200,
+                                                    "header": [],
+                                                    "cookie": [],
+                                                    "_postman_previewlanguage": "text"
+                                                }
+                                            ],
+                                            "event": [],
+                                            "protocolProfileBehavior": {
+                                                "disableBodyPruning": true
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "checkin",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "{eventId}",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "8e51dadc-50d2-42c3-a61c-1292b8b2b741",
+                                    "name": "Dados para check-in do evento",
+                                    "request": {
+                                        "name": "Dados para check-in do evento",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "checkin",
+                                                ":eventId"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "eventId",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "method": "GET",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "5a23cffd-afa5-42cb-8c59-143c1e4ea1b1",
+                                            "name": "Dados retornados",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "checkin",
+                                                        ":eventId"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "eventId"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "GET",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "scan",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "32ed1d9e-8a95-4c1e-9c88-06096ab20151",
+                                    "name": "Marca presenÃ§a por QR ou busca manual",
+                                    "request": {
+                                        "name": "Marca presenÃ§a por QR ou busca manual",
+                                        "description": {},
+                                        "url": {
+                                            "path": [
+                                                "admin",
+                                                "checkin",
+                                                "scan"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "method": "POST",
+                                        "body": {},
+                                        "auth": {
+                                            "type": "bearer",
+                                            "bearer": [
+                                                {
+                                                    "key": "token",
+                                                    "value": "{{bearerToken}}"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "a4d45953-1c99-4b24-a2db-84b7d12a21a0",
+                                            "name": "Check-in registrado",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "admin",
+                                                        "checkin",
+                                                        "scan"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "description": {
+                                                            "content": "Added as a part of security scheme: bearer",
+                                                            "type": "text/plain"
+                                                        },
+                                                        "key": "Authorization",
+                                                        "value": "Bearer <token>"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {}
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3001/api"
+        },
+        {
+            "key": "registrationId",
+            "value": "<uuid>"
+        }
+    ],
+    "info": {
+        "_postman_id": "b0261ee4-7ee3-44d4-b708-7bfd60360618",
+        "name": "CATRE Ipitinga API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": {
+            "content": "API para gestÃ£o de inscriÃ§Ãµes CATRE Ipitinga com pagamentos Mercado Pago, recibos e check-in.",
+            "type": "text/plain"
+        }
+    }
+}

@@ -146,6 +146,8 @@ router.get("/catalog/districts", listDistrictsHandler);
 router.get("/catalog/churches", listChurchesHandler);
 router.get("/catalog/churches/director", findChurchByDirectorCpfHandler);
 router.get("/catalog/ministries", listMinistriesHandler);
+router.get("/public/districts", listDistrictsHandler);
+router.get("/public/churches", listChurchesHandler);
 
 // AutenticaÃ§Ã£o
 router.post("/admin/login", loginHandler);
