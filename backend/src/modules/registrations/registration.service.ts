@@ -111,6 +111,12 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
   DRAFT: "Rascunho"
 };
 
+const RECEIPT_AVAILABLE_STATUSES: readonly RegistrationStatusValue[] = [
+  RegistrationStatus.PAID,
+  RegistrationStatus.CHECKED_IN,
+  RegistrationStatus.REFUNDED
+];
+
 const resolvePaymentStatusLabel = (status: string) =>
   PAYMENT_STATUS_LABELS[status] ?? status;
 
@@ -728,11 +734,7 @@ export class RegistrationService {
     if (!registration) {
       throw new NotFoundError("Inscricao nao encontrada");
     }
-    if (
-      ![RegistrationStatus.PAID, RegistrationStatus.CHECKED_IN, RegistrationStatus.REFUNDED].includes(
-        registration.status as RegistrationStatus
-      )
-    ) {
+    if (!RECEIPT_AVAILABLE_STATUSES.some((status) => status === registration.status)) {
       throw new AppError("Comprovante disponivel apenas para inscricoes pagas", 400);
     }
     const { url: receiptUrl } = buildReceiptLink(registrationId, registration.receiptPdfUrl);

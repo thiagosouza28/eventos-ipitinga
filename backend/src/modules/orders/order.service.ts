@@ -1,5 +1,4 @@
-﻿import { randomUUID } from "crypto";
-import type { User as ExpressUser } from "express";
+import { randomUUID } from "crypto";
 
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
 import { prisma } from "../../lib/prisma";
@@ -171,7 +170,7 @@ export class OrderService {
     buyerCpf: string;
     people: BatchPerson[];
     paymentMethod?: PaymentMethod;
-  }, actor?: ExpressUser | undefined) {
+  }, actor?: Express.User | undefined) {
     const actorId = actor?.id;
     const actorRole = actor?.role;
     const actorDistrictId = actor?.districtScopeId ?? null;
@@ -199,12 +198,12 @@ export class OrderService {
     let resolvedMethod =
       requestedMethod && (allowedMethods.includes(requestedMethod) || ((actorRole === "AdminGeral" || actorRole === "AdminDistrital") && AdminOnlyPaymentMethods.includes(requestedMethod as any))) ? requestedMethod : fallbackMethod;
 
-    // Verificar se mÃ©todo Ã© exclusivo de admin
+    // Verificar se método é exclusivo de admin
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
       if (!actorId || !actorRole) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
       }
-      // Verificar se o usuÃ¡rio Ã© admin (AdminGeral ou AdminDistrital)
+      // Verificar se o usuário é admin (AdminGeral ou AdminDistrital)
       const isAdmin = actorRole === "AdminGeral" || actorRole === "AdminDistrital";
       if (!isAdmin) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
@@ -214,9 +213,9 @@ export class OrderService {
     const isFreeEvent = Boolean((event as any).isFree);
     const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
     
-    // Se for mÃ©todo gratuito, nÃ£o usar PIX_MP mesmo para eventos gratuitos
+    // Se for método gratuito, não usar PIX_MP mesmo para eventos gratuitos
     if (isFreePaymentMethod) {
-      // MÃ©todo gratuito jÃ¡ estÃ¡ definido
+      // Método gratuito já está definido
     } else if (isFreeEvent) {
       resolvedMethod = PaymentMethod.PIX_MP;
     }
@@ -229,7 +228,7 @@ export class OrderService {
       throw new AppError("Nenhum lote disponivel para inscricao no momento", 400);
     }
 
-    // Se for mÃ©todo de pagamento gratuito, o valor Ã© sempre 0
+    // Se for método de pagamento gratuito, o valor é sempre 0
     const unitPriceCents = (isFreeEvent || isFreePaymentMethod)
       ? 0
       : Math.max(activeLot?.priceCents ?? 0, 0);
@@ -267,7 +266,7 @@ export class OrderService {
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
     const registrations = await prisma.$transaction(async (tx) => {
-      // Se for mÃ©todo gratuito, marcar como pago automaticamente
+      // Se for método gratuito, marcar como pago automaticamente
       const orderStatus = (isFreeEvent || isFreePaymentMethod) ? OrderStatus.PAID : OrderStatus.PENDING;
       const paidAtValue = (isFreeEvent || isFreePaymentMethod) ? new Date() : null;
       const order = await tx.order.create({
@@ -295,11 +294,11 @@ export class OrderService {
 
         // Garantir que a data de nascimento seja salva como UTC midnight do dia correto
         // Quando recebemos "1998-11-05", queremos salvar como "1998-11-05T00:00:00.000Z"
-        // Isso garante que ao formatar usando UTC, a data serÃ¡ exibida corretamente
+        // Isso garante que ao formatar usando UTC, a data será exibida corretamente
         const birthDateParts = person.birthDate.split('-');
         const birthDateUTC = new Date(Date.UTC(
           parseInt(birthDateParts[0], 10), // ano
-          parseInt(birthDateParts[1], 10) - 1, // mÃªs (0-indexed)
+          parseInt(birthDateParts[1], 10) - 1, // mês (0-indexed)
           parseInt(birthDateParts[2], 10) // dia
         ));
 
@@ -592,7 +591,7 @@ export class OrderService {
     // Tentar obter/garantir dados de PIX (qr_code e base64)
     let pixQrData = forcedNewPayment ? undefined : (payment as any)?.pixQrData;
 
-    // Se já houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
+    // Se j� houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
     if (latestPayment?.id && !pixQrData && !forcedNewPayment) {
       try {
         const details = await paymentService.fetchPayment(String(latestPayment.id));
@@ -639,7 +638,7 @@ export class OrderService {
     const hasFeeCents = columnNames.includes("feeCents");
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
-    // Usar select para evitar problemas com colunas que podem nÃ£o existir
+    // Usar select para evitar problemas com colunas que podem não existir
     return prisma.order.findMany({
       where: {
         eventId: filters.eventId,
@@ -685,9 +684,9 @@ export class OrderService {
     });
   }
 
-  // Gera um pagamento exclusivo para uma inscriÃ§Ã£o especÃ­fica.
-  // Se a inscriÃ§Ã£o pertencer a um pedido com outras inscriÃ§Ãµes, move-a para um novo pedido (split)
-  // e invalida a preferÃªncia antiga do pedido original. Se jÃ¡ estiver sozinha, apenas gera nova preferÃªncia.
+  // Gera um pagamento exclusivo para uma inscrição específica.
+  // Se a inscrição pertencer a um pedido com outras inscrições, move-a para um novo pedido (split)
+  // e invalida a preferência antiga do pedido original. Se já estiver sozinha, apenas gera nova preferência.
   async createIndividualPaymentForRegistration(registrationId: string) {
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
@@ -821,9 +820,9 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId, paymentId, error },
-          "Falha ao calcular taxas do Mercado Pago. Usando valores padrÃ£o."
+          "Falha ao calcular taxas do Mercado Pago. Usando valores padrão."
         );
-        // Em caso de erro, nÃ£o aplicar taxas (assumir 0)
+        // Em caso de erro, não aplicar taxas (assumir 0)
       }
     }
 
@@ -1001,5 +1000,7 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
+
+
 
 
