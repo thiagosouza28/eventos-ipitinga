@@ -220,7 +220,13 @@ export const useAdminStore = defineStore("admin", () => {
 
   const confirmOrderPayment = async (
     orderId: string,
-    payload?: { paymentId?: string; manualReference?: string; paidAt?: string }
+    payload?: {
+      paymentId?: string;
+      manualReference?: string;
+      paidAt?: string;
+      proofFile?: string;
+      proofUrl?: string;
+    }
   ) => {
     await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
     await loadRegistrations(registrationFilters.value);
@@ -238,6 +244,7 @@ export const useAdminStore = defineStore("admin", () => {
       paidAt?: string | null;
       isFree?: boolean;
       isManual?: boolean;
+      manualPaymentProofUrl?: string | null;
     };
   };
 

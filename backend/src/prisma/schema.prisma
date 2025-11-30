@@ -81,19 +81,34 @@ model Order {
   expiresAt              DateTime
   paidAt                 DateTime?
   manualPaymentReference String?
+  manualPaymentProofUrl  String?        @db.LongText
   feeCents               Int            @default(0)
   netAmountCents         Int            @default(0)
+  origin                 OrderOrigin    @default(MARKETPLACE)
+  responsibleName        String?
+  responsibleDocument    String?
+  responsibleEmail       String?
+  responsiblePhone       String?
+  amountReceivedCents    Int?
+  manualNotes            String?        @db.LongText
+  confirmedById          String?
+  confirmedAt            DateTime?
   createdAt              DateTime       @default(now())
   event                  Event          @relation(fields: [eventId], references: [id])
   pricingLot             EventLot?      @relation(fields: [pricingLotId], references: [id])
   refunds                Refund[]
   registrations          Registration[]
   webhookEvents          WebhookEvent[]
+  items                  OrderItem[]
+  serviceOrders          ServiceOrder[]
+  confirmedBy            User?          @relation("ManualOrderConfirmedBy", fields: [confirmedById], references: [id])
 
   @@index([eventId])
   @@index([buyerCpf])
   @@index([status])
   @@index([pricingLotId], map: "Order_pricingLotId_fkey")
+  @@index([origin])
+  @@index([confirmedById])
 }
 
 model Registration {
@@ -122,6 +137,7 @@ model Registration {
   event         Event     @relation(fields: [eventId], references: [id])
   ministry      Ministry? @relation(fields: [ministryId], references: [id])
   order         Order     @relation(fields: [orderId], references: [id])
+  orderItems    OrderItem[]
 
   @@unique([eventId, cpf])
   @@index([orderId])
@@ -201,6 +217,9 @@ model User {
   primaryMinistry      Ministry?        @relation("UserPrimaryMinistry", fields: [ministryId], references: [id])
   profile              Profile?         @relation(fields: [profileId], references: [id])
   permissionsOverride  UserPermission[]
+  confirmedManualOrders Order[]          @relation("ManualOrderConfirmedBy")
+  confirmedOrderItems  OrderItem[]       @relation("OrderItemConfirmedBy")
+  issuedServiceOrders  ServiceOrder[]    @relation("ServiceOrderIssuedBy")
 
   @@index([profileId])
   @@index([churchId], map: "User_churchScopeId_fkey")
@@ -329,4 +348,53 @@ model UserPermission {
 enum UserStatus {
   ACTIVE
   INACTIVE
+}
+
+enum OrderOrigin {
+  MARKETPLACE
+  MANUAL
+}
+
+enum OrderItemStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+}
+
+model OrderItem {
+  id             String          @id @default(cuid())
+  orderId        String
+  registrationId String
+  amountCents    Int
+  status         OrderItemStatus @default(PENDING)
+  notes          String?         @db.LongText
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  confirmedById  String?
+  order          Order           @relation(fields: [orderId], references: [id])
+  registration   Registration    @relation(fields: [registrationId], references: [id])
+  confirmedBy    User?           @relation("OrderItemConfirmedBy", fields: [confirmedById], references: [id])
+
+  @@unique([orderId, registrationId])
+  @@index([registrationId])
+  @@index([confirmedById])
+}
+
+model ServiceOrder {
+  id           String   @id @default(cuid())
+  orderId      String
+  number       Int
+  totalCents   Int
+  proofUrl     String?  @db.LongText
+  pdfUrl       String?  @db.LongText
+  notes        String?  @db.LongText
+  metadata     Json?
+  issuedAt     DateTime @default(now())
+  issuedById   String?
+  order        Order    @relation(fields: [orderId], references: [id])
+  issuedBy     User?    @relation("ServiceOrderIssuedBy", fields: [issuedById], references: [id])
+
+  @@index([orderId])
+  @@index([issuedById])
+  @@unique([orderId, number])
 }

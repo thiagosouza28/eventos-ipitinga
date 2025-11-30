@@ -98,23 +98,58 @@ export type ProfilePermission = $Result.DefaultSelection<Prisma.$ProfilePermissi
  * 
  */
 export type UserPermission = $Result.DefaultSelection<Prisma.$UserPermissionPayload>
+/**
+ * Model OrderItem
+ * 
+ */
+export type OrderItem = $Result.DefaultSelection<Prisma.$OrderItemPayload>
+/**
+ * Model ServiceOrder
+ * 
+ */
+export type ServiceOrder = $Result.DefaultSelection<Prisma.$ServiceOrderPayload>
 
 /**
  * Enums
  */
 export namespace $Enums {
-  export const UserStatus: {
+  export const OrderOrigin: {
+  MARKETPLACE: 'MARKETPLACE',
+  MANUAL: 'MANUAL'
+};
+
+export type OrderOrigin = (typeof OrderOrigin)[keyof typeof OrderOrigin]
+
+
+export const UserStatus: {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE'
 };
 
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
 
+
+export const OrderItemStatus: {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCELED: 'CANCELED'
+};
+
+export type OrderItemStatus = (typeof OrderItemStatus)[keyof typeof OrderItemStatus]
+
 }
+
+export type OrderOrigin = $Enums.OrderOrigin
+
+export const OrderOrigin: typeof $Enums.OrderOrigin
 
 export type UserStatus = $Enums.UserStatus
 
 export const UserStatus: typeof $Enums.UserStatus
+
+export type OrderItemStatus = $Enums.OrderItemStatus
+
+export const OrderItemStatus: typeof $Enums.OrderItemStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -408,6 +443,26 @@ export class PrismaClient<
     * ```
     */
   get userPermission(): Prisma.UserPermissionDelegate<ExtArgs>;
+
+  /**
+   * `prisma.orderItem`: Exposes CRUD operations for the **OrderItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrderItems
+    * const orderItems = await prisma.orderItem.findMany()
+    * ```
+    */
+  get orderItem(): Prisma.OrderItemDelegate<ExtArgs>;
+
+  /**
+   * `prisma.serviceOrder`: Exposes CRUD operations for the **ServiceOrder** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ServiceOrders
+    * const serviceOrders = await prisma.serviceOrder.findMany()
+    * ```
+    */
+  get serviceOrder(): Prisma.ServiceOrderDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -865,7 +920,9 @@ export namespace Prisma {
     MinistryUser: 'MinistryUser',
     Profile: 'Profile',
     ProfilePermission: 'ProfilePermission',
-    UserPermission: 'UserPermission'
+    UserPermission: 'UserPermission',
+    OrderItem: 'OrderItem',
+    ServiceOrder: 'ServiceOrder'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -881,7 +938,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "systemConfig" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission"
+      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "systemConfig" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission" | "orderItem" | "serviceOrder"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2007,6 +2064,138 @@ export namespace Prisma {
           }
         }
       }
+      OrderItem: {
+        payload: Prisma.$OrderItemPayload<ExtArgs>
+        fields: Prisma.OrderItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrderItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrderItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>
+          }
+          findFirst: {
+            args: Prisma.OrderItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrderItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>
+          }
+          findMany: {
+            args: Prisma.OrderItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>[]
+          }
+          create: {
+            args: Prisma.OrderItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>
+          }
+          createMany: {
+            args: Prisma.OrderItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.OrderItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>
+          }
+          update: {
+            args: Prisma.OrderItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrderItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrderItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.OrderItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrderItemPayload>
+          }
+          aggregate: {
+            args: Prisma.OrderItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrderItem>
+          }
+          groupBy: {
+            args: Prisma.OrderItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrderItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrderItemCountArgs<ExtArgs>
+            result: $Utils.Optional<OrderItemCountAggregateOutputType> | number
+          }
+        }
+      }
+      ServiceOrder: {
+        payload: Prisma.$ServiceOrderPayload<ExtArgs>
+        fields: Prisma.ServiceOrderFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ServiceOrderFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ServiceOrderFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>
+          }
+          findFirst: {
+            args: Prisma.ServiceOrderFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ServiceOrderFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>
+          }
+          findMany: {
+            args: Prisma.ServiceOrderFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>[]
+          }
+          create: {
+            args: Prisma.ServiceOrderCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>
+          }
+          createMany: {
+            args: Prisma.ServiceOrderCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.ServiceOrderDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>
+          }
+          update: {
+            args: Prisma.ServiceOrderUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>
+          }
+          deleteMany: {
+            args: Prisma.ServiceOrderDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ServiceOrderUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.ServiceOrderUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ServiceOrderPayload>
+          }
+          aggregate: {
+            args: Prisma.ServiceOrderAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateServiceOrder>
+          }
+          groupBy: {
+            args: Prisma.ServiceOrderGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ServiceOrderGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ServiceOrderCountArgs<ExtArgs>
+            result: $Utils.Optional<ServiceOrderCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2318,12 +2507,16 @@ export namespace Prisma {
     refunds: number
     registrations: number
     webhookEvents: number
+    items: number
+    serviceOrders: number
   }
 
   export type OrderCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     refunds?: boolean | OrderCountOutputTypeCountRefundsArgs
     registrations?: boolean | OrderCountOutputTypeCountRegistrationsArgs
     webhookEvents?: boolean | OrderCountOutputTypeCountWebhookEventsArgs
+    items?: boolean | OrderCountOutputTypeCountItemsArgs
+    serviceOrders?: boolean | OrderCountOutputTypeCountServiceOrdersArgs
   }
 
   // Custom InputTypes
@@ -2358,6 +2551,20 @@ export namespace Prisma {
     where?: WebhookEventWhereInput
   }
 
+  /**
+   * OrderCountOutputType without action
+   */
+  export type OrderCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderItemWhereInput
+  }
+
+  /**
+   * OrderCountOutputType without action
+   */
+  export type OrderCountOutputTypeCountServiceOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiceOrderWhereInput
+  }
+
 
   /**
    * Count Type RegistrationCountOutputType
@@ -2365,10 +2572,12 @@ export namespace Prisma {
 
   export type RegistrationCountOutputType = {
     refunds: number
+    orderItems: number
   }
 
   export type RegistrationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     refunds?: boolean | RegistrationCountOutputTypeCountRefundsArgs
+    orderItems?: boolean | RegistrationCountOutputTypeCountOrderItemsArgs
   }
 
   // Custom InputTypes
@@ -2389,6 +2598,13 @@ export namespace Prisma {
     where?: RefundWhereInput
   }
 
+  /**
+   * RegistrationCountOutputType without action
+   */
+  export type RegistrationCountOutputTypeCountOrderItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderItemWhereInput
+  }
+
 
   /**
    * Count Type UserCountOutputType
@@ -2400,6 +2616,9 @@ export namespace Prisma {
     ministries: number
     systemConfigsUpdated: number
     permissionsOverride: number
+    confirmedManualOrders: number
+    confirmedOrderItems: number
+    issuedServiceOrders: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2408,6 +2627,9 @@ export namespace Prisma {
     ministries?: boolean | UserCountOutputTypeCountMinistriesArgs
     systemConfigsUpdated?: boolean | UserCountOutputTypeCountSystemConfigsUpdatedArgs
     permissionsOverride?: boolean | UserCountOutputTypeCountPermissionsOverrideArgs
+    confirmedManualOrders?: boolean | UserCountOutputTypeCountConfirmedManualOrdersArgs
+    confirmedOrderItems?: boolean | UserCountOutputTypeCountConfirmedOrderItemsArgs
+    issuedServiceOrders?: boolean | UserCountOutputTypeCountIssuedServiceOrdersArgs
   }
 
   // Custom InputTypes
@@ -2454,6 +2676,27 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountPermissionsOverrideArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserPermissionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountConfirmedManualOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountConfirmedOrderItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderItemWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountIssuedServiceOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiceOrderWhereInput
   }
 
 
@@ -5710,6 +5953,7 @@ export namespace Prisma {
     preferenceVersion: number | null
     feeCents: number | null
     netAmountCents: number | null
+    amountReceivedCents: number | null
   }
 
   export type OrderSumAggregateOutputType = {
@@ -5717,6 +5961,7 @@ export namespace Prisma {
     preferenceVersion: number | null
     feeCents: number | null
     netAmountCents: number | null
+    amountReceivedCents: number | null
   }
 
   export type OrderMinAggregateOutputType = {
@@ -5734,8 +5979,18 @@ export namespace Prisma {
     expiresAt: Date | null
     paidAt: Date | null
     manualPaymentReference: string | null
+    manualPaymentProofUrl: string | null
     feeCents: number | null
     netAmountCents: number | null
+    origin: $Enums.OrderOrigin | null
+    responsibleName: string | null
+    responsibleDocument: string | null
+    responsibleEmail: string | null
+    responsiblePhone: string | null
+    amountReceivedCents: number | null
+    manualNotes: string | null
+    confirmedById: string | null
+    confirmedAt: Date | null
     createdAt: Date | null
   }
 
@@ -5754,8 +6009,18 @@ export namespace Prisma {
     expiresAt: Date | null
     paidAt: Date | null
     manualPaymentReference: string | null
+    manualPaymentProofUrl: string | null
     feeCents: number | null
     netAmountCents: number | null
+    origin: $Enums.OrderOrigin | null
+    responsibleName: string | null
+    responsibleDocument: string | null
+    responsibleEmail: string | null
+    responsiblePhone: string | null
+    amountReceivedCents: number | null
+    manualNotes: string | null
+    confirmedById: string | null
+    confirmedAt: Date | null
     createdAt: Date | null
   }
 
@@ -5774,8 +6039,18 @@ export namespace Prisma {
     expiresAt: number
     paidAt: number
     manualPaymentReference: number
+    manualPaymentProofUrl: number
     feeCents: number
     netAmountCents: number
+    origin: number
+    responsibleName: number
+    responsibleDocument: number
+    responsibleEmail: number
+    responsiblePhone: number
+    amountReceivedCents: number
+    manualNotes: number
+    confirmedById: number
+    confirmedAt: number
     createdAt: number
     _all: number
   }
@@ -5786,6 +6061,7 @@ export namespace Prisma {
     preferenceVersion?: true
     feeCents?: true
     netAmountCents?: true
+    amountReceivedCents?: true
   }
 
   export type OrderSumAggregateInputType = {
@@ -5793,6 +6069,7 @@ export namespace Prisma {
     preferenceVersion?: true
     feeCents?: true
     netAmountCents?: true
+    amountReceivedCents?: true
   }
 
   export type OrderMinAggregateInputType = {
@@ -5810,8 +6087,18 @@ export namespace Prisma {
     expiresAt?: true
     paidAt?: true
     manualPaymentReference?: true
+    manualPaymentProofUrl?: true
     feeCents?: true
     netAmountCents?: true
+    origin?: true
+    responsibleName?: true
+    responsibleDocument?: true
+    responsibleEmail?: true
+    responsiblePhone?: true
+    amountReceivedCents?: true
+    manualNotes?: true
+    confirmedById?: true
+    confirmedAt?: true
     createdAt?: true
   }
 
@@ -5830,8 +6117,18 @@ export namespace Prisma {
     expiresAt?: true
     paidAt?: true
     manualPaymentReference?: true
+    manualPaymentProofUrl?: true
     feeCents?: true
     netAmountCents?: true
+    origin?: true
+    responsibleName?: true
+    responsibleDocument?: true
+    responsibleEmail?: true
+    responsiblePhone?: true
+    amountReceivedCents?: true
+    manualNotes?: true
+    confirmedById?: true
+    confirmedAt?: true
     createdAt?: true
   }
 
@@ -5850,8 +6147,18 @@ export namespace Prisma {
     expiresAt?: true
     paidAt?: true
     manualPaymentReference?: true
+    manualPaymentProofUrl?: true
     feeCents?: true
     netAmountCents?: true
+    origin?: true
+    responsibleName?: true
+    responsibleDocument?: true
+    responsibleEmail?: true
+    responsiblePhone?: true
+    amountReceivedCents?: true
+    manualNotes?: true
+    confirmedById?: true
+    confirmedAt?: true
     createdAt?: true
     _all?: true
   }
@@ -5957,8 +6264,18 @@ export namespace Prisma {
     expiresAt: Date
     paidAt: Date | null
     manualPaymentReference: string | null
+    manualPaymentProofUrl: string | null
     feeCents: number
     netAmountCents: number
+    origin: $Enums.OrderOrigin
+    responsibleName: string | null
+    responsibleDocument: string | null
+    responsibleEmail: string | null
+    responsiblePhone: string | null
+    amountReceivedCents: number | null
+    manualNotes: string | null
+    confirmedById: string | null
+    confirmedAt: Date | null
     createdAt: Date
     _count: OrderCountAggregateOutputType | null
     _avg: OrderAvgAggregateOutputType | null
@@ -5996,14 +6313,27 @@ export namespace Prisma {
     expiresAt?: boolean
     paidAt?: boolean
     manualPaymentReference?: boolean
+    manualPaymentProofUrl?: boolean
     feeCents?: boolean
     netAmountCents?: boolean
+    origin?: boolean
+    responsibleName?: boolean
+    responsibleDocument?: boolean
+    responsibleEmail?: boolean
+    responsiblePhone?: boolean
+    amountReceivedCents?: boolean
+    manualNotes?: boolean
+    confirmedById?: boolean
+    confirmedAt?: boolean
     createdAt?: boolean
     event?: boolean | EventDefaultArgs<ExtArgs>
     pricingLot?: boolean | Order$pricingLotArgs<ExtArgs>
     refunds?: boolean | Order$refundsArgs<ExtArgs>
     registrations?: boolean | Order$registrationsArgs<ExtArgs>
     webhookEvents?: boolean | Order$webhookEventsArgs<ExtArgs>
+    items?: boolean | Order$itemsArgs<ExtArgs>
+    serviceOrders?: boolean | Order$serviceOrdersArgs<ExtArgs>
+    confirmedBy?: boolean | Order$confirmedByArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["order"]>
 
@@ -6023,8 +6353,18 @@ export namespace Prisma {
     expiresAt?: boolean
     paidAt?: boolean
     manualPaymentReference?: boolean
+    manualPaymentProofUrl?: boolean
     feeCents?: boolean
     netAmountCents?: boolean
+    origin?: boolean
+    responsibleName?: boolean
+    responsibleDocument?: boolean
+    responsibleEmail?: boolean
+    responsiblePhone?: boolean
+    amountReceivedCents?: boolean
+    manualNotes?: boolean
+    confirmedById?: boolean
+    confirmedAt?: boolean
     createdAt?: boolean
   }
 
@@ -6034,6 +6374,9 @@ export namespace Prisma {
     refunds?: boolean | Order$refundsArgs<ExtArgs>
     registrations?: boolean | Order$registrationsArgs<ExtArgs>
     webhookEvents?: boolean | Order$webhookEventsArgs<ExtArgs>
+    items?: boolean | Order$itemsArgs<ExtArgs>
+    serviceOrders?: boolean | Order$serviceOrdersArgs<ExtArgs>
+    confirmedBy?: boolean | Order$confirmedByArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -6045,6 +6388,9 @@ export namespace Prisma {
       refunds: Prisma.$RefundPayload<ExtArgs>[]
       registrations: Prisma.$RegistrationPayload<ExtArgs>[]
       webhookEvents: Prisma.$WebhookEventPayload<ExtArgs>[]
+      items: Prisma.$OrderItemPayload<ExtArgs>[]
+      serviceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
+      confirmedBy: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -6061,8 +6407,18 @@ export namespace Prisma {
       expiresAt: Date
       paidAt: Date | null
       manualPaymentReference: string | null
+      manualPaymentProofUrl: string | null
       feeCents: number
       netAmountCents: number
+      origin: $Enums.OrderOrigin
+      responsibleName: string | null
+      responsibleDocument: string | null
+      responsibleEmail: string | null
+      responsiblePhone: string | null
+      amountReceivedCents: number | null
+      manualNotes: string | null
+      confirmedById: string | null
+      confirmedAt: Date | null
       createdAt: Date
     }, ExtArgs["result"]["order"]>
     composites: {}
@@ -6409,6 +6765,9 @@ export namespace Prisma {
     refunds<T extends Order$refundsArgs<ExtArgs> = {}>(args?: Subset<T, Order$refundsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RefundPayload<ExtArgs>, T, "findMany"> | Null>
     registrations<T extends Order$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Order$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     webhookEvents<T extends Order$webhookEventsArgs<ExtArgs> = {}>(args?: Subset<T, Order$webhookEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WebhookEventPayload<ExtArgs>, T, "findMany"> | Null>
+    items<T extends Order$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Order$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany"> | Null>
+    serviceOrders<T extends Order$serviceOrdersArgs<ExtArgs> = {}>(args?: Subset<T, Order$serviceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany"> | Null>
+    confirmedBy<T extends Order$confirmedByArgs<ExtArgs> = {}>(args?: Subset<T, Order$confirmedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6452,8 +6811,18 @@ export namespace Prisma {
     readonly expiresAt: FieldRef<"Order", 'DateTime'>
     readonly paidAt: FieldRef<"Order", 'DateTime'>
     readonly manualPaymentReference: FieldRef<"Order", 'String'>
+    readonly manualPaymentProofUrl: FieldRef<"Order", 'String'>
     readonly feeCents: FieldRef<"Order", 'Int'>
     readonly netAmountCents: FieldRef<"Order", 'Int'>
+    readonly origin: FieldRef<"Order", 'OrderOrigin'>
+    readonly responsibleName: FieldRef<"Order", 'String'>
+    readonly responsibleDocument: FieldRef<"Order", 'String'>
+    readonly responsibleEmail: FieldRef<"Order", 'String'>
+    readonly responsiblePhone: FieldRef<"Order", 'String'>
+    readonly amountReceivedCents: FieldRef<"Order", 'Int'>
+    readonly manualNotes: FieldRef<"Order", 'String'>
+    readonly confirmedById: FieldRef<"Order", 'String'>
+    readonly confirmedAt: FieldRef<"Order", 'DateTime'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
   }
     
@@ -6829,6 +7198,61 @@ export namespace Prisma {
   }
 
   /**
+   * Order.items
+   */
+  export type Order$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    where?: OrderItemWhereInput
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    cursor?: OrderItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * Order.serviceOrders
+   */
+  export type Order$serviceOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    where?: ServiceOrderWhereInput
+    orderBy?: ServiceOrderOrderByWithRelationInput | ServiceOrderOrderByWithRelationInput[]
+    cursor?: ServiceOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiceOrderScalarFieldEnum | ServiceOrderScalarFieldEnum[]
+  }
+
+  /**
+   * Order.confirmedBy
+   */
+  export type Order$confirmedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
    * Order without action
    */
   export type OrderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7163,6 +7587,7 @@ export namespace Prisma {
     event?: boolean | EventDefaultArgs<ExtArgs>
     ministry?: boolean | Registration$ministryArgs<ExtArgs>
     order?: boolean | OrderDefaultArgs<ExtArgs>
+    orderItems?: boolean | Registration$orderItemsArgs<ExtArgs>
     _count?: boolean | RegistrationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
 
@@ -7196,6 +7621,7 @@ export namespace Prisma {
     event?: boolean | EventDefaultArgs<ExtArgs>
     ministry?: boolean | Registration$ministryArgs<ExtArgs>
     order?: boolean | OrderDefaultArgs<ExtArgs>
+    orderItems?: boolean | Registration$orderItemsArgs<ExtArgs>
     _count?: boolean | RegistrationCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -7208,6 +7634,7 @@ export namespace Prisma {
       event: Prisma.$EventPayload<ExtArgs>
       ministry: Prisma.$MinistryPayload<ExtArgs> | null
       order: Prisma.$OrderPayload<ExtArgs>
+      orderItems: Prisma.$OrderItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -7575,6 +8002,7 @@ export namespace Prisma {
     event<T extends EventDefaultArgs<ExtArgs> = {}>(args?: Subset<T, EventDefaultArgs<ExtArgs>>): Prisma__EventClient<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     ministry<T extends Registration$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Registration$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    orderItems<T extends Registration$orderItemsArgs<ExtArgs> = {}>(args?: Subset<T, Registration$orderItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -7954,6 +8382,26 @@ export namespace Prisma {
      */
     include?: MinistryInclude<ExtArgs> | null
     where?: MinistryWhereInput
+  }
+
+  /**
+   * Registration.orderItems
+   */
+  export type Registration$orderItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    where?: OrderItemWhereInput
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    cursor?: OrderItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
   }
 
   /**
@@ -11014,6 +11462,9 @@ export namespace Prisma {
     primaryMinistry?: boolean | User$primaryMinistryArgs<ExtArgs>
     profile?: boolean | User$profileArgs<ExtArgs>
     permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
+    confirmedManualOrders?: boolean | User$confirmedManualOrdersArgs<ExtArgs>
+    confirmedOrderItems?: boolean | User$confirmedOrderItemsArgs<ExtArgs>
+    issuedServiceOrders?: boolean | User$issuedServiceOrdersArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -11047,6 +11498,9 @@ export namespace Prisma {
     primaryMinistry?: boolean | User$primaryMinistryArgs<ExtArgs>
     profile?: boolean | User$profileArgs<ExtArgs>
     permissionsOverride?: boolean | User$permissionsOverrideArgs<ExtArgs>
+    confirmedManualOrders?: boolean | User$confirmedManualOrdersArgs<ExtArgs>
+    confirmedOrderItems?: boolean | User$confirmedOrderItemsArgs<ExtArgs>
+    issuedServiceOrders?: boolean | User$issuedServiceOrdersArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -11062,6 +11516,9 @@ export namespace Prisma {
       primaryMinistry: Prisma.$MinistryPayload<ExtArgs> | null
       profile: Prisma.$ProfilePayload<ExtArgs> | null
       permissionsOverride: Prisma.$UserPermissionPayload<ExtArgs>[]
+      confirmedManualOrders: Prisma.$OrderPayload<ExtArgs>[]
+      confirmedOrderItems: Prisma.$OrderItemPayload<ExtArgs>[]
+      issuedServiceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -11429,6 +11886,9 @@ export namespace Prisma {
     primaryMinistry<T extends User$primaryMinistryArgs<ExtArgs> = {}>(args?: Subset<T, User$primaryMinistryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     profile<T extends User$profileArgs<ExtArgs> = {}>(args?: Subset<T, User$profileArgs<ExtArgs>>): Prisma__ProfileClient<$Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     permissionsOverride<T extends User$permissionsOverrideArgs<ExtArgs> = {}>(args?: Subset<T, User$permissionsOverrideArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPermissionPayload<ExtArgs>, T, "findMany"> | Null>
+    confirmedManualOrders<T extends User$confirmedManualOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$confirmedManualOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
+    confirmedOrderItems<T extends User$confirmedOrderItemsArgs<ExtArgs> = {}>(args?: Subset<T, User$confirmedOrderItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany"> | Null>
+    issuedServiceOrders<T extends User$issuedServiceOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$issuedServiceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11930,6 +12390,66 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: UserPermissionScalarFieldEnum | UserPermissionScalarFieldEnum[]
+  }
+
+  /**
+   * User.confirmedManualOrders
+   */
+  export type User$confirmedManualOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
+  }
+
+  /**
+   * User.confirmedOrderItems
+   */
+  export type User$confirmedOrderItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    where?: OrderItemWhereInput
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    cursor?: OrderItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * User.issuedServiceOrders
+   */
+  export type User$issuedServiceOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    where?: ServiceOrderWhereInput
+    orderBy?: ServiceOrderOrderByWithRelationInput | ServiceOrderOrderByWithRelationInput[]
+    cursor?: ServiceOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiceOrderScalarFieldEnum | ServiceOrderScalarFieldEnum[]
   }
 
   /**
@@ -19482,6 +20002,1973 @@ export namespace Prisma {
 
 
   /**
+   * Model OrderItem
+   */
+
+  export type AggregateOrderItem = {
+    _count: OrderItemCountAggregateOutputType | null
+    _avg: OrderItemAvgAggregateOutputType | null
+    _sum: OrderItemSumAggregateOutputType | null
+    _min: OrderItemMinAggregateOutputType | null
+    _max: OrderItemMaxAggregateOutputType | null
+  }
+
+  export type OrderItemAvgAggregateOutputType = {
+    amountCents: number | null
+  }
+
+  export type OrderItemSumAggregateOutputType = {
+    amountCents: number | null
+  }
+
+  export type OrderItemMinAggregateOutputType = {
+    id: string | null
+    orderId: string | null
+    registrationId: string | null
+    amountCents: number | null
+    status: $Enums.OrderItemStatus | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    confirmedById: string | null
+  }
+
+  export type OrderItemMaxAggregateOutputType = {
+    id: string | null
+    orderId: string | null
+    registrationId: string | null
+    amountCents: number | null
+    status: $Enums.OrderItemStatus | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    confirmedById: string | null
+  }
+
+  export type OrderItemCountAggregateOutputType = {
+    id: number
+    orderId: number
+    registrationId: number
+    amountCents: number
+    status: number
+    notes: number
+    createdAt: number
+    updatedAt: number
+    confirmedById: number
+    _all: number
+  }
+
+
+  export type OrderItemAvgAggregateInputType = {
+    amountCents?: true
+  }
+
+  export type OrderItemSumAggregateInputType = {
+    amountCents?: true
+  }
+
+  export type OrderItemMinAggregateInputType = {
+    id?: true
+    orderId?: true
+    registrationId?: true
+    amountCents?: true
+    status?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+    confirmedById?: true
+  }
+
+  export type OrderItemMaxAggregateInputType = {
+    id?: true
+    orderId?: true
+    registrationId?: true
+    amountCents?: true
+    status?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+    confirmedById?: true
+  }
+
+  export type OrderItemCountAggregateInputType = {
+    id?: true
+    orderId?: true
+    registrationId?: true
+    amountCents?: true
+    status?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+    confirmedById?: true
+    _all?: true
+  }
+
+  export type OrderItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrderItem to aggregate.
+     */
+    where?: OrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrderItems to fetch.
+     */
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrderItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrderItems
+    **/
+    _count?: true | OrderItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrderItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrderItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrderItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrderItemMaxAggregateInputType
+  }
+
+  export type GetOrderItemAggregateType<T extends OrderItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrderItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrderItem[P]>
+      : GetScalarType<T[P], AggregateOrderItem[P]>
+  }
+
+
+
+
+  export type OrderItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderItemWhereInput
+    orderBy?: OrderItemOrderByWithAggregationInput | OrderItemOrderByWithAggregationInput[]
+    by: OrderItemScalarFieldEnum[] | OrderItemScalarFieldEnum
+    having?: OrderItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrderItemCountAggregateInputType | true
+    _avg?: OrderItemAvgAggregateInputType
+    _sum?: OrderItemSumAggregateInputType
+    _min?: OrderItemMinAggregateInputType
+    _max?: OrderItemMaxAggregateInputType
+  }
+
+  export type OrderItemGroupByOutputType = {
+    id: string
+    orderId: string
+    registrationId: string
+    amountCents: number
+    status: $Enums.OrderItemStatus
+    notes: string | null
+    createdAt: Date
+    updatedAt: Date
+    confirmedById: string | null
+    _count: OrderItemCountAggregateOutputType | null
+    _avg: OrderItemAvgAggregateOutputType | null
+    _sum: OrderItemSumAggregateOutputType | null
+    _min: OrderItemMinAggregateOutputType | null
+    _max: OrderItemMaxAggregateOutputType | null
+  }
+
+  type GetOrderItemGroupByPayload<T extends OrderItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrderItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrderItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrderItemGroupByOutputType[P]>
+            : GetScalarType<T[P], OrderItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrderItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    orderId?: boolean
+    registrationId?: boolean
+    amountCents?: boolean
+    status?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    confirmedById?: boolean
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    confirmedBy?: boolean | OrderItem$confirmedByArgs<ExtArgs>
+  }, ExtArgs["result"]["orderItem"]>
+
+
+  export type OrderItemSelectScalar = {
+    id?: boolean
+    orderId?: boolean
+    registrationId?: boolean
+    amountCents?: boolean
+    status?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    confirmedById?: boolean
+  }
+
+  export type OrderItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    confirmedBy?: boolean | OrderItem$confirmedByArgs<ExtArgs>
+  }
+
+  export type $OrderItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrderItem"
+    objects: {
+      order: Prisma.$OrderPayload<ExtArgs>
+      registration: Prisma.$RegistrationPayload<ExtArgs>
+      confirmedBy: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      orderId: string
+      registrationId: string
+      amountCents: number
+      status: $Enums.OrderItemStatus
+      notes: string | null
+      createdAt: Date
+      updatedAt: Date
+      confirmedById: string | null
+    }, ExtArgs["result"]["orderItem"]>
+    composites: {}
+  }
+
+  type OrderItemGetPayload<S extends boolean | null | undefined | OrderItemDefaultArgs> = $Result.GetResult<Prisma.$OrderItemPayload, S>
+
+  type OrderItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<OrderItemFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: OrderItemCountAggregateInputType | true
+    }
+
+  export interface OrderItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrderItem'], meta: { name: 'OrderItem' } }
+    /**
+     * Find zero or one OrderItem that matches the filter.
+     * @param {OrderItemFindUniqueArgs} args - Arguments to find a OrderItem
+     * @example
+     * // Get one OrderItem
+     * const orderItem = await prisma.orderItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrderItemFindUniqueArgs>(args: SelectSubset<T, OrderItemFindUniqueArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one OrderItem that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {OrderItemFindUniqueOrThrowArgs} args - Arguments to find a OrderItem
+     * @example
+     * // Get one OrderItem
+     * const orderItem = await prisma.orderItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrderItemFindUniqueOrThrowArgs>(args: SelectSubset<T, OrderItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first OrderItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemFindFirstArgs} args - Arguments to find a OrderItem
+     * @example
+     * // Get one OrderItem
+     * const orderItem = await prisma.orderItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrderItemFindFirstArgs>(args?: SelectSubset<T, OrderItemFindFirstArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first OrderItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemFindFirstOrThrowArgs} args - Arguments to find a OrderItem
+     * @example
+     * // Get one OrderItem
+     * const orderItem = await prisma.orderItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrderItemFindFirstOrThrowArgs>(args?: SelectSubset<T, OrderItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more OrderItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrderItems
+     * const orderItems = await prisma.orderItem.findMany()
+     * 
+     * // Get first 10 OrderItems
+     * const orderItems = await prisma.orderItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const orderItemWithIdOnly = await prisma.orderItem.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrderItemFindManyArgs>(args?: SelectSubset<T, OrderItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a OrderItem.
+     * @param {OrderItemCreateArgs} args - Arguments to create a OrderItem.
+     * @example
+     * // Create one OrderItem
+     * const OrderItem = await prisma.orderItem.create({
+     *   data: {
+     *     // ... data to create a OrderItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrderItemCreateArgs>(args: SelectSubset<T, OrderItemCreateArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many OrderItems.
+     * @param {OrderItemCreateManyArgs} args - Arguments to create many OrderItems.
+     * @example
+     * // Create many OrderItems
+     * const orderItem = await prisma.orderItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrderItemCreateManyArgs>(args?: SelectSubset<T, OrderItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a OrderItem.
+     * @param {OrderItemDeleteArgs} args - Arguments to delete one OrderItem.
+     * @example
+     * // Delete one OrderItem
+     * const OrderItem = await prisma.orderItem.delete({
+     *   where: {
+     *     // ... filter to delete one OrderItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrderItemDeleteArgs>(args: SelectSubset<T, OrderItemDeleteArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one OrderItem.
+     * @param {OrderItemUpdateArgs} args - Arguments to update one OrderItem.
+     * @example
+     * // Update one OrderItem
+     * const orderItem = await prisma.orderItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrderItemUpdateArgs>(args: SelectSubset<T, OrderItemUpdateArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more OrderItems.
+     * @param {OrderItemDeleteManyArgs} args - Arguments to filter OrderItems to delete.
+     * @example
+     * // Delete a few OrderItems
+     * const { count } = await prisma.orderItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrderItemDeleteManyArgs>(args?: SelectSubset<T, OrderItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrderItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrderItems
+     * const orderItem = await prisma.orderItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrderItemUpdateManyArgs>(args: SelectSubset<T, OrderItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one OrderItem.
+     * @param {OrderItemUpsertArgs} args - Arguments to update or create a OrderItem.
+     * @example
+     * // Update or create a OrderItem
+     * const orderItem = await prisma.orderItem.upsert({
+     *   create: {
+     *     // ... data to create a OrderItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrderItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrderItemUpsertArgs>(args: SelectSubset<T, OrderItemUpsertArgs<ExtArgs>>): Prisma__OrderItemClient<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of OrderItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemCountArgs} args - Arguments to filter OrderItems to count.
+     * @example
+     * // Count the number of OrderItems
+     * const count = await prisma.orderItem.count({
+     *   where: {
+     *     // ... the filter for the OrderItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrderItemCountArgs>(
+      args?: Subset<T, OrderItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrderItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrderItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrderItemAggregateArgs>(args: Subset<T, OrderItemAggregateArgs>): Prisma.PrismaPromise<GetOrderItemAggregateType<T>>
+
+    /**
+     * Group by OrderItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrderItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrderItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrderItemGroupByArgs['orderBy'] }
+        : { orderBy?: OrderItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrderItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrderItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrderItem model
+   */
+  readonly fields: OrderItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrderItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrderItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    registration<T extends RegistrationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RegistrationDefaultArgs<ExtArgs>>): Prisma__RegistrationClient<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    confirmedBy<T extends OrderItem$confirmedByArgs<ExtArgs> = {}>(args?: Subset<T, OrderItem$confirmedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrderItem model
+   */ 
+  interface OrderItemFieldRefs {
+    readonly id: FieldRef<"OrderItem", 'String'>
+    readonly orderId: FieldRef<"OrderItem", 'String'>
+    readonly registrationId: FieldRef<"OrderItem", 'String'>
+    readonly amountCents: FieldRef<"OrderItem", 'Int'>
+    readonly status: FieldRef<"OrderItem", 'OrderItemStatus'>
+    readonly notes: FieldRef<"OrderItem", 'String'>
+    readonly createdAt: FieldRef<"OrderItem", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrderItem", 'DateTime'>
+    readonly confirmedById: FieldRef<"OrderItem", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrderItem findUnique
+   */
+  export type OrderItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which OrderItem to fetch.
+     */
+    where: OrderItemWhereUniqueInput
+  }
+
+  /**
+   * OrderItem findUniqueOrThrow
+   */
+  export type OrderItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which OrderItem to fetch.
+     */
+    where: OrderItemWhereUniqueInput
+  }
+
+  /**
+   * OrderItem findFirst
+   */
+  export type OrderItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which OrderItem to fetch.
+     */
+    where?: OrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrderItems to fetch.
+     */
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrderItems.
+     */
+    cursor?: OrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrderItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrderItems.
+     */
+    distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * OrderItem findFirstOrThrow
+   */
+  export type OrderItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which OrderItem to fetch.
+     */
+    where?: OrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrderItems to fetch.
+     */
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrderItems.
+     */
+    cursor?: OrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrderItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrderItems.
+     */
+    distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * OrderItem findMany
+   */
+  export type OrderItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which OrderItems to fetch.
+     */
+    where?: OrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrderItems to fetch.
+     */
+    orderBy?: OrderItemOrderByWithRelationInput | OrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrderItems.
+     */
+    cursor?: OrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrderItems.
+     */
+    skip?: number
+    distinct?: OrderItemScalarFieldEnum | OrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * OrderItem create
+   */
+  export type OrderItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrderItem.
+     */
+    data: XOR<OrderItemCreateInput, OrderItemUncheckedCreateInput>
+  }
+
+  /**
+   * OrderItem createMany
+   */
+  export type OrderItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrderItems.
+     */
+    data: OrderItemCreateManyInput | OrderItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrderItem update
+   */
+  export type OrderItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrderItem.
+     */
+    data: XOR<OrderItemUpdateInput, OrderItemUncheckedUpdateInput>
+    /**
+     * Choose, which OrderItem to update.
+     */
+    where: OrderItemWhereUniqueInput
+  }
+
+  /**
+   * OrderItem updateMany
+   */
+  export type OrderItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrderItems.
+     */
+    data: XOR<OrderItemUpdateManyMutationInput, OrderItemUncheckedUpdateManyInput>
+    /**
+     * Filter which OrderItems to update
+     */
+    where?: OrderItemWhereInput
+  }
+
+  /**
+   * OrderItem upsert
+   */
+  export type OrderItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrderItem to update in case it exists.
+     */
+    where: OrderItemWhereUniqueInput
+    /**
+     * In case the OrderItem found by the `where` argument doesn't exist, create a new OrderItem with this data.
+     */
+    create: XOR<OrderItemCreateInput, OrderItemUncheckedCreateInput>
+    /**
+     * In case the OrderItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrderItemUpdateInput, OrderItemUncheckedUpdateInput>
+  }
+
+  /**
+   * OrderItem delete
+   */
+  export type OrderItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+    /**
+     * Filter which OrderItem to delete.
+     */
+    where: OrderItemWhereUniqueInput
+  }
+
+  /**
+   * OrderItem deleteMany
+   */
+  export type OrderItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrderItems to delete
+     */
+    where?: OrderItemWhereInput
+  }
+
+  /**
+   * OrderItem.confirmedBy
+   */
+  export type OrderItem$confirmedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * OrderItem without action
+   */
+  export type OrderItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrderItem
+     */
+    select?: OrderItemSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderItemInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ServiceOrder
+   */
+
+  export type AggregateServiceOrder = {
+    _count: ServiceOrderCountAggregateOutputType | null
+    _avg: ServiceOrderAvgAggregateOutputType | null
+    _sum: ServiceOrderSumAggregateOutputType | null
+    _min: ServiceOrderMinAggregateOutputType | null
+    _max: ServiceOrderMaxAggregateOutputType | null
+  }
+
+  export type ServiceOrderAvgAggregateOutputType = {
+    number: number | null
+    totalCents: number | null
+  }
+
+  export type ServiceOrderSumAggregateOutputType = {
+    number: number | null
+    totalCents: number | null
+  }
+
+  export type ServiceOrderMinAggregateOutputType = {
+    id: string | null
+    orderId: string | null
+    number: number | null
+    totalCents: number | null
+    proofUrl: string | null
+    pdfUrl: string | null
+    notes: string | null
+    issuedAt: Date | null
+    issuedById: string | null
+  }
+
+  export type ServiceOrderMaxAggregateOutputType = {
+    id: string | null
+    orderId: string | null
+    number: number | null
+    totalCents: number | null
+    proofUrl: string | null
+    pdfUrl: string | null
+    notes: string | null
+    issuedAt: Date | null
+    issuedById: string | null
+  }
+
+  export type ServiceOrderCountAggregateOutputType = {
+    id: number
+    orderId: number
+    number: number
+    totalCents: number
+    proofUrl: number
+    pdfUrl: number
+    notes: number
+    metadata: number
+    issuedAt: number
+    issuedById: number
+    _all: number
+  }
+
+
+  export type ServiceOrderAvgAggregateInputType = {
+    number?: true
+    totalCents?: true
+  }
+
+  export type ServiceOrderSumAggregateInputType = {
+    number?: true
+    totalCents?: true
+  }
+
+  export type ServiceOrderMinAggregateInputType = {
+    id?: true
+    orderId?: true
+    number?: true
+    totalCents?: true
+    proofUrl?: true
+    pdfUrl?: true
+    notes?: true
+    issuedAt?: true
+    issuedById?: true
+  }
+
+  export type ServiceOrderMaxAggregateInputType = {
+    id?: true
+    orderId?: true
+    number?: true
+    totalCents?: true
+    proofUrl?: true
+    pdfUrl?: true
+    notes?: true
+    issuedAt?: true
+    issuedById?: true
+  }
+
+  export type ServiceOrderCountAggregateInputType = {
+    id?: true
+    orderId?: true
+    number?: true
+    totalCents?: true
+    proofUrl?: true
+    pdfUrl?: true
+    notes?: true
+    metadata?: true
+    issuedAt?: true
+    issuedById?: true
+    _all?: true
+  }
+
+  export type ServiceOrderAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ServiceOrder to aggregate.
+     */
+    where?: ServiceOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ServiceOrders to fetch.
+     */
+    orderBy?: ServiceOrderOrderByWithRelationInput | ServiceOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ServiceOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ServiceOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ServiceOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ServiceOrders
+    **/
+    _count?: true | ServiceOrderCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ServiceOrderAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ServiceOrderSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ServiceOrderMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ServiceOrderMaxAggregateInputType
+  }
+
+  export type GetServiceOrderAggregateType<T extends ServiceOrderAggregateArgs> = {
+        [P in keyof T & keyof AggregateServiceOrder]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateServiceOrder[P]>
+      : GetScalarType<T[P], AggregateServiceOrder[P]>
+  }
+
+
+
+
+  export type ServiceOrderGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiceOrderWhereInput
+    orderBy?: ServiceOrderOrderByWithAggregationInput | ServiceOrderOrderByWithAggregationInput[]
+    by: ServiceOrderScalarFieldEnum[] | ServiceOrderScalarFieldEnum
+    having?: ServiceOrderScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ServiceOrderCountAggregateInputType | true
+    _avg?: ServiceOrderAvgAggregateInputType
+    _sum?: ServiceOrderSumAggregateInputType
+    _min?: ServiceOrderMinAggregateInputType
+    _max?: ServiceOrderMaxAggregateInputType
+  }
+
+  export type ServiceOrderGroupByOutputType = {
+    id: string
+    orderId: string
+    number: number
+    totalCents: number
+    proofUrl: string | null
+    pdfUrl: string | null
+    notes: string | null
+    metadata: JsonValue | null
+    issuedAt: Date
+    issuedById: string | null
+    _count: ServiceOrderCountAggregateOutputType | null
+    _avg: ServiceOrderAvgAggregateOutputType | null
+    _sum: ServiceOrderSumAggregateOutputType | null
+    _min: ServiceOrderMinAggregateOutputType | null
+    _max: ServiceOrderMaxAggregateOutputType | null
+  }
+
+  type GetServiceOrderGroupByPayload<T extends ServiceOrderGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ServiceOrderGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ServiceOrderGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ServiceOrderGroupByOutputType[P]>
+            : GetScalarType<T[P], ServiceOrderGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ServiceOrderSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    orderId?: boolean
+    number?: boolean
+    totalCents?: boolean
+    proofUrl?: boolean
+    pdfUrl?: boolean
+    notes?: boolean
+    metadata?: boolean
+    issuedAt?: boolean
+    issuedById?: boolean
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+    issuedBy?: boolean | ServiceOrder$issuedByArgs<ExtArgs>
+  }, ExtArgs["result"]["serviceOrder"]>
+
+
+  export type ServiceOrderSelectScalar = {
+    id?: boolean
+    orderId?: boolean
+    number?: boolean
+    totalCents?: boolean
+    proofUrl?: boolean
+    pdfUrl?: boolean
+    notes?: boolean
+    metadata?: boolean
+    issuedAt?: boolean
+    issuedById?: boolean
+  }
+
+  export type ServiceOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | OrderDefaultArgs<ExtArgs>
+    issuedBy?: boolean | ServiceOrder$issuedByArgs<ExtArgs>
+  }
+
+  export type $ServiceOrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ServiceOrder"
+    objects: {
+      order: Prisma.$OrderPayload<ExtArgs>
+      issuedBy: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      orderId: string
+      number: number
+      totalCents: number
+      proofUrl: string | null
+      pdfUrl: string | null
+      notes: string | null
+      metadata: Prisma.JsonValue | null
+      issuedAt: Date
+      issuedById: string | null
+    }, ExtArgs["result"]["serviceOrder"]>
+    composites: {}
+  }
+
+  type ServiceOrderGetPayload<S extends boolean | null | undefined | ServiceOrderDefaultArgs> = $Result.GetResult<Prisma.$ServiceOrderPayload, S>
+
+  type ServiceOrderCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<ServiceOrderFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: ServiceOrderCountAggregateInputType | true
+    }
+
+  export interface ServiceOrderDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ServiceOrder'], meta: { name: 'ServiceOrder' } }
+    /**
+     * Find zero or one ServiceOrder that matches the filter.
+     * @param {ServiceOrderFindUniqueArgs} args - Arguments to find a ServiceOrder
+     * @example
+     * // Get one ServiceOrder
+     * const serviceOrder = await prisma.serviceOrder.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ServiceOrderFindUniqueArgs>(args: SelectSubset<T, ServiceOrderFindUniqueArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one ServiceOrder that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {ServiceOrderFindUniqueOrThrowArgs} args - Arguments to find a ServiceOrder
+     * @example
+     * // Get one ServiceOrder
+     * const serviceOrder = await prisma.serviceOrder.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ServiceOrderFindUniqueOrThrowArgs>(args: SelectSubset<T, ServiceOrderFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first ServiceOrder that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderFindFirstArgs} args - Arguments to find a ServiceOrder
+     * @example
+     * // Get one ServiceOrder
+     * const serviceOrder = await prisma.serviceOrder.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ServiceOrderFindFirstArgs>(args?: SelectSubset<T, ServiceOrderFindFirstArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first ServiceOrder that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderFindFirstOrThrowArgs} args - Arguments to find a ServiceOrder
+     * @example
+     * // Get one ServiceOrder
+     * const serviceOrder = await prisma.serviceOrder.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ServiceOrderFindFirstOrThrowArgs>(args?: SelectSubset<T, ServiceOrderFindFirstOrThrowArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more ServiceOrders that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ServiceOrders
+     * const serviceOrders = await prisma.serviceOrder.findMany()
+     * 
+     * // Get first 10 ServiceOrders
+     * const serviceOrders = await prisma.serviceOrder.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const serviceOrderWithIdOnly = await prisma.serviceOrder.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ServiceOrderFindManyArgs>(args?: SelectSubset<T, ServiceOrderFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a ServiceOrder.
+     * @param {ServiceOrderCreateArgs} args - Arguments to create a ServiceOrder.
+     * @example
+     * // Create one ServiceOrder
+     * const ServiceOrder = await prisma.serviceOrder.create({
+     *   data: {
+     *     // ... data to create a ServiceOrder
+     *   }
+     * })
+     * 
+     */
+    create<T extends ServiceOrderCreateArgs>(args: SelectSubset<T, ServiceOrderCreateArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many ServiceOrders.
+     * @param {ServiceOrderCreateManyArgs} args - Arguments to create many ServiceOrders.
+     * @example
+     * // Create many ServiceOrders
+     * const serviceOrder = await prisma.serviceOrder.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ServiceOrderCreateManyArgs>(args?: SelectSubset<T, ServiceOrderCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a ServiceOrder.
+     * @param {ServiceOrderDeleteArgs} args - Arguments to delete one ServiceOrder.
+     * @example
+     * // Delete one ServiceOrder
+     * const ServiceOrder = await prisma.serviceOrder.delete({
+     *   where: {
+     *     // ... filter to delete one ServiceOrder
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ServiceOrderDeleteArgs>(args: SelectSubset<T, ServiceOrderDeleteArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one ServiceOrder.
+     * @param {ServiceOrderUpdateArgs} args - Arguments to update one ServiceOrder.
+     * @example
+     * // Update one ServiceOrder
+     * const serviceOrder = await prisma.serviceOrder.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ServiceOrderUpdateArgs>(args: SelectSubset<T, ServiceOrderUpdateArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more ServiceOrders.
+     * @param {ServiceOrderDeleteManyArgs} args - Arguments to filter ServiceOrders to delete.
+     * @example
+     * // Delete a few ServiceOrders
+     * const { count } = await prisma.serviceOrder.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ServiceOrderDeleteManyArgs>(args?: SelectSubset<T, ServiceOrderDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ServiceOrders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ServiceOrders
+     * const serviceOrder = await prisma.serviceOrder.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ServiceOrderUpdateManyArgs>(args: SelectSubset<T, ServiceOrderUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one ServiceOrder.
+     * @param {ServiceOrderUpsertArgs} args - Arguments to update or create a ServiceOrder.
+     * @example
+     * // Update or create a ServiceOrder
+     * const serviceOrder = await prisma.serviceOrder.upsert({
+     *   create: {
+     *     // ... data to create a ServiceOrder
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ServiceOrder we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ServiceOrderUpsertArgs>(args: SelectSubset<T, ServiceOrderUpsertArgs<ExtArgs>>): Prisma__ServiceOrderClient<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of ServiceOrders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderCountArgs} args - Arguments to filter ServiceOrders to count.
+     * @example
+     * // Count the number of ServiceOrders
+     * const count = await prisma.serviceOrder.count({
+     *   where: {
+     *     // ... the filter for the ServiceOrders we want to count
+     *   }
+     * })
+    **/
+    count<T extends ServiceOrderCountArgs>(
+      args?: Subset<T, ServiceOrderCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ServiceOrderCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ServiceOrder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ServiceOrderAggregateArgs>(args: Subset<T, ServiceOrderAggregateArgs>): Prisma.PrismaPromise<GetServiceOrderAggregateType<T>>
+
+    /**
+     * Group by ServiceOrder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ServiceOrderGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ServiceOrderGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ServiceOrderGroupByArgs['orderBy'] }
+        : { orderBy?: ServiceOrderGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ServiceOrderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetServiceOrderGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ServiceOrder model
+   */
+  readonly fields: ServiceOrderFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ServiceOrder.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ServiceOrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    issuedBy<T extends ServiceOrder$issuedByArgs<ExtArgs> = {}>(args?: Subset<T, ServiceOrder$issuedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ServiceOrder model
+   */ 
+  interface ServiceOrderFieldRefs {
+    readonly id: FieldRef<"ServiceOrder", 'String'>
+    readonly orderId: FieldRef<"ServiceOrder", 'String'>
+    readonly number: FieldRef<"ServiceOrder", 'Int'>
+    readonly totalCents: FieldRef<"ServiceOrder", 'Int'>
+    readonly proofUrl: FieldRef<"ServiceOrder", 'String'>
+    readonly pdfUrl: FieldRef<"ServiceOrder", 'String'>
+    readonly notes: FieldRef<"ServiceOrder", 'String'>
+    readonly metadata: FieldRef<"ServiceOrder", 'Json'>
+    readonly issuedAt: FieldRef<"ServiceOrder", 'DateTime'>
+    readonly issuedById: FieldRef<"ServiceOrder", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ServiceOrder findUnique
+   */
+  export type ServiceOrderFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which ServiceOrder to fetch.
+     */
+    where: ServiceOrderWhereUniqueInput
+  }
+
+  /**
+   * ServiceOrder findUniqueOrThrow
+   */
+  export type ServiceOrderFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which ServiceOrder to fetch.
+     */
+    where: ServiceOrderWhereUniqueInput
+  }
+
+  /**
+   * ServiceOrder findFirst
+   */
+  export type ServiceOrderFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which ServiceOrder to fetch.
+     */
+    where?: ServiceOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ServiceOrders to fetch.
+     */
+    orderBy?: ServiceOrderOrderByWithRelationInput | ServiceOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ServiceOrders.
+     */
+    cursor?: ServiceOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ServiceOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ServiceOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ServiceOrders.
+     */
+    distinct?: ServiceOrderScalarFieldEnum | ServiceOrderScalarFieldEnum[]
+  }
+
+  /**
+   * ServiceOrder findFirstOrThrow
+   */
+  export type ServiceOrderFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which ServiceOrder to fetch.
+     */
+    where?: ServiceOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ServiceOrders to fetch.
+     */
+    orderBy?: ServiceOrderOrderByWithRelationInput | ServiceOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ServiceOrders.
+     */
+    cursor?: ServiceOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ServiceOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ServiceOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ServiceOrders.
+     */
+    distinct?: ServiceOrderScalarFieldEnum | ServiceOrderScalarFieldEnum[]
+  }
+
+  /**
+   * ServiceOrder findMany
+   */
+  export type ServiceOrderFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which ServiceOrders to fetch.
+     */
+    where?: ServiceOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ServiceOrders to fetch.
+     */
+    orderBy?: ServiceOrderOrderByWithRelationInput | ServiceOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ServiceOrders.
+     */
+    cursor?: ServiceOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ServiceOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ServiceOrders.
+     */
+    skip?: number
+    distinct?: ServiceOrderScalarFieldEnum | ServiceOrderScalarFieldEnum[]
+  }
+
+  /**
+   * ServiceOrder create
+   */
+  export type ServiceOrderCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ServiceOrder.
+     */
+    data: XOR<ServiceOrderCreateInput, ServiceOrderUncheckedCreateInput>
+  }
+
+  /**
+   * ServiceOrder createMany
+   */
+  export type ServiceOrderCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ServiceOrders.
+     */
+    data: ServiceOrderCreateManyInput | ServiceOrderCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ServiceOrder update
+   */
+  export type ServiceOrderUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ServiceOrder.
+     */
+    data: XOR<ServiceOrderUpdateInput, ServiceOrderUncheckedUpdateInput>
+    /**
+     * Choose, which ServiceOrder to update.
+     */
+    where: ServiceOrderWhereUniqueInput
+  }
+
+  /**
+   * ServiceOrder updateMany
+   */
+  export type ServiceOrderUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ServiceOrders.
+     */
+    data: XOR<ServiceOrderUpdateManyMutationInput, ServiceOrderUncheckedUpdateManyInput>
+    /**
+     * Filter which ServiceOrders to update
+     */
+    where?: ServiceOrderWhereInput
+  }
+
+  /**
+   * ServiceOrder upsert
+   */
+  export type ServiceOrderUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ServiceOrder to update in case it exists.
+     */
+    where: ServiceOrderWhereUniqueInput
+    /**
+     * In case the ServiceOrder found by the `where` argument doesn't exist, create a new ServiceOrder with this data.
+     */
+    create: XOR<ServiceOrderCreateInput, ServiceOrderUncheckedCreateInput>
+    /**
+     * In case the ServiceOrder was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ServiceOrderUpdateInput, ServiceOrderUncheckedUpdateInput>
+  }
+
+  /**
+   * ServiceOrder delete
+   */
+  export type ServiceOrderDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+    /**
+     * Filter which ServiceOrder to delete.
+     */
+    where: ServiceOrderWhereUniqueInput
+  }
+
+  /**
+   * ServiceOrder deleteMany
+   */
+  export type ServiceOrderDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ServiceOrders to delete
+     */
+    where?: ServiceOrderWhereInput
+  }
+
+  /**
+   * ServiceOrder.issuedBy
+   */
+  export type ServiceOrder$issuedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * ServiceOrder without action
+   */
+  export type ServiceOrderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ServiceOrder
+     */
+    select?: ServiceOrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiceOrderInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -19559,8 +22046,18 @@ export namespace Prisma {
     expiresAt: 'expiresAt',
     paidAt: 'paidAt',
     manualPaymentReference: 'manualPaymentReference',
+    manualPaymentProofUrl: 'manualPaymentProofUrl',
     feeCents: 'feeCents',
     netAmountCents: 'netAmountCents',
+    origin: 'origin',
+    responsibleName: 'responsibleName',
+    responsibleDocument: 'responsibleDocument',
+    responsibleEmail: 'responsibleEmail',
+    responsiblePhone: 'responsiblePhone',
+    amountReceivedCents: 'amountReceivedCents',
+    manualNotes: 'manualNotes',
+    confirmedById: 'confirmedById',
+    confirmedAt: 'confirmedAt',
     createdAt: 'createdAt'
   };
 
@@ -19765,6 +22262,37 @@ export namespace Prisma {
   export type UserPermissionScalarFieldEnum = (typeof UserPermissionScalarFieldEnum)[keyof typeof UserPermissionScalarFieldEnum]
 
 
+  export const OrderItemScalarFieldEnum: {
+    id: 'id',
+    orderId: 'orderId',
+    registrationId: 'registrationId',
+    amountCents: 'amountCents',
+    status: 'status',
+    notes: 'notes',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    confirmedById: 'confirmedById'
+  };
+
+  export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+  export const ServiceOrderScalarFieldEnum: {
+    id: 'id',
+    orderId: 'orderId',
+    number: 'number',
+    totalCents: 'totalCents',
+    proofUrl: 'proofUrl',
+    pdfUrl: 'pdfUrl',
+    notes: 'notes',
+    metadata: 'metadata',
+    issuedAt: 'issuedAt',
+    issuedById: 'issuedById'
+  };
+
+  export type ServiceOrderScalarFieldEnum = (typeof ServiceOrderScalarFieldEnum)[keyof typeof ServiceOrderScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -19778,6 +22306,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const NullsOrder: {
@@ -19831,6 +22367,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'OrderOrigin'
+   */
+  export type EnumOrderOriginFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderOrigin'>
+    
+
+
+  /**
    * Reference to a field of type 'UserStatus'
    */
   export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus'>
@@ -19841,6 +22384,13 @@ export namespace Prisma {
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrderItemStatus'
+   */
+  export type EnumOrderItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderItemStatus'>
     
 
 
@@ -20147,14 +22697,27 @@ export namespace Prisma {
     expiresAt?: DateTimeFilter<"Order"> | Date | string
     paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     manualPaymentReference?: StringNullableFilter<"Order"> | string | null
+    manualPaymentProofUrl?: StringNullableFilter<"Order"> | string | null
     feeCents?: IntFilter<"Order"> | number
     netAmountCents?: IntFilter<"Order"> | number
+    origin?: EnumOrderOriginFilter<"Order"> | $Enums.OrderOrigin
+    responsibleName?: StringNullableFilter<"Order"> | string | null
+    responsibleDocument?: StringNullableFilter<"Order"> | string | null
+    responsibleEmail?: StringNullableFilter<"Order"> | string | null
+    responsiblePhone?: StringNullableFilter<"Order"> | string | null
+    amountReceivedCents?: IntNullableFilter<"Order"> | number | null
+    manualNotes?: StringNullableFilter<"Order"> | string | null
+    confirmedById?: StringNullableFilter<"Order"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
     event?: XOR<EventRelationFilter, EventWhereInput>
     pricingLot?: XOR<EventLotNullableRelationFilter, EventLotWhereInput> | null
     refunds?: RefundListRelationFilter
     registrations?: RegistrationListRelationFilter
     webhookEvents?: WebhookEventListRelationFilter
+    items?: OrderItemListRelationFilter
+    serviceOrders?: ServiceOrderListRelationFilter
+    confirmedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
   }
 
   export type OrderOrderByWithRelationInput = {
@@ -20172,14 +22735,27 @@ export namespace Prisma {
     expiresAt?: SortOrder
     paidAt?: SortOrderInput | SortOrder
     manualPaymentReference?: SortOrderInput | SortOrder
+    manualPaymentProofUrl?: SortOrderInput | SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    origin?: SortOrder
+    responsibleName?: SortOrderInput | SortOrder
+    responsibleDocument?: SortOrderInput | SortOrder
+    responsibleEmail?: SortOrderInput | SortOrder
+    responsiblePhone?: SortOrderInput | SortOrder
+    amountReceivedCents?: SortOrderInput | SortOrder
+    manualNotes?: SortOrderInput | SortOrder
+    confirmedById?: SortOrderInput | SortOrder
+    confirmedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     event?: EventOrderByWithRelationInput
     pricingLot?: EventLotOrderByWithRelationInput
     refunds?: RefundOrderByRelationAggregateInput
     registrations?: RegistrationOrderByRelationAggregateInput
     webhookEvents?: WebhookEventOrderByRelationAggregateInput
+    items?: OrderItemOrderByRelationAggregateInput
+    serviceOrders?: ServiceOrderOrderByRelationAggregateInput
+    confirmedBy?: UserOrderByWithRelationInput
   }
 
   export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -20200,14 +22776,27 @@ export namespace Prisma {
     expiresAt?: DateTimeFilter<"Order"> | Date | string
     paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     manualPaymentReference?: StringNullableFilter<"Order"> | string | null
+    manualPaymentProofUrl?: StringNullableFilter<"Order"> | string | null
     feeCents?: IntFilter<"Order"> | number
     netAmountCents?: IntFilter<"Order"> | number
+    origin?: EnumOrderOriginFilter<"Order"> | $Enums.OrderOrigin
+    responsibleName?: StringNullableFilter<"Order"> | string | null
+    responsibleDocument?: StringNullableFilter<"Order"> | string | null
+    responsibleEmail?: StringNullableFilter<"Order"> | string | null
+    responsiblePhone?: StringNullableFilter<"Order"> | string | null
+    amountReceivedCents?: IntNullableFilter<"Order"> | number | null
+    manualNotes?: StringNullableFilter<"Order"> | string | null
+    confirmedById?: StringNullableFilter<"Order"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
     event?: XOR<EventRelationFilter, EventWhereInput>
     pricingLot?: XOR<EventLotNullableRelationFilter, EventLotWhereInput> | null
     refunds?: RefundListRelationFilter
     registrations?: RegistrationListRelationFilter
     webhookEvents?: WebhookEventListRelationFilter
+    items?: OrderItemListRelationFilter
+    serviceOrders?: ServiceOrderListRelationFilter
+    confirmedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
   }, "id" | "externalReference">
 
   export type OrderOrderByWithAggregationInput = {
@@ -20225,8 +22814,18 @@ export namespace Prisma {
     expiresAt?: SortOrder
     paidAt?: SortOrderInput | SortOrder
     manualPaymentReference?: SortOrderInput | SortOrder
+    manualPaymentProofUrl?: SortOrderInput | SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    origin?: SortOrder
+    responsibleName?: SortOrderInput | SortOrder
+    responsibleDocument?: SortOrderInput | SortOrder
+    responsibleEmail?: SortOrderInput | SortOrder
+    responsiblePhone?: SortOrderInput | SortOrder
+    amountReceivedCents?: SortOrderInput | SortOrder
+    manualNotes?: SortOrderInput | SortOrder
+    confirmedById?: SortOrderInput | SortOrder
+    confirmedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: OrderCountOrderByAggregateInput
     _avg?: OrderAvgOrderByAggregateInput
@@ -20253,8 +22852,18 @@ export namespace Prisma {
     expiresAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
     paidAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     manualPaymentReference?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    manualPaymentProofUrl?: StringNullableWithAggregatesFilter<"Order"> | string | null
     feeCents?: IntWithAggregatesFilter<"Order"> | number
     netAmountCents?: IntWithAggregatesFilter<"Order"> | number
+    origin?: EnumOrderOriginWithAggregatesFilter<"Order"> | $Enums.OrderOrigin
+    responsibleName?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    responsibleDocument?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    responsibleEmail?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    responsiblePhone?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    amountReceivedCents?: IntNullableWithAggregatesFilter<"Order"> | number | null
+    manualNotes?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    confirmedById?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    confirmedAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
   }
 
@@ -20287,6 +22896,7 @@ export namespace Prisma {
     event?: XOR<EventRelationFilter, EventWhereInput>
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     order?: XOR<OrderRelationFilter, OrderWhereInput>
+    orderItems?: OrderItemListRelationFilter
   }
 
   export type RegistrationOrderByWithRelationInput = {
@@ -20315,6 +22925,7 @@ export namespace Prisma {
     event?: EventOrderByWithRelationInput
     ministry?: MinistryOrderByWithRelationInput
     order?: OrderOrderByWithRelationInput
+    orderItems?: OrderItemOrderByRelationAggregateInput
   }
 
   export type RegistrationWhereUniqueInput = Prisma.AtLeast<{
@@ -20347,6 +22958,7 @@ export namespace Prisma {
     event?: XOR<EventRelationFilter, EventWhereInput>
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     order?: XOR<OrderRelationFilter, OrderWhereInput>
+    orderItems?: OrderItemListRelationFilter
   }, "id" | "eventId_cpf">
 
   export type RegistrationOrderByWithAggregationInput = {
@@ -20635,6 +23247,9 @@ export namespace Prisma {
     primaryMinistry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     permissionsOverride?: UserPermissionListRelationFilter
+    confirmedManualOrders?: OrderListRelationFilter
+    confirmedOrderItems?: OrderItemListRelationFilter
+    issuedServiceOrders?: ServiceOrderListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -20663,6 +23278,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryOrderByWithRelationInput
     profile?: ProfileOrderByWithRelationInput
     permissionsOverride?: UserPermissionOrderByRelationAggregateInput
+    confirmedManualOrders?: OrderOrderByRelationAggregateInput
+    confirmedOrderItems?: OrderItemOrderByRelationAggregateInput
+    issuedServiceOrders?: ServiceOrderOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -20694,6 +23312,9 @@ export namespace Prisma {
     primaryMinistry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     profile?: XOR<ProfileNullableRelationFilter, ProfileWhereInput> | null
     permissionsOverride?: UserPermissionListRelationFilter
+    confirmedManualOrders?: OrderListRelationFilter
+    confirmedOrderItems?: OrderItemListRelationFilter
+    issuedServiceOrders?: ServiceOrderListRelationFilter
   }, "id" | "email" | "cpf">
 
   export type UserOrderByWithAggregationInput = {
@@ -21321,6 +23942,176 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"UserPermission"> | Date | string
   }
 
+  export type OrderItemWhereInput = {
+    AND?: OrderItemWhereInput | OrderItemWhereInput[]
+    OR?: OrderItemWhereInput[]
+    NOT?: OrderItemWhereInput | OrderItemWhereInput[]
+    id?: StringFilter<"OrderItem"> | string
+    orderId?: StringFilter<"OrderItem"> | string
+    registrationId?: StringFilter<"OrderItem"> | string
+    amountCents?: IntFilter<"OrderItem"> | number
+    status?: EnumOrderItemStatusFilter<"OrderItem"> | $Enums.OrderItemStatus
+    notes?: StringNullableFilter<"OrderItem"> | string | null
+    createdAt?: DateTimeFilter<"OrderItem"> | Date | string
+    updatedAt?: DateTimeFilter<"OrderItem"> | Date | string
+    confirmedById?: StringNullableFilter<"OrderItem"> | string | null
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    registration?: XOR<RegistrationRelationFilter, RegistrationWhereInput>
+    confirmedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type OrderItemOrderByWithRelationInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    registrationId?: SortOrder
+    amountCents?: SortOrder
+    status?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    confirmedById?: SortOrderInput | SortOrder
+    order?: OrderOrderByWithRelationInput
+    registration?: RegistrationOrderByWithRelationInput
+    confirmedBy?: UserOrderByWithRelationInput
+  }
+
+  export type OrderItemWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    orderId_registrationId?: OrderItemOrderIdRegistrationIdCompoundUniqueInput
+    AND?: OrderItemWhereInput | OrderItemWhereInput[]
+    OR?: OrderItemWhereInput[]
+    NOT?: OrderItemWhereInput | OrderItemWhereInput[]
+    orderId?: StringFilter<"OrderItem"> | string
+    registrationId?: StringFilter<"OrderItem"> | string
+    amountCents?: IntFilter<"OrderItem"> | number
+    status?: EnumOrderItemStatusFilter<"OrderItem"> | $Enums.OrderItemStatus
+    notes?: StringNullableFilter<"OrderItem"> | string | null
+    createdAt?: DateTimeFilter<"OrderItem"> | Date | string
+    updatedAt?: DateTimeFilter<"OrderItem"> | Date | string
+    confirmedById?: StringNullableFilter<"OrderItem"> | string | null
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    registration?: XOR<RegistrationRelationFilter, RegistrationWhereInput>
+    confirmedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id" | "orderId_registrationId">
+
+  export type OrderItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    registrationId?: SortOrder
+    amountCents?: SortOrder
+    status?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    confirmedById?: SortOrderInput | SortOrder
+    _count?: OrderItemCountOrderByAggregateInput
+    _avg?: OrderItemAvgOrderByAggregateInput
+    _max?: OrderItemMaxOrderByAggregateInput
+    _min?: OrderItemMinOrderByAggregateInput
+    _sum?: OrderItemSumOrderByAggregateInput
+  }
+
+  export type OrderItemScalarWhereWithAggregatesInput = {
+    AND?: OrderItemScalarWhereWithAggregatesInput | OrderItemScalarWhereWithAggregatesInput[]
+    OR?: OrderItemScalarWhereWithAggregatesInput[]
+    NOT?: OrderItemScalarWhereWithAggregatesInput | OrderItemScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"OrderItem"> | string
+    orderId?: StringWithAggregatesFilter<"OrderItem"> | string
+    registrationId?: StringWithAggregatesFilter<"OrderItem"> | string
+    amountCents?: IntWithAggregatesFilter<"OrderItem"> | number
+    status?: EnumOrderItemStatusWithAggregatesFilter<"OrderItem"> | $Enums.OrderItemStatus
+    notes?: StringNullableWithAggregatesFilter<"OrderItem"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"OrderItem"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrderItem"> | Date | string
+    confirmedById?: StringNullableWithAggregatesFilter<"OrderItem"> | string | null
+  }
+
+  export type ServiceOrderWhereInput = {
+    AND?: ServiceOrderWhereInput | ServiceOrderWhereInput[]
+    OR?: ServiceOrderWhereInput[]
+    NOT?: ServiceOrderWhereInput | ServiceOrderWhereInput[]
+    id?: StringFilter<"ServiceOrder"> | string
+    orderId?: StringFilter<"ServiceOrder"> | string
+    number?: IntFilter<"ServiceOrder"> | number
+    totalCents?: IntFilter<"ServiceOrder"> | number
+    proofUrl?: StringNullableFilter<"ServiceOrder"> | string | null
+    pdfUrl?: StringNullableFilter<"ServiceOrder"> | string | null
+    notes?: StringNullableFilter<"ServiceOrder"> | string | null
+    metadata?: JsonNullableFilter<"ServiceOrder">
+    issuedAt?: DateTimeFilter<"ServiceOrder"> | Date | string
+    issuedById?: StringNullableFilter<"ServiceOrder"> | string | null
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    issuedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }
+
+  export type ServiceOrderOrderByWithRelationInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    number?: SortOrder
+    totalCents?: SortOrder
+    proofUrl?: SortOrderInput | SortOrder
+    pdfUrl?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    issuedAt?: SortOrder
+    issuedById?: SortOrderInput | SortOrder
+    order?: OrderOrderByWithRelationInput
+    issuedBy?: UserOrderByWithRelationInput
+  }
+
+  export type ServiceOrderWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    orderId_number?: ServiceOrderOrderIdNumberCompoundUniqueInput
+    AND?: ServiceOrderWhereInput | ServiceOrderWhereInput[]
+    OR?: ServiceOrderWhereInput[]
+    NOT?: ServiceOrderWhereInput | ServiceOrderWhereInput[]
+    orderId?: StringFilter<"ServiceOrder"> | string
+    number?: IntFilter<"ServiceOrder"> | number
+    totalCents?: IntFilter<"ServiceOrder"> | number
+    proofUrl?: StringNullableFilter<"ServiceOrder"> | string | null
+    pdfUrl?: StringNullableFilter<"ServiceOrder"> | string | null
+    notes?: StringNullableFilter<"ServiceOrder"> | string | null
+    metadata?: JsonNullableFilter<"ServiceOrder">
+    issuedAt?: DateTimeFilter<"ServiceOrder"> | Date | string
+    issuedById?: StringNullableFilter<"ServiceOrder"> | string | null
+    order?: XOR<OrderRelationFilter, OrderWhereInput>
+    issuedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+  }, "id" | "orderId_number">
+
+  export type ServiceOrderOrderByWithAggregationInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    number?: SortOrder
+    totalCents?: SortOrder
+    proofUrl?: SortOrderInput | SortOrder
+    pdfUrl?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    issuedAt?: SortOrder
+    issuedById?: SortOrderInput | SortOrder
+    _count?: ServiceOrderCountOrderByAggregateInput
+    _avg?: ServiceOrderAvgOrderByAggregateInput
+    _max?: ServiceOrderMaxOrderByAggregateInput
+    _min?: ServiceOrderMinOrderByAggregateInput
+    _sum?: ServiceOrderSumOrderByAggregateInput
+  }
+
+  export type ServiceOrderScalarWhereWithAggregatesInput = {
+    AND?: ServiceOrderScalarWhereWithAggregatesInput | ServiceOrderScalarWhereWithAggregatesInput[]
+    OR?: ServiceOrderScalarWhereWithAggregatesInput[]
+    NOT?: ServiceOrderScalarWhereWithAggregatesInput | ServiceOrderScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ServiceOrder"> | string
+    orderId?: StringWithAggregatesFilter<"ServiceOrder"> | string
+    number?: IntWithAggregatesFilter<"ServiceOrder"> | number
+    totalCents?: IntWithAggregatesFilter<"ServiceOrder"> | number
+    proofUrl?: StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
+    pdfUrl?: StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
+    notes?: StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
+    metadata?: JsonNullableWithAggregatesFilter<"ServiceOrder">
+    issuedAt?: DateTimeWithAggregatesFilter<"ServiceOrder"> | Date | string
+    issuedById?: StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
+  }
+
   export type DistrictCreateInput = {
     id?: string
     name: string
@@ -21647,14 +24438,26 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
     registrations?: RegistrationCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
   }
 
   export type OrderUncheckedCreateInput = {
@@ -21672,12 +24475,24 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderUpdateInput = {
@@ -21693,14 +24508,26 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateInput = {
@@ -21718,12 +24545,24 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderCreateManyInput = {
@@ -21741,8 +24580,18 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
   }
 
@@ -21759,8 +24608,17 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -21779,8 +24637,18 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -21805,6 +24673,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateInput = {
@@ -21828,6 +24697,7 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUpdateInput = {
@@ -21851,6 +24721,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateInput = {
@@ -21874,6 +24745,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationCreateManyInput = {
@@ -22172,6 +25044,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -22196,6 +25071,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUpdateInput = {
@@ -22220,6 +25098,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -22244,6 +25125,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -22929,6 +25813,176 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type OrderItemCreateInput = {
+    id?: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    order: OrderCreateNestedOneWithoutItemsInput
+    registration: RegistrationCreateNestedOneWithoutOrderItemsInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedOrderItemsInput
+  }
+
+  export type OrderItemUncheckedCreateInput = {
+    id?: string
+    orderId: string
+    registrationId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    confirmedById?: string | null
+  }
+
+  export type OrderItemUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: OrderUpdateOneRequiredWithoutItemsNestedInput
+    registration?: RegistrationUpdateOneRequiredWithoutOrderItemsNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedOrderItemsNestedInput
+  }
+
+  export type OrderItemUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OrderItemCreateManyInput = {
+    id?: string
+    orderId: string
+    registrationId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    confirmedById?: string | null
+  }
+
+  export type OrderItemUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrderItemUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ServiceOrderCreateInput = {
+    id?: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    order: OrderCreateNestedOneWithoutServiceOrdersInput
+    issuedBy?: UserCreateNestedOneWithoutIssuedServiceOrdersInput
+  }
+
+  export type ServiceOrderUncheckedCreateInput = {
+    id?: string
+    orderId: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    issuedById?: string | null
+  }
+
+  export type ServiceOrderUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: OrderUpdateOneRequiredWithoutServiceOrdersNestedInput
+    issuedBy?: UserUpdateOneWithoutIssuedServiceOrdersNestedInput
+  }
+
+  export type ServiceOrderUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ServiceOrderCreateManyInput = {
+    id?: string
+    orderId: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    issuedById?: string | null
+  }
+
+  export type ServiceOrderUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceOrderUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -23323,6 +26377,13 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type EnumOrderOriginFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderOrigin | EnumOrderOriginFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderOrigin[]
+    notIn?: $Enums.OrderOrigin[]
+    not?: NestedEnumOrderOriginFilter<$PrismaModel> | $Enums.OrderOrigin
+  }
+
   export type EventRelationFilter = {
     is?: EventWhereInput
     isNot?: EventWhereInput
@@ -23345,11 +26406,31 @@ export namespace Prisma {
     none?: WebhookEventWhereInput
   }
 
+  export type OrderItemListRelationFilter = {
+    every?: OrderItemWhereInput
+    some?: OrderItemWhereInput
+    none?: OrderItemWhereInput
+  }
+
+  export type ServiceOrderListRelationFilter = {
+    every?: ServiceOrderWhereInput
+    some?: ServiceOrderWhereInput
+    none?: ServiceOrderWhereInput
+  }
+
   export type RefundOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type WebhookEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrderItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ServiceOrderOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -23368,8 +26449,18 @@ export namespace Prisma {
     expiresAt?: SortOrder
     paidAt?: SortOrder
     manualPaymentReference?: SortOrder
+    manualPaymentProofUrl?: SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    origin?: SortOrder
+    responsibleName?: SortOrder
+    responsibleDocument?: SortOrder
+    responsibleEmail?: SortOrder
+    responsiblePhone?: SortOrder
+    amountReceivedCents?: SortOrder
+    manualNotes?: SortOrder
+    confirmedById?: SortOrder
+    confirmedAt?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -23378,6 +26469,7 @@ export namespace Prisma {
     preferenceVersion?: SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    amountReceivedCents?: SortOrder
   }
 
   export type OrderMaxOrderByAggregateInput = {
@@ -23395,8 +26487,18 @@ export namespace Prisma {
     expiresAt?: SortOrder
     paidAt?: SortOrder
     manualPaymentReference?: SortOrder
+    manualPaymentProofUrl?: SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    origin?: SortOrder
+    responsibleName?: SortOrder
+    responsibleDocument?: SortOrder
+    responsibleEmail?: SortOrder
+    responsiblePhone?: SortOrder
+    amountReceivedCents?: SortOrder
+    manualNotes?: SortOrder
+    confirmedById?: SortOrder
+    confirmedAt?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -23415,8 +26517,18 @@ export namespace Prisma {
     expiresAt?: SortOrder
     paidAt?: SortOrder
     manualPaymentReference?: SortOrder
+    manualPaymentProofUrl?: SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    origin?: SortOrder
+    responsibleName?: SortOrder
+    responsibleDocument?: SortOrder
+    responsibleEmail?: SortOrder
+    responsiblePhone?: SortOrder
+    amountReceivedCents?: SortOrder
+    manualNotes?: SortOrder
+    confirmedById?: SortOrder
+    confirmedAt?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -23425,6 +26537,17 @@ export namespace Prisma {
     preferenceVersion?: SortOrder
     feeCents?: SortOrder
     netAmountCents?: SortOrder
+    amountReceivedCents?: SortOrder
+  }
+
+  export type EnumOrderOriginWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderOrigin | EnumOrderOriginFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderOrigin[]
+    notIn?: $Enums.OrderOrigin[]
+    not?: NestedEnumOrderOriginWithAggregatesFilter<$PrismaModel> | $Enums.OrderOrigin
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrderOriginFilter<$PrismaModel>
+    _max?: NestedEnumOrderOriginFilter<$PrismaModel>
   }
 
   export type ChurchRelationFilter = {
@@ -24135,6 +27258,171 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type EnumOrderItemStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderItemStatus | EnumOrderItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderItemStatus[]
+    notIn?: $Enums.OrderItemStatus[]
+    not?: NestedEnumOrderItemStatusFilter<$PrismaModel> | $Enums.OrderItemStatus
+  }
+
+  export type OrderItemOrderIdRegistrationIdCompoundUniqueInput = {
+    orderId: string
+    registrationId: string
+  }
+
+  export type OrderItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    registrationId?: SortOrder
+    amountCents?: SortOrder
+    status?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    confirmedById?: SortOrder
+  }
+
+  export type OrderItemAvgOrderByAggregateInput = {
+    amountCents?: SortOrder
+  }
+
+  export type OrderItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    registrationId?: SortOrder
+    amountCents?: SortOrder
+    status?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    confirmedById?: SortOrder
+  }
+
+  export type OrderItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    registrationId?: SortOrder
+    amountCents?: SortOrder
+    status?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    confirmedById?: SortOrder
+  }
+
+  export type OrderItemSumOrderByAggregateInput = {
+    amountCents?: SortOrder
+  }
+
+  export type EnumOrderItemStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderItemStatus | EnumOrderItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderItemStatus[]
+    notIn?: $Enums.OrderItemStatus[]
+    not?: NestedEnumOrderItemStatusWithAggregatesFilter<$PrismaModel> | $Enums.OrderItemStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrderItemStatusFilter<$PrismaModel>
+    _max?: NestedEnumOrderItemStatusFilter<$PrismaModel>
+  }
+  export type JsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type ServiceOrderOrderIdNumberCompoundUniqueInput = {
+    orderId: string
+    number: number
+  }
+
+  export type ServiceOrderCountOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    number?: SortOrder
+    totalCents?: SortOrder
+    proofUrl?: SortOrder
+    pdfUrl?: SortOrder
+    notes?: SortOrder
+    metadata?: SortOrder
+    issuedAt?: SortOrder
+    issuedById?: SortOrder
+  }
+
+  export type ServiceOrderAvgOrderByAggregateInput = {
+    number?: SortOrder
+    totalCents?: SortOrder
+  }
+
+  export type ServiceOrderMaxOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    number?: SortOrder
+    totalCents?: SortOrder
+    proofUrl?: SortOrder
+    pdfUrl?: SortOrder
+    notes?: SortOrder
+    issuedAt?: SortOrder
+    issuedById?: SortOrder
+  }
+
+  export type ServiceOrderMinOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    number?: SortOrder
+    totalCents?: SortOrder
+    proofUrl?: SortOrder
+    pdfUrl?: SortOrder
+    notes?: SortOrder
+    issuedAt?: SortOrder
+    issuedById?: SortOrder
+  }
+
+  export type ServiceOrderSumOrderByAggregateInput = {
+    number?: SortOrder
+    totalCents?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
   export type ChurchCreateNestedManyWithoutDistrictInput = {
     create?: XOR<ChurchCreateWithoutDistrictInput, ChurchUncheckedCreateWithoutDistrictInput> | ChurchCreateWithoutDistrictInput[] | ChurchUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: ChurchCreateOrConnectWithoutDistrictInput | ChurchCreateOrConnectWithoutDistrictInput[]
@@ -24628,6 +27916,26 @@ export namespace Prisma {
     connect?: WebhookEventWhereUniqueInput | WebhookEventWhereUniqueInput[]
   }
 
+  export type OrderItemCreateNestedManyWithoutOrderInput = {
+    create?: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput> | OrderItemCreateWithoutOrderInput[] | OrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutOrderInput | OrderItemCreateOrConnectWithoutOrderInput[]
+    createMany?: OrderItemCreateManyOrderInputEnvelope
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+  }
+
+  export type ServiceOrderCreateNestedManyWithoutOrderInput = {
+    create?: XOR<ServiceOrderCreateWithoutOrderInput, ServiceOrderUncheckedCreateWithoutOrderInput> | ServiceOrderCreateWithoutOrderInput[] | ServiceOrderUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutOrderInput | ServiceOrderCreateOrConnectWithoutOrderInput[]
+    createMany?: ServiceOrderCreateManyOrderInputEnvelope
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+  }
+
+  export type UserCreateNestedOneWithoutConfirmedManualOrdersInput = {
+    create?: XOR<UserCreateWithoutConfirmedManualOrdersInput, UserUncheckedCreateWithoutConfirmedManualOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutConfirmedManualOrdersInput
+    connect?: UserWhereUniqueInput
+  }
+
   export type RefundUncheckedCreateNestedManyWithoutOrderInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
@@ -24647,6 +27955,24 @@ export namespace Prisma {
     connectOrCreate?: WebhookEventCreateOrConnectWithoutOrderInput | WebhookEventCreateOrConnectWithoutOrderInput[]
     createMany?: WebhookEventCreateManyOrderInputEnvelope
     connect?: WebhookEventWhereUniqueInput | WebhookEventWhereUniqueInput[]
+  }
+
+  export type OrderItemUncheckedCreateNestedManyWithoutOrderInput = {
+    create?: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput> | OrderItemCreateWithoutOrderInput[] | OrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutOrderInput | OrderItemCreateOrConnectWithoutOrderInput[]
+    createMany?: OrderItemCreateManyOrderInputEnvelope
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+  }
+
+  export type ServiceOrderUncheckedCreateNestedManyWithoutOrderInput = {
+    create?: XOR<ServiceOrderCreateWithoutOrderInput, ServiceOrderUncheckedCreateWithoutOrderInput> | ServiceOrderCreateWithoutOrderInput[] | ServiceOrderUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutOrderInput | ServiceOrderCreateOrConnectWithoutOrderInput[]
+    createMany?: ServiceOrderCreateManyOrderInputEnvelope
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+  }
+
+  export type EnumOrderOriginFieldUpdateOperationsInput = {
+    set?: $Enums.OrderOrigin
   }
 
   export type EventUpdateOneRequiredWithoutOrdersNestedInput = {
@@ -24709,6 +28035,44 @@ export namespace Prisma {
     deleteMany?: WebhookEventScalarWhereInput | WebhookEventScalarWhereInput[]
   }
 
+  export type OrderItemUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput> | OrderItemCreateWithoutOrderInput[] | OrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutOrderInput | OrderItemCreateOrConnectWithoutOrderInput[]
+    upsert?: OrderItemUpsertWithWhereUniqueWithoutOrderInput | OrderItemUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: OrderItemCreateManyOrderInputEnvelope
+    set?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    disconnect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    delete?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    update?: OrderItemUpdateWithWhereUniqueWithoutOrderInput | OrderItemUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: OrderItemUpdateManyWithWhereWithoutOrderInput | OrderItemUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+  }
+
+  export type ServiceOrderUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<ServiceOrderCreateWithoutOrderInput, ServiceOrderUncheckedCreateWithoutOrderInput> | ServiceOrderCreateWithoutOrderInput[] | ServiceOrderUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutOrderInput | ServiceOrderCreateOrConnectWithoutOrderInput[]
+    upsert?: ServiceOrderUpsertWithWhereUniqueWithoutOrderInput | ServiceOrderUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: ServiceOrderCreateManyOrderInputEnvelope
+    set?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    disconnect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    delete?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    update?: ServiceOrderUpdateWithWhereUniqueWithoutOrderInput | ServiceOrderUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: ServiceOrderUpdateManyWithWhereWithoutOrderInput | ServiceOrderUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
+  }
+
+  export type UserUpdateOneWithoutConfirmedManualOrdersNestedInput = {
+    create?: XOR<UserCreateWithoutConfirmedManualOrdersInput, UserUncheckedCreateWithoutConfirmedManualOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutConfirmedManualOrdersInput
+    upsert?: UserUpsertWithoutConfirmedManualOrdersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutConfirmedManualOrdersInput, UserUpdateWithoutConfirmedManualOrdersInput>, UserUncheckedUpdateWithoutConfirmedManualOrdersInput>
+  }
+
   export type RefundUncheckedUpdateManyWithoutOrderNestedInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
@@ -24751,6 +28115,34 @@ export namespace Prisma {
     deleteMany?: WebhookEventScalarWhereInput | WebhookEventScalarWhereInput[]
   }
 
+  export type OrderItemUncheckedUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput> | OrderItemCreateWithoutOrderInput[] | OrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutOrderInput | OrderItemCreateOrConnectWithoutOrderInput[]
+    upsert?: OrderItemUpsertWithWhereUniqueWithoutOrderInput | OrderItemUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: OrderItemCreateManyOrderInputEnvelope
+    set?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    disconnect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    delete?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    update?: OrderItemUpdateWithWhereUniqueWithoutOrderInput | OrderItemUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: OrderItemUpdateManyWithWhereWithoutOrderInput | OrderItemUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+  }
+
+  export type ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<ServiceOrderCreateWithoutOrderInput, ServiceOrderUncheckedCreateWithoutOrderInput> | ServiceOrderCreateWithoutOrderInput[] | ServiceOrderUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutOrderInput | ServiceOrderCreateOrConnectWithoutOrderInput[]
+    upsert?: ServiceOrderUpsertWithWhereUniqueWithoutOrderInput | ServiceOrderUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: ServiceOrderCreateManyOrderInputEnvelope
+    set?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    disconnect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    delete?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    update?: ServiceOrderUpdateWithWhereUniqueWithoutOrderInput | ServiceOrderUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: ServiceOrderUpdateManyWithWhereWithoutOrderInput | ServiceOrderUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
+  }
+
   export type RefundCreateNestedManyWithoutRegistrationInput = {
     create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
@@ -24788,11 +28180,25 @@ export namespace Prisma {
     connect?: OrderWhereUniqueInput
   }
 
+  export type OrderItemCreateNestedManyWithoutRegistrationInput = {
+    create?: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput> | OrderItemCreateWithoutRegistrationInput[] | OrderItemUncheckedCreateWithoutRegistrationInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutRegistrationInput | OrderItemCreateOrConnectWithoutRegistrationInput[]
+    createMany?: OrderItemCreateManyRegistrationInputEnvelope
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+  }
+
   export type RefundUncheckedCreateNestedManyWithoutRegistrationInput = {
     create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
     createMany?: RefundCreateManyRegistrationInputEnvelope
     connect?: RefundWhereUniqueInput | RefundWhereUniqueInput[]
+  }
+
+  export type OrderItemUncheckedCreateNestedManyWithoutRegistrationInput = {
+    create?: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput> | OrderItemCreateWithoutRegistrationInput[] | OrderItemUncheckedCreateWithoutRegistrationInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutRegistrationInput | OrderItemCreateOrConnectWithoutRegistrationInput[]
+    createMany?: OrderItemCreateManyRegistrationInputEnvelope
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
   }
 
   export type RefundUpdateManyWithoutRegistrationNestedInput = {
@@ -24851,6 +28257,20 @@ export namespace Prisma {
     update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutRegistrationsInput, OrderUpdateWithoutRegistrationsInput>, OrderUncheckedUpdateWithoutRegistrationsInput>
   }
 
+  export type OrderItemUpdateManyWithoutRegistrationNestedInput = {
+    create?: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput> | OrderItemCreateWithoutRegistrationInput[] | OrderItemUncheckedCreateWithoutRegistrationInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutRegistrationInput | OrderItemCreateOrConnectWithoutRegistrationInput[]
+    upsert?: OrderItemUpsertWithWhereUniqueWithoutRegistrationInput | OrderItemUpsertWithWhereUniqueWithoutRegistrationInput[]
+    createMany?: OrderItemCreateManyRegistrationInputEnvelope
+    set?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    disconnect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    delete?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    update?: OrderItemUpdateWithWhereUniqueWithoutRegistrationInput | OrderItemUpdateWithWhereUniqueWithoutRegistrationInput[]
+    updateMany?: OrderItemUpdateManyWithWhereWithoutRegistrationInput | OrderItemUpdateManyWithWhereWithoutRegistrationInput[]
+    deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+  }
+
   export type RefundUncheckedUpdateManyWithoutRegistrationNestedInput = {
     create?: XOR<RefundCreateWithoutRegistrationInput, RefundUncheckedCreateWithoutRegistrationInput> | RefundCreateWithoutRegistrationInput[] | RefundUncheckedCreateWithoutRegistrationInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutRegistrationInput | RefundCreateOrConnectWithoutRegistrationInput[]
@@ -24863,6 +28283,20 @@ export namespace Prisma {
     update?: RefundUpdateWithWhereUniqueWithoutRegistrationInput | RefundUpdateWithWhereUniqueWithoutRegistrationInput[]
     updateMany?: RefundUpdateManyWithWhereWithoutRegistrationInput | RefundUpdateManyWithWhereWithoutRegistrationInput[]
     deleteMany?: RefundScalarWhereInput | RefundScalarWhereInput[]
+  }
+
+  export type OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput = {
+    create?: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput> | OrderItemCreateWithoutRegistrationInput[] | OrderItemUncheckedCreateWithoutRegistrationInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutRegistrationInput | OrderItemCreateOrConnectWithoutRegistrationInput[]
+    upsert?: OrderItemUpsertWithWhereUniqueWithoutRegistrationInput | OrderItemUpsertWithWhereUniqueWithoutRegistrationInput[]
+    createMany?: OrderItemCreateManyRegistrationInputEnvelope
+    set?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    disconnect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    delete?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    update?: OrderItemUpdateWithWhereUniqueWithoutRegistrationInput | OrderItemUpdateWithWhereUniqueWithoutRegistrationInput[]
+    updateMany?: OrderItemUpdateManyWithWhereWithoutRegistrationInput | OrderItemUpdateManyWithWhereWithoutRegistrationInput[]
+    deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
   }
 
   export type OrderCreateNestedOneWithoutRefundsInput = {
@@ -24984,6 +28418,27 @@ export namespace Prisma {
     connect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
   }
 
+  export type OrderCreateNestedManyWithoutConfirmedByInput = {
+    create?: XOR<OrderCreateWithoutConfirmedByInput, OrderUncheckedCreateWithoutConfirmedByInput> | OrderCreateWithoutConfirmedByInput[] | OrderUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutConfirmedByInput | OrderCreateOrConnectWithoutConfirmedByInput[]
+    createMany?: OrderCreateManyConfirmedByInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type OrderItemCreateNestedManyWithoutConfirmedByInput = {
+    create?: XOR<OrderItemCreateWithoutConfirmedByInput, OrderItemUncheckedCreateWithoutConfirmedByInput> | OrderItemCreateWithoutConfirmedByInput[] | OrderItemUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutConfirmedByInput | OrderItemCreateOrConnectWithoutConfirmedByInput[]
+    createMany?: OrderItemCreateManyConfirmedByInputEnvelope
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+  }
+
+  export type ServiceOrderCreateNestedManyWithoutIssuedByInput = {
+    create?: XOR<ServiceOrderCreateWithoutIssuedByInput, ServiceOrderUncheckedCreateWithoutIssuedByInput> | ServiceOrderCreateWithoutIssuedByInput[] | ServiceOrderUncheckedCreateWithoutIssuedByInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutIssuedByInput | ServiceOrderCreateOrConnectWithoutIssuedByInput[]
+    createMany?: ServiceOrderCreateManyIssuedByInputEnvelope
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+  }
+
   export type AuditLogUncheckedCreateNestedManyWithoutActorInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
@@ -25017,6 +28472,27 @@ export namespace Prisma {
     connectOrCreate?: UserPermissionCreateOrConnectWithoutUserInput | UserPermissionCreateOrConnectWithoutUserInput[]
     createMany?: UserPermissionCreateManyUserInputEnvelope
     connect?: UserPermissionWhereUniqueInput | UserPermissionWhereUniqueInput[]
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutConfirmedByInput = {
+    create?: XOR<OrderCreateWithoutConfirmedByInput, OrderUncheckedCreateWithoutConfirmedByInput> | OrderCreateWithoutConfirmedByInput[] | OrderUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutConfirmedByInput | OrderCreateOrConnectWithoutConfirmedByInput[]
+    createMany?: OrderCreateManyConfirmedByInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput = {
+    create?: XOR<OrderItemCreateWithoutConfirmedByInput, OrderItemUncheckedCreateWithoutConfirmedByInput> | OrderItemCreateWithoutConfirmedByInput[] | OrderItemUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutConfirmedByInput | OrderItemCreateOrConnectWithoutConfirmedByInput[]
+    createMany?: OrderItemCreateManyConfirmedByInputEnvelope
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+  }
+
+  export type ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput = {
+    create?: XOR<ServiceOrderCreateWithoutIssuedByInput, ServiceOrderUncheckedCreateWithoutIssuedByInput> | ServiceOrderCreateWithoutIssuedByInput[] | ServiceOrderUncheckedCreateWithoutIssuedByInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutIssuedByInput | ServiceOrderCreateOrConnectWithoutIssuedByInput[]
+    createMany?: ServiceOrderCreateManyIssuedByInputEnvelope
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
   }
 
   export type EnumUserStatusFieldUpdateOperationsInput = {
@@ -25133,6 +28609,48 @@ export namespace Prisma {
     deleteMany?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
   }
 
+  export type OrderUpdateManyWithoutConfirmedByNestedInput = {
+    create?: XOR<OrderCreateWithoutConfirmedByInput, OrderUncheckedCreateWithoutConfirmedByInput> | OrderCreateWithoutConfirmedByInput[] | OrderUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutConfirmedByInput | OrderCreateOrConnectWithoutConfirmedByInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutConfirmedByInput | OrderUpsertWithWhereUniqueWithoutConfirmedByInput[]
+    createMany?: OrderCreateManyConfirmedByInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutConfirmedByInput | OrderUpdateWithWhereUniqueWithoutConfirmedByInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutConfirmedByInput | OrderUpdateManyWithWhereWithoutConfirmedByInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type OrderItemUpdateManyWithoutConfirmedByNestedInput = {
+    create?: XOR<OrderItemCreateWithoutConfirmedByInput, OrderItemUncheckedCreateWithoutConfirmedByInput> | OrderItemCreateWithoutConfirmedByInput[] | OrderItemUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutConfirmedByInput | OrderItemCreateOrConnectWithoutConfirmedByInput[]
+    upsert?: OrderItemUpsertWithWhereUniqueWithoutConfirmedByInput | OrderItemUpsertWithWhereUniqueWithoutConfirmedByInput[]
+    createMany?: OrderItemCreateManyConfirmedByInputEnvelope
+    set?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    disconnect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    delete?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    update?: OrderItemUpdateWithWhereUniqueWithoutConfirmedByInput | OrderItemUpdateWithWhereUniqueWithoutConfirmedByInput[]
+    updateMany?: OrderItemUpdateManyWithWhereWithoutConfirmedByInput | OrderItemUpdateManyWithWhereWithoutConfirmedByInput[]
+    deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+  }
+
+  export type ServiceOrderUpdateManyWithoutIssuedByNestedInput = {
+    create?: XOR<ServiceOrderCreateWithoutIssuedByInput, ServiceOrderUncheckedCreateWithoutIssuedByInput> | ServiceOrderCreateWithoutIssuedByInput[] | ServiceOrderUncheckedCreateWithoutIssuedByInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutIssuedByInput | ServiceOrderCreateOrConnectWithoutIssuedByInput[]
+    upsert?: ServiceOrderUpsertWithWhereUniqueWithoutIssuedByInput | ServiceOrderUpsertWithWhereUniqueWithoutIssuedByInput[]
+    createMany?: ServiceOrderCreateManyIssuedByInputEnvelope
+    set?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    disconnect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    delete?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    update?: ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput | ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput[]
+    updateMany?: ServiceOrderUpdateManyWithWhereWithoutIssuedByInput | ServiceOrderUpdateManyWithWhereWithoutIssuedByInput[]
+    deleteMany?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
+  }
+
   export type AuditLogUncheckedUpdateManyWithoutActorNestedInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
@@ -25201,6 +28719,48 @@ export namespace Prisma {
     update?: UserPermissionUpdateWithWhereUniqueWithoutUserInput | UserPermissionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: UserPermissionUpdateManyWithWhereWithoutUserInput | UserPermissionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: UserPermissionScalarWhereInput | UserPermissionScalarWhereInput[]
+  }
+
+  export type OrderUncheckedUpdateManyWithoutConfirmedByNestedInput = {
+    create?: XOR<OrderCreateWithoutConfirmedByInput, OrderUncheckedCreateWithoutConfirmedByInput> | OrderCreateWithoutConfirmedByInput[] | OrderUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutConfirmedByInput | OrderCreateOrConnectWithoutConfirmedByInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutConfirmedByInput | OrderUpsertWithWhereUniqueWithoutConfirmedByInput[]
+    createMany?: OrderCreateManyConfirmedByInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutConfirmedByInput | OrderUpdateWithWhereUniqueWithoutConfirmedByInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutConfirmedByInput | OrderUpdateManyWithWhereWithoutConfirmedByInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput = {
+    create?: XOR<OrderItemCreateWithoutConfirmedByInput, OrderItemUncheckedCreateWithoutConfirmedByInput> | OrderItemCreateWithoutConfirmedByInput[] | OrderItemUncheckedCreateWithoutConfirmedByInput[]
+    connectOrCreate?: OrderItemCreateOrConnectWithoutConfirmedByInput | OrderItemCreateOrConnectWithoutConfirmedByInput[]
+    upsert?: OrderItemUpsertWithWhereUniqueWithoutConfirmedByInput | OrderItemUpsertWithWhereUniqueWithoutConfirmedByInput[]
+    createMany?: OrderItemCreateManyConfirmedByInputEnvelope
+    set?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    disconnect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    delete?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    connect?: OrderItemWhereUniqueInput | OrderItemWhereUniqueInput[]
+    update?: OrderItemUpdateWithWhereUniqueWithoutConfirmedByInput | OrderItemUpdateWithWhereUniqueWithoutConfirmedByInput[]
+    updateMany?: OrderItemUpdateManyWithWhereWithoutConfirmedByInput | OrderItemUpdateManyWithWhereWithoutConfirmedByInput[]
+    deleteMany?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+  }
+
+  export type ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput = {
+    create?: XOR<ServiceOrderCreateWithoutIssuedByInput, ServiceOrderUncheckedCreateWithoutIssuedByInput> | ServiceOrderCreateWithoutIssuedByInput[] | ServiceOrderUncheckedCreateWithoutIssuedByInput[]
+    connectOrCreate?: ServiceOrderCreateOrConnectWithoutIssuedByInput | ServiceOrderCreateOrConnectWithoutIssuedByInput[]
+    upsert?: ServiceOrderUpsertWithWhereUniqueWithoutIssuedByInput | ServiceOrderUpsertWithWhereUniqueWithoutIssuedByInput[]
+    createMany?: ServiceOrderCreateManyIssuedByInputEnvelope
+    set?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    disconnect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    delete?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
+    update?: ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput | ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput[]
+    updateMany?: ServiceOrderUpdateManyWithWhereWithoutIssuedByInput | ServiceOrderUpdateManyWithWhereWithoutIssuedByInput[]
+    deleteMany?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutSystemConfigsUpdatedInput = {
@@ -25597,6 +29157,84 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutPermissionsOverrideInput, UserUpdateWithoutPermissionsOverrideInput>, UserUncheckedUpdateWithoutPermissionsOverrideInput>
   }
 
+  export type OrderCreateNestedOneWithoutItemsInput = {
+    create?: XOR<OrderCreateWithoutItemsInput, OrderUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutItemsInput
+    connect?: OrderWhereUniqueInput
+  }
+
+  export type RegistrationCreateNestedOneWithoutOrderItemsInput = {
+    create?: XOR<RegistrationCreateWithoutOrderItemsInput, RegistrationUncheckedCreateWithoutOrderItemsInput>
+    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderItemsInput
+    connect?: RegistrationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutConfirmedOrderItemsInput = {
+    create?: XOR<UserCreateWithoutConfirmedOrderItemsInput, UserUncheckedCreateWithoutConfirmedOrderItemsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutConfirmedOrderItemsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumOrderItemStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OrderItemStatus
+  }
+
+  export type OrderUpdateOneRequiredWithoutItemsNestedInput = {
+    create?: XOR<OrderCreateWithoutItemsInput, OrderUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutItemsInput
+    upsert?: OrderUpsertWithoutItemsInput
+    connect?: OrderWhereUniqueInput
+    update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutItemsInput, OrderUpdateWithoutItemsInput>, OrderUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type RegistrationUpdateOneRequiredWithoutOrderItemsNestedInput = {
+    create?: XOR<RegistrationCreateWithoutOrderItemsInput, RegistrationUncheckedCreateWithoutOrderItemsInput>
+    connectOrCreate?: RegistrationCreateOrConnectWithoutOrderItemsInput
+    upsert?: RegistrationUpsertWithoutOrderItemsInput
+    connect?: RegistrationWhereUniqueInput
+    update?: XOR<XOR<RegistrationUpdateToOneWithWhereWithoutOrderItemsInput, RegistrationUpdateWithoutOrderItemsInput>, RegistrationUncheckedUpdateWithoutOrderItemsInput>
+  }
+
+  export type UserUpdateOneWithoutConfirmedOrderItemsNestedInput = {
+    create?: XOR<UserCreateWithoutConfirmedOrderItemsInput, UserUncheckedCreateWithoutConfirmedOrderItemsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutConfirmedOrderItemsInput
+    upsert?: UserUpsertWithoutConfirmedOrderItemsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutConfirmedOrderItemsInput, UserUpdateWithoutConfirmedOrderItemsInput>, UserUncheckedUpdateWithoutConfirmedOrderItemsInput>
+  }
+
+  export type OrderCreateNestedOneWithoutServiceOrdersInput = {
+    create?: XOR<OrderCreateWithoutServiceOrdersInput, OrderUncheckedCreateWithoutServiceOrdersInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutServiceOrdersInput
+    connect?: OrderWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutIssuedServiceOrdersInput = {
+    create?: XOR<UserCreateWithoutIssuedServiceOrdersInput, UserUncheckedCreateWithoutIssuedServiceOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutIssuedServiceOrdersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type OrderUpdateOneRequiredWithoutServiceOrdersNestedInput = {
+    create?: XOR<OrderCreateWithoutServiceOrdersInput, OrderUncheckedCreateWithoutServiceOrdersInput>
+    connectOrCreate?: OrderCreateOrConnectWithoutServiceOrdersInput
+    upsert?: OrderUpsertWithoutServiceOrdersInput
+    connect?: OrderWhereUniqueInput
+    update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutServiceOrdersInput, OrderUpdateWithoutServiceOrdersInput>, OrderUncheckedUpdateWithoutServiceOrdersInput>
+  }
+
+  export type UserUpdateOneWithoutIssuedServiceOrdersNestedInput = {
+    create?: XOR<UserCreateWithoutIssuedServiceOrdersInput, UserUncheckedCreateWithoutIssuedServiceOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutIssuedServiceOrdersInput
+    upsert?: UserUpsertWithoutIssuedServiceOrdersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutIssuedServiceOrdersInput, UserUpdateWithoutIssuedServiceOrdersInput>, UserUncheckedUpdateWithoutIssuedServiceOrdersInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -25798,6 +29436,23 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type NestedEnumOrderOriginFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderOrigin | EnumOrderOriginFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderOrigin[]
+    notIn?: $Enums.OrderOrigin[]
+    not?: NestedEnumOrderOriginFilter<$PrismaModel> | $Enums.OrderOrigin
+  }
+
+  export type NestedEnumOrderOriginWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderOrigin | EnumOrderOriginFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderOrigin[]
+    notIn?: $Enums.OrderOrigin[]
+    not?: NestedEnumOrderOriginWithAggregatesFilter<$PrismaModel> | $Enums.OrderOrigin
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrderOriginFilter<$PrismaModel>
+    _max?: NestedEnumOrderOriginFilter<$PrismaModel>
+  }
+
   export type NestedEnumUserStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.UserStatus | EnumUserStatusFieldRefInput<$PrismaModel>
     in?: $Enums.UserStatus[]
@@ -25822,6 +29477,45 @@ export namespace Prisma {
     | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
 
   export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumOrderItemStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderItemStatus | EnumOrderItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderItemStatus[]
+    notIn?: $Enums.OrderItemStatus[]
+    not?: NestedEnumOrderItemStatusFilter<$PrismaModel> | $Enums.OrderItemStatus
+  }
+
+  export type NestedEnumOrderItemStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderItemStatus | EnumOrderItemStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.OrderItemStatus[]
+    notIn?: $Enums.OrderItemStatus[]
+    not?: NestedEnumOrderItemStatusWithAggregatesFilter<$PrismaModel> | $Enums.OrderItemStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrderItemStatusFilter<$PrismaModel>
+    _max?: NestedEnumOrderItemStatusFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
     equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
     path?: string
     string_contains?: string | StringFieldRefInput<$PrismaModel>
@@ -25895,6 +29589,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateWithoutDistrictInput = {
@@ -25917,6 +29612,7 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationCreateOrConnectWithoutDistrictInput = {
@@ -25950,6 +29646,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutDistrictScopeInput = {
@@ -25973,6 +29672,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutDistrictScopeInput = {
@@ -26139,6 +29841,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateWithoutChurchInput = {
@@ -26161,6 +29864,7 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationCreateOrConnectWithoutChurchInput = {
@@ -26194,6 +29898,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutChurchInput = {
@@ -26217,6 +29924,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutChurchInput = {
@@ -26311,6 +30021,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutEventsCreatedInput = {
@@ -26334,6 +30047,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutEventsCreatedInput = {
@@ -26447,13 +30163,25 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
     registrations?: RegistrationCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutEventInput = {
@@ -26470,12 +30198,24 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutEventInput = {
@@ -26508,6 +30248,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateWithoutEventInput = {
@@ -26530,6 +30271,7 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationCreateOrConnectWithoutEventInput = {
@@ -26574,6 +30316,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEventsCreatedInput = {
@@ -26597,6 +30342,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type MinistryUpsertWithoutEventsInput = {
@@ -26729,8 +30477,18 @@ export namespace Prisma {
     expiresAt?: DateTimeFilter<"Order"> | Date | string
     paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     manualPaymentReference?: StringNullableFilter<"Order"> | string | null
+    manualPaymentProofUrl?: StringNullableFilter<"Order"> | string | null
     feeCents?: IntFilter<"Order"> | number
     netAmountCents?: IntFilter<"Order"> | number
+    origin?: EnumOrderOriginFilter<"Order"> | $Enums.OrderOrigin
+    responsibleName?: StringNullableFilter<"Order"> | string | null
+    responsibleDocument?: StringNullableFilter<"Order"> | string | null
+    responsibleEmail?: StringNullableFilter<"Order"> | string | null
+    responsiblePhone?: StringNullableFilter<"Order"> | string | null
+    amountReceivedCents?: IntNullableFilter<"Order"> | number | null
+    manualNotes?: StringNullableFilter<"Order"> | string | null
+    confirmedById?: StringNullableFilter<"Order"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
   }
 
@@ -26874,6 +30632,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateWithoutOrderInput = {
@@ -26896,6 +30655,7 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationCreateOrConnectWithoutOrderInput = {
@@ -26936,6 +30696,129 @@ export namespace Prisma {
   export type WebhookEventCreateManyOrderInputEnvelope = {
     data: WebhookEventCreateManyOrderInput | WebhookEventCreateManyOrderInput[]
     skipDuplicates?: boolean
+  }
+
+  export type OrderItemCreateWithoutOrderInput = {
+    id?: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    registration: RegistrationCreateNestedOneWithoutOrderItemsInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedOrderItemsInput
+  }
+
+  export type OrderItemUncheckedCreateWithoutOrderInput = {
+    id?: string
+    registrationId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    confirmedById?: string | null
+  }
+
+  export type OrderItemCreateOrConnectWithoutOrderInput = {
+    where: OrderItemWhereUniqueInput
+    create: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput>
+  }
+
+  export type OrderItemCreateManyOrderInputEnvelope = {
+    data: OrderItemCreateManyOrderInput | OrderItemCreateManyOrderInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ServiceOrderCreateWithoutOrderInput = {
+    id?: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    issuedBy?: UserCreateNestedOneWithoutIssuedServiceOrdersInput
+  }
+
+  export type ServiceOrderUncheckedCreateWithoutOrderInput = {
+    id?: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    issuedById?: string | null
+  }
+
+  export type ServiceOrderCreateOrConnectWithoutOrderInput = {
+    where: ServiceOrderWhereUniqueInput
+    create: XOR<ServiceOrderCreateWithoutOrderInput, ServiceOrderUncheckedCreateWithoutOrderInput>
+  }
+
+  export type ServiceOrderCreateManyOrderInputEnvelope = {
+    data: ServiceOrderCreateManyOrderInput | ServiceOrderCreateManyOrderInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutConfirmedManualOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+  }
+
+  export type UserUncheckedCreateWithoutConfirmedManualOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+  }
+
+  export type UserCreateOrConnectWithoutConfirmedManualOrdersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutConfirmedManualOrdersInput, UserUncheckedCreateWithoutConfirmedManualOrdersInput>
   }
 
   export type EventUpsertWithoutOrdersInput = {
@@ -27099,6 +30982,132 @@ export namespace Prisma {
     processedAt?: DateTimeNullableFilter<"WebhookEvent"> | Date | string | null
     createdAt?: DateTimeFilter<"WebhookEvent"> | Date | string
     orderId?: StringNullableFilter<"WebhookEvent"> | string | null
+  }
+
+  export type OrderItemUpsertWithWhereUniqueWithoutOrderInput = {
+    where: OrderItemWhereUniqueInput
+    update: XOR<OrderItemUpdateWithoutOrderInput, OrderItemUncheckedUpdateWithoutOrderInput>
+    create: XOR<OrderItemCreateWithoutOrderInput, OrderItemUncheckedCreateWithoutOrderInput>
+  }
+
+  export type OrderItemUpdateWithWhereUniqueWithoutOrderInput = {
+    where: OrderItemWhereUniqueInput
+    data: XOR<OrderItemUpdateWithoutOrderInput, OrderItemUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type OrderItemUpdateManyWithWhereWithoutOrderInput = {
+    where: OrderItemScalarWhereInput
+    data: XOR<OrderItemUpdateManyMutationInput, OrderItemUncheckedUpdateManyWithoutOrderInput>
+  }
+
+  export type OrderItemScalarWhereInput = {
+    AND?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+    OR?: OrderItemScalarWhereInput[]
+    NOT?: OrderItemScalarWhereInput | OrderItemScalarWhereInput[]
+    id?: StringFilter<"OrderItem"> | string
+    orderId?: StringFilter<"OrderItem"> | string
+    registrationId?: StringFilter<"OrderItem"> | string
+    amountCents?: IntFilter<"OrderItem"> | number
+    status?: EnumOrderItemStatusFilter<"OrderItem"> | $Enums.OrderItemStatus
+    notes?: StringNullableFilter<"OrderItem"> | string | null
+    createdAt?: DateTimeFilter<"OrderItem"> | Date | string
+    updatedAt?: DateTimeFilter<"OrderItem"> | Date | string
+    confirmedById?: StringNullableFilter<"OrderItem"> | string | null
+  }
+
+  export type ServiceOrderUpsertWithWhereUniqueWithoutOrderInput = {
+    where: ServiceOrderWhereUniqueInput
+    update: XOR<ServiceOrderUpdateWithoutOrderInput, ServiceOrderUncheckedUpdateWithoutOrderInput>
+    create: XOR<ServiceOrderCreateWithoutOrderInput, ServiceOrderUncheckedCreateWithoutOrderInput>
+  }
+
+  export type ServiceOrderUpdateWithWhereUniqueWithoutOrderInput = {
+    where: ServiceOrderWhereUniqueInput
+    data: XOR<ServiceOrderUpdateWithoutOrderInput, ServiceOrderUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type ServiceOrderUpdateManyWithWhereWithoutOrderInput = {
+    where: ServiceOrderScalarWhereInput
+    data: XOR<ServiceOrderUpdateManyMutationInput, ServiceOrderUncheckedUpdateManyWithoutOrderInput>
+  }
+
+  export type ServiceOrderScalarWhereInput = {
+    AND?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
+    OR?: ServiceOrderScalarWhereInput[]
+    NOT?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
+    id?: StringFilter<"ServiceOrder"> | string
+    orderId?: StringFilter<"ServiceOrder"> | string
+    number?: IntFilter<"ServiceOrder"> | number
+    totalCents?: IntFilter<"ServiceOrder"> | number
+    proofUrl?: StringNullableFilter<"ServiceOrder"> | string | null
+    pdfUrl?: StringNullableFilter<"ServiceOrder"> | string | null
+    notes?: StringNullableFilter<"ServiceOrder"> | string | null
+    metadata?: JsonNullableFilter<"ServiceOrder">
+    issuedAt?: DateTimeFilter<"ServiceOrder"> | Date | string
+    issuedById?: StringNullableFilter<"ServiceOrder"> | string | null
+  }
+
+  export type UserUpsertWithoutConfirmedManualOrdersInput = {
+    update: XOR<UserUpdateWithoutConfirmedManualOrdersInput, UserUncheckedUpdateWithoutConfirmedManualOrdersInput>
+    create: XOR<UserCreateWithoutConfirmedManualOrdersInput, UserUncheckedCreateWithoutConfirmedManualOrdersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutConfirmedManualOrdersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutConfirmedManualOrdersInput, UserUncheckedUpdateWithoutConfirmedManualOrdersInput>
+  }
+
+  export type UserUpdateWithoutConfirmedManualOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutConfirmedManualOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type RefundCreateWithoutRegistrationInput = {
@@ -27278,13 +31287,25 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutRegistrationsInput = {
@@ -27302,16 +31323,60 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutRegistrationsInput = {
     where: OrderWhereUniqueInput
     create: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
+  }
+
+  export type OrderItemCreateWithoutRegistrationInput = {
+    id?: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    order: OrderCreateNestedOneWithoutItemsInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedOrderItemsInput
+  }
+
+  export type OrderItemUncheckedCreateWithoutRegistrationInput = {
+    id?: string
+    orderId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    confirmedById?: string | null
+  }
+
+  export type OrderItemCreateOrConnectWithoutRegistrationInput = {
+    where: OrderItemWhereUniqueInput
+    create: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput>
+  }
+
+  export type OrderItemCreateManyRegistrationInputEnvelope = {
+    data: OrderItemCreateManyRegistrationInput | OrderItemCreateManyRegistrationInput[]
+    skipDuplicates?: boolean
   }
 
   export type RefundUpsertWithWhereUniqueWithoutRegistrationInput = {
@@ -27514,13 +31579,25 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutRegistrationsInput = {
@@ -27538,11 +31615,39 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderItemUpsertWithWhereUniqueWithoutRegistrationInput = {
+    where: OrderItemWhereUniqueInput
+    update: XOR<OrderItemUpdateWithoutRegistrationInput, OrderItemUncheckedUpdateWithoutRegistrationInput>
+    create: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput>
+  }
+
+  export type OrderItemUpdateWithWhereUniqueWithoutRegistrationInput = {
+    where: OrderItemWhereUniqueInput
+    data: XOR<OrderItemUpdateWithoutRegistrationInput, OrderItemUncheckedUpdateWithoutRegistrationInput>
+  }
+
+  export type OrderItemUpdateManyWithWhereWithoutRegistrationInput = {
+    where: OrderItemScalarWhereInput
+    data: XOR<OrderItemUpdateManyMutationInput, OrderItemUncheckedUpdateManyWithoutRegistrationInput>
   }
 
   export type OrderCreateWithoutRefundsInput = {
@@ -27558,13 +31663,25 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
     registrations?: RegistrationCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutRefundsInput = {
@@ -27582,11 +31699,23 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutRefundsInput = {
@@ -27614,6 +31743,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateWithoutRefundsInput = {
@@ -27636,6 +31766,7 @@ export namespace Prisma {
     paidAt?: Date | string | null
     createdAt?: Date | string
     ministryId?: string | null
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationCreateOrConnectWithoutRefundsInput = {
@@ -27667,13 +31798,25 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
     registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutRefundsInput = {
@@ -27691,11 +31834,23 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type RegistrationUpsertWithoutRefundsInput = {
@@ -27729,6 +31884,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutRefundsInput = {
@@ -27751,6 +31907,7 @@ export namespace Prisma {
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type OrderCreateWithoutWebhookEventsInput = {
@@ -27766,13 +31923,25 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
     registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutWebhookEventsInput = {
@@ -27790,11 +31959,23 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutWebhookEventsInput = {
@@ -27826,13 +32007,25 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutWebhookEventsInput = {
@@ -27850,11 +32043,23 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type UserCreateWithoutAuditLogsInput = {
@@ -27878,6 +32083,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -27901,6 +32109,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -27940,6 +32151,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -27963,6 +32177,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type AuditLogCreateWithoutActorInput = {
@@ -28240,6 +32457,150 @@ export namespace Prisma {
 
   export type UserPermissionCreateManyUserInputEnvelope = {
     data: UserPermissionCreateManyUserInput | UserPermissionCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrderCreateWithoutConfirmedByInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderUncheckedCreateWithoutConfirmedByInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutConfirmedByInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutConfirmedByInput, OrderUncheckedCreateWithoutConfirmedByInput>
+  }
+
+  export type OrderCreateManyConfirmedByInputEnvelope = {
+    data: OrderCreateManyConfirmedByInput | OrderCreateManyConfirmedByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrderItemCreateWithoutConfirmedByInput = {
+    id?: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    order: OrderCreateNestedOneWithoutItemsInput
+    registration: RegistrationCreateNestedOneWithoutOrderItemsInput
+  }
+
+  export type OrderItemUncheckedCreateWithoutConfirmedByInput = {
+    id?: string
+    orderId: string
+    registrationId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrderItemCreateOrConnectWithoutConfirmedByInput = {
+    where: OrderItemWhereUniqueInput
+    create: XOR<OrderItemCreateWithoutConfirmedByInput, OrderItemUncheckedCreateWithoutConfirmedByInput>
+  }
+
+  export type OrderItemCreateManyConfirmedByInputEnvelope = {
+    data: OrderItemCreateManyConfirmedByInput | OrderItemCreateManyConfirmedByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ServiceOrderCreateWithoutIssuedByInput = {
+    id?: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    order: OrderCreateNestedOneWithoutServiceOrdersInput
+  }
+
+  export type ServiceOrderUncheckedCreateWithoutIssuedByInput = {
+    id?: string
+    orderId: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+  }
+
+  export type ServiceOrderCreateOrConnectWithoutIssuedByInput = {
+    where: ServiceOrderWhereUniqueInput
+    create: XOR<ServiceOrderCreateWithoutIssuedByInput, ServiceOrderUncheckedCreateWithoutIssuedByInput>
+  }
+
+  export type ServiceOrderCreateManyIssuedByInputEnvelope = {
+    data: ServiceOrderCreateManyIssuedByInput | ServiceOrderCreateManyIssuedByInput[]
     skipDuplicates?: boolean
   }
 
@@ -28532,6 +32893,54 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"UserPermission"> | Date | string
   }
 
+  export type OrderUpsertWithWhereUniqueWithoutConfirmedByInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutConfirmedByInput, OrderUncheckedUpdateWithoutConfirmedByInput>
+    create: XOR<OrderCreateWithoutConfirmedByInput, OrderUncheckedCreateWithoutConfirmedByInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutConfirmedByInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutConfirmedByInput, OrderUncheckedUpdateWithoutConfirmedByInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutConfirmedByInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutConfirmedByInput>
+  }
+
+  export type OrderItemUpsertWithWhereUniqueWithoutConfirmedByInput = {
+    where: OrderItemWhereUniqueInput
+    update: XOR<OrderItemUpdateWithoutConfirmedByInput, OrderItemUncheckedUpdateWithoutConfirmedByInput>
+    create: XOR<OrderItemCreateWithoutConfirmedByInput, OrderItemUncheckedCreateWithoutConfirmedByInput>
+  }
+
+  export type OrderItemUpdateWithWhereUniqueWithoutConfirmedByInput = {
+    where: OrderItemWhereUniqueInput
+    data: XOR<OrderItemUpdateWithoutConfirmedByInput, OrderItemUncheckedUpdateWithoutConfirmedByInput>
+  }
+
+  export type OrderItemUpdateManyWithWhereWithoutConfirmedByInput = {
+    where: OrderItemScalarWhereInput
+    data: XOR<OrderItemUpdateManyMutationInput, OrderItemUncheckedUpdateManyWithoutConfirmedByInput>
+  }
+
+  export type ServiceOrderUpsertWithWhereUniqueWithoutIssuedByInput = {
+    where: ServiceOrderWhereUniqueInput
+    update: XOR<ServiceOrderUpdateWithoutIssuedByInput, ServiceOrderUncheckedUpdateWithoutIssuedByInput>
+    create: XOR<ServiceOrderCreateWithoutIssuedByInput, ServiceOrderUncheckedCreateWithoutIssuedByInput>
+  }
+
+  export type ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput = {
+    where: ServiceOrderWhereUniqueInput
+    data: XOR<ServiceOrderUpdateWithoutIssuedByInput, ServiceOrderUncheckedUpdateWithoutIssuedByInput>
+  }
+
+  export type ServiceOrderUpdateManyWithWhereWithoutIssuedByInput = {
+    where: ServiceOrderScalarWhereInput
+    data: XOR<ServiceOrderUpdateManyMutationInput, ServiceOrderUncheckedUpdateManyWithoutIssuedByInput>
+  }
+
   export type UserCreateWithoutSystemConfigsUpdatedInput = {
     id?: string
     name: string
@@ -28553,6 +32962,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutSystemConfigsUpdatedInput = {
@@ -28576,6 +32988,9 @@ export namespace Prisma {
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutSystemConfigsUpdatedInput = {
@@ -28615,6 +33030,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSystemConfigsUpdatedInput = {
@@ -28638,6 +33056,9 @@ export namespace Prisma {
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type EventCreateWithoutLotsInput = {
@@ -28704,13 +33125,25 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
     registrations?: RegistrationCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutPricingLotInput = {
@@ -28727,12 +33160,24 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type OrderCreateOrConnectWithoutPricingLotInput = {
@@ -29022,6 +33467,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateWithoutMinistryInput = {
@@ -29044,6 +33490,7 @@ export namespace Prisma {
     paidAt?: Date | string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
   }
 
   export type RegistrationCreateOrConnectWithoutMinistryInput = {
@@ -29077,6 +33524,9 @@ export namespace Prisma {
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutPrimaryMinistryInput = {
@@ -29100,6 +33550,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutPrimaryMinistryInput = {
@@ -29226,6 +33679,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutMinistriesInput = {
@@ -29249,6 +33705,9 @@ export namespace Prisma {
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutMinistriesInput = {
@@ -29323,6 +33782,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMinistriesInput = {
@@ -29346,6 +33808,9 @@ export namespace Prisma {
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type ProfilePermissionCreateWithoutProfileInput = {
@@ -29409,6 +33874,9 @@ export namespace Prisma {
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutProfileInput = {
@@ -29432,6 +33900,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutProfileInput = {
@@ -29572,6 +34043,9 @@ export namespace Prisma {
     districtScope?: DistrictCreateNestedOneWithoutUsersInput
     primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
     profile?: ProfileCreateNestedOneWithoutUsersInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserUncheckedCreateWithoutPermissionsOverrideInput = {
@@ -29595,6 +34069,9 @@ export namespace Prisma {
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
   }
 
   export type UserCreateOrConnectWithoutPermissionsOverrideInput = {
@@ -29634,6 +34111,9 @@ export namespace Prisma {
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPermissionsOverrideInput = {
@@ -29657,6 +34137,661 @@ export namespace Prisma {
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+  }
+
+  export type OrderCreateWithoutItemsInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+  }
+
+  export type OrderUncheckedCreateWithoutItemsInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutItemsInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutItemsInput, OrderUncheckedCreateWithoutItemsInput>
+  }
+
+  export type RegistrationCreateWithoutOrderItemsInput = {
+    id?: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
+    event: EventCreateNestedOneWithoutRegistrationsInput
+    ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
+  }
+
+  export type RegistrationUncheckedCreateWithoutOrderItemsInput = {
+    id?: string
+    orderId: string
+    eventId: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    districtId: string
+    churchId: string
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    ministryId?: string | null
+    refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+  }
+
+  export type RegistrationCreateOrConnectWithoutOrderItemsInput = {
+    where: RegistrationWhereUniqueInput
+    create: XOR<RegistrationCreateWithoutOrderItemsInput, RegistrationUncheckedCreateWithoutOrderItemsInput>
+  }
+
+  export type UserCreateWithoutConfirmedOrderItemsInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+  }
+
+  export type UserUncheckedCreateWithoutConfirmedOrderItemsInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+  }
+
+  export type UserCreateOrConnectWithoutConfirmedOrderItemsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutConfirmedOrderItemsInput, UserUncheckedCreateWithoutConfirmedOrderItemsInput>
+  }
+
+  export type OrderUpsertWithoutItemsInput = {
+    update: XOR<OrderUpdateWithoutItemsInput, OrderUncheckedUpdateWithoutItemsInput>
+    create: XOR<OrderCreateWithoutItemsInput, OrderUncheckedCreateWithoutItemsInput>
+    where?: OrderWhereInput
+  }
+
+  export type OrderUpdateToOneWithWhereWithoutItemsInput = {
+    where?: OrderWhereInput
+    data: XOR<OrderUpdateWithoutItemsInput, OrderUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type OrderUpdateWithoutItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type RegistrationUpsertWithoutOrderItemsInput = {
+    update: XOR<RegistrationUpdateWithoutOrderItemsInput, RegistrationUncheckedUpdateWithoutOrderItemsInput>
+    create: XOR<RegistrationCreateWithoutOrderItemsInput, RegistrationUncheckedCreateWithoutOrderItemsInput>
+    where?: RegistrationWhereInput
+  }
+
+  export type RegistrationUpdateToOneWithWhereWithoutOrderItemsInput = {
+    where?: RegistrationWhereInput
+    data: XOR<RegistrationUpdateWithoutOrderItemsInput, RegistrationUncheckedUpdateWithoutOrderItemsInput>
+  }
+
+  export type RegistrationUpdateWithoutOrderItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
+    event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
+    ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateWithoutOrderItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+  }
+
+  export type UserUpsertWithoutConfirmedOrderItemsInput = {
+    update: XOR<UserUpdateWithoutConfirmedOrderItemsInput, UserUncheckedUpdateWithoutConfirmedOrderItemsInput>
+    create: XOR<UserCreateWithoutConfirmedOrderItemsInput, UserUncheckedCreateWithoutConfirmedOrderItemsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutConfirmedOrderItemsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutConfirmedOrderItemsInput, UserUncheckedUpdateWithoutConfirmedOrderItemsInput>
+  }
+
+  export type UserUpdateWithoutConfirmedOrderItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutConfirmedOrderItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+  }
+
+  export type OrderCreateWithoutServiceOrdersInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+  }
+
+  export type OrderUncheckedCreateWithoutServiceOrdersInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutServiceOrdersInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutServiceOrdersInput, OrderUncheckedCreateWithoutServiceOrdersInput>
+  }
+
+  export type UserCreateWithoutIssuedServiceOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+  }
+
+  export type UserUncheckedCreateWithoutIssuedServiceOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+  }
+
+  export type UserCreateOrConnectWithoutIssuedServiceOrdersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutIssuedServiceOrdersInput, UserUncheckedCreateWithoutIssuedServiceOrdersInput>
+  }
+
+  export type OrderUpsertWithoutServiceOrdersInput = {
+    update: XOR<OrderUpdateWithoutServiceOrdersInput, OrderUncheckedUpdateWithoutServiceOrdersInput>
+    create: XOR<OrderCreateWithoutServiceOrdersInput, OrderUncheckedCreateWithoutServiceOrdersInput>
+    where?: OrderWhereInput
+  }
+
+  export type OrderUpdateToOneWithWhereWithoutServiceOrdersInput = {
+    where?: OrderWhereInput
+    data: XOR<OrderUpdateWithoutServiceOrdersInput, OrderUncheckedUpdateWithoutServiceOrdersInput>
+  }
+
+  export type OrderUpdateWithoutServiceOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutServiceOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type UserUpsertWithoutIssuedServiceOrdersInput = {
+    update: XOR<UserUpdateWithoutIssuedServiceOrdersInput, UserUncheckedUpdateWithoutIssuedServiceOrdersInput>
+    create: XOR<UserCreateWithoutIssuedServiceOrdersInput, UserUncheckedCreateWithoutIssuedServiceOrdersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutIssuedServiceOrdersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutIssuedServiceOrdersInput, UserUncheckedUpdateWithoutIssuedServiceOrdersInput>
+  }
+
+  export type UserUpdateWithoutIssuedServiceOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutIssuedServiceOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
   }
 
   export type ChurchCreateManyDistrictInput = {
@@ -29770,6 +34905,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutDistrictInput = {
@@ -29792,6 +34928,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateManyWithoutDistrictInput = {
@@ -29836,6 +34973,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutDistrictScopeInput = {
@@ -29859,6 +34999,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutDistrictScopeInput = {
@@ -29938,6 +35081,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutChurchInput = {
@@ -29960,6 +35104,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateManyWithoutChurchInput = {
@@ -30004,6 +35149,9 @@ export namespace Prisma {
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChurchInput = {
@@ -30027,6 +35175,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutChurchInput = {
@@ -30082,8 +35233,18 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
   }
 
@@ -30186,13 +35347,25 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutEventInput = {
@@ -30209,12 +35382,24 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateManyWithoutEventInput = {
@@ -30231,8 +35416,18 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -30256,6 +35451,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutEventInput = {
@@ -30278,6 +35474,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateManyWithoutEventInput = {
@@ -30341,6 +35538,29 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type OrderItemCreateManyOrderInput = {
+    id?: string
+    registrationId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    confirmedById?: string | null
+  }
+
+  export type ServiceOrderCreateManyOrderInput = {
+    id?: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
+    issuedById?: string | null
+  }
+
   export type RefundUpdateWithoutOrderInput = {
     id?: StringFieldUpdateOperationsInput | string
     amountCents?: IntFieldUpdateOperationsInput | number
@@ -30388,6 +35608,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutOrderInput = {
@@ -30410,6 +35631,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateManyWithoutOrderInput = {
@@ -30463,6 +35685,75 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type OrderItemUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    registration?: RegistrationUpdateOneRequiredWithoutOrderItemsNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedOrderItemsNestedInput
+  }
+
+  export type OrderItemUncheckedUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OrderItemUncheckedUpdateManyWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ServiceOrderUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuedBy?: UserUpdateOneWithoutIssuedServiceOrdersNestedInput
+  }
+
+  export type ServiceOrderUncheckedUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type ServiceOrderUncheckedUpdateManyWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    issuedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type RefundCreateManyRegistrationInput = {
     id?: string
     orderId: string
@@ -30470,6 +35761,17 @@ export namespace Prisma {
     mpRefundId: string
     reason?: string | null
     createdAt?: Date | string
+  }
+
+  export type OrderItemCreateManyRegistrationInput = {
+    id?: string
+    orderId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    confirmedById?: string | null
   }
 
   export type RefundUpdateWithoutRegistrationInput = {
@@ -30497,6 +35799,39 @@ export namespace Prisma {
     mpRefundId?: StringFieldUpdateOperationsInput | string
     reason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrderItemUpdateWithoutRegistrationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: OrderUpdateOneRequiredWithoutItemsNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedOrderItemsNestedInput
+  }
+
+  export type OrderItemUncheckedUpdateWithoutRegistrationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OrderItemUncheckedUpdateManyWithoutRegistrationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AuditLogCreateManyActorInput = {
@@ -30552,6 +35887,58 @@ export namespace Prisma {
     canFinancial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type OrderCreateManyConfirmedByInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type OrderItemCreateManyConfirmedByInput = {
+    id?: string
+    orderId: string
+    registrationId: string
+    amountCents: number
+    status?: $Enums.OrderItemStatus
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiceOrderCreateManyIssuedByInput = {
+    id?: string
+    orderId: string
+    number: number
+    totalCents: number
+    proofUrl?: string | null
+    pdfUrl?: string | null
+    notes?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: Date | string
   }
 
   export type AuditLogUpdateWithoutActorInput = {
@@ -30727,6 +36114,172 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type OrderUpdateWithoutConfirmedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutConfirmedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutConfirmedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrderItemUpdateWithoutConfirmedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: OrderUpdateOneRequiredWithoutItemsNestedInput
+    registration?: RegistrationUpdateOneRequiredWithoutOrderItemsNestedInput
+  }
+
+  export type OrderItemUncheckedUpdateWithoutConfirmedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrderItemUncheckedUpdateManyWithoutConfirmedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    amountCents?: IntFieldUpdateOperationsInput | number
+    status?: EnumOrderItemStatusFieldUpdateOperationsInput | $Enums.OrderItemStatus
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceOrderUpdateWithoutIssuedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: OrderUpdateOneRequiredWithoutServiceOrdersNestedInput
+  }
+
+  export type ServiceOrderUncheckedUpdateWithoutIssuedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiceOrderUncheckedUpdateManyWithoutIssuedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    number?: IntFieldUpdateOperationsInput | number
+    totalCents?: IntFieldUpdateOperationsInput | number
+    proofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    pdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrderCreateManyPricingLotInput = {
     id?: string
     eventId: string
@@ -30741,8 +36294,18 @@ export namespace Prisma {
     expiresAt: Date | string
     paidAt?: Date | string | null
     manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
     feeCents?: number
     netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
     createdAt?: Date | string
   }
 
@@ -30759,13 +36322,25 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutPricingLotInput = {
@@ -30782,12 +36357,24 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type OrderUncheckedUpdateManyWithoutPricingLotInput = {
@@ -30804,8 +36391,18 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
     feeCents?: IntFieldUpdateOperationsInput | number
     netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -30972,6 +36569,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutMinistryInput = {
@@ -30994,6 +36592,7 @@ export namespace Prisma {
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateManyWithoutMinistryInput = {
@@ -31038,6 +36637,9 @@ export namespace Prisma {
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
     profile?: ProfileUpdateOneWithoutUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPrimaryMinistryInput = {
@@ -31061,6 +36663,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutPrimaryMinistryInput = {
@@ -31180,6 +36785,9 @@ export namespace Prisma {
     districtScope?: DistrictUpdateOneWithoutUsersNestedInput
     primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProfileInput = {
@@ -31203,6 +36811,9 @@ export namespace Prisma {
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutProfileInput = {
@@ -31332,6 +36943,14 @@ export namespace Prisma {
      * @deprecated Use UserPermissionDefaultArgs instead
      */
     export type UserPermissionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserPermissionDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use OrderItemDefaultArgs instead
+     */
+    export type OrderItemArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = OrderItemDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use ServiceOrderDefaultArgs instead
+     */
+    export type ServiceOrderArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ServiceOrderDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

@@ -470,6 +470,7 @@ export class OrderService {
       fullName: registration.fullName,
       status: registration.status
     }));
+    const manualPaymentProofUrl = order.manualPaymentProofUrl ?? undefined;
 
     const isFreeEvent = Boolean((order.event as any)?.isFree);
     if (isFreeEvent) {
@@ -482,7 +483,8 @@ export class OrderService {
         totalCents,
         paidAt: order.paidAt,
         isFree: true,
-        receipts
+        receipts,
+        manualPaymentProofUrl
       };
     }
 
@@ -496,7 +498,8 @@ export class OrderService {
         totalCents,
         isManual: true,
         paidAt: order.paidAt,
-        receipts
+        receipts,
+        manualPaymentProofUrl
       };
     }
 
@@ -509,7 +512,8 @@ export class OrderService {
         participants,
         totalCents,
         paidAt: order.paidAt,
-        receipts
+        receipts,
+        manualPaymentProofUrl
       };
     }
 
@@ -591,7 +595,7 @@ export class OrderService {
     // Tentar obter/garantir dados de PIX (qr_code e base64)
     let pixQrData = forcedNewPayment ? undefined : (payment as any)?.pixQrData;
 
-    // Se já houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
+    // Se jï¿½ houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
     if (latestPayment?.id && !pixQrData && !forcedNewPayment) {
       try {
         const details = await paymentService.fetchPayment(String(latestPayment.id));
@@ -624,7 +628,8 @@ export class OrderService {
       participants,
       totalCents,
       receipts: [],
-      pixReactivated: forcedNewPayment
+      pixReactivated: forcedNewPayment,
+      manualPaymentProofUrl
     };
   }
 
@@ -653,6 +658,8 @@ export class OrderService {
         paymentMethod: true,
         mpPreferenceId: true,
         mpPaymentId: true,
+        manualPaymentReference: true,
+        manualPaymentProofUrl: true,
         expiresAt: true,
         createdAt: true,
         ...(hasFeeCents && { feeCents: true }),
@@ -761,6 +768,7 @@ export class OrderService {
       manualReference?: string | null;
       paymentMethod?: PaymentMethod;
       actorUserId?: string | null;
+      paymentProofUrl?: string | null;
     }
   ) {
     const order = await prisma.order.findUnique({
@@ -806,6 +814,8 @@ export class OrderService {
       options?.paymentMethod ?? (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
     const manualReference =
       options?.manualReference ?? (isManualPayment(paymentId) ? paymentId : null);
+    const shouldUpdateProof = Object.prototype.hasOwnProperty.call(options ?? {}, paymentProofUrl);
+    const newProofUrl = shouldUpdateProof ? options?.paymentProofUrl ?? null : undefined;
 
     // Calcular taxas do Mercado Pago se for pagamento via MP
     let feeCents = 0;
@@ -842,6 +852,9 @@ export class OrderService {
         paidAt,
         manualPaymentReference: manualReference
       };
+      if (shouldUpdateProof) {
+        updateData.manualPaymentProofUrl = newProofUrl ?? null;
+      }
 
       // Adicionar campos financeiros apenas se existirem
       if (hasFeeCents) {
@@ -867,6 +880,9 @@ export class OrderService {
       return updatedOrder;
     });
 
+    if (shouldUpdateProof && order.manualPaymentProofUrl && order.manualPaymentProofUrl !== newProofUrl) {
+      await storageService.deleteByUrl(order.manualPaymentProofUrl).catch(() => undefined);
+    }
     await registrationService.generateReceiptsForOrder(orderId);
     await auditService.log({
       actorUserId: options?.actorUserId ?? undefined,

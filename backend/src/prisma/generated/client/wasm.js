@@ -177,8 +177,18 @@ exports.Prisma.OrderScalarFieldEnum = {
   expiresAt: 'expiresAt',
   paidAt: 'paidAt',
   manualPaymentReference: 'manualPaymentReference',
+  manualPaymentProofUrl: 'manualPaymentProofUrl',
   feeCents: 'feeCents',
   netAmountCents: 'netAmountCents',
+  origin: 'origin',
+  responsibleName: 'responsibleName',
+  responsibleDocument: 'responsibleDocument',
+  responsibleEmail: 'responsibleEmail',
+  responsiblePhone: 'responsiblePhone',
+  amountReceivedCents: 'amountReceivedCents',
+  manualNotes: 'manualNotes',
+  confirmedById: 'confirmedById',
+  confirmedAt: 'confirmedAt',
   createdAt: 'createdAt'
 };
 
@@ -341,12 +351,42 @@ exports.Prisma.UserPermissionScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrderItemScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  registrationId: 'registrationId',
+  amountCents: 'amountCents',
+  status: 'status',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  confirmedById: 'confirmedById'
+};
+
+exports.Prisma.ServiceOrderScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  number: 'number',
+  totalCents: 'totalCents',
+  proofUrl: 'proofUrl',
+  pdfUrl: 'pdfUrl',
+  notes: 'notes',
+  metadata: 'metadata',
+  issuedAt: 'issuedAt',
+  issuedById: 'issuedById'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -360,9 +400,20 @@ exports.Prisma.JsonNullValueFilter = {
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
 };
+exports.OrderOrigin = exports.$Enums.OrderOrigin = {
+  MARKETPLACE: 'MARKETPLACE',
+  MANUAL: 'MANUAL'
+};
+
 exports.UserStatus = exports.$Enums.UserStatus = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE'
+};
+
+exports.OrderItemStatus = exports.$Enums.OrderItemStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCELED: 'CANCELED'
 };
 
 exports.Prisma.ModelName = {
@@ -382,7 +433,9 @@ exports.Prisma.ModelName = {
   MinistryUser: 'MinistryUser',
   Profile: 'Profile',
   ProfilePermission: 'ProfilePermission',
-  UserPermission: 'UserPermission'
+  UserPermission: 'UserPermission',
+  OrderItem: 'OrderItem',
+  ServiceOrder: 'ServiceOrder'
 };
 
 /**

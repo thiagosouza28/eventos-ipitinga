@@ -255,6 +255,20 @@
                     Confirmar pagamento
                   </button>
                   <button
+                    v-if="canConfirmManualPix(registration)"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="openManualPaymentDialog(registration)"
+                  >
+                    Confirmar PIX manual
+                  </button>
+                  <button
+                    v-if="canViewManualProof(registration)"
+                    class="text-primary-600 hover:text-primary-500"
+                    @click="viewManualProof(registration)"
+                  >
+                    Ver anexo
+                  </button>
+                  <button
                     v-if="
                       canCancelRegistration(registration.status) &&
                       registration.status === 'PENDING_PAYMENT' &&
@@ -544,6 +558,100 @@
       @confirm="executeConfirmAction"
       @cancel="resetConfirmState"
     />
+    <div v-if="manualPayment.open" class="fixed inset-0 z-[65] flex items-center justify-center bg-black/60 px-4">
+      <div class="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900">
+        <div class="space-y-1">
+          <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">Confirmar pagamento manual</h3>
+          <p class="text-sm text-neutral-600 dark:text-neutral-300">
+            Registre o recebimento manual do PIX e envie o comprovante para anexarmos à inscrição.
+          </p>
+        </div>
+        <div class="mt-4 space-y-4">
+          <div>
+            <label class="text-xs font-semibold uppercase text-neutral-500">Referência interna</label>
+            <input
+              v-model="manualPayment.reference"
+              type="text"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800"
+              placeholder="PIX-MANUAL-..."
+            />
+          </div>
+          <div>
+            <label class="text-xs font-semibold uppercase text-neutral-500">Data do pagamento</label>
+            <input
+              v-model="manualPayment.paidAt"
+              type="datetime-local"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800"
+            />
+          </div>
+          <div>
+            <label class="text-xs font-semibold uppercase text-neutral-500">Comprovante</label>
+            <input
+              :key="manualPayment.fileInputKey"
+              type="file"
+              accept="image/*,application/pdf"
+              class="mt-2 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 dark:text-neutral-300"
+              @change="handleManualProofChange"
+            />
+            <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              Formatos aceitos: JPG, PNG ou PDF (até 5 MB).
+            </p>
+            <div
+              v-if="manualPayment.filePreview"
+              class="mt-3 overflow-hidden rounded-xl border border-neutral-200 shadow-inner dark:border-neutral-700"
+            >
+              <img
+                :src="manualPayment.filePreview"
+                alt="Pré-visualização do comprovante"
+                class="max-h-52 w-full bg-neutral-50 object-contain dark:bg-neutral-900"
+              />
+              <div class="border-t border-neutral-100 px-3 py-2 text-xs text-neutral-600 dark:border-neutral-800 dark:text-neutral-300">
+                {{ manualPayment.fileName }}
+              </div>
+            </div>
+            <div
+              v-else-if="manualPayment.fileName"
+              class="mt-3 rounded-xl border border-dashed border-neutral-300 px-3 py-2 text-xs text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"
+            >
+              {{ manualPayment.fileName }} ({{ manualPayment.fileType || 'arquivo' }})
+            </div>
+            <button
+              v-if="manualPayment.existingProofUrl"
+              type="button"
+              class="mt-3 text-xs font-semibold text-primary-600 hover:text-primary-500"
+              @click="openExistingManualProof"
+            >
+              Abrir comprovante já anexado
+            </button>
+          </div>
+          <p v-if="manualPayment.error" class="text-sm text-red-500">
+            {{ manualPayment.error }}
+          </p>
+        </div>
+        <div class="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            class="rounded-lg border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-800"
+            :disabled="manualPayment.submitting"
+            @click="closeManualPaymentDialog"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-60"
+            :disabled="manualPayment.submitting"
+            @click="submitManualPayment"
+          >
+            <span
+              v-if="manualPayment.submitting"
+              class="mr-2 h-4 w-4 animate-spin rounded-full border border-white border-b-transparent"
+            />
+            Confirmar pagamento
+          </button>
+        </div>
+      </div>
+    </div>
     <div v-if="processing.open" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60">
       <div class="rounded-lg bg-white px-6 py-4 text-sm shadow dark:bg-neutral-900">
         <div class="flex items-center gap-3">
@@ -1195,6 +1303,30 @@ const ensureMinDelay = async (promise: Promise<any>, ms = 2000) => {
   return result
 }
 
+const formatDateTimeLocalInput = (value?: Date | string) => {
+  const source = value ? new Date(value) : new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${source.getFullYear()}-${pad(source.getMonth() + 1)}-${pad(source.getDate())}T${pad(source.getHours())}:${pad(source.getMinutes())}`
+}
+
+const generateManualReference = () => `PIX-MANUAL-${Date.now()}`
+const MANUAL_PROOF_MAX_SIZE = 5 * 1024 * 1024
+
+const manualPayment = reactive({
+  open: false,
+  registration: null as Registration | null,
+  reference: '',
+  paidAt: '',
+  fileName: '',
+  fileType: '',
+  filePreview: '',
+  fileDataUrl: '',
+  submitting: false,
+  error: '',
+  existingProofUrl: '',
+  fileInputKey: 0
+})
+
 const executeConfirmAction = async () => {
   if (!confirmState.registration || !confirmState.action) { resetConfirmState(); return }
   const registration = confirmState.registration
@@ -1243,6 +1375,117 @@ const executeConfirmAction = async () => {
     }
     if (action === 'confirm-cash') { showError('Falha ao confirmar pagamento', e); return }
     showError(titles[action], e)
+  }
+}
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error ?? new Error('Falha ao ler arquivo'))
+    reader.readAsDataURL(file)
+  })
+
+const resetManualPaymentState = (options?: { preserveInput?: boolean }) => {
+  manualPayment.fileDataUrl = ''
+  manualPayment.filePreview = ''
+  manualPayment.fileName = ''
+  manualPayment.fileType = ''
+  manualPayment.error = ''
+  manualPayment.submitting = false
+  if (!options?.preserveInput) {
+    manualPayment.fileInputKey += 1
+  }
+}
+
+const openManualPaymentDialog = (registration: Registration) => {
+  if (!registration.orderId) {
+    showError('Pedido indisponível', new Error('Inscrição sem pedido associado.'))
+    return
+  }
+  manualPayment.registration = registration
+  manualPayment.open = true
+  manualPayment.reference = registration.order?.manualPaymentReference || generateManualReference()
+  manualPayment.paidAt = formatDateTimeLocalInput(new Date())
+  manualPayment.existingProofUrl = registration.order?.manualPaymentProofUrl || ''
+  resetManualPaymentState()
+}
+
+const closeManualPaymentDialog = () => {
+  manualPayment.open = false
+  manualPayment.registration = null
+  manualPayment.existingProofUrl = ''
+  resetManualPaymentState()
+}
+
+const handleManualProofChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  resetManualPaymentState({ preserveInput: true })
+  if (!file) return
+  if (file.size > MANUAL_PROOF_MAX_SIZE) {
+    manualPayment.error = 'O comprovante deve ter no máximo 5 MB.'
+    return
+  }
+  if (!file.type || (!file.type.startsWith('image/') && file.type !== 'application/pdf')) {
+    manualPayment.error = 'Envie um arquivo de imagem ou PDF.'
+    return
+  }
+  try {
+    const dataUrl = await readFileAsDataUrl(file)
+    manualPayment.fileDataUrl = dataUrl
+    manualPayment.fileName = file.name
+    manualPayment.fileType = file.type
+    manualPayment.filePreview = file.type.startsWith('image/') ? dataUrl : ''
+  } catch (error) {
+    manualPayment.error = 'Não foi possível processar o arquivo selecionado.'
+  }
+}
+
+const submitManualPayment = async () => {
+  if (!manualPayment.registration?.orderId) {
+    showError('Não foi possível confirmar pagamento', new Error('Inscrição sem pedido associado.'))
+    return
+  }
+  if (!manualPayment.fileDataUrl) {
+    manualPayment.error = 'Anexe o comprovante antes de confirmar.'
+    return
+  }
+  manualPayment.submitting = true
+  try {
+    await ensureMinDelay(
+      admin.confirmOrderPayment(manualPayment.registration.orderId, {
+        manualReference: manualPayment.reference?.trim() || undefined,
+        paidAt: manualPayment.paidAt ? new Date(manualPayment.paidAt).toISOString() : undefined,
+        proofFile: manualPayment.fileDataUrl
+      }),
+      1000
+    )
+    closeManualPaymentDialog()
+  } catch (error) {
+    manualPayment.error = extractErrorInfo(error).message
+  } finally {
+    manualPayment.submitting = false
+  }
+}
+
+const canConfirmManualPix = (registration: Registration) =>
+  registration.status === 'PENDING_PAYMENT' &&
+  registration.paymentMethod === 'PIX_MP' &&
+  Boolean(registration.orderId) &&
+  registrationPermissions.canFinancial.value
+
+const canViewManualProof = (registration: Registration) =>
+  Boolean(registration.order?.manualPaymentProofUrl) && registrationPermissions.canFinancial.value
+
+const viewManualProof = (registration: Registration) => {
+  const url = registration.order?.manualPaymentProofUrl
+  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+const openExistingManualProof = () => {
+  if (manualPayment.existingProofUrl) {
+    window.open(manualPayment.existingProofUrl, '_blank', 'noopener,noreferrer')
   }
 }
 

@@ -7,6 +7,7 @@ import { paymentService } from "../../services/payment.service";
 import { PaymentMethod } from "../../config/payment-methods";
 import { Gender } from "../../config/gender";
 import { BulkPaymentDto } from "./dtos/bulk-payment.dto";
+import { storageService } from "../../storage/storage.service";
 
 // Schema que aceita tanto CUID quanto UUID sem mostrar erro de UUID primeiro
 // CUID do Prisma: pode começar com qualquer letra minúscula seguido de caracteres alfanuméricos
@@ -32,10 +33,19 @@ const cuidOrUuid = z.string().refine(
   { message: "Deve ser um ID válido (CUID ou UUID)" }
 );
 
+const dataUrlRegex = /^data:.+;base64,/i;
+
 const markPaidSchema = z.object({
   paymentId: z.string().min(3).optional(),
   paidAt: z.string().datetime().optional(),
-  manualReference: z.string().min(1).optional()
+  manualReference: z.string().min(1).optional(),
+  proofFile: z
+    .string()
+    .refine((value) => dataUrlRegex.test(value), {
+      message: "Comprovante deve estar em formato base64 (data URL)"
+    })
+    .optional(),
+  proofUrl: z.string().url().optional()
 });
 
 const cpfSchema = z
@@ -155,14 +165,25 @@ export const getPaymentByPreferenceIdHandler = async (request: Request, response
 };
 
 export const markOrderPaidHandler = async (request: Request, response: Response) => {
-  const { paymentId, paidAt, manualReference } = markPaidSchema.parse(request.body);
+  const { paymentId, paidAt, manualReference, proofFile, proofUrl } = markPaidSchema.parse(
+    request.body
+  );
+
+  let manualProofUrl: string | undefined;
+  if (proofFile) {
+    manualProofUrl = await storageService.saveBase64Attachment(proofFile);
+  } else if (proofUrl) {
+    manualProofUrl = proofUrl;
+  }
+
   const order = await orderService.markPaid(
     request.params.id,
     paymentId ?? `MANUAL-${Date.now()}`,
     {
       paidAt: paidAt ? new Date(paidAt) : undefined,
       manualReference: manualReference ?? paymentId ?? undefined,
-      actorUserId: request.user?.id
+      actorUserId: request.user?.id,
+      paymentProofUrl: manualProofUrl
     }
   );
   return response.json(order);

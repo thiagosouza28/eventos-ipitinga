@@ -255,6 +255,8 @@ export class RegistrationService {
             status: true,
             paymentMethod: true,
             mpPaymentId: true,
+            manualPaymentReference: true,
+            manualPaymentProofUrl: true,
             paidAt: true,
             createdAt: true,
             expiresAt: true,

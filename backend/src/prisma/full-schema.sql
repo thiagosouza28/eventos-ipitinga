@@ -67,15 +67,27 @@ CREATE TABLE `Order` (
     `externalReference` VARCHAR(191) NOT NULL,
     `expiresAt` DATETIME(3) NOT NULL,
     `paidAt` DATETIME(3) NULL,
-    `manualPaymentReference` VARCHAR(191) NULL,
-    `feeCents` INTEGER NOT NULL DEFAULT 0,
+  `manualPaymentReference` VARCHAR(191) NULL,
+  `manualPaymentProofUrl` LONGTEXT NULL,
+  `feeCents` INTEGER NOT NULL DEFAULT 0,
     `netAmountCents` INTEGER NOT NULL DEFAULT 0,
+    `origin` VARCHAR(191) NOT NULL DEFAULT 'MARKETPLACE',
+    `responsibleName` VARCHAR(191) NULL,
+    `responsibleDocument` VARCHAR(191) NULL,
+    `responsibleEmail` VARCHAR(191) NULL,
+    `responsiblePhone` VARCHAR(191) NULL,
+    `amountReceivedCents` INTEGER NULL,
+    `manualNotes` LONGTEXT NULL,
+    `confirmedById` VARCHAR(191) NULL,
+    `confirmedAt` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `Order_externalReference_key`(`externalReference`),
     INDEX `Order_eventId_idx`(`eventId`),
     INDEX `Order_buyerCpf_idx`(`buyerCpf`),
     INDEX `Order_status_idx`(`status`),
+    INDEX `Order_origin_idx`(`origin`),
+    INDEX `Order_confirmedById_idx`(`confirmedById`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -134,6 +146,43 @@ CREATE TABLE `WebhookEvent` (
     `orderId` VARCHAR(191) NULL,
 
     UNIQUE INDEX `WebhookEvent_idempotencyKey_key`(`idempotencyKey`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `OrderItem` (
+    `id` VARCHAR(191) NOT NULL,
+    `orderId` VARCHAR(191) NOT NULL,
+    `registrationId` VARCHAR(191) NOT NULL,
+    `amountCents` INTEGER NOT NULL,
+    `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
+    `notes` LONGTEXT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `confirmedById` VARCHAR(191) NULL,
+
+    UNIQUE INDEX `OrderItem_orderId_registrationId_key`(`orderId`, `registrationId`),
+    INDEX `OrderItem_registrationId_idx`(`registrationId`),
+    INDEX `OrderItem_confirmedById_idx`(`confirmedById`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ServiceOrder` (
+    `id` VARCHAR(191) NOT NULL,
+    `orderId` VARCHAR(191) NOT NULL,
+    `number` INTEGER NOT NULL,
+    `totalCents` INTEGER NOT NULL,
+    `proofUrl` LONGTEXT NULL,
+    `pdfUrl` LONGTEXT NULL,
+    `notes` LONGTEXT NULL,
+    `metadata` JSON NULL,
+    `issuedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `issuedById` VARCHAR(191) NULL,
+
+    UNIQUE INDEX `ServiceOrder_orderId_number_key`(`orderId`, `number`),
+    INDEX `ServiceOrder_orderId_idx`(`orderId`),
+    INDEX `ServiceOrder_issuedById_idx`(`issuedById`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -264,6 +313,18 @@ ALTER TABLE `Refund` ADD CONSTRAINT `Refund_registrationId_fkey` FOREIGN KEY (`r
 
 -- AddForeignKey
 ALTER TABLE `WebhookEvent` ADD CONSTRAINT `WebhookEvent_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `Order` ADD CONSTRAINT `Order_confirmedById_fkey` FOREIGN KEY (`confirmedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_registrationId_fkey` FOREIGN KEY (`registrationId`) REFERENCES `Registration`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_confirmedById_fkey` FOREIGN KEY (`confirmedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_issuedById_fkey` FOREIGN KEY (`issuedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `AuditLog` ADD CONSTRAINT `AuditLog_actorUserId_fkey` FOREIGN KEY (`actorUserId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

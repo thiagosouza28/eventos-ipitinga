@@ -74,6 +74,71 @@ class StorageService {
     return publicUrl;
   }
 
+  async saveBase64Attachment(base64: string | null | undefined, options?: { prefix?: string }) {
+    if (!base64) return null;
+    if (/^https?:\/\//.test(base64)) {
+      return base64;
+    }
+
+    const matches = base64.match(/^data:(.+);base64,(.+)$/);
+    if (!matches) {
+      throw new Error("Formato de arquivo inválido");
+    }
+    const [, mime, data] = matches;
+    const allowed = ["image/", "application/pdf"];
+    const isAllowed = allowed.some((prefix) =>
+      prefix.endsWith("/") ? mime.startsWith(prefix) : mime === prefix
+    );
+    if (!isAllowed) {
+      throw new Error("Apenas arquivos de imagem ou PDF são suportados");
+    }
+
+    const resolveExtension = (type: string) => {
+      if (type === "application/pdf") return "pdf";
+      if (type === "image/jpeg" || type === "image/jpg") return "jpg";
+      if (type === "image/png") return "png";
+      if (type === "image/webp") return "webp";
+      if (type === "image/gif") return "gif";
+      if (type === "image/bmp") return "bmp";
+      const [, subtype = "bin"] = type.split("/");
+      return subtype || "bin";
+    };
+
+    const extension = resolveExtension(mime);
+    const buffer = Buffer.from(data, "base64");
+    const filename = `${options?.prefix ?? "proof"}-${randomUUID()}.${extension}`;
+    const folder = "proofs";
+
+    if (env.STORAGE_DRIVER === "supabase" && this.supabase && this.supabaseBucket) {
+      const filePath = `${folder}/${filename}`;
+      const { error } = await this.supabase.storage
+        .from(this.supabaseBucket)
+        .upload(filePath, buffer, { contentType: mime, upsert: false });
+      if (error) {
+        logger.error({ error }, "Falha ao enviar comprovante para Supabase Storage");
+        throw new Error("Não foi possível salvar o arquivo no storage");
+      }
+
+      const { data: publicUrlData } = this.supabase.storage
+        .from(this.supabaseBucket)
+        .getPublicUrl(filePath);
+      logger.info({ filePath }, "Comprovante salvo no Supabase Storage");
+      return publicUrlData.publicUrl;
+    }
+
+    const proofsDir = path.join(this.uploadsDir, folder);
+    await fs.mkdir(proofsDir, { recursive: true });
+    const filepath = path.join(proofsDir, filename);
+    await fs.writeFile(filepath, buffer);
+
+    const publicUrl =
+      env.STORAGE_DRIVER === "in-memory"
+        ? `data:${mime};base64,${data}`
+        : `${env.APP_URL.replace(/\/$/, "")}/uploads/${folder}/${filename}`;
+    logger.info({ filename }, "Comprovante salvo no storage local");
+    return publicUrl;
+  }
+
   /**
    * Verifica se a URL informada aponta para um arquivo gerenciado pelo storage
    * (local uploads ou bucket do Supabase). Utilizado para evitar tentar remover
