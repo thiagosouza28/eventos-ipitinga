@@ -19,9 +19,12 @@ export const createApp = () => {
 
   app.disable("x-powered-by");
   // Só confia nos cabeçalhos X-Forwarded-* em produção (atrás de proxy conhecido)
-  const trustProxySetting =
-    env.NODE_ENV === "production" ? ["loopback", "linklocal", "uniquelocal"] : false;
-  app.set("trust proxy", trustProxySetting);
+  if (env.NODE_ENV === "production") {
+    // Confia apenas em hops internos conhecidos; ajuste se usar load balancer com IP específico
+    app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"]);
+  } else {
+    app.set("trust proxy", false);
+  }
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" }
