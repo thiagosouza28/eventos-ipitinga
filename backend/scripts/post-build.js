@@ -22,4 +22,10 @@ if (existsSync(prismaClientSource)) {
   cpSync(prismaClientSource, prismaClientTarget, { recursive: true });
 }
 
-console.log("OpenAPI exportado e Prisma Client copiado para dist.");
+const pdfTemplatesSource = resolve(rootDir, "src", "pdf", "templates");
+const pdfTemplatesTarget = resolve(rootDir, "dist", "pdf", "templates");
+if (existsSync(pdfTemplatesSource)) {
+  cpSync(pdfTemplatesSource, pdfTemplatesTarget, { recursive: true });
+}
+
+console.log("OpenAPI exportado, Prisma Client e templates de PDF copiados para dist.");
