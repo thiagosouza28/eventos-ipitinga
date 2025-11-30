@@ -26,7 +26,7 @@
           v-for="tab in tabs"
           :key="tab.key"
           type="button"
-          class="inline-flex flex-1 items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition sm:flex-none sm:px-6 sm:py-3"
+          class="inline-flex flex-1 items-center justify-center rounded-sm border px-4 py-2 text-sm font-semibold transition sm:flex-none sm:px-6 sm:py-3"
           :class="activeTab === tab.key ? 'border-sky-600 bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-400/50' : 'border-neutral-200/70 bg-white/70 text-neutral-700 hover:border-sky-200 hover:text-sky-700 dark:border-white/10 dark:bg-white/5 dark:text-white/70'"
           @click="setActiveTab(tab.key)"
         >
@@ -43,7 +43,7 @@
             <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Evento</label>
             <select
               v-model="eventReport.eventId"
-              class="mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="mt-2 w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="" disabled>Selecione</option>
               <option v-for="event in accessibleEvents" :key="event.id" :value="event.id">{{ event.title }}</option>
@@ -52,7 +52,7 @@
           <div class="flex flex-wrap gap-3">
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+              class="inline-flex items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
               :disabled="eventReport.loading || !eventReport.eventId"
               @click="loadEventParticipants"
             >
@@ -60,18 +60,18 @@
             </button>
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+              class="inline-flex items-center justify-center rounded-sm bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
               :disabled="!eventReport.eventId || eventDownloadState"
               @click="downloadEventReport"
             >
-              <span v-if="eventDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+              <span v-if="eventDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
               <span>{{ eventDownloadState ? "Gerando..." : "Baixar PDF" }}</span>
             </button>
           </div>
         </div>
 
         <div v-if="selectedEvent" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <div class="rounded-2xl border border-neutral-200/90 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+          <div class="rounded-sm border border-neutral-200/90 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Evento selecionado</p>
             <p class="mt-2 text-lg font-semibold text-neutral-900 dark:text-white">{{ selectedEvent.title }}</p>
             <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatEventPeriod(selectedEvent) }} · {{ selectedEvent.location }}</p>
@@ -79,7 +79,7 @@
           <div
             v-for="card in eventSummaryCards"
             :key="card.label"
-            class="rounded-2xl border border-neutral-200/80 bg-white/80 p-4 text-neutral-800 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5 dark:text-white"
+            class="rounded-sm border border-neutral-200/80 bg-white/80 p-4 text-neutral-800 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5 dark:text-white"
           >
             <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
             <p class="mt-2 text-2xl font-bold" :class="card.accent">{{ card.value }}</p>
@@ -117,7 +117,7 @@
                   <td class="px-4 py-3 text-neutral-600 dark:text-neutral-300">{{ formatBirthDate(participant.birthDate) }}</td>
                   <td class="px-4 py-3 text-neutral-600 dark:text-neutral-300">{{ participant.ageYears ?? '-' }}</td>
                   <td class="px-4 py-3">
-                    <span class="inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]" :class="statusBadgeClass(participant.status)">
+                    <span class="inline-flex rounded-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]" :class="statusBadgeClass(participant.status)">
                       {{ translateStatus(participant.status) }}
                     </span>
                   </td>
@@ -138,7 +138,7 @@
             <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Evento</label>
             <select
               v-model="churchReport.eventId"
-              class="w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="">Todos</option>
               <option v-for="event in accessibleEvents" :key="event.id" :value="event.id">{{ event.title }}</option>
@@ -149,7 +149,7 @@
             <select
               v-model="churchReport.districtId"
               :disabled="lockDistrictSelect"
-              class="w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="">{{ lockDistrictSelect ? "Distrito vinculado" : "Todos" }}</option>
               <option v-for="district in accessibleDistricts" :key="district.id" :value="district.id">{{ district.name }}</option>
@@ -160,7 +160,7 @@
             <select
               v-model="churchReport.churchId"
               :disabled="lockChurchSelect || !churchReport.districtId"
-              class="w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="">{{ lockChurchSelect ? "Igreja vinculada" : churchReport.districtId ? "Todas" : "Selecione o distrito" }}</option>
               <option v-for="church in churchesForSelectedDistrict" :key="church.id" :value="church.id">{{ church.name }}</option>
@@ -171,7 +171,7 @@
             <select
               v-model="churchReport.layout"
               :disabled="churchReport.template !== 'event'"
-              class="w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="single">1 por página</option>
               <option value="two">2 por página</option>
@@ -182,7 +182,7 @@
             <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Modelo</label>
             <select
               v-model="churchReport.template"
-              class="w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="event">Com termo e assinatura</option>
               <option value="standard">Somente lista</option>
@@ -192,7 +192,7 @@
         <div class="mt-4 flex flex-wrap gap-3">
           <button
             type="button"
-            class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+            class="inline-flex flex-1 items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
             :disabled="churchReport.loading"
             @click="loadChurchParticipants"
           >
@@ -200,11 +200,11 @@
           </button>
           <button
             type="button"
-            class="inline-flex items-center justify-center rounded-full bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-400/50 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex items-center justify-center rounded-sm bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-400/50 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="!churchReport.churchId || churchReportDownloadState"
             @click="downloadChurchReport"
           >
-            <span v-if="churchReportDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+            <span v-if="churchReportDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
             <span>{{ churchReportDownloadState ? "Gerando..." : "Gerar PDF" }}</span>
           </button>
         </div>
@@ -220,10 +220,10 @@
             <article
               v-for="participant in churchParticipants"
               :key="participant.id"
-              class="flex flex-col gap-4 rounded-3xl border border-neutral-100/80 bg-white/95 p-5 shadow-xl shadow-sky-50/70 transition hover:-translate-y-0.5 hover:shadow-2xl dark:border-white/10 dark:bg-white/5 dark:shadow-black/30"
+              class="flex flex-col gap-4 rounded-sm border border-neutral-100/80 bg-white/95 p-5 shadow-xl shadow-sky-50/70 transition hover:-translate-y-0.5 hover:shadow-2xl dark:border-white/10 dark:bg-white/5 dark:shadow-black/30"
             >
               <div class="flex items-start gap-4">
-                <div class="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/80 bg-neutral-100 dark:border-white/20">
+                <div class="h-16 w-16 shrink-0 overflow-hidden rounded-sm border border-white/80 bg-neutral-100 dark:border-white/20">
                   <img
                     :src="resolvePhotoUrl(participant.photoUrl)"
                     :alt="participant.fullName ? 'Foto de ' + participant.fullName : 'Foto do participante'"
@@ -250,7 +250,7 @@
                   </p>
                 </div>
               </div>
-              <div class="rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4 text-sm leading-relaxed text-neutral-600 shadow-inner dark:border-white/10 dark:bg-white/5 dark:text-neutral-200">
+              <div class="rounded-sm border border-neutral-100 bg-neutral-50/80 p-4 text-sm leading-relaxed text-neutral-600 shadow-inner dark:border-white/10 dark:bg-white/5 dark:text-neutral-200">
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
                   Termo de participação
                 </p>
@@ -271,7 +271,7 @@
             <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Evento</label>
             <select
               v-model="selectedFinancialEventId"
-              class="mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+              class="mt-2 w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
             >
               <option value="">Selecione</option>
               <option v-for="event in accessibleEvents" :key="event.id" :value="event.id">{{ event.title }}</option>
@@ -280,7 +280,7 @@
           <div class="flex flex-wrap gap-3">
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+              class="inline-flex items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
               :disabled="financialDetailLoading || !selectedFinancialEventId"
               @click="refreshFinancialData"
             >
@@ -288,16 +288,16 @@
             </button>
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+              class="inline-flex items-center justify-center rounded-sm bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
               :disabled="!selectedFinancialEventId || financialDownloadState"
               @click="downloadFinancialPdf"
             >
-              <span v-if="financialDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+              <span v-if="financialDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
               <span>{{ financialDownloadState ? "Gerando..." : "PDF do evento" }}</span>
             </button>
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-full border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30"
+              class="inline-flex items-center justify-center rounded-sm border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30"
               :disabled="!selectedFinancialEventId"
               @click="exportFinancialCsv"
             >
@@ -315,7 +315,7 @@
           </div>
           <div v-else class="space-y-6">
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div v-for="card in generalFinancialCards" :key="card.label" class="rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5">
+              <div v-for="card in generalFinancialCards" :key="card.label" class="rounded-sm border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5">
                 <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
                 <p class="mt-2 text-2xl font-bold" :class="card.accent">{{ card.value }}</p>
               </div>
@@ -347,7 +347,7 @@
               </table>
             </div>
 
-            <div v-if="selectedFinancialEventId" class="space-y-5 rounded-3xl border border-neutral-100/80 bg-white/95 p-5 shadow-inner shadow-neutral-200/60 dark:border-white/10 dark:bg-neutral-900/50">
+            <div v-if="selectedFinancialEventId" class="space-y-5 rounded-sm border border-neutral-100/80 bg-white/95 p-5 shadow-inner shadow-neutral-200/60 dark:border-white/10 dark:bg-neutral-900/50">
               <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p class="text-xs uppercase tracking-[0.35em] text-sky-700 dark:text-sky-300">Evento focado</p>
@@ -366,7 +366,7 @@
                   <div
                     v-for="card in financialStatusCards"
                     :key="card.label"
-                    class="rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-neutral-100/40 dark:border-white/10 dark:bg-white/5"
+                    class="rounded-sm border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-neutral-100/40 dark:border-white/10 dark:bg-white/5"
                   >
                     <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
                     <p class="mt-2 text-2xl font-bold" :class="card.accent">{{ card.value }}</p>
@@ -380,7 +380,7 @@
                     <div
                       v-for="district in financialByDistrict"
                       :key="district.id"
-                      class="flex items-center justify-between rounded-2xl border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
+                      class="flex items-center justify-between rounded-sm border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
                     >
                       <div>
                         <p class="font-semibold text-neutral-900 dark:text-white">{{ district.name }}</p>
@@ -394,7 +394,7 @@
                     <div
                       v-for="church in financialByChurch"
                       :key="church.id"
-                      class="flex items-center justify-between rounded-2xl border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
+                      class="flex items-center justify-between rounded-sm border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5"
                     >
                       <div>
                         <p class="font-semibold text-neutral-900 dark:text-white">{{ church.name }}</p>

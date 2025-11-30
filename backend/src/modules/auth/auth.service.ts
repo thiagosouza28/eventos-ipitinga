@@ -7,7 +7,7 @@ import { env } from "../../config/env";
 import { RolePermissionPresets } from "../../config/permissions";
 import { prisma } from "../../lib/prisma";
 import { AppError, UnauthorizedError } from "../../utils/errors";
-import { buildPermissionMap, mergePermissionMap, toPermissionEntry } from "../../utils/permissions";
+import { buildPermissionMap, toPermissionEntry } from "../../utils/permissions";
 import { sanitizeCpf } from "../../utils/mask";
 import { emailService } from "../../services/email.service";
 import { generateTemporaryPassword } from "../../utils/password";
@@ -18,8 +18,7 @@ const userInclude = {
   },
   profile: {
     include: { permissions: true }
-  },
-  permissionsOverride: true
+  }
 } as const;
 
 type UserWithRelations = Prisma.UserGetPayload<{ include: typeof userInclude }>;
@@ -129,9 +128,6 @@ export class AuthService {
     const basePermissions =
       profilePermissions.length > 0 ? profilePermissions : RolePermissionPresets[roleKey] ?? [];
     const permissionMap = buildPermissionMap(basePermissions);
-    const overrideEntries = user.permissionsOverride?.map(toPermissionEntry) ?? [];
-    const resolvedPermissions =
-      overrideEntries.length > 0 ? mergePermissionMap(permissionMap, overrideEntries) : permissionMap;
 
     const primaryMinistryId = user.ministryId ?? ministryIds[0] ?? null;
 
@@ -143,7 +139,7 @@ export class AuthService {
         ministryId: primaryMinistryId,
         ministryIds,
         profileId: user.profileId,
-        permissions: resolvedPermissions,
+        permissions: permissionMap,
         mustChangePassword: user.isTemporaryPassword
       },
       env.JWT_SECRET as Secret,
@@ -178,8 +174,6 @@ export class AuthService {
               permissions: user.profile.permissions.map(toPermissionEntry)
             }
           : null,
-        permissions: resolvedPermissions,
-        permissionOverrides: overrideEntries,
         ministries:
           user.ministries?.map((relation) => ({
             id: relation.ministryId,

@@ -7,11 +7,10 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog.vue";
 import Modal from "../../components/ui/Modal.vue";
 import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
-import { permissionModules, permissionActions } from "../../config/permission-schema";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
-import { createPermissionMatrix, hydrateMatrixFromEntries, toPermissionPayload, toggleMatrixPermission } from "../../utils/permission-matrix";
 import { useModulePermissions } from "../../composables/usePermissions";
+import { maskCpf as maskCpfUtil } from "../../utils/format";
 const admin = useAdminStore();
 const catalog = useCatalogStore();
 const userPermissions = useModulePermissions("users");
@@ -19,6 +18,8 @@ const showCreateForm = ref(false);
 const initialLoading = ref(true);
 const savingUser = ref(false);
 const lastTempPassword = ref(null);
+const ministryError = ref("");
+const editMinistryError = ref("");
 const form = reactive({
     name: "",
     email: "",
@@ -50,16 +51,6 @@ const editDialog = reactive({
         status: "ACTIVE"
     }
 });
-const permissionDialog = reactive({
-    open: false,
-    loading: false,
-    saving: false,
-    user: null,
-    permissions: createPermissionMatrix(),
-    profileMatrix: createPermissionMatrix(),
-    enabledOverrides: {}
-});
-const editMinistryError = ref("");
 const errorDialog = reactive({
     open: false,
     title: "Erro",
@@ -71,94 +62,22 @@ const passwordDialog = reactive({
     loading: false,
     target: null
 });
-const resetPermissionDialog = () => {
-    permissionDialog.open = false;
-    permissionDialog.loading = false;
-    permissionDialog.saving = false;
-    permissionDialog.user = null;
-    permissionDialog.permissions = createPermissionMatrix();
-    permissionDialog.profileMatrix = createPermissionMatrix();
-    permissionDialog.enabledOverrides = {};
-};
-const isModuleOverridden = (moduleKey) => Boolean(permissionDialog.enabledOverrides[moduleKey]);
-const toggleModuleOverride = (moduleKey, enabled) => {
-    if (enabled) {
-        permissionDialog.enabledOverrides[moduleKey] = true;
-        return;
-    }
-    delete permissionDialog.enabledOverrides[moduleKey];
-    const blank = createPermissionMatrix().find((entry) => entry.module === moduleKey);
-    const target = permissionDialog.permissions.find((entry) => entry.module === moduleKey);
-    if (target && blank) {
-        target.actions = { ...blank.actions };
-    }
-};
-const profileHasPermission = (moduleKey, action) => {
-    const entry = permissionDialog.profileMatrix.find((item) => item.module === moduleKey);
-    return entry ? entry.actions[action] : false;
-};
-const overrideHasPermission = (moduleKey, action) => {
-    const entry = permissionDialog.permissions.find((item) => item.module === moduleKey);
-    return entry ? entry.actions[action] : false;
-};
-const handlePermissionOverrideChange = (moduleKey, action, enabled) => {
-    if (enabled) {
-        permissionDialog.enabledOverrides[moduleKey] = true;
-    }
-    permissionDialog.permissions = toggleMatrixPermission(permissionDialog.permissions, moduleKey, action, enabled);
-};
-const clearAllOverrides = () => {
-    permissionDialog.permissions = createPermissionMatrix();
-    permissionDialog.enabledOverrides = {};
-};
-const openPermissionDialog = async (user) => {
-    if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Você não possui permissão para editar permissões.");
-        return;
-    }
-    permissionDialog.user = user;
-    permissionDialog.open = true;
-    permissionDialog.loading = true;
-    permissionDialog.profileMatrix = hydrateMatrixFromEntries(user.profile?.permissions ?? []);
-    try {
-        const overrides = await admin.getUserPermissions(user.id);
-        permissionDialog.permissions = hydrateMatrixFromEntries(overrides);
-        permissionDialog.enabledOverrides = overrides.reduce((acc, curr) => {
-            acc[curr.module] = true;
-            return acc;
-        }, {});
-    }
-    catch (error) {
-        const message = error.response?.data?.message ?? "Não foi possível carregar as permissões do usuário.";
-        showError("Falha ao carregar permissões", message);
-        resetPermissionDialog();
-    }
-    finally {
-        permissionDialog.loading = false;
-    }
-};
-const savePermissionOverrides = async () => {
-    if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Você não possui permissão para editar permissões.");
-        return;
-    }
-    if (!permissionDialog.user)
-        return;
-    permissionDialog.saving = true;
-    try {
-        const modules = Object.keys(permissionDialog.enabledOverrides).filter((moduleKey) => permissionDialog.enabledOverrides[moduleKey]);
-        const entries = permissionDialog.permissions.filter((entry) => modules.includes(entry.module));
-        const payload = toPermissionPayload(entries, { keepEmpty: true });
-        await admin.updateUserPermissions(permissionDialog.user.id, payload);
-        resetPermissionDialog();
-    }
-    catch (error) {
-        const message = error.response?.data?.message ?? "Não foi possível salvar as permissões.";
-        showError("Falha ao salvar permissões", message);
-    }
-    finally {
-        permissionDialog.saving = false;
-    }
+const statusDialog = reactive({
+    open: false,
+    loading: false,
+    target: null,
+    nextStatus: "INACTIVE"
+});
+const deleteDialog = reactive({
+    open: false,
+    loading: false,
+    target: null
+});
+const showError = (title, message, details) => {
+    errorDialog.title = title;
+    errorDialog.message = message;
+    errorDialog.details = details ?? "";
+    errorDialog.open = true;
 };
 const baseRoleOptions = [
     { value: "AdminGeral", label: "Admin geral" },
@@ -190,40 +109,48 @@ const editRoleSelectValue = computed(() => {
     }
     return editDialog.form.role;
 });
-const ministryError = ref("");
 const maskCpf = (value) => {
     if (!value)
         return "--";
-    const digits = value.replace(/\D/g, "");
-    return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    return maskCpfUtil(value);
 };
 const userInitials = (value) => {
-    if (!value)
+    const name = value?.trim();
+    if (!name)
         return "US";
-    const parts = value.trim().split(/\s+/);
+    const parts = name.split(/\s+/);
     const first = parts[0]?.[0] ?? "";
     const second = parts[1]?.[0] ?? "";
     const initials = `${first}${second}`.trim();
-    return (initials || value.slice(0, 2)).toUpperCase();
+    return (initials || name.slice(0, 2)).toUpperCase();
 };
-const roleLabel = (role) => {
-    const option = baseRoleOptions.find((item) => item.value === role);
-    return option?.label ?? role;
-};
-const parseRoleSelection = (value) => {
-    if (value?.startsWith("CoordenadorMinisterio:")) {
-        const [, ministryId] = value.split(":");
-        return { role: "CoordenadorMinisterio", ministryId: ministryId || undefined };
+const roleLabel = (role) => baseRoleOptions.find((option) => option.value === role)?.label ?? role;
+const statusPillClass = (status) => status === "ACTIVE"
+    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100"
+    : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700/40 dark:text-neutral-100";
+const deleteDialogDescription = computed(() => {
+    if (!deleteDialog.target)
+        return "Excluir usuario selecionado?";
+    return `Tem certeza que deseja excluir ${deleteDialog.target.name}? Essa acao nao pode ser desfeita.`;
+});
+const statusDialogTitle = computed(() => statusDialog.nextStatus === "INACTIVE" ? "Desativar usuario" : "Reativar usuario");
+const statusDialogDescription = computed(() => {
+    if (!statusDialog.target) {
+        return "";
     }
-    return { role: value || "CoordenadorMinisterio", ministryId: undefined };
-};
+    return statusDialog.nextStatus === "INACTIVE"
+        ? `Desativar o acesso de ${statusDialog.target.name}? Ele podera ser ativado novamente depois.`
+        : `Reativar o acesso de ${statusDialog.target.name}?`;
+});
 const applyRoleSelection = (target, value) => {
-    const { role, ministryId } = parseRoleSelection(value);
-    target.role = role;
-    if (role === "CoordenadorMinisterio") {
+    if (value.startsWith("CoordenadorMinisterio:")) {
+        const [, ministryId] = value.split(":");
+        target.role = "CoordenadorMinisterio";
         target.ministryIds = ministryId ? [ministryId] : [];
+        return;
     }
-    else {
+    target.role = value || "CoordenadorMinisterio";
+    if (target.role !== "CoordenadorMinisterio") {
         target.ministryIds = [];
     }
 };
@@ -232,12 +159,6 @@ const onCreateRoleChange = (value) => {
 };
 const onEditRoleChange = (value) => {
     applyRoleSelection(editDialog.form, value);
-};
-const showError = (title, message, details) => {
-    errorDialog.title = title;
-    errorDialog.message = message;
-    errorDialog.details = details ?? "";
-    errorDialog.open = true;
 };
 const resetForm = () => {
     form.name = "";
@@ -250,10 +171,11 @@ const resetForm = () => {
     form.ministryIds = [];
     form.profileId = "";
     form.status = "ACTIVE";
+    ministryError.value = "";
 };
 const toggleCreateForm = () => {
     if (!userPermissions.canCreate.value) {
-        showError("Acesso negado", "Você não possui permissão para criar usuários.");
+        showError("Acesso negado", "Voce nao possui permissao para criar usuarios.");
         return;
     }
     showCreateForm.value = !showCreateForm.value;
@@ -261,6 +183,7 @@ const toggleCreateForm = () => {
         resetForm();
     }
 };
+const normalizeCpf = (value) => value.replace(/\D/g, "") || undefined;
 const validateForm = () => {
     ministryError.value = "";
     if (requiresMinistry.value && !form.ministryIds.length) {
@@ -277,7 +200,6 @@ const validateForm = () => {
     }
     return true;
 };
-const normalizeCpf = (value) => value.replace(/\D/g, "") || undefined;
 const fileToBase64 = (file) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);
@@ -286,7 +208,7 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 });
 const handleCreateUser = async () => {
     if (!userPermissions.canCreate.value) {
-        showError("Acesso negado", "Você não possui permissão para criar usuários.");
+        showError("Acesso negado", "Voce nao possui permissao para criar usuarios.");
         return;
     }
     if (!validateForm())
@@ -299,19 +221,14 @@ const handleCreateUser = async () => {
             role: form.role,
             districtScopeId: form.districtScopeId || undefined,
             churchScopeId: form.churchScopeId || undefined,
-            ministryIds: form.ministryIds.length ? [...form.ministryIds] : []
+            ministryIds: form.ministryIds.length ? [...form.ministryIds] : [],
+            status: form.status
         };
-        if (form.cpf.trim()) {
-            payload.cpf = normalizeCpf(form.cpf) ?? undefined;
-        }
-        else {
-            payload.cpf = null;
-        }
+        payload.cpf = form.cpf.trim() ? normalizeCpf(form.cpf) ?? undefined : null;
         payload.phone = form.phone.trim() || null;
         if (form.profileId) {
             payload.profileId = form.profileId;
         }
-        payload.status = form.status;
         const response = await admin.createUser(payload);
         lastTempPassword.value = {
             user: response.user.name,
@@ -330,7 +247,7 @@ const handleCreateUser = async () => {
 };
 const openEditDialog = (user) => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
         return;
     }
     editDialog.userId = user.id;
@@ -373,7 +290,7 @@ const handleEditPhotoChange = async (event) => {
         editDialog.photoPayload = base64;
         editDialog.photoPreview = base64;
     }
-    catch (error) {
+    catch {
         showError("Erro ao processar imagem", "Tente novamente.");
     }
     finally {
@@ -387,7 +304,7 @@ const clearEditPhoto = () => {
 };
 const handleUpdateUser = async () => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
         return;
     }
     if (!editDialog.userId)
@@ -416,19 +333,9 @@ const handleUpdateUser = async () => {
             ministryIds: editDialog.form.ministryIds.length ? [...editDialog.form.ministryIds] : [],
             status: editDialog.form.status
         };
-        if (editDialog.form.cpf.trim()) {
-            payload.cpf = normalizeCpf(editDialog.form.cpf) ?? undefined;
-        }
-        else {
-            payload.cpf = null;
-        }
+        payload.cpf = editDialog.form.cpf.trim() ? normalizeCpf(editDialog.form.cpf) ?? undefined : null;
         payload.phone = editDialog.form.phone.trim() || null;
-        if (editDialog.form.profileId) {
-            payload.profileId = editDialog.form.profileId;
-        }
-        else {
-            payload.profileId = null;
-        }
+        payload.profileId = editDialog.form.profileId || null;
         if (editDialog.photoPayload !== undefined) {
             payload.photoUrl = editDialog.photoPayload;
         }
@@ -436,8 +343,8 @@ const handleUpdateUser = async () => {
         closeEditDialog();
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Não foi possível atualizar o usuário.";
-        showError("Erro ao atualizar usuário", message);
+        const message = error.response?.data?.message ?? "Nao foi possivel atualizar o usuario.";
+        showError("Erro ao atualizar usuario", message);
     }
     finally {
         editDialog.loading = false;
@@ -445,7 +352,7 @@ const handleUpdateUser = async () => {
 };
 const openResetDialog = (user) => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
         return;
     }
     passwordDialog.target = user;
@@ -453,7 +360,7 @@ const openResetDialog = (user) => {
 };
 const handleConfirmReset = async () => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Você não possui permissão para editar usuários.");
+        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
         return;
     }
     if (!passwordDialog.target)
@@ -467,13 +374,72 @@ const handleConfirmReset = async () => {
         };
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Não foi possível resetar a senha.";
+        const message = error.response?.data?.message ?? "Nao foi possivel resetar a senha.";
         showError("Erro ao resetar senha", message);
     }
     finally {
         passwordDialog.loading = false;
         passwordDialog.open = false;
         passwordDialog.target = null;
+    }
+};
+const openStatusDialog = (user) => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        return;
+    }
+    statusDialog.target = user;
+    statusDialog.nextStatus = user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    statusDialog.open = true;
+};
+const handleConfirmStatusChange = async () => {
+    if (!userPermissions.canEdit.value) {
+        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        return;
+    }
+    if (!statusDialog.target)
+        return;
+    statusDialog.loading = true;
+    try {
+        await admin.updateUserStatus(statusDialog.target.id, statusDialog.nextStatus);
+    }
+    catch (error) {
+        const message = error.response?.data?.message ?? "Nao foi possivel atualizar o status.";
+        showError("Erro ao atualizar status", message);
+    }
+    finally {
+        statusDialog.loading = false;
+        statusDialog.open = false;
+        statusDialog.target = null;
+    }
+};
+const openDeleteDialog = (user) => {
+    if (!userPermissions.canDelete.value) {
+        showError("Acesso negado", "Voce nao possui permissao para excluir usuarios.");
+        return;
+    }
+    deleteDialog.target = user;
+    deleteDialog.open = true;
+};
+const handleConfirmDelete = async () => {
+    if (!userPermissions.canDelete.value) {
+        showError("Acesso negado", "Voce nao possui permissao para excluir usuarios.");
+        return;
+    }
+    if (!deleteDialog.target)
+        return;
+    deleteDialog.loading = true;
+    try {
+        await admin.deleteUser(deleteDialog.target.id);
+    }
+    catch (error) {
+        const message = error.response?.data?.message ?? "Nao foi possivel excluir o usuario.";
+        showError("Erro ao excluir usuario", message);
+    }
+    finally {
+        deleteDialog.loading = false;
+        deleteDialog.open = false;
+        deleteDialog.target = null;
     }
 };
 const refreshData = async () => {
@@ -484,7 +450,7 @@ const refreshData = async () => {
         await Promise.all([admin.loadUsers(), admin.loadProfiles()]);
     }
     catch (error) {
-        showError("Falha ao carregar usuários", error.response?.data?.message ?? "Tente novamente mais tarde.");
+        showError("Falha ao carregar usuarios", error.response?.data?.message ?? "Tente novamente mais tarde.");
     }
     finally {
         initialLoading.value = false;
@@ -591,29 +557,117 @@ if (__VLS_ctx.userPermissions.canList) {
         }
     };
     var __VLS_9;
-    /** @type {[typeof Modal, typeof Modal, ]} */ ;
+    /** @type {[typeof ConfirmDialog, ]} */ ;
     // @ts-ignore
-    const __VLS_15 = __VLS_asFunctionalComponent(Modal, new Modal({
+    const __VLS_15 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
         ...{ 'onUpdate:modelValue': {} },
-        modelValue: (__VLS_ctx.editDialog.open),
-        title: "Editar usuario",
+        ...{ 'onConfirm': {} },
+        ...{ 'onCancel': {} },
+        modelValue: (__VLS_ctx.statusDialog.open),
+        title: (__VLS_ctx.statusDialogTitle),
+        description: (__VLS_ctx.statusDialogDescription),
+        confirmLabel: "Confirmar",
+        cancelLabel: "Cancelar",
     }));
     const __VLS_16 = __VLS_15({
         ...{ 'onUpdate:modelValue': {} },
-        modelValue: (__VLS_ctx.editDialog.open),
-        title: "Editar usuario",
+        ...{ 'onConfirm': {} },
+        ...{ 'onCancel': {} },
+        modelValue: (__VLS_ctx.statusDialog.open),
+        title: (__VLS_ctx.statusDialogTitle),
+        description: (__VLS_ctx.statusDialogDescription),
+        confirmLabel: "Confirmar",
+        cancelLabel: "Cancelar",
     }, ...__VLS_functionalComponentArgsRest(__VLS_15));
     let __VLS_18;
     let __VLS_19;
     let __VLS_20;
     const __VLS_21 = {
+        'onUpdate:modelValue': (...[$event]) => {
+            if (!(__VLS_ctx.userPermissions.canList))
+                return;
+            __VLS_ctx.statusDialog.open = $event;
+        }
+    };
+    const __VLS_22 = {
+        onConfirm: (__VLS_ctx.handleConfirmStatusChange)
+    };
+    const __VLS_23 = {
+        onCancel: (...[$event]) => {
+            if (!(__VLS_ctx.userPermissions.canList))
+                return;
+            __VLS_ctx.statusDialog.open = false;
+        }
+    };
+    var __VLS_17;
+    /** @type {[typeof ConfirmDialog, ]} */ ;
+    // @ts-ignore
+    const __VLS_24 = __VLS_asFunctionalComponent(ConfirmDialog, new ConfirmDialog({
+        ...{ 'onUpdate:modelValue': {} },
+        ...{ 'onConfirm': {} },
+        ...{ 'onCancel': {} },
+        modelValue: (__VLS_ctx.deleteDialog.open),
+        title: "Excluir usuario",
+        description: (__VLS_ctx.deleteDialogDescription),
+        confirmLabel: "Excluir",
+        cancelLabel: "Cancelar",
+        type: "danger",
+    }));
+    const __VLS_25 = __VLS_24({
+        ...{ 'onUpdate:modelValue': {} },
+        ...{ 'onConfirm': {} },
+        ...{ 'onCancel': {} },
+        modelValue: (__VLS_ctx.deleteDialog.open),
+        title: "Excluir usuario",
+        description: (__VLS_ctx.deleteDialogDescription),
+        confirmLabel: "Excluir",
+        cancelLabel: "Cancelar",
+        type: "danger",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_24));
+    let __VLS_27;
+    let __VLS_28;
+    let __VLS_29;
+    const __VLS_30 = {
+        'onUpdate:modelValue': (...[$event]) => {
+            if (!(__VLS_ctx.userPermissions.canList))
+                return;
+            __VLS_ctx.deleteDialog.open = $event;
+        }
+    };
+    const __VLS_31 = {
+        onConfirm: (__VLS_ctx.handleConfirmDelete)
+    };
+    const __VLS_32 = {
+        onCancel: (...[$event]) => {
+            if (!(__VLS_ctx.userPermissions.canList))
+                return;
+            __VLS_ctx.deleteDialog.open = false;
+        }
+    };
+    var __VLS_26;
+    /** @type {[typeof Modal, typeof Modal, ]} */ ;
+    // @ts-ignore
+    const __VLS_33 = __VLS_asFunctionalComponent(Modal, new Modal({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.editDialog.open),
+        title: "Editar usuario",
+    }));
+    const __VLS_34 = __VLS_33({
+        ...{ 'onUpdate:modelValue': {} },
+        modelValue: (__VLS_ctx.editDialog.open),
+        title: "Editar usuario",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_33));
+    let __VLS_36;
+    let __VLS_37;
+    let __VLS_38;
+    const __VLS_39 = {
         'onUpdate:modelValue': ((value) => {
             __VLS_ctx.editDialog.open = value;
             if (!value)
                 __VLS_ctx.closeEditDialog();
         })
     };
-    __VLS_17.slots.default;
+    __VLS_35.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
         ...{ onSubmit: (__VLS_ctx.handleUpdateUser) },
         ...{ class: "space-y-4" },
@@ -683,7 +737,7 @@ if (__VLS_ctx.userPermissions.canList) {
     }
     if (__VLS_ctx.catalog.ministries.length) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.optgroup, __VLS_intrinsicElements.optgroup)({
-            label: "Coordenadores por ministério",
+            label: "Coordenadores por ministÃ©rio",
         });
         for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
@@ -855,161 +909,17 @@ if (__VLS_ctx.userPermissions.canList) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.editDialog.loading ? "Salvando..." : "Salvar alterações");
-    var __VLS_17;
-    /** @type {[typeof Modal, typeof Modal, ]} */ ;
-    // @ts-ignore
-    const __VLS_22 = __VLS_asFunctionalComponent(Modal, new Modal({
-        ...{ 'onUpdate:modelValue': {} },
-        modelValue: (__VLS_ctx.permissionDialog.open),
-        title: "Permissões personalizadas",
-    }));
-    const __VLS_23 = __VLS_22({
-        ...{ 'onUpdate:modelValue': {} },
-        modelValue: (__VLS_ctx.permissionDialog.open),
-        title: "Permissões personalizadas",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_22));
-    let __VLS_25;
-    let __VLS_26;
-    let __VLS_27;
-    const __VLS_28 = {
-        'onUpdate:modelValue': ((value) => {
-            __VLS_ctx.permissionDialog.open = value;
-            if (!value)
-                __VLS_ctx.resetPermissionDialog();
-        })
-    };
-    __VLS_24.slots.default;
-    if (__VLS_ctx.permissionDialog.loading) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex h-24 items-center justify-center text-sm text-neutral-500 dark:text-neutral-300" },
-        });
-    }
-    else if (__VLS_ctx.permissionDialog.user) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "space-y-4" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-sm text-neutral-600 dark:text-neutral-300" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "font-semibold text-primary-600 dark:text-primary-200" },
-        });
-        (__VLS_ctx.permissionDialog.user.name);
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "font-semibold" },
-        });
-        (__VLS_ctx.permissionDialog.user.profile?.name ?? "sem perfil definido");
-        for (const [module] of __VLS_getVForSourceType((__VLS_ctx.permissionModules))) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                key: (module.key),
-                ...{ class: "rounded-2xl border border-neutral-100 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-wrap items-center justify-between gap-3" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-sm font-semibold text-neutral-900 dark:text-white" },
-            });
-            (module.label);
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-[11px] uppercase tracking-wider text-neutral-400 dark:text-neutral-500" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: "font-semibold text-neutral-600 dark:text-neutral-300" },
-            });
-            (__VLS_ctx.permissionDialog.user.profile?.name ?? "Padrāo");
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                ...{ class: "inline-flex items-center gap-2 text-xs font-semibold text-primary-600 dark:text-primary-300" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                ...{ onChange: (...[$event]) => {
-                        if (!(__VLS_ctx.userPermissions.canList))
-                            return;
-                        if (!!(__VLS_ctx.permissionDialog.loading))
-                            return;
-                        if (!(__VLS_ctx.permissionDialog.user))
-                            return;
-                        __VLS_ctx.toggleModuleOverride(module.key, $event.target.checked);
-                    } },
-                ...{ class: "h-4 w-4 rounded border-primary-200 text-primary-600 focus:ring-primary-500" },
-                type: "checkbox",
-                checked: (__VLS_ctx.isModuleOverridden(module.key)),
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "mt-3 grid gap-2 sm:grid-cols-2" },
-            });
-            for (const [action] of __VLS_getVForSourceType((__VLS_ctx.permissionActions))) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    key: (`${module.key}-${action.key}`),
-                    ...{ class: "inline-flex items-center gap-2 rounded-xl border border-neutral-200 px-3 py-2 text-xs text-neutral-600 dark:border-white/10 dark:text-neutral-200" },
-                    ...{ class: ({ 'opacity-60': !__VLS_ctx.isModuleOverridden(module.key) }) },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                    ...{ onChange: (...[$event]) => {
-                            if (!(__VLS_ctx.userPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.permissionDialog.loading))
-                                return;
-                            if (!(__VLS_ctx.permissionDialog.user))
-                                return;
-                            __VLS_ctx.handlePermissionOverrideChange(module.key, action.key, $event.target.checked);
-                        } },
-                    ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
-                    type: "checkbox",
-                    disabled: (!__VLS_ctx.isModuleOverridden(module.key)),
-                    checked: (__VLS_ctx.overrideHasPermission(module.key, action.key)),
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                (action.label);
-                if (__VLS_ctx.profileHasPermission(module.key, action.key)) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "ml-auto inline-flex items-center rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-neutral-500 dark:bg-white/10 dark:text-neutral-300" },
-                    });
-                }
-            }
-        }
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex flex-wrap items-center justify-between gap-3" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.clearAllOverrides) },
-            type: "button",
-            ...{ class: "text-xs font-semibold text-neutral-500 underline-offset-2 transition hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex gap-3" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.resetPermissionDialog) },
-            type: "button",
-            ...{ class: "rounded-full border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-100 dark:border-white/10 dark:text-neutral-200" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.savePermissionOverrides) },
-            type: "button",
-            ...{ class: "inline-flex items-center justify-center rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-50" },
-            disabled: (__VLS_ctx.permissionDialog.saving),
-        });
-        if (__VLS_ctx.permissionDialog.saving) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-                ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
-            });
-        }
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-        (__VLS_ctx.permissionDialog.saving ? "Salvando..." : "Salvar ajustes");
-    }
-    var __VLS_24;
+    (__VLS_ctx.editDialog.loading ? "Salvando..." : "Salvar alteraÃ§Ãµes");
+    var __VLS_35;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_29 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_40 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
     }));
-    const __VLS_30 = __VLS_29({
+    const __VLS_41 = __VLS_40({
         ...{ class: "bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_29));
-    __VLS_31.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_40));
+    __VLS_42.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between" },
     });
@@ -1028,36 +938,36 @@ if (__VLS_ctx.userPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center" },
     });
-    const __VLS_32 = {}.RouterLink;
+    const __VLS_43 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
+    const __VLS_44 = __VLS_asFunctionalComponent(__VLS_43, new __VLS_43({
         to: "/admin/dashboard",
         ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
     }));
-    const __VLS_34 = __VLS_33({
+    const __VLS_45 = __VLS_44({
         to: "/admin/dashboard",
         ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_33));
-    __VLS_35.slots.default;
-    var __VLS_35;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_44));
+    __VLS_46.slots.default;
+    var __VLS_46;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.toggleCreateForm) },
         type: "button",
         ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5" },
     });
-    (__VLS_ctx.showCreateForm ? "Fechar formulário" : "+ Novo usuário");
-    var __VLS_31;
+    (__VLS_ctx.showCreateForm ? "Fechar formulÃ¡rio" : "+ Novo usuÃ¡rio");
+    var __VLS_42;
     if (__VLS_ctx.lastTempPassword) {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_36 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        const __VLS_47 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
             ...{ class: "border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
         }));
-        const __VLS_37 = __VLS_36({
+        const __VLS_48 = __VLS_47({
             ...{ class: "border border-white/30 bg-gradient-to-br from-white/90 to-primary-50/30 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_36));
-        __VLS_38.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_47));
+        __VLS_49.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "space-y-3" },
         });
@@ -1072,18 +982,18 @@ if (__VLS_ctx.userPermissions.canList) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
         });
-        var __VLS_38;
+        var __VLS_49;
     }
     if (__VLS_ctx.showCreateForm) {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_39 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        const __VLS_50 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
             ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
         }));
-        const __VLS_40 = __VLS_39({
+        const __VLS_51 = __VLS_50({
             ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_39));
-        __VLS_41.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_50));
+        __VLS_52.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
             ...{ onSubmit: (__VLS_ctx.handleCreateUser) },
             ...{ class: "space-y-5" },
@@ -1165,7 +1075,7 @@ if (__VLS_ctx.userPermissions.canList) {
         }
         if (__VLS_ctx.catalog.ministries.length) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.optgroup, __VLS_intrinsicElements.optgroup)({
-                label: "Coordenadores por ministério",
+                label: "Coordenadores por ministÃ©rio",
             });
             for (const [ministry] of __VLS_getVForSourceType((__VLS_ctx.catalog.ministries))) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
@@ -1300,17 +1210,17 @@ if (__VLS_ctx.userPermissions.canList) {
         }
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         (__VLS_ctx.savingUser ? "Salvando..." : "Criar usuario");
-        var __VLS_41;
+        var __VLS_52;
     }
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_42 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_53 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
     }));
-    const __VLS_43 = __VLS_42({
+    const __VLS_54 = __VLS_53({
         ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_42));
-    __VLS_44.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_53));
+    __VLS_55.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
     });
@@ -1331,12 +1241,12 @@ if (__VLS_ctx.userPermissions.canList) {
     if (__VLS_ctx.initialLoading) {
         /** @type {[typeof TableSkeleton, ]} */ ;
         // @ts-ignore
-        const __VLS_45 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
-            helperText: "🔄 Carregando usuários...",
+        const __VLS_56 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+            helperText: "ðŸ”„ Carregando usuÃ¡rios...",
         }));
-        const __VLS_46 = __VLS_45({
-            helperText: "🔄 Carregando usuários...",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_45));
+        const __VLS_57 = __VLS_56({
+            helperText: "ðŸ”„ Carregando usuÃ¡rios...",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_56));
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
@@ -1432,29 +1342,24 @@ if (__VLS_ctx.userPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                 ...{ class: "px-5 py-4" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex flex-wrap items-center gap-2" },
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase" },
-                ...{ class: (user.mustChangePassword
-                        ? 'bg-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200'
-                        : 'bg-emerald-200/70 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-100') },
+                ...{ class: (__VLS_ctx.statusPillClass(user.status)) },
             });
-            (user.mustChangePassword ? 'Trocar senha' : 'Ativo');
+            (user.status === 'ACTIVE' ? 'Ativo' : 'Inativo');
+            if (user.mustChangePassword) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase bg-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200" },
+                });
+            }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                 ...{ class: "px-5 py-4 text-right" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "inline-flex flex-wrap items-center justify-end gap-2" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                ...{ onClick: (...[$event]) => {
-                        if (!(__VLS_ctx.userPermissions.canList))
-                            return;
-                        if (!!(__VLS_ctx.initialLoading))
-                            return;
-                        __VLS_ctx.openPermissionDialog(user);
-                    } },
-                type: "button",
-                ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -1478,6 +1383,40 @@ if (__VLS_ctx.userPermissions.canList) {
                 type: "button",
                 ...{ class: "inline-flex items-center gap-1 rounded-full border border-primary-200/60 px-4 py-1.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-900/30" },
             });
+            if (__VLS_ctx.userPermissions.canDeactivate) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(__VLS_ctx.userPermissions.canList))
+                                return;
+                            if (!!(__VLS_ctx.initialLoading))
+                                return;
+                            if (!(__VLS_ctx.userPermissions.canDeactivate))
+                                return;
+                            __VLS_ctx.openStatusDialog(user);
+                        } },
+                    type: "button",
+                    ...{ class: "inline-flex items-center gap-1 rounded-full border px-4 py-1.5 text-xs font-semibold transition hover:bg-amber-50 dark:hover:bg-amber-500/10" },
+                    ...{ class: (user.status === 'ACTIVE'
+                            ? 'border-amber-200/70 text-amber-700 dark:border-amber-500/30 dark:text-amber-200'
+                            : 'border-emerald-200/70 text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-200') },
+                });
+                (user.status === 'ACTIVE' ? 'Desativar' : 'Reativar');
+            }
+            if (__VLS_ctx.userPermissions.canDelete) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(__VLS_ctx.userPermissions.canList))
+                                return;
+                            if (!!(__VLS_ctx.initialLoading))
+                                return;
+                            if (!(__VLS_ctx.userPermissions.canDelete))
+                                return;
+                            __VLS_ctx.openDeleteDialog(user);
+                        } },
+                    type: "button",
+                    ...{ class: "inline-flex items-center gap-1 rounded-full border border-red-200/70 px-4 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10" },
+                });
+            }
         }
         if (!__VLS_ctx.admin.users.length) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
@@ -1541,8 +1480,19 @@ if (__VLS_ctx.userPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            (user.mustChangePassword ? "Trocar senha" : "Ativo");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-1 flex flex-wrap gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase" },
+                ...{ class: (__VLS_ctx.statusPillClass(user.status)) },
+            });
+            (user.status === 'ACTIVE' ? 'Ativo' : 'Inativo');
+            if (user.mustChangePassword) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase bg-amber-200/70 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200" },
+                });
+            }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "col-span-2" },
             });
@@ -1561,17 +1511,6 @@ if (__VLS_ctx.userPermissions.canList) {
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-4 grid grid-cols-1 gap-2 text-xs font-semibold" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                ...{ onClick: (...[$event]) => {
-                        if (!(__VLS_ctx.userPermissions.canList))
-                            return;
-                        if (!!(__VLS_ctx.initialLoading))
-                            return;
-                        __VLS_ctx.openPermissionDialog(user);
-                    } },
-                type: "button",
-                ...{ class: "rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "grid grid-cols-2 gap-2" },
@@ -1598,6 +1537,40 @@ if (__VLS_ctx.userPermissions.canList) {
                 type: "button",
                 ...{ class: "rounded-full border border-primary-200 px-4 py-2 text-primary-700 transition hover:bg-primary-50 dark:border-primary-700 dark:text-primary-200 dark:hover:bg-primary-900/30" },
             });
+            if (__VLS_ctx.userPermissions.canDeactivate) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(__VLS_ctx.userPermissions.canList))
+                                return;
+                            if (!!(__VLS_ctx.initialLoading))
+                                return;
+                            if (!(__VLS_ctx.userPermissions.canDeactivate))
+                                return;
+                            __VLS_ctx.openStatusDialog(user);
+                        } },
+                    type: "button",
+                    ...{ class: "rounded-full border px-4 py-2 text-xs font-semibold transition hover:bg-amber-50 dark:hover:bg-amber-500/10" },
+                    ...{ class: (user.status === 'ACTIVE'
+                            ? 'border-amber-200/70 text-amber-700 dark:border-amber-500/30 dark:text-amber-200'
+                            : 'border-emerald-200/70 text-emerald-700 dark:border-emerald-500/30 dark:text-emerald-200') },
+                });
+                (user.status === 'ACTIVE' ? 'Desativar' : 'Reativar');
+            }
+            if (__VLS_ctx.userPermissions.canDelete) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(__VLS_ctx.userPermissions.canList))
+                                return;
+                            if (!!(__VLS_ctx.initialLoading))
+                                return;
+                            if (!(__VLS_ctx.userPermissions.canDelete))
+                                return;
+                            __VLS_ctx.openDeleteDialog(user);
+                        } },
+                    type: "button",
+                    ...{ class: "rounded-full border border-red-200 px-4 py-2 text-red-600 transition hover:bg-red-50 dark:border-red-500/30 dark:text-red-200 dark:hover:bg-red-500/10" },
+                });
+            }
         }
         if (!__VLS_ctx.admin.users.length) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1605,21 +1578,21 @@ if (__VLS_ctx.userPermissions.canList) {
             });
         }
     }
-    var __VLS_44;
+    var __VLS_55;
 }
 else {
     /** @type {[typeof AccessDeniedNotice, ]} */ ;
     // @ts-ignore
-    const __VLS_48 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
+    const __VLS_59 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
         module: "users",
         action: "view",
     }));
-    const __VLS_49 = __VLS_48({
+    const __VLS_60 = __VLS_59({
         module: "users",
         action: "view",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_48));
-    var __VLS_51 = {};
-    var __VLS_50;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_59));
+    var __VLS_62 = {};
+    var __VLS_61;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
@@ -1858,142 +1831,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
-/** @type {__VLS_StyleScopedClasses['mr-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-24']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wider']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['ml-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-0.5']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['underline-offset-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['mr-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
@@ -2545,6 +2382,10 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-3']} */ ;
@@ -2552,6 +2393,17 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-amber-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-amber-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-amber-500/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-amber-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
@@ -2597,17 +2449,29 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-primary-200/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-primary-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-amber-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-amber-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-red-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-red-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-red-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-red-500/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2676,6 +2540,28 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-amber-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-amber-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-amber-500/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-amber-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
@@ -2688,17 +2574,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-primary-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-900/30']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -2724,6 +2599,26 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:border-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-amber-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-amber-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-red-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-red-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-red-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-red-500/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-3xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
@@ -2745,8 +2640,6 @@ const __VLS_self = (await import('vue')).defineComponent({
             Modal: Modal,
             TableSkeleton: TableSkeleton,
             AccessDeniedNotice: AccessDeniedNotice,
-            permissionModules: permissionModules,
-            permissionActions: permissionActions,
             admin: admin,
             catalog: catalog,
             userPermissions: userPermissions,
@@ -2754,21 +2647,14 @@ const __VLS_self = (await import('vue')).defineComponent({
             initialLoading: initialLoading,
             savingUser: savingUser,
             lastTempPassword: lastTempPassword,
+            ministryError: ministryError,
+            editMinistryError: editMinistryError,
             form: form,
             editDialog: editDialog,
-            permissionDialog: permissionDialog,
-            editMinistryError: editMinistryError,
             errorDialog: errorDialog,
             passwordDialog: passwordDialog,
-            resetPermissionDialog: resetPermissionDialog,
-            isModuleOverridden: isModuleOverridden,
-            toggleModuleOverride: toggleModuleOverride,
-            profileHasPermission: profileHasPermission,
-            overrideHasPermission: overrideHasPermission,
-            handlePermissionOverrideChange: handlePermissionOverrideChange,
-            clearAllOverrides: clearAllOverrides,
-            openPermissionDialog: openPermissionDialog,
-            savePermissionOverrides: savePermissionOverrides,
+            statusDialog: statusDialog,
+            deleteDialog: deleteDialog,
             baseRoleOptions: baseRoleOptions,
             requiresDistrict: requiresDistrict,
             requiresChurch: requiresChurch,
@@ -2778,10 +2664,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             editRequiresMinistry: editRequiresMinistry,
             createRoleSelectValue: createRoleSelectValue,
             editRoleSelectValue: editRoleSelectValue,
-            ministryError: ministryError,
             maskCpf: maskCpf,
             userInitials: userInitials,
             roleLabel: roleLabel,
+            statusPillClass: statusPillClass,
+            deleteDialogDescription: deleteDialogDescription,
+            statusDialogTitle: statusDialogTitle,
+            statusDialogDescription: statusDialogDescription,
             onCreateRoleChange: onCreateRoleChange,
             onEditRoleChange: onEditRoleChange,
             toggleCreateForm: toggleCreateForm,
@@ -2793,6 +2682,10 @@ const __VLS_self = (await import('vue')).defineComponent({
             handleUpdateUser: handleUpdateUser,
             openResetDialog: openResetDialog,
             handleConfirmReset: handleConfirmReset,
+            openStatusDialog: openStatusDialog,
+            handleConfirmStatusChange: handleConfirmStatusChange,
+            openDeleteDialog: openDeleteDialog,
+            handleConfirmDelete: handleConfirmDelete,
             refreshData: refreshData,
         };
     },

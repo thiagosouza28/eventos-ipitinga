@@ -57,38 +57,6 @@ export const buildPermissionMap = (permissions: Array<PermissionLike | Permissio
   return map;
 };
 
-export const mergePermissionMap = (
-  base: PermissionMap | undefined,
-  overrides: Array<PermissionLike | PermissionEntry>
-): PermissionMap => {
-  const cloned: PermissionMap = {};
-  if (base) {
-    Object.entries(base).forEach(([module, actions]) => {
-      cloned[module] = { ...actions };
-    });
-  }
-
-  overrides.forEach((permission) => {
-    const moduleKey = permission.module;
-    if (!cloned[moduleKey]) {
-      cloned[moduleKey] = emptyPermissionSet();
-    }
-    cloned[moduleKey] = {
-      ...cloned[moduleKey],
-      view: permission.canView,
-      create: permission.canCreate,
-      edit: permission.canEdit,
-      delete: permission.canDelete,
-      approve: permission.canApprove,
-      deactivate: permission.canDeactivate,
-      reports: permission.canReport,
-      financial: permission.canFinancial
-    };
-  });
-
-  return cloned;
-};
-
 export const hasPermission = (
   permissionMap: PermissionMap | undefined,
   module: PermissionModule | string,
@@ -115,12 +83,3 @@ export const normalizePermissionPayload = (
   canFinancial: Boolean(payload.financial)
 });
 
-export const emptyPermissionSet = (): PermissionSet => {
-  return actionKeys.reduce(
-    (acc, key) => {
-      acc[key] = false;
-      return acc;
-    },
-    {} as PermissionSet
-  );
-};

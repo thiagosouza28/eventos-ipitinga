@@ -633,7 +633,7 @@ export class OrderService {
     };
   }
 
-  async list(filters: { eventId?: string; status?: OrderStatusValue }) {
+  async list(filters: { eventId?: string; status?: OrderStatusValue; churchId?: string; districtId?: string; ministryIds?: string[] }) {
     const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
       SELECT column_name
       FROM information_schema.columns
@@ -644,10 +644,30 @@ export class OrderService {
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
     // Usar select para evitar problemas com colunas que podem não existir
+    const registrationFilter: Record<string, string> = {};
+    if (filters.churchId) registrationFilter.churchId = filters.churchId;
+    if (filters.districtId) registrationFilter.districtId = filters.districtId;
+
     return prisma.order.findMany({
       where: {
         eventId: filters.eventId,
-        status: filters.status
+        status: filters.status,
+        ...(Object.keys(registrationFilter).length
+          ? {
+              registrations: {
+                some: registrationFilter
+              }
+            }
+          : {}),
+        ...(filters.ministryIds && filters.ministryIds.length
+          ? {
+              event: {
+                ministryId: {
+                  in: filters.ministryIds
+                }
+              }
+            }
+          : {})
       },
       select: {
         id: true,

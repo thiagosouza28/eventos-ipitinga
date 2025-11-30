@@ -47,8 +47,7 @@ const userIncludes = {
   },
   profile: {
     include: { permissions: true }
-  },
-  permissionsOverride: true
+  }
 } as const;
 
 const ensureActiveProfile = async (profileId?: string | null) => {
@@ -64,16 +63,28 @@ const ensureActiveProfile = async (profileId?: string | null) => {
   return profile.id;
 };
 
-const serializeUser = (user: any) => ({
-  ...user,
-  churchScope: user.church ?? user.churchScope ?? null,
-  churchId: user.churchId ?? user.churchScopeId ?? null,
-  ministries: user.ministries?.map((relation: any) => ({
-    id: relation.ministryId,
-    name: relation.ministry?.name ?? ""
-  })) ?? [],
-  permissionOverrides: user.permissionsOverride?.map(toPermissionEntry) ?? []
-});
+const serializeUser = (user: any) => {
+  const profile = user.profile
+    ? {
+        id: user.profile.id,
+        name: user.profile.name,
+        description: user.profile.description,
+        isActive: user.profile.isActive,
+        permissions: user.profile.permissions?.map(toPermissionEntry) ?? []
+      }
+    : null;
+
+  return {
+    ...user,
+    profile,
+    churchScope: user.church ?? user.churchScope ?? null,
+    churchId: user.churchId ?? user.churchScopeId ?? null,
+    ministries: user.ministries?.map((relation: any) => ({
+      id: relation.ministryId,
+      name: relation.ministry?.name ?? ""
+    })) ?? []
+  };
+};
 
 export class UserService {
   async list() {

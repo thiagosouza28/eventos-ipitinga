@@ -350,7 +350,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
         ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -360,7 +360,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.grossCents));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -370,7 +370,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalMpFees));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -380,7 +380,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.netCents));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -390,7 +390,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.expensesCents));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -400,7 +400,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.cashCents || 0));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -410,7 +410,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.pix?.netCents || 0));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -420,7 +420,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.pix?.feesCents || 0));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-primary-400/60 bg-gradient-to-br from-primary-600/10 to-primary-400/10 p-4 shadow-lg shadow-primary-300/30 dark:border-primary-500/30 dark:from-primary-900/30 dark:to-primary-700/20" },
+        ...{ class: "rounded-sm border border-primary-400/60 bg-gradient-to-br from-primary-600/10 to-primary-400/10 p-4 shadow-lg shadow-primary-300/30 dark:border-primary-500/30 dark:from-primary-900/30 dark:to-primary-700/20" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-300" },
@@ -430,7 +430,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.cashBalanceCents));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
+        ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -463,7 +463,7 @@ if (!__VLS_ctx.loading) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         ...{ onChange: (__VLS_ctx.loadEventSummary) },
         value: (__VLS_ctx.selectedEventId),
-        ...{ class: "mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        ...{ class: "mt-2 w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -936,7 +936,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['xl:grid-cols-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -956,7 +956,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -976,7 +976,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -996,7 +996,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1016,7 +1016,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1036,7 +1036,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1056,7 +1056,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1076,7 +1076,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-primary-400/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
@@ -1099,7 +1099,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1142,7 +1142,7 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;

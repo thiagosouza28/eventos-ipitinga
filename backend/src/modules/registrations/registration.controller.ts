@@ -72,11 +72,32 @@ const bulkMarkPaidSchema = z.object({
   reference: z.string().min(3).optional()
 });
 
+const applyScopedLocationFilters = (
+  filters: { churchId?: string; districtId?: string },
+  user?: Request["user"]
+) => {
+  if (!user) return filters;
+  const scoped = { ...filters };
+  if (user.role === "DiretorLocal") {
+    if (user.churchId) {
+      scoped.churchId = user.churchId;
+    } else if (user.districtScopeId) {
+      scoped.districtId = user.districtScopeId;
+    }
+  } else if (user.role === "AdminDistrital") {
+    if (user.districtScopeId) {
+      scoped.districtId = user.districtScopeId;
+    }
+  }
+  return scoped;
+};
+
 export const listRegistrationsHandler = async (request: Request, response: Response) => {
   try {
     const filters = listSchema.parse(request.query);
+    const scopedFilters = applyScopedLocationFilters(filters, request.user);
     const ministryIds = getScopedMinistryIds(request.user);
-    const registrations = await registrationService.list(filters, ministryIds);
+    const registrations = await registrationService.list(scopedFilters, ministryIds);
     return response.json(registrations);
   } catch (error: any) {
     console.error("Erro ao listar inscrições:", error);
@@ -90,8 +111,9 @@ export const listRegistrationsHandler = async (request: Request, response: Respo
 export const registrationsReportHandler = async (request: Request, response: Response) => {
   try {
     const { groupBy, ...filters } = reportSchema.parse(request.query);
+    const scopedFilters = applyScopedLocationFilters(filters, request.user);
     const ministryIds = getScopedMinistryIds(request.user);
-    const report = await registrationService.report(filters, groupBy, ministryIds);
+    const report = await registrationService.report(scopedFilters, groupBy, ministryIds);
     return response.json(report);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -119,15 +141,16 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
   }
 
   const ministryIds = getScopedMinistryIds(request.user);
+  const scopedFilters = applyScopedLocationFilters(filters, request.user);
   const pdfBuffer =
     template === "event"
       ? await registrationService.generateEventSheetPdf(
-          filters,
+          scopedFilters,
           groupBy,
           (layout as any) ?? "single",
           ministryIds
         )
-      : await registrationService.generateReportPdf(filters, groupBy, ministryIds);
+      : await registrationService.generateReportPdf(scopedFilters, groupBy, ministryIds);
   const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
   response.setHeader("Content-Type", "application/pdf");
   response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);

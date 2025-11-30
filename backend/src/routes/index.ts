@@ -99,9 +99,7 @@ import {
   updateUserHandler,
   resetUserPasswordHandler,
   updateUserStatusHandler,
-  deleteUserHandler,
-  listUserPermissionsHandler,
-  updateUserPermissionsHandler
+  deleteUserHandler
 } from "../controllers/user.controller";
 import {
   listProfilesHandler,
@@ -202,19 +200,6 @@ router.delete(
   authorizePermission("users", "delete"),
   deleteUserHandler
 );
-router.get(
-  "/admin/users/:id/permissions",
-  authorize("AdminGeral"),
-  authorizePermission("users", "view"),
-  listUserPermissionsHandler
-);
-router.put(
-  "/admin/users/:id/permissions",
-  authorize("AdminGeral"),
-  authorizePermission("users", "edit"),
-  updateUserPermissionsHandler
-);
-
 router.get("/admin/profiles", authorize("AdminGeral"), authorizePermission("profiles", "view"), listProfilesHandler);
 router.post("/admin/profiles", authorize("AdminGeral"), authorizePermission("profiles", "create"), createProfileHandler);
 router.patch("/admin/profiles/:id", authorize("AdminGeral"), authorizePermission("profiles", "edit"), updateProfileHandler);

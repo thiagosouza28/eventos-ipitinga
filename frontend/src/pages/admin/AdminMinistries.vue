@@ -31,7 +31,7 @@
             v-model="ministryForm.name"
             type="text"
             required
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             placeholder="Pastoral, música, comunicação..."
           />
         </div>
@@ -42,13 +42,13 @@
           <textarea
             v-model="ministryForm.description"
             rows="3"
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             placeholder="Responsabilidades, contatos, etc."
           />
         </div>
         <label
           for="ministry-active"
-          class="flex items-center gap-3 rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-neutral-700 shadow-inner transition hover:border-primary-300 dark:border-white/10 dark:bg-white/5 dark:text-white"
+          class="flex items-center gap-3 rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm font-semibold text-neutral-700 shadow-inner transition hover:border-primary-300 dark:border-white/10 dark:bg-white/5 dark:text-white"
         >
           <input
             id="ministry-active"

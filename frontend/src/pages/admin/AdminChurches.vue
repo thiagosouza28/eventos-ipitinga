@@ -223,15 +223,65 @@
           <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
             Filtro por distrito
           </p>
-          <select
-            v-model="selectedDistrictId"
-            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
-          >
-            <option value="">Todos os distritos</option>
-            <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
-              {{ district.name }}
-            </option>
-          </select>
+          <div ref="districtDropdownRef" class="relative w-full">
+            <button
+              type="button"
+              class="flex w-full items-center justify-between rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-left text-sm text-neutral-900 shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus-visible:ring-primary-900/40"
+              :aria-expanded="districtDropdownOpen"
+              @click.stop="toggleDistrictDropdown"
+            >
+              <span class="truncate">{{ selectedDistrictLabel }}</span>
+              <svg
+                class="ml-3 h-4 w-4 text-neutral-500 transition-transform duration-200"
+                :class="{ 'rotate-180': districtDropdownOpen }"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            <transition
+              enter-active-class="transition duration-150 ease-out"
+              enter-from-class="opacity-0 -translate-y-1"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition duration-150 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 -translate-y-1"
+            >
+              <div
+                v-if="districtDropdownOpen"
+                class="absolute left-0 right-0 z-30 mt-2 rounded-2xl border border-neutral-200/80 bg-white/95 p-2 text-sm shadow-2xl shadow-neutral-200/60 ring-1 ring-black/5 dark:border-white/10 dark:bg-neutral-900/95 dark:text-neutral-100 dark:shadow-black/50"
+              >
+                <div class="custom-scroll max-h-60 overflow-y-auto pr-1">
+                  <button
+                    v-for="option in districtOptions"
+                    :key="option.id || 'all-districts'"
+                    type="button"
+                    class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-neutral-700 transition hover:bg-primary-50 hover:text-primary-700 dark:text-neutral-100 dark:hover:bg-primary-500/10"
+                    :class="{
+                      'bg-primary-600/10 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100':
+                        selectedDistrictId === option.id
+                    }"
+                    @click.stop="selectDistrict(option.id)"
+                  >
+                    <span class="truncate">{{ option.name }}</span>
+                    <svg
+                      v-if="selectedDistrictId === option.id"
+                      class="ml-2 h-4 w-4 text-primary-600 dark:text-primary-200"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </transition>
+          </div>
         </div>
         <p class="text-xs text-neutral-500 dark:text-neutral-400 sm:max-w-sm">
           Visualize rapidamente os diretores de juventude associados a cada igreja e distrito.
@@ -397,7 +447,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 
 import DateField from "../../components/forms/DateField.vue";
@@ -422,6 +472,8 @@ const uploadsBaseUrl = `${normalizedApiOrigin}/uploads`;
 const editingChurchId = ref<string | null>(null);
 const showChurchModal = ref(false);
 const selectedDistrictId = ref("");
+const districtDropdownOpen = ref(false);
+const districtDropdownRef = ref<HTMLElement | null>(null);
 const churchForm = reactive({
   name: "",
   districtId: "",
@@ -435,6 +487,16 @@ const churchForm = reactive({
 const churchError = ref("");
 const directorPhotoInput = ref<HTMLInputElement | null>(null);
 const directorPhotoUploading = ref(false);
+
+const districtOptions = computed(() => [
+  { id: "", name: "Todos os distritos" },
+  ...catalog.districts.map((district) => ({ id: district.id, name: district.name }))
+]);
+
+const selectedDistrictLabel = computed(() => {
+  const match = districtOptions.value.find((option) => option.id === selectedDistrictId.value);
+  return match ? match.name : "Todos os distritos";
+});
 
 const buildUploadUrl = (value: string) => {
   const sanitized = value.replace(/^\/+/, "");
@@ -509,6 +571,24 @@ const resolvePhoto = (url?: string | null) => {
     return `${normalizedApiOrigin}/${sanitized}`;
   }
   return `${uploadsBaseUrl}/${sanitized}`;
+};
+
+const toggleDistrictDropdown = () => {
+  districtDropdownOpen.value = !districtDropdownOpen.value;
+};
+
+const selectDistrict = (districtId: string) => {
+  selectedDistrictId.value = districtId;
+  districtDropdownOpen.value = false;
+};
+
+const handleDistrictDropdownClickOutside = (event: MouseEvent) => {
+  if (!districtDropdownOpen.value || !districtDropdownRef.value) return;
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (!districtDropdownRef.value.contains(target)) {
+    districtDropdownOpen.value = false;
+  }
 };
 
 const openNewChurchForm = () => {
@@ -662,6 +742,9 @@ watch(selectedDistrictId, () => {
 });
 
 onMounted(async () => {
+  if (typeof window !== "undefined") {
+    document.addEventListener("click", handleDistrictDropdownClickOutside);
+  }
   try {
     await Promise.all([catalog.loadDistricts(), catalog.loadChurches()]);
     if (catalog.districts.length) {
@@ -670,6 +753,12 @@ onMounted(async () => {
     }
   } catch (error) {
     showError("Falha ao carregar distritos ou igrejas", error);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (typeof window !== "undefined") {
+    document.removeEventListener("click", handleDistrictDropdownClickOutside);
   }
 });
 </script>

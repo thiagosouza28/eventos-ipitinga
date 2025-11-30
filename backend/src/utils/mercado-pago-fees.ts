@@ -1,64 +1,90 @@
 /**
- * Calcula as taxas do Mercado Pago baseado no objeto de pagamento
- * As taxas do Mercado Pago geralmente estão em:
- * - transaction_details.fee (taxa total)
- * - transaction_details.net_received_amount (valor líquido recebido)
- * - transaction_amount (valor bruto)
- * 
- * Taxa padrão do Mercado Pago: 0,94% para pagamentos via PIX
+ * Calcula as taxas do Mercado Pago baseado no objeto de pagamento.
+ * As informacoes podem aparecer em transaction_details.*, fee_details ou fee_details no topo.
+ *
+ * Taxa padrao utilizada como fallback: 0,94% para pagamentos via PIX.
  */
 const MERCADO_PAGO_FEE_PERCENTAGE = 0.0094; // 0,94%
+
+const toCents = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
+  const numericValue =
+    typeof value === "string"
+      ? Number(value)
+      : typeof value === "number"
+        ? value
+        : null;
+  if (numericValue === null || Number.isNaN(numericValue)) return null;
+  return Math.round(numericValue * 100);
+};
 
 export function calculateMercadoPagoFees(payment: any, totalCents: number): {
   feeCents: number;
   netAmountCents: number;
 } {
-  // Se não for pagamento via Mercado Pago, não há taxas
-  if (!payment || !payment.transaction_details) {
+  if (!payment) {
     return { feeCents: 0, netAmountCents: totalCents };
   }
 
-  const transactionDetails = payment.transaction_details;
-  
-  // Tentar obter a taxa do Mercado Pago
+  const transactionDetails = payment.transaction_details ?? {};
+  const feeDetails = [
+    ...(Array.isArray(payment.fee_details) ? payment.fee_details : []),
+    ...(Array.isArray(transactionDetails.fee_details) ? transactionDetails.fee_details : [])
+  ];
+
+  const transactionAmountCents =
+    toCents(
+      transactionDetails.total_paid_amount ??
+        transactionDetails.transaction_amount ??
+        payment.transaction_amount
+    ) ?? totalCents;
+
   let feeCents = 0;
-  let netAmountCents = totalCents;
+  let netAmountCents = transactionAmountCents;
 
-  // Taxa do Mercado Pago (geralmente em transaction_details.fee)
-  if (transactionDetails.fee !== undefined) {
-    feeCents = Math.round(transactionDetails.fee * 100);
-  } else if (transactionDetails.fee_payer) {
-    // Se não há taxa explícita mas há fee_payer, pode ser que a taxa seja zero ou calculada diferentemente
-    feeCents = 0;
+  // Taxa direta exposta no payload
+  const transactionFee = toCents(transactionDetails.fee);
+  if (transactionFee !== null) {
+    feeCents = transactionFee;
   }
 
-  // Valor líquido recebido (transaction_details.net_received_amount)
-  if (transactionDetails.net_received_amount !== undefined) {
-    netAmountCents = Math.round(transactionDetails.net_received_amount * 100);
-    // Se temos o valor líquido, calcular a taxa como diferença
-    if (feeCents === 0 && transactionDetails.transaction_amount !== undefined) {
-      const transactionAmountCents = Math.round(transactionDetails.transaction_amount * 100);
-      feeCents = transactionAmountCents - netAmountCents;
-    }
-  } else {
-    // Se não temos o valor líquido, calcular como diferença
-    if (transactionDetails.transaction_amount !== undefined) {
-      const transactionAmountCents = Math.round(transactionDetails.transaction_amount * 100);
-      netAmountCents = transactionAmountCents - feeCents;
+  // Somar todas as fee_details retornadas pela API
+  if (feeCents === 0 && feeDetails.length) {
+    const totalFees = feeDetails.reduce((sum, detail) => {
+      const amount = toCents(detail?.amount);
+      return sum + (amount ?? 0);
+    }, 0);
+    if (totalFees > 0) {
+      feeCents = totalFees;
     }
   }
 
-  // Se ainda não conseguimos calcular a taxa, usar a taxa padrão de 0,94%
-  if (feeCents === 0 && netAmountCents === totalCents) {
-    feeCents = Math.round(totalCents * MERCADO_PAGO_FEE_PERCENTAGE);
-    netAmountCents = totalCents - feeCents;
+  // Valor liquido recebido
+  const netValue =
+    transactionDetails.net_received_amount ??
+    transactionDetails.net_amount ??
+    payment.net_amount;
+  const parsedNet = toCents(netValue);
+  if (parsedNet !== null) {
+    netAmountCents = parsedNet;
+  } else if (feeCents > 0) {
+    netAmountCents = transactionAmountCents - feeCents;
   }
 
-  // Garantir que não temos valores negativos
+  // Se ainda nao temos taxa mas temos bruto x liquido, usar diferenca
+  if (feeCents === 0 && netAmountCents !== transactionAmountCents) {
+    feeCents = Math.max(0, transactionAmountCents - netAmountCents);
+  }
+
+  // Fallback para taxa padrao
+  if (feeCents === 0) {
+    feeCents = Math.round(transactionAmountCents * MERCADO_PAGO_FEE_PERCENTAGE);
+    netAmountCents = transactionAmountCents - feeCents;
+  }
+
+  netAmountCents = Math.min(netAmountCents, transactionAmountCents);
   feeCents = Math.max(0, feeCents);
   netAmountCents = Math.max(0, netAmountCents);
 
   return { feeCents, netAmountCents };
 }
-
-

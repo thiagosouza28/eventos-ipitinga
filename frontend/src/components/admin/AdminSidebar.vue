@@ -16,7 +16,7 @@
       </button>
       <nav class="flex flex-1 flex-col space-y-2">
         <RouterLink
-          v-for="item in menuItems"
+          v-for="item in visibleMenuItems"
           :key="item.label"
           :to="item.to"
           class="group flex items-center rounded-[20px] px-3 py-3 text-sm font-medium tracking-wide transition-all duration-300"
@@ -60,7 +60,7 @@
         </div>
           <nav class="mt-6 flex flex-1 flex-col space-y-3 overflow-y-auto pr-1">
             <RouterLink
-              v-for="item in menuItems"
+              v-for="item in visibleMenuItems"
               :key="`mobile-${item.label}`"
               :to="item.to"
               class="flex items-center gap-3 rounded-2xl px-4 py-3 text-base font-semibold transition hover:bg-[color:var(--surface-card-alt)]"
@@ -78,22 +78,29 @@
 </template>
 
 <script setup lang="ts">
-import type { Component } from "vue";
+import { computed, type Component } from "vue";
 import { RouterLink, useRoute, type RouteLocationRaw } from "vue-router";
 import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
+
+import { useAuthStore } from "../../stores/auth";
+import type { PermissionAction, Role } from "../../types/api";
 
 type MenuItem = {
   label: string;
   to: RouteLocationRaw;
   icon: Component;
+  module?: string;
+  action?: PermissionAction;
+  requiresRole?: Role;
 };
 
-defineProps<{
+const props = defineProps<{
   isOpen: boolean;
   menuItems: MenuItem[];
 }>();
 
 const route = useRoute();
+const auth = useAuthStore();
 
 const isRouteActive = (to: RouteLocationRaw) => {
   if (typeof to === "string") {
@@ -109,6 +116,18 @@ const isRouteActive = (to: RouteLocationRaw) => {
 };
 
 const isActive = (to: RouteLocationRaw) => isRouteActive(to);
+
+const visibleMenuItems = computed(() =>
+  props.menuItems.filter((item) => {
+    if (item.requiresRole && auth.user?.role !== item.requiresRole) {
+      return false;
+    }
+    if (!item.module) {
+      return true;
+    }
+    return auth.hasPermission(item.module, item.action ?? "view");
+  })
+);
 </script>
 
 <style scoped>

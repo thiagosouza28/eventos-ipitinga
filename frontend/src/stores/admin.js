@@ -233,15 +233,6 @@ export const useAdminStore = defineStore("admin", () => {
         await api.delete(`/admin/users/${userId}`);
         await loadUsers();
     };
-    const getUserPermissions = async (userId) => {
-        const response = await api.get(`/admin/users/${userId}/permissions`);
-        return response.data;
-    };
-    const updateUserPermissions = async (userId, permissions) => {
-        const response = await api.put(`/admin/users/${userId}/permissions`, { permissions });
-        await loadUsers();
-        return response.data;
-    };
     const loadProfiles = async () => {
         const response = await api.get("/admin/profiles");
         profiles.value = response.data;
@@ -308,8 +299,6 @@ export const useAdminStore = defineStore("admin", () => {
         resetUserPassword,
         updateUserStatus,
         deleteUser,
-        getUserPermissions,
-        updateUserPermissions,
         loadProfiles,
         createProfile,
         updateProfile,

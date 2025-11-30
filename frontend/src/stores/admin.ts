@@ -9,8 +9,7 @@ import type {
   Registration,
   AdminUser,
   AdminProfile,
-  UserStatus,
-  ProfilePermissionEntry
+  UserStatus
 } from "../types/api";
 
 export const useAdminStore = defineStore("admin", () => {
@@ -371,17 +370,6 @@ export const useAdminStore = defineStore("admin", () => {
     await loadUsers();
   };
 
-  const getUserPermissions = async (userId: string) => {
-    const response = await api.get(`/admin/users/${userId}/permissions`);
-    return response.data as ProfilePermissionEntry[];
-  };
-
-  const updateUserPermissions = async (userId: string, permissions: ProfilePermissionEntry[]) => {
-    const response = await api.put(`/admin/users/${userId}/permissions`, { permissions });
-    await loadUsers();
-    return response.data as ProfilePermissionEntry[];
-  };
-
   const loadProfiles = async () => {
     const response = await api.get("/admin/profiles");
     profiles.value = response.data as AdminProfile[];
@@ -453,8 +441,6 @@ export const useAdminStore = defineStore("admin", () => {
     resetUserPassword,
     updateUserStatus,
     deleteUser,
-    getUserPermissions,
-    updateUserPermissions,
     loadProfiles,
     createProfile,
     updateProfile,

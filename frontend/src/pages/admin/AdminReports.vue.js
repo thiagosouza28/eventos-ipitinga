@@ -625,7 +625,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                 } },
             key: (tab.key),
             type: "button",
-            ...{ class: "inline-flex flex-1 items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold transition sm:flex-none sm:px-6 sm:py-3" },
+            ...{ class: "inline-flex flex-1 items-center justify-center rounded-sm border px-4 py-2 text-sm font-semibold transition sm:flex-none sm:px-6 sm:py-3" },
             ...{ class: (__VLS_ctx.activeTab === tab.key ? 'border-sky-600 bg-gradient-to-r from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-400/50' : 'border-neutral-200/70 bg-white/70 text-neutral-700 hover:border-sky-200 hover:text-sky-700 dark:border-white/10 dark:bg-white/5 dark:text-white/70') },
         });
         (tab.label);
@@ -655,7 +655,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.eventReport.eventId),
-        ...{ class: "mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "mt-2 w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -674,18 +674,18 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.loadEventParticipants) },
         type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        ...{ class: "inline-flex items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
         disabled: (__VLS_ctx.eventReport.loading || !__VLS_ctx.eventReport.eventId),
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.downloadEventReport) },
         type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900" },
+        ...{ class: "inline-flex items-center justify-center rounded-sm bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900" },
         disabled: (!__VLS_ctx.eventReport.eventId || __VLS_ctx.eventDownloadState),
     });
     if (__VLS_ctx.eventDownloadState) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
@@ -695,7 +695,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
             ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "rounded-2xl border border-neutral-200/90 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/5" },
+            ...{ class: "rounded-sm border border-neutral-200/90 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/5" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -712,7 +712,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         for (const [card] of __VLS_getVForSourceType((__VLS_ctx.eventSummaryCards))) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 key: (card.label),
-                ...{ class: "rounded-2xl border border-neutral-200/80 bg-white/80 p-4 text-neutral-800 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5 dark:text-white" },
+                ...{ class: "rounded-sm border border-neutral-200/80 bg-white/80 p-4 text-neutral-800 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5 dark:text-white" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -814,7 +814,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                     ...{ class: "px-4 py-3" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                    ...{ class: "inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]" },
+                    ...{ class: "inline-flex rounded-sm px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]" },
                     ...{ class: (__VLS_ctx.statusBadgeClass(participant.status)) },
                 });
                 (__VLS_ctx.translateStatus(participant.status));
@@ -850,7 +850,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.churchReport.eventId),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -871,7 +871,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.churchReport.districtId),
         disabled: (__VLS_ctx.lockDistrictSelect),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -893,7 +893,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.churchReport.churchId),
         disabled: (__VLS_ctx.lockChurchSelect || !__VLS_ctx.churchReport.districtId),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -915,7 +915,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.churchReport.layout),
         disabled: (__VLS_ctx.churchReport.template !== 'event'),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "single",
@@ -934,7 +934,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.churchReport.template),
-        ...{ class: "w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "event",
@@ -948,18 +948,18 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.loadChurchParticipants) },
         type: "button",
-        ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        ...{ class: "inline-flex flex-1 items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
         disabled: (__VLS_ctx.churchReport.loading),
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.downloadChurchReport) },
         type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-400/50 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
+        ...{ class: "inline-flex items-center justify-center rounded-sm bg-sky-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-400/50 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
         disabled: (!__VLS_ctx.churchReport.churchId || __VLS_ctx.churchReportDownloadState),
     });
     if (__VLS_ctx.churchReportDownloadState) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
@@ -998,13 +998,13 @@ if (__VLS_ctx.reportsPermissions.canView) {
             for (const [participant] of __VLS_getVForSourceType((__VLS_ctx.churchParticipants))) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.article, __VLS_intrinsicElements.article)({
                     key: (participant.id),
-                    ...{ class: "flex flex-col gap-4 rounded-3xl border border-neutral-100/80 bg-white/95 p-5 shadow-xl shadow-sky-50/70 transition hover:-translate-y-0.5 hover:shadow-2xl dark:border-white/10 dark:bg-white/5 dark:shadow-black/30" },
+                    ...{ class: "flex flex-col gap-4 rounded-sm border border-neutral-100/80 bg-white/95 p-5 shadow-xl shadow-sky-50/70 transition hover:-translate-y-0.5 hover:shadow-2xl dark:border-white/10 dark:bg-white/5 dark:shadow-black/30" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "flex items-start gap-4" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "h-16 w-16 shrink-0 overflow-hidden rounded-full border border-white/80 bg-neutral-100 dark:border-white/20" },
+                    ...{ class: "h-16 w-16 shrink-0 overflow-hidden rounded-sm border border-white/80 bg-neutral-100 dark:border-white/20" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
                     src: (__VLS_ctx.resolvePhotoUrl(participant.photoUrl)),
@@ -1042,7 +1042,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                 });
                 (__VLS_ctx.findEventTitle(participant.eventId));
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4 text-sm leading-relaxed text-neutral-600 shadow-inner dark:border-white/10 dark:bg-white/5 dark:text-neutral-200" },
+                    ...{ class: "rounded-sm border border-neutral-100 bg-neutral-50/80 p-4 text-sm leading-relaxed text-neutral-600 shadow-inner dark:border-white/10 dark:bg-white/5 dark:text-neutral-200" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     ...{ class: "text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500" },
@@ -1078,7 +1078,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
         value: (__VLS_ctx.selectedFinancialEventId),
-        ...{ class: "mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+        ...{ class: "mt-2 w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
         value: "",
@@ -1096,18 +1096,18 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.refreshFinancialData) },
         type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        ...{ class: "inline-flex items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
         disabled: (__VLS_ctx.financialDetailLoading || !__VLS_ctx.selectedFinancialEventId),
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.downloadFinancialPdf) },
         type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900" },
+        ...{ class: "inline-flex items-center justify-center rounded-sm bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900" },
         disabled: (!__VLS_ctx.selectedFinancialEventId || __VLS_ctx.financialDownloadState),
     });
     if (__VLS_ctx.financialDownloadState) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
@@ -1115,7 +1115,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.exportFinancialCsv) },
         type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30" },
+        ...{ class: "inline-flex items-center justify-center rounded-sm border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30" },
         disabled: (!__VLS_ctx.selectedFinancialEventId),
     });
     var __VLS_33;
@@ -1155,7 +1155,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
             for (const [card] of __VLS_getVForSourceType((__VLS_ctx.generalFinancialCards))) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     key: (card.label),
-                    ...{ class: "rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5" },
+                    ...{ class: "rounded-sm border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-sky-100/30 dark:border-white/10 dark:bg-white/5" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -1223,7 +1223,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
             }
             if (__VLS_ctx.selectedFinancialEventId) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "space-y-5 rounded-3xl border border-neutral-100/80 bg-white/95 p-5 shadow-inner shadow-neutral-200/60 dark:border-white/10 dark:bg-neutral-900/50" },
+                    ...{ class: "space-y-5 rounded-sm border border-neutral-100/80 bg-white/95 p-5 shadow-inner shadow-neutral-200/60 dark:border-white/10 dark:bg-neutral-900/50" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
@@ -1265,7 +1265,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                     for (const [card] of __VLS_getVForSourceType((__VLS_ctx.financialStatusCards))) {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                             key: (card.label),
-                            ...{ class: "rounded-2xl border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-neutral-100/40 dark:border-white/10 dark:bg-white/5" },
+                            ...{ class: "rounded-sm border border-neutral-200/80 bg-white/90 p-4 shadow-inner shadow-neutral-100/40 dark:border-white/10 dark:bg-white/5" },
                         });
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                             ...{ class: "text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400" },
@@ -1293,7 +1293,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                     for (const [district] of __VLS_getVForSourceType((__VLS_ctx.financialByDistrict))) {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                             key: (district.id),
-                            ...{ class: "flex items-center justify-between rounded-2xl border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5" },
+                            ...{ class: "flex items-center justify-between rounded-sm border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5" },
                         });
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1318,7 +1318,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                     for (const [church] of __VLS_getVForSourceType((__VLS_ctx.financialByChurch))) {
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                             key: (church.id),
-                            ...{ class: "flex items-center justify-between rounded-2xl border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5" },
+                            ...{ class: "flex items-center justify-between rounded-sm border border-neutral-100/80 bg-white/90 px-4 py-3 text-sm shadow-sm dark:border-white/10 dark:bg-white/5" },
                         });
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1398,7 +1398,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
@@ -1435,7 +1435,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1460,7 +1460,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
@@ -1477,7 +1477,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
@@ -1496,7 +1496,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
@@ -1505,7 +1505,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['xl:grid-cols-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/90']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1527,7 +1527,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1626,7 +1626,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
@@ -1660,7 +1660,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1687,35 +1687,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1743,7 +1715,35 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1771,7 +1771,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1798,7 +1798,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
@@ -1817,7 +1817,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-sky-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
@@ -1834,7 +1834,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
@@ -1857,7 +1857,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-100/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/95']} */ ;
@@ -1877,7 +1877,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['w-16']} */ ;
 /** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
@@ -1916,7 +1916,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sky-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-sky-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-neutral-50/80']} */ ;
@@ -1964,7 +1964,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
@@ -1989,7 +1989,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-300/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
@@ -2008,7 +2008,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
@@ -2027,14 +2027,14 @@ else {
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-sky-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-6']} */ ;
@@ -2067,7 +2067,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['xl:grid-cols-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
@@ -2140,7 +2140,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-100/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/95']} */ ;
@@ -2173,7 +2173,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['xl:grid-cols-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
@@ -2204,7 +2204,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-100/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
@@ -2232,7 +2232,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-100/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;

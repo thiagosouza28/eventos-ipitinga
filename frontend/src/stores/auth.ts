@@ -4,14 +4,7 @@ import axios from "axios";
 
 import { API_BASE_URL } from "../config/api";
 import { useLoaderStore } from "./loader";
-import type {
-  Role,
-  AdminProfile,
-  PermissionState,
-  PermissionAction,
-  UserStatus,
-  ProfilePermissionEntry
-} from "../types/api";
+import type { Role, AdminProfile, PermissionState, PermissionAction, UserStatus } from "../types/api";
 
 type AuthUser = {
   id: string;
@@ -29,7 +22,6 @@ type AuthUser = {
   ministries?: Array<{ id: string; name: string }>;
   profile?: AdminProfile | null;
   permissions?: Record<string, PermissionState>;
-  permissionOverrides?: ProfilePermissionEntry[];
 };
 
 const STORAGE_KEY = "catre-auth";
@@ -123,6 +115,33 @@ export const useAuthStore = defineStore("auth", () => {
 
   const role = computed<Role | null>(() => user.value?.role ?? null);
 
+  const mapProfilePermissions = (profile?: AdminProfile | null): Record<string, PermissionState> => {
+    if (!profile?.permissions?.length) {
+      return {};
+    }
+    return profile.permissions.reduce<Record<string, PermissionState>>((acc, entry) => {
+      acc[entry.module] = {
+        view: entry.canView,
+        create: entry.canCreate,
+        edit: entry.canEdit,
+        delete: entry.canDelete,
+        approve: entry.canApprove,
+        deactivate: entry.canDeactivate,
+        reports: entry.canReport,
+        financial: entry.canFinancial
+      };
+      return acc;
+    }, {});
+  };
+
+  const permissionMap = computed<Record<string, PermissionState>>(() => {
+    const profileMap = mapProfilePermissions(user.value?.profile ?? null);
+    if (Object.keys(profileMap).length > 0) {
+      return profileMap;
+    }
+    return user.value?.permissions ?? {};
+  });
+
   const hasPermission = (module: string, action: PermissionAction = "view") => {
     if (!user.value) {
       return false;
@@ -130,10 +149,9 @@ export const useAuthStore = defineStore("auth", () => {
     if (user.value.role === "AdminGeral") {
       return true;
     }
-    const map = user.value.permissions ?? {};
-    // Se ainda não houver mapa calculado, mantemos compatibilidade liberando acesso
+    const map = permissionMap.value;
     if (!map || Object.keys(map).length === 0) {
-      return true;
+      return false;
     }
     const entry = map[module];
     if (!entry) {
@@ -144,8 +162,8 @@ export const useAuthStore = defineStore("auth", () => {
 
   const isAdminGeral = computed(() => role.value === "AdminGeral");
   const isAdminDistrital = computed(() => role.value === "AdminDistrital");
-  const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
-  const canManageUsers = computed(() => isAdminGeral.value || hasPermission("users", "view"));
+  const canCreateFree = computed(() => hasPermission("registrations", "create"));
+  const canManageUsers = computed(() => hasPermission("users", "view"));
 
   return {
     token,
@@ -163,6 +181,7 @@ export const useAuthStore = defineStore("auth", () => {
     signOut
   };
 });
+
 
 
 

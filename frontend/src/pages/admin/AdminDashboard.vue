@@ -1,21 +1,21 @@
 ﻿<template>
   <div class="space-y-6">
-    <TableSkeleton v-if="loadingDashboard" helperText="ðŸ“¡ Carregando painel administrativo..." />
+    <TableSkeleton v-if="loadingDashboard" helperText="📡 Carregando painel administrativo..." />
     <template v-else>
     <BaseCard
       class="bg-gradient-to-r from-white via-[#f7f9ff] to-[#e7ecff] dark:from-[#131a2f] dark:via-[#0f162a] dark:to-[#0b1223]"
     >
       <div class="flex flex-col gap-6">
         <div class="max-w-4xl">
-          <p class="text-xs uppercase tracking-[0.35em] text-[#6f7cff] dark:text-[#b7c8ff]">VisÃ£o geral</p>
+          <p class="text-xs uppercase tracking-[0.35em] text-[#6f7cff] dark:text-[#b7c8ff]">Visão geral</p>
           <h1 class="mt-1 text-3xl font-semibold text-[color:var(--text)]">Dashboard administrativo</h1>
           <p class="mt-2 text-sm text-[color:var(--text-muted)]">
-            Gerencie eventos, pedidos, lotes e inscriÃ§Ãµes com atalhos rÃ¡pidos.
+            Gerencie eventos, pedidos, lotes e inscrições com atalhos rápidos.
           </p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div
-            class="flex flex-col gap-3 rounded-[26px] bg-gradient-to-br from-[#6f9bff] via-[#4d7dff] to-[#1f4fff] p-5 text-white shadow-[0_25px_80px_rgba(72,103,255,0.35)] dark:shadow-[0_25px_70px_rgba(16,25,56,0.55)]"
+            class="flex flex-col gap-3 rounded-[26px] bg-gradient-to-br from-white via-[#f5f7ff] to-[#eaf1ff] p-5 text-[#111827] shadow-[0_25px_60px_rgba(15,23,42,0.08)] dark:from-[#161d36] dark:via-[#111a2d] dark:to-[#0d1426] dark:text-[color:var(--text)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.55)] dark:border dark:border-[rgba(255,255,255,0.06)]"
           >
             <div class="flex items-center justify-between">
               <span class="text-xs uppercase tracking-[0.3em] text-white/70">Eventos ativos</span>
@@ -36,7 +36,7 @@
             class="flex flex-col gap-3 rounded-[26px] bg-gradient-to-br from-white via-[#f2f7ff] to-[#fef2ff] p-5 text-[#111827] shadow-[0_25px_60px_rgba(15,23,42,0.08)] dark:from-[#161c33] dark:via-[#121a2f] dark:to-[#0e1527] dark:text-[color:var(--text)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.55)] dark:border dark:border-[rgba(255,255,255,0.06)]"
           >
             <div class="flex items-center justify-between">
-              <span class="text-xs uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[color:var(--text-muted)]">InscriÃ§Ãµes carregadas</span>
+              <span class="text-xs uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[color:var(--text-muted)]">Inscrições carregadas</span>
               <UsersIcon class="h-10 w-10 text-[#4b61ff] dark:text-[#b8a2ff]" aria-hidden="true" />
             </div>
             <p class="text-4xl font-semibold">{{ admin.registrations.length }}</p>
@@ -59,9 +59,9 @@
           <thead class="text-xs uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
             <tr>
               <th class="pb-4 font-semibold">Evento</th>
-              <th class="pb-4 font-semibold">PerÃ­odo</th>
+              <th class="pb-4 font-semibold">Período</th>
               <th class="pb-4 font-semibold">Status</th>
-              <th class="pb-4 text-right font-semibold">AÃ§Ãµes</th>
+              <th class="pb-4 text-right font-semibold">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[#eaecf5] dark:divide-[rgba(255,255,255,0.08)]">
@@ -94,7 +94,7 @@
                     target="_blank"
                     class="text-[#1f4fff] hover:underline dark:text-[#a8c4ff]"
                   >
-                    Ver pÃºblico
+                    Ver público
                   </RouterLink>
                   <RouterLink :to="`/admin/checkin/${event.id}`" class="text-[#1f4fff] hover:underline dark:text-[#a8c4ff]">
                     Check-in
@@ -102,7 +102,7 @@
                 </div>
               </td>
             </tr>
-            <tr v-if="!admin.events.length">
+            <tr v-if="!visibleEvents.length">
               <td class="py-4 text-center text-sm text-[color:var(--text-muted)]" colspan="4">
                 Nenhum evento cadastrado até o momento.
               </td>
@@ -111,7 +111,7 @@
         </table>
       </div>      <div class="mt-6 flex flex-col gap-4 md:hidden">
         <div
-          v-for="event in admin.events"
+          v-for="event in visibleEvents"
           :key="event.id"
           class="rounded-3xl border border-white/15 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-28px_rgba(15,23,42,0.8)] dark:border-white/5 dark:bg-[color:var(--surface-card)] dark:text-[color:var(--text)]"
         >
@@ -158,7 +158,7 @@
             </RouterLink>
           </div>
         </div>
-        <div v-if="!admin.events.length" class="rounded-3xl border border-dashed border-[color:var(--border-card)] p-4 text-center text-sm text-[color:var(--text-muted)]">
+        <div v-if="!visibleEvents.length" class="rounded-3xl border border-dashed border-[color:var(--border-card)] p-4 text-center text-sm text-[color:var(--text-muted)]">
           Nenhum evento cadastrado até o momento.
         </div>
       </div>
@@ -186,11 +186,42 @@ const canViewEvents = computed(() => auth.hasPermission("events", "view"));
 const canViewOrders = computed(() => auth.hasPermission("orders", "view"));
 const canViewRegistrations = computed(() => auth.hasPermission("registrations", "view"));
 
+const currentUser = computed(() => auth.user);
+const isLocalDirector = computed(() => currentUser.value?.role === "DiretorLocal");
+const scopedChurchId = computed(() => currentUser.value?.churchId ?? null);
+const scopedDistrictId = computed(() => currentUser.value?.districtScopeId ?? null);
+const userMinistryIds = computed(() => {
+  const ids = new Set<string>();
+  if (currentUser.value?.ministryId) ids.add(currentUser.value.ministryId);
+  (currentUser.value?.ministries ?? []).forEach((ministry) => {
+    if (ministry.id) ids.add(ministry.id);
+  });
+  return ids;
+});
+const hasMinistryScope = computed(() => isLocalDirector.value && userMinistryIds.value.size > 0);
+const localDirectorFilters = computed(() => {
+  if (isLocalDirector.value) {
+    const filters: Record<string, string> = {};
+    if (scopedChurchId.value) filters.churchId = scopedChurchId.value;
+    if (scopedDistrictId.value) filters.districtId = scopedDistrictId.value;
+    return filters;
+  }
+  return {};
+});
+const visibleEvents = computed(() => {
+  if (hasMinistryScope.value) {
+    return admin.events.filter(
+      (event) => event.ministryId && userMinistryIds.value.has(event.ministryId)
+    );
+  }
+  return admin.events;
+});
+
 onMounted(async () => {
   const tasks: Promise<unknown>[] = [];
   if (canViewEvents.value) tasks.push(admin.loadEvents());
-  if (canViewOrders.value) tasks.push(admin.loadOrders({}));
-  if (canViewRegistrations.value) tasks.push(admin.loadRegistrations({}));
+  if (canViewOrders.value) tasks.push(admin.loadOrders(localDirectorFilters.value));
+  if (canViewRegistrations.value) tasks.push(admin.loadRegistrations(localDirectorFilters.value));
   try {
     await Promise.all(tasks);
   } catch (error) {
@@ -200,7 +231,5 @@ onMounted(async () => {
   }
 });
 
-const activeEvents = computed(() => admin.events.filter((event) => event.isActive).length);
+const activeEvents = computed(() => visibleEvents.value.filter((event) => event.isActive).length);
 </script>
-
-

@@ -13,14 +13,46 @@ const loadingDashboard = ref(true);
 const canViewEvents = computed(() => auth.hasPermission("events", "view"));
 const canViewOrders = computed(() => auth.hasPermission("orders", "view"));
 const canViewRegistrations = computed(() => auth.hasPermission("registrations", "view"));
+const currentUser = computed(() => auth.user);
+const isLocalDirector = computed(() => currentUser.value?.role === "DiretorLocal");
+const scopedChurchId = computed(() => currentUser.value?.churchId ?? null);
+const scopedDistrictId = computed(() => currentUser.value?.districtScopeId ?? null);
+const userMinistryIds = computed(() => {
+    const ids = new Set();
+    if (currentUser.value?.ministryId)
+        ids.add(currentUser.value.ministryId);
+    (currentUser.value?.ministries ?? []).forEach((ministry) => {
+        if (ministry.id)
+            ids.add(ministry.id);
+    });
+    return ids;
+});
+const hasMinistryScope = computed(() => isLocalDirector.value && userMinistryIds.value.size > 0);
+const localDirectorFilters = computed(() => {
+    if (isLocalDirector.value) {
+        const filters = {};
+        if (scopedChurchId.value)
+            filters.churchId = scopedChurchId.value;
+        if (scopedDistrictId.value)
+            filters.districtId = scopedDistrictId.value;
+        return filters;
+    }
+    return {};
+});
+const visibleEvents = computed(() => {
+    if (hasMinistryScope.value) {
+        return admin.events.filter((event) => event.ministryId && userMinistryIds.value.has(event.ministryId));
+    }
+    return admin.events;
+});
 onMounted(async () => {
     const tasks = [];
     if (canViewEvents.value)
         tasks.push(admin.loadEvents());
     if (canViewOrders.value)
-        tasks.push(admin.loadOrders({}));
+        tasks.push(admin.loadOrders(localDirectorFilters.value));
     if (canViewRegistrations.value)
-        tasks.push(admin.loadRegistrations({}));
+        tasks.push(admin.loadRegistrations(localDirectorFilters.value));
     try {
         await Promise.all(tasks);
     }
@@ -31,7 +63,7 @@ onMounted(async () => {
         loadingDashboard.value = false;
     }
 });
-const activeEvents = computed(() => admin.events.filter((event) => event.isActive).length);
+const activeEvents = computed(() => visibleEvents.value.filter((event) => event.isActive).length);
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -43,10 +75,10 @@ if (__VLS_ctx.loadingDashboard) {
     /** @type {[typeof TableSkeleton, ]} */ ;
     // @ts-ignore
     const __VLS_0 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
-        helperText: "ðŸ“¡ Carregando painel administrativo...",
+        helperText: "📡 Carregando painel administrativo...",
     }));
     const __VLS_1 = __VLS_0({
-        helperText: "ðŸ“¡ Carregando painel administrativo...",
+        helperText: "📡 Carregando painel administrativo...",
     }, ...__VLS_functionalComponentArgsRest(__VLS_0));
 }
 else {
@@ -78,7 +110,7 @@ else {
         ...{ class: "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-col gap-3 rounded-[26px] bg-gradient-to-br from-[#6f9bff] via-[#4d7dff] to-[#1f4fff] p-5 text-white shadow-[0_25px_80px_rgba(72,103,255,0.35)] dark:shadow-[0_25px_70px_rgba(16,25,56,0.55)]" },
+        ...{ class: "flex flex-col gap-3 rounded-[26px] bg-gradient-to-br from-white via-[#f5f7ff] to-[#eaf1ff] p-5 text-[#111827] shadow-[0_25px_60px_rgba(15,23,42,0.08)] dark:from-[#161d36] dark:via-[#111a2d] dark:to-[#0d1426] dark:text-[color:var(--text)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.55)] dark:border dark:border-[rgba(255,255,255,0.06)]" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex items-center justify-between" },
@@ -262,7 +294,7 @@ else {
         __VLS_28.slots.default;
         var __VLS_28;
     }
-    if (!__VLS_ctx.admin.events.length) {
+    if (!__VLS_ctx.visibleEvents.length) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-4 text-center text-sm text-[color:var(--text-muted)]" },
@@ -272,7 +304,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mt-6 flex flex-col gap-4 md:hidden" },
     });
-    for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
+    for (const [event] of __VLS_getVForSourceType((__VLS_ctx.visibleEvents))) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             key: (event.id),
             ...{ class: "rounded-3xl border border-white/15 bg-white/90 p-4 text-sm shadow-[0_18px_40px_-28px_rgba(15,23,42,0.8)] dark:border-white/5 dark:bg-[color:var(--surface-card)] dark:text-[color:var(--text)]" },
@@ -350,7 +382,7 @@ else {
         __VLS_36.slots.default;
         var __VLS_36;
     }
-    if (!__VLS_ctx.admin.events.length) {
+    if (!__VLS_ctx.visibleEvents.length) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "rounded-3xl border border-dashed border-[color:var(--border-card)] p-4 text-center text-sm text-[color:var(--text-muted)]" },
         });
@@ -390,13 +422,19 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-[26px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
-/** @type {__VLS_StyleScopedClasses['from-[#6f9bff]']} */ ;
-/** @type {__VLS_StyleScopedClasses['via-[#4d7dff]']} */ ;
-/** @type {__VLS_StyleScopedClasses['to-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['via-[#f5f7ff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-[#eaf1ff]']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-[0_25px_80px_rgba(72,103,255,0.35)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:shadow-[0_25px_70px_rgba(16,25,56,0.55)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#111827]']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-[0_25px_60px_rgba(15,23,42,0.08)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:from-[#161d36]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:via-[#111a2d]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:to-[#0d1426]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-[0_25px_70px_rgba(0,0,0,0.55)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-[rgba(255,255,255,0.06)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
@@ -627,6 +665,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             TableSkeleton: TableSkeleton,
             admin: admin,
             loadingDashboard: loadingDashboard,
+            visibleEvents: visibleEvents,
             activeEvents: activeEvents,
         };
     },

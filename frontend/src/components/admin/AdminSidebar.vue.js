@@ -1,8 +1,11 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
-const __VLS_props = defineProps();
+import { useAuthStore } from "../../stores/auth";
+const props = defineProps();
 const route = useRoute();
+const auth = useAuthStore();
 const isRouteActive = (to) => {
     if (typeof to === "string") {
         return route.path === to;
@@ -16,6 +19,15 @@ const isRouteActive = (to) => {
     return false;
 };
 const isActive = (to) => isRouteActive(to);
+const visibleMenuItems = computed(() => props.menuItems.filter((item) => {
+    if (item.requiresRole && auth.user?.role !== item.requiresRole) {
+        return false;
+    }
+    if (!item.module) {
+        return true;
+    }
+    return auth.hasPermission(item.module, item.action ?? "view");
+}));
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
@@ -53,7 +65,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.
 __VLS_asFunctionalElement(__VLS_intrinsicElements.nav, __VLS_intrinsicElements.nav)({
     ...{ class: "flex flex-1 flex-col space-y-2" },
 });
-for (const [item] of __VLS_getVForSourceType((__VLS_ctx.menuItems))) {
+for (const [item] of __VLS_getVForSourceType((__VLS_ctx.visibleMenuItems))) {
     const __VLS_4 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
@@ -176,7 +188,7 @@ if (__VLS_ctx.isOpen) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.nav, __VLS_intrinsicElements.nav)({
         ...{ class: "mt-6 flex flex-1 flex-col space-y-3 overflow-y-auto pr-1" },
     });
-    for (const [item] of __VLS_getVForSourceType((__VLS_ctx.menuItems))) {
+    for (const [item] of __VLS_getVForSourceType((__VLS_ctx.visibleMenuItems))) {
         const __VLS_28 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
@@ -350,6 +362,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             Bars3Icon: Bars3Icon,
             XMarkIcon: XMarkIcon,
             isActive: isActive,
+            visibleMenuItems: visibleMenuItems,
         };
     },
     __typeProps: {},

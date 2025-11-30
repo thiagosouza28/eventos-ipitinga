@@ -8,6 +8,7 @@ import { PaymentMethod } from "../../config/payment-methods";
 import { Gender } from "../../config/gender";
 import { BulkPaymentDto } from "./dtos/bulk-payment.dto";
 import { storageService } from "../../storage/storage.service";
+import { getScopedMinistryIds } from "../../utils/user-scope";
 
 // Schema que aceita tanto CUID quanto UUID sem mostrar erro de UUID primeiro
 // CUID do Prisma: pode começar com qualquer letra minúscula seguido de caracteres alfanuméricos
@@ -101,6 +102,26 @@ const participantCheckSchema = z.object({
   cpf: cpfSchema
 });
 
+const applyScopedLocationFilters = (
+  filters: { churchId?: string; districtId?: string },
+  user?: Request["user"]
+) => {
+  if (!user) return filters;
+  const scoped = { ...filters };
+  if (user.role === "DiretorLocal") {
+    if (user.churchId) {
+      scoped.churchId = user.churchId;
+    } else if (user.districtScopeId) {
+      scoped.districtId = user.districtScopeId;
+    }
+  } else if (user.role === "AdminDistrital") {
+    if (user.districtScopeId) {
+      scoped.districtId = user.districtScopeId;
+    }
+  }
+  return scoped;
+};
+
 export const startInscriptionHandler = async (request: Request, response: Response) => {
   const payload = startSchema.parse(request.body);
   const pendingOrders = await orderService.findPendingOrder(payload.eventId, payload.buyerCpf);
@@ -192,10 +213,14 @@ export const markOrderPaidHandler = async (request: Request, response: Response)
 export const listOrdersHandler = async (request: Request, response: Response) => {
   const schema = z.object({
     eventId: z.string().uuid().optional(),
-    status: z.enum(["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"]).optional()
+    status: z.enum(["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"]).optional(),
+    churchId: z.string().min(1).optional(),
+    districtId: z.string().min(1).optional()
   });
   const query = schema.parse(request.query);
-  const orders = await orderService.list(query);
+  const ministryIds = getScopedMinistryIds(request.user);
+  const scopedFilters = applyScopedLocationFilters(query, request.user);
+  const orders = await orderService.list({ ...scopedFilters, ministryIds });
   return response.json(orders);
 };
 

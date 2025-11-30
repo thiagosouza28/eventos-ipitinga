@@ -46,55 +46,55 @@
     </p>
   </div>
   <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita bruta</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.grossCents) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas MP (processamento)</p>
       <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
         -{{ formatCurrency(generalMpFees) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita líquida</p>
       <p class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300">
         {{ formatCurrency(generalSummary.totals.netCents) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Despesas</p>
       <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
         -{{ formatCurrency(generalSummary.totals.expensesCents) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Recebido em dinheiro</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.cashCents || 0) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">PIX líquido</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas PIX</p>
       <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
         -{{ formatCurrency(generalSummary.totals.pix?.feesCents || 0) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-primary-400/60 bg-gradient-to-br from-primary-600/10 to-primary-400/10 p-4 shadow-lg shadow-primary-300/30 dark:border-primary-500/30 dark:from-primary-900/30 dark:to-primary-700/20">
+    <div class="rounded-sm border border-primary-400/60 bg-gradient-to-br from-primary-600/10 to-primary-400/10 p-4 shadow-lg shadow-primary-300/30 dark:border-primary-500/30 dark:from-primary-900/30 dark:to-primary-700/20">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-300">Saldo do caixa</p>
       <p class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300">
         {{ formatCurrency(generalSummary.totals.cashBalanceCents) }}
       </p>
     </div>
-    <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
+    <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
       <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Total geral (líquido)</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
@@ -115,7 +115,7 @@
           </label>
           <select
             v-model="selectedEventId"
-            class="mt-2 w-full rounded-2xl border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            class="mt-2 w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             @change="loadEventSummary"
           >
             <option value="">Todos os eventos</option>

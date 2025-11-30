@@ -48,9 +48,10 @@
           <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Evento</label>
           <select
             v-model="filters.eventId"
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            :disabled="isEventFilterLocked"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           >
-            <option value="">Todos</option>
+            <option value="">{{ isEventFilterLocked ? 'Evento vinculado' : 'Todos' }}</option>
             <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
           </select>
         </div>
@@ -58,9 +59,10 @@
           <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Distrito</label>
           <select
             v-model="filters.districtId"
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            :disabled="isDistrictFilterLocked"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           >
-            <option value="">Todos</option>
+            <option value="">{{ isDistrictFilterLocked ? 'Distrito vinculado' : 'Todos' }}</option>
             <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
           </select>
         </div>
@@ -68,10 +70,10 @@
           <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Igreja</label>
           <select
             v-model="filters.churchId"
-            :disabled="!filters.districtId"
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            :disabled="isChurchFilterLocked || !filters.districtId"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           >
-            <option value="">{{ filters.districtId ? "Todas" : "Selecione o distrito" }}</option>
+            <option value="">{{ isChurchFilterLocked ? 'Igreja vinculada' : (filters.districtId ? 'Todas' : 'Selecione o distrito') }}</option>
             <option v-for="church in churchesByDistrict(filters.districtId)" :key="church.id" :value="church.id">
               {{ church.name }}
             </option>
@@ -81,7 +83,7 @@
           <label class="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">Status</label>
           <select
             v-model="filters.status"
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           >
             <option value="">Todos</option>
             <option v-for="option in registrationStatusOptions" :key="option.value" :value="option.value">
@@ -97,7 +99,7 @@
             v-model="filters.search"
             type="text"
             placeholder="Digite nome ou CPF"
-            class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+            class="w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             autocomplete="off"
           />
         </div>
@@ -675,6 +677,7 @@ import AccessDeniedNotice from '../../components/admin/AccessDeniedNotice.vue'
 import TableSkeleton from '../../components/ui/TableSkeleton.vue'
 import { useAdminStore } from '../../stores/admin'
 import { useCatalogStore } from '../../stores/catalog'
+import { useAuthStore } from '../../stores/auth'
 import type { Church, Registration } from '../../types/api'
 import { formatCurrency } from '../../utils/format'
 import ConfirmDialog from '../../components/ui/ConfirmDialog.vue'
@@ -685,6 +688,7 @@ import { useModulePermissions } from '../../composables/usePermissions'
 
 const admin = useAdminStore()
 const catalog = useCatalogStore()
+const auth = useAuthStore()
 const registrationPermissions = useModulePermissions('registrations')
 
 const filters = reactive({
@@ -694,6 +698,17 @@ const filters = reactive({
   status: '',
   search: ''
 })
+
+const currentUser = computed(() => auth.user)
+const userRole = computed(() => currentUser.value?.role ?? null)
+const isLocalDirector = computed(() => userRole.value === 'DiretorLocal')
+const lockedDistrictId = computed(() => (isLocalDirector.value ? currentUser.value?.districtScopeId ?? '' : ''))
+const lockedChurchId = computed(() => (isLocalDirector.value ? currentUser.value?.churchId ?? '' : ''))
+const activeEventId = computed(() => admin.events.find((event) => event.isActive)?.id ?? admin.events[0]?.id ?? '')
+const lockedEventId = computed(() => (isLocalDirector.value ? activeEventId.value : ''))
+const isDistrictFilterLocked = computed(() => isLocalDirector.value && Boolean(lockedDistrictId.value))
+const isChurchFilterLocked = computed(() => isLocalDirector.value && Boolean(lockedChurchId.value))
+const isEventFilterLocked = computed(() => isLocalDirector.value && Boolean(lockedEventId.value))
 
 const statusLabels: Record<string, string> = {
   DRAFT: 'Rascunho',
@@ -744,6 +759,26 @@ const showError = (title: string, error: unknown) => {
   errorDialog.open = true
 }
 
+const applyScopedFilters = () => {
+  if (!isLocalDirector.value) {
+    return false
+  }
+  let hasChanged = false
+  if (lockedEventId.value && filters.eventId !== lockedEventId.value) {
+    filters.eventId = lockedEventId.value
+    hasChanged = true
+  }
+  if (lockedDistrictId.value && filters.districtId !== lockedDistrictId.value) {
+    filters.districtId = lockedDistrictId.value
+    hasChanged = true
+  }
+  if (lockedChurchId.value && filters.churchId !== lockedChurchId.value) {
+    filters.churchId = lockedChurchId.value
+    hasChanged = true
+  }
+  return hasChanged
+}
+
 const buildFilterParams = () => ({
   eventId: filters.eventId || undefined,
   districtId: filters.districtId || undefined,
@@ -775,17 +810,51 @@ const scheduleApply = (immediate = false) => {
 
 const resetFilters = () => {
   Object.assign(filters, { eventId: '', districtId: '', churchId: '', status: '', search: '' })
+  const changed = applyScopedFilters()
+  if (filtersReady.value) {
+    if (changed) {
+      scheduleApply(true)
+    } else {
+      scheduleApply()
+    }
+  }
 }
 
 watch(() => filters.districtId, async (value) => {
+  if (isDistrictFilterLocked.value && lockedDistrictId.value && value !== lockedDistrictId.value) {
+    filters.districtId = lockedDistrictId.value || ''
+    return
+  }
   if (!filtersReady.value) return
   try { await catalog.loadChurches(value || undefined) } catch (e) { showError('Falha ao carregar igrejas', e) }
   if (filters.churchId && !catalog.churches.some(c => c.id === filters.churchId)) filters.churchId = ''
   scheduleApply()
 })
-watch(() => filters.eventId, () => { if (filtersReady.value) scheduleApply() })
-watch(() => filters.churchId, () => { if (filtersReady.value) scheduleApply() })
+watch(() => filters.eventId, (value) => {
+  if (isEventFilterLocked.value && lockedEventId.value && value !== lockedEventId.value) {
+    filters.eventId = lockedEventId.value || ''
+    return
+  }
+  if (filtersReady.value) scheduleApply()
+})
+watch(() => filters.churchId, (value) => {
+  if (isChurchFilterLocked.value && lockedChurchId.value && value !== lockedChurchId.value) {
+    filters.churchId = lockedChurchId.value || ''
+    return
+  }
+  if (filtersReady.value) scheduleApply()
+})
 watch(() => filters.status, () => { if (filtersReady.value) scheduleApply() })
+
+watch(
+  [lockedEventId, lockedDistrictId, lockedChurchId],
+  () => {
+    const changed = applyScopedFilters()
+    if (changed && filtersReady.value) {
+      scheduleApply(true)
+    }
+  }
+)
 
 onMounted(async () => {
   try {
@@ -793,6 +862,7 @@ onMounted(async () => {
   } catch (error) {
     showError('Falha ao carregar dados iniciais', error)
   }
+  applyScopedFilters()
   await applyFilters()
   filtersReady.value = true
 })

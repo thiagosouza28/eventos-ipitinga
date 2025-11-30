@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 import { prisma } from "../lib/prisma";
 import { RolePermissionPresets } from "../config/permissions";
-import { buildPermissionMap, mergePermissionMap, toPermissionEntry } from "../utils/permissions";
+import { buildPermissionMap } from "../utils/permissions";
 import { UnauthorizedError } from "../utils/errors";
 
 export const hydratePermissions = async (request: Request, _response: Response, next: NextFunction) => {
@@ -18,8 +18,7 @@ export const hydratePermissions = async (request: Request, _response: Response, 
   const user = await prisma.user.findUnique({
     where: { id: request.user.id },
     include: {
-      profile: { include: { permissions: true } },
-      permissionsOverride: true
+      profile: { include: { permissions: true } }
     }
   });
 
@@ -32,11 +31,8 @@ export const hydratePermissions = async (request: Request, _response: Response, 
   const basePermissions =
     profilePermissions.length > 0 ? profilePermissions : RolePermissionPresets[roleKey] ?? [];
   const permissionMap = buildPermissionMap(basePermissions);
-  const overrideEntries = user.permissionsOverride?.map(toPermissionEntry) ?? [];
-  const resolvedPermissions =
-    overrideEntries.length > 0 ? mergePermissionMap(permissionMap, overrideEntries) : permissionMap;
 
-  request.user.permissions = resolvedPermissions;
+  request.user.permissions = permissionMap;
 
   return next();
 };

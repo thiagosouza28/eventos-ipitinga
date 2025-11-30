@@ -78,6 +78,31 @@ export const useAuthStore = defineStore("auth", () => {
     };
     loadFromStorage();
     const role = computed(() => user.value?.role ?? null);
+    const mapProfilePermissions = (profile) => {
+        if (!profile?.permissions?.length) {
+            return {};
+        }
+        return profile.permissions.reduce((acc, entry) => {
+            acc[entry.module] = {
+                view: entry.canView,
+                create: entry.canCreate,
+                edit: entry.canEdit,
+                delete: entry.canDelete,
+                approve: entry.canApprove,
+                deactivate: entry.canDeactivate,
+                reports: entry.canReport,
+                financial: entry.canFinancial
+            };
+            return acc;
+        }, {});
+    };
+    const permissionMap = computed(() => {
+        const profileMap = mapProfilePermissions(user.value?.profile ?? null);
+        if (Object.keys(profileMap).length > 0) {
+            return profileMap;
+        }
+        return user.value?.permissions ?? {};
+    });
     const hasPermission = (module, action = "view") => {
         if (!user.value) {
             return false;
@@ -85,10 +110,9 @@ export const useAuthStore = defineStore("auth", () => {
         if (user.value.role === "AdminGeral") {
             return true;
         }
-        const map = user.value.permissions ?? {};
-        // Se ainda não houver mapa calculado, mantemos compatibilidade liberando acesso
+        const map = permissionMap.value;
         if (!map || Object.keys(map).length === 0) {
-            return true;
+            return false;
         }
         const entry = map[module];
         if (!entry) {
@@ -98,8 +122,8 @@ export const useAuthStore = defineStore("auth", () => {
     };
     const isAdminGeral = computed(() => role.value === "AdminGeral");
     const isAdminDistrital = computed(() => role.value === "AdminDistrital");
-    const canCreateFree = computed(() => isAdminGeral.value || isAdminDistrital.value);
-    const canManageUsers = computed(() => isAdminGeral.value || hasPermission("users", "view"));
+    const canCreateFree = computed(() => hasPermission("registrations", "create"));
+    const canManageUsers = computed(() => hasPermission("users", "view"));
     return {
         token,
         user,

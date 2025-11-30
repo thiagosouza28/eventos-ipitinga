@@ -38,8 +38,8 @@
           </label>
           <select v-model="filters.status" class="mt-1 w-52 rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800">
             <option value="">Todos</option>
-            <option v-for="status in orderStatuses" :key="status" :value="status">
-              {{ status }}
+            <option v-for="status in orderStatusOptions" :key="status.value" :value="status.value">
+              {{ status.label }}
             </option>
           </select>
         </div>
@@ -98,7 +98,7 @@
                   statusBadge(order.status)
                 ]"
               >
-                {{ order.status }}
+                {{ formatOrderStatus(order.status) }}
               </span>
             </td>
             <td class="py-3 text-right font-semibold text-neutral-800 dark:text-neutral-100">
@@ -170,7 +170,7 @@
             <span
               :class="['rounded-full px-3 py-1 text-xs font-semibold uppercase', statusBadge(order.status)]"
             >
-              {{ order.status }}
+              {{ formatOrderStatus(order.status) }}
             </span>
           </div>
           <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
@@ -219,7 +219,7 @@
                   class="mt-2 inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase"
                   :class="registrationStatusBadge(registration.status)"
                 >
-                  {{ registration.status }}
+                      {{ formatRegistrationStatus(registration.status) }}
                 </span>
               </div>
             </div>
@@ -240,12 +240,29 @@ import { RouterLink } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
+import type { OrderStatus, RegistrationStatus } from "../../types/api";
 import { maskCpf, formatCurrency } from "../../utils/format";
 
 const admin = useAdminStore();
 const catalog = useCatalogStore();
 const filters = reactive({ eventId: "", status: "" });
-const orderStatuses = ["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"];
+const orderStatusLabels: Record<OrderStatus, string> = {
+  PENDING: "Pendente",
+  PAID: "Pago",
+  PARTIALLY_REFUNDED: "Reembolsado parcialmente",
+  CANCELED: "Cancelado",
+  EXPIRED: "Expirado"
+};
+const orderStatuses: OrderStatus[] = ["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"];
+const orderStatusOptions = orderStatuses.map((status) => ({ value: status, label: orderStatusLabels[status] }));
+const registrationStatusLabels: Record<RegistrationStatus, string> = {
+  DRAFT: "Rascunho",
+  PENDING_PAYMENT: "Pendente",
+  PAID: "Pago",
+  CANCELED: "Cancelada",
+  REFUNDED: "Estornada",
+  CHECKED_IN: "Check-in realizado"
+};
 const expandedOrderId = ref<string | null>(null);
 
 onMounted(async () => {
@@ -277,6 +294,11 @@ const findChurchName = (churchId: string) =>
 const toggleOrderDetails = (orderId: string) => {
   expandedOrderId.value = expandedOrderId.value === orderId ? null : orderId;
 };
+
+const formatOrderStatus = (status: string) => orderStatusLabels[status as OrderStatus] ?? status;
+
+const formatRegistrationStatus = (status: string) =>
+  registrationStatusLabels[status as RegistrationStatus] ?? status;
 
 const statusBadge = (status: string) => {
   switch (status) {
