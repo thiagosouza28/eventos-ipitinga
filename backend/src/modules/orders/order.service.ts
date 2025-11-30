@@ -814,7 +814,7 @@ export class OrderService {
       options?.paymentMethod ?? (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
     const manualReference =
       options?.manualReference ?? (isManualPayment(paymentId) ? paymentId : null);
-    const shouldUpdateProof = Object.prototype.hasOwnProperty.call(options ?? {}, paymentProofUrl);
+    const shouldUpdateProof = Object.prototype.hasOwnProperty.call(options ?? {}, "paymentProofUrl");
     const newProofUrl = shouldUpdateProof ? options?.paymentProofUrl ?? null : undefined;
 
     // Calcular taxas do Mercado Pago se for pagamento via MP

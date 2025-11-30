@@ -169,7 +169,7 @@ export const markOrderPaidHandler = async (request: Request, response: Response)
     request.body
   );
 
-  let manualProofUrl: string | undefined;
+  let manualProofUrl: string | null | undefined;
   if (proofFile) {
     manualProofUrl = await storageService.saveBase64Attachment(proofFile);
   } else if (proofUrl) {
