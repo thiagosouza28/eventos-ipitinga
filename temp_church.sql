@@ -1,0 +1,17 @@
+INSERT IGNORE INTO `Church` (`name`, `districtId`) VALUES
+('Ateua-Grande','cmi9fw7zi001vc6lt58qyagja'),
+('Ateuazinho','cmi9fw7zi001vc6lt58qyagja'),
+('Atlético','cmi9fw7zi001vc6lt58qyagja'),
+('Bom Futuro','cmi9fw7zi001vc6lt58qyagja'),
+('Bom Jesus','cmi9fw7zi001vc6lt58qyagja'),
+('Campina','cmi9fw7zi001vc6lt58qyagja'),
+('Curuperé','cmi9fw7zi001vc6lt58qyagja'),
+('Ipitinga Do Moju','cmi9fw7zi001vc6lt58qyagja'),
+('Jambuaçú','cmi9fw7zi001vc6lt58qyagja'),
+('Luso Brasileiro','cmi9fw7zi001vc6lt58qyagja'),
+('Monte Sinai - Km 34','cmi9fw7zi001vc6lt58qyagja'),
+('Monte Sinai II - Km 30','cmi9fw7zi001vc6lt58qyagja'),
+('Nova Vida - Sede','cmi9fw7zi001vc6lt58qyagja'),
+('Primavera','cmi9fw7zi001vc6lt58qyagja'),
+('Tracuateua - Acará','cmi9fw7zi001vc6lt58qyagja'),
+('Trevo','cmi9fw7zi001vc6lt58qyagja');

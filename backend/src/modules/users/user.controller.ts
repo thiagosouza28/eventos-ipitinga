@@ -23,7 +23,13 @@ const baseSchema = z.object({
   profileId: z.string().cuid().optional().or(z.literal("")).transform((value) => value || undefined),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   ministryIds: z.array(z.string().cuid()).optional(),
-  photoUrl: photoSchema
+  photoUrl: photoSchema,
+  pixType: z.enum(["CPF", "CNPJ", "EMAIL", "PHONE", "RANDOM", "EVP"]).optional(),
+  pixKey: z.string().optional().or(z.literal("")).transform((value) => value || undefined),
+  pixOwnerName: z.string().optional().or(z.literal("")).transform((value) => value || undefined),
+  pixOwnerDocument: z.string().optional().or(z.literal("")).transform((value) => value || undefined),
+  pixBankName: z.string().optional().or(z.literal("")).transform((value) => value || undefined),
+  pixStatus: z.enum(["VALIDATED", "PENDING"]).optional()
 });
 
 const createSchema = baseSchema;
@@ -39,13 +45,13 @@ export const listUsersHandler = async (_request: Request, response: Response) =>
 
 export const createUserHandler = async (request: Request, response: Response) => {
   const payload = createSchema.parse(request.body);
-  const result = await userService.create(payload, request.user?.id);
+  const result = await userService.create(payload, request.user);
   return response.status(201).json(result);
 };
 
 export const updateUserHandler = async (request: Request, response: Response) => {
   const payload = updateSchema.parse(request.body);
-  const user = await userService.update(request.params.id, payload, request.user?.id);
+  const user = await userService.update(request.params.id, payload, request.user);
   return response.json(user);
 };
 

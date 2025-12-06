@@ -10,6 +10,7 @@ import { eventService } from "../events/event.service";
 import { storageService } from "../../storage/storage.service";
 import { sanitizeCpf } from "../../utils/mask";
 import { logger } from "../../utils/logger";
+import { OrderTransferStatus } from "../../config/transfer-status";
 import {
   DEFAULT_PAYMENT_METHODS,
   ManualPaymentMethods,
@@ -26,6 +27,8 @@ import {
 import { Gender, parseGender } from "../../config/gender";
 import { calculateMercadoPagoFees } from "../../utils/mercado-pago-fees";
 import { resolveEffectiveExpirationDate, resolveOrderExpirationDate } from "../../utils/order-expiration";
+import { getActivePixProvider } from "../payments/pix-gateway";
+import { pixPaymentService } from "../payments/pix.service";
 
 type GenderInput = Gender | "MASCULINO" | "FEMININO" | "OUTRO";
 
@@ -40,6 +43,32 @@ type BatchPerson = {
 };
 
 const isManualPayment = (paymentId: string) => paymentId.startsWith("MANUAL-");
+
+const resolveOrderDistrictId = (
+  registrations: Array<{ districtId?: string | null }>,
+  eventDistrictId?: string | null
+) => {
+  if (eventDistrictId) {
+    return eventDistrictId;
+  }
+  const ids = Array.from(
+    new Set(
+      registrations
+        .map((registration) => registration.districtId)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  if (!ids.length) {
+    return null;
+  }
+  if (ids.length > 1) {
+    logger.warn({ districts: ids }, "Inscricoes de pedidos com distritos diferentes. Usando o primeiro.");
+  }
+  return ids[0];
+};
+
+const isPendingTransferStatus = (status?: string | null) =>
+  !status || status === OrderTransferStatus.PENDING || status === OrderTransferStatus.FAILED;
 
 export class OrderService {
   async findAllPendingOrders(cpf: string) {
@@ -165,6 +194,19 @@ export class OrderService {
     );
   }
 
+  private async resolveDistrictAdminId(districtId: string | null, tx: typeof prisma = prisma) {
+    if (!districtId) return null;
+    const admin = await tx.user.findFirst({
+      where: {
+        districtScopeId: districtId,
+        role: "AdminDistrital",
+        status: "ACTIVE"
+      },
+      orderBy: { createdAt: "asc" }
+    });
+    return admin?.id ?? null;
+  }
+
   async createBatch(payload: {
     eventId: string;
     buyerCpf: string;
@@ -189,6 +231,9 @@ export class OrderService {
     }
     if (!event.ministryId) {
       throw new AppError("Evento sem ministerio associado", 400);
+    }
+    if (!event.districtId) {
+      throw new AppError("Evento sem distrito associado", 400);
     }
 
     const allowedMethods = parsePaymentMethods(event.paymentMethods);
@@ -238,10 +283,6 @@ export class OrderService {
       throw new AppError("Ha CPFs duplicados no lote", 400);
     }
 
-    for (const person of payload.people) {
-      await registrationService.ensureUniqueCpf(payload.eventId, sanitizeCpf(person.cpf));
-    }
-
     const peoplePrepared = await Promise.all(
       payload.people.map(async (person) => {
         const lockedDistrictId = isDirectorLocal && actorDistrictId ? actorDistrictId : person.districtId;
@@ -262,11 +303,59 @@ export class OrderService {
       })
     );
 
+    const orderDistrictId = event.districtId;
+    const districtAdminId = await this.resolveDistrictAdminId(orderDistrictId);
+
     const orderId = randomUUID();
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
     const registrations = await prisma.$transaction(async (tx) => {
-      // Se for método gratuito, marcar como pago automaticamente
+      // Limpar inscrições e pedidos anteriores (pendentes/cancelados/expirados) para os CPFs informados
+      for (const person of peoplePrepared) {
+        const existing = await tx.registration.findFirst({
+          where: {
+            eventId: payload.eventId,
+            cpf: person.cpf
+          },
+          include: {
+            order: {
+              include: { registrations: true }
+            }
+          }
+        });
+
+        if (!existing) continue;
+
+        const order = existing.order;
+        if (order && (order.status as OrderStatus) === OrderStatus.PAID) {
+          throw new ConflictError(`CPF ${maskCpf(existing.cpf)} ja possui inscricao paga para este evento.`);
+        }
+
+        // Apagar inscrição anterior
+        await tx.registration.delete({ where: { id: existing.id } });
+
+        // Se o pedido antigo estava pendente/cancelado/expirado, ajustar ou remover
+        if (order && [OrderStatus.PENDING, OrderStatus.CANCELED, OrderStatus.EXPIRED].includes(order.status as OrderStatus)) {
+          const remaining = order.registrations.filter((r) => r.id !== existing.id);
+          if (remaining.length === 0) {
+            await tx.order.delete({ where: { id: order.id } });
+          } else {
+            const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
+            await tx.order.update({
+              where: { id: order.id },
+              data: {
+                totalCents: newTotal,
+                status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
+                mpPreferenceId: null,
+                mpPaymentId: null,
+                preferenceVersion: { increment: 1 }
+              }
+            });
+          }
+        }
+      }
+
+      // Se for metodo gratuito, marcar como pago automaticamente
       const orderStatus = (isFreeEvent || isFreePaymentMethod) ? OrderStatus.PAID : OrderStatus.PENDING;
       const paidAtValue = (isFreeEvent || isFreePaymentMethod) ? new Date() : null;
       const order = await tx.order.create({
@@ -281,7 +370,12 @@ export class OrderService {
           expiresAt,
           pricingLotId: activeLot?.id ?? null,
           mpPaymentId: (isFreeEvent || isFreePaymentMethod) ? `MANUAL-FREE-${Date.now()}` : null,
-          paidAt: paidAtValue
+          paidAt: paidAtValue,
+          districtId: orderDistrictId,
+          districtAdminId,
+          responsibleUserId: event.createdById ?? null,
+          amountToTransfer: orderStatus === OrderStatus.PAID ? unitPriceCents * payload.people.length : 0,
+          transferStatus: orderStatus === OrderStatus.PAID ? OrderTransferStatus.PENDING : null
         }
       });
 
@@ -319,6 +413,7 @@ export class OrderService {
             status: (isFreeEvent || isFreePaymentMethod)
               ? RegistrationStatus.PAID
               : RegistrationStatus.PENDING_PAYMENT,
+            responsibleUserId: event.createdById ?? null,
             priceCents: unitPriceCents,
             paidAt: paidAtValue
           }
@@ -499,6 +594,30 @@ export class OrderService {
         isManual: true,
         paidAt: order.paidAt,
         receipts,
+        manualPaymentProofUrl
+      };
+    }
+
+    const activePixProvider = await getActivePixProvider().catch(() => null);
+    const useUniversalPix =
+      paymentMethod === PaymentMethod.PIX_MP &&
+      activePixProvider &&
+      activePixProvider !== "mercadopago";
+
+    if (useUniversalPix) {
+      const pixPayment = await pixPaymentService.createCharge(orderId);
+      return {
+        status: order.status,
+        paymentId: pixPayment.chargeId ?? order.mpPaymentId,
+        paymentMethod,
+        participantCount,
+        participants,
+        totalCents,
+        pixQrData: pixPayment.pixQrData ?? undefined,
+        paidAt: order.paidAt,
+        receipts: order.status === OrderStatus.PAID ? receipts : [],
+        provider: pixPayment.provider,
+        expiresAt: pixPayment.expiresAt ?? order.expiresAt,
         manualPaymentProofUrl
       };
     }
@@ -717,7 +836,15 @@ export class OrderService {
   async createIndividualPaymentForRegistration(registrationId: string) {
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
-      include: { order: true, event: true }
+      include: {
+        order: {
+          include: {
+            registrations: true,
+            event: true
+          }
+        },
+        event: true
+      }
     });
     if (!registration) {
       throw new NotFoundError("Inscricao nao encontrada");
@@ -728,16 +855,75 @@ export class OrderService {
     if (registration.status === RegistrationStatus.CANCELED) {
       throw new AppError("Inscricao cancelada", 400);
     }
+    if (!registration.event?.districtId) {
+      throw new AppError("Evento sem distrito associado", 400);
+    }
+
+    const order = registration.order;
+    if (!order) {
+      throw new NotFoundError("Pedido associado nao encontrado");
+    }
+    if (order.mpPaymentId) {
+      throw new AppError("Pedido ja possui pagamento registrado. Aguarde confirmacao ou estorne.", 400);
+    }
+
+    const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
+    const effectiveExpiration = resolveEffectiveExpirationDate(
+      paymentMethod,
+      order.createdAt,
+      order.expiresAt
+    );
+    const hasValidPreference =
+      Boolean(order.mpPreferenceId) &&
+      order.status === OrderStatus.PENDING &&
+      registration.status === RegistrationStatus.PENDING_PAYMENT &&
+      effectiveExpiration > new Date();
+
+    const isSingleRegistrationOrder = (order.registrations?.length ?? 1) === 1;
+    if (isSingleRegistrationOrder && hasValidPreference) {
+      try {
+        const payment = await paymentService.getPreference(order.mpPreferenceId as string);
+        return { orderId: order.id, payment };
+      } catch (error) {
+        logger.warn(
+          { registrationId, orderId: order.id, error },
+          "Preferencia existente invalida, gerando nova"
+        );
+      }
+    }
+
+    if (isSingleRegistrationOrder) {
+      const newExpiresAt = resolveOrderExpirationDate(paymentMethod, new Date());
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          status: OrderStatus.PENDING,
+          mpPaymentId: null,
+          mpPreferenceId: null,
+          manualPaymentReference: null,
+          manualPaymentProofUrl: null,
+          expiresAt: newExpiresAt
+        }
+      });
+      const payment = await paymentService.createPreference(order.id);
+      return { orderId: order.id, payment };
+    }
 
     const oldOrderId = registration.orderId;
     const priceCents =
       registration.priceCents && registration.priceCents > 0
         ? registration.priceCents
         : registration.event.priceCents ?? 0;
-    const paymentMethod = (registration.order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
     const expiresAt = resolveOrderExpirationDate(paymentMethod);
-    const buyerCpf = sanitizeCpf(registration.order.buyerCpf ?? registration.cpf);
+    const buyerCpf = sanitizeCpf(order.buyerCpf ?? registration.cpf);
     const newOrderId = randomUUID();
+    const districtAdminId = await this.resolveDistrictAdminId(registration.event.districtId);
+    const shouldDeleteOldOrder =
+      (order.status === OrderStatus.PENDING ||
+        order.status === OrderStatus.CANCELED ||
+        order.status === OrderStatus.EXPIRED) &&
+      !order.mpPaymentId &&
+      (order.registrations?.length ?? 0) <= 1;
 
     await prisma.$transaction(async (tx) => {
       await tx.order.create({
@@ -752,28 +938,39 @@ export class OrderService {
           expiresAt,
           mpPreferenceId: null,
           mpPaymentId: null,
-          preferenceVersion: 0
+          preferenceVersion: 0,
+          districtId: registration.event.districtId,
+          districtAdminId,
+          responsibleUserId: registration.event.createdById ?? null
         }
       });
 
       await tx.registration.update({
         where: { id: registrationId },
-        data: { orderId: newOrderId, paymentMethod }
-      });
-
-      const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
-      const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
-
-      await tx.order.update({
-        where: { id: oldOrderId },
         data: {
-          totalCents: newTotal,
-          status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
-          mpPreferenceId: null,
-          mpPaymentId: null,
-          preferenceVersion: { increment: 1 }
+          orderId: newOrderId,
+          paymentMethod,
+          responsibleUserId: registration.event.createdById ?? registration.responsibleUserId ?? null
         }
       });
+
+      if (shouldDeleteOldOrder) {
+        await tx.order.delete({ where: { id: oldOrderId } });
+      } else {
+        const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
+        const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
+
+        await tx.order.update({
+          where: { id: oldOrderId },
+          data: {
+            totalCents: newTotal,
+            status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
+            mpPreferenceId: null,
+            mpPaymentId: null,
+            preferenceVersion: { increment: 1 }
+          }
+        });
+      }
     });
 
     const payment = await paymentService.createPreference(newOrderId);
@@ -793,11 +990,107 @@ export class OrderService {
   ) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { registrations: true }
+      include: {
+        registrations: true,
+        event: {
+          select: {
+            districtId: true,
+            createdById: true
+          }
+        }
+      }
     });
     if (!order) throw new NotFoundError("Pedido nao encontrado");
 
-    if (order.status === "PAID") return order;
+    const paidAt = options?.paidAt ?? new Date();
+    const paymentMethod =
+      options?.paymentMethod ?? (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
+    const manualReference =
+      options?.manualReference ?? (isManualPayment(paymentId) ? paymentId : null);
+    const shouldUpdateProof = Object.prototype.hasOwnProperty.call(options ?? {}, "paymentProofUrl");
+    const newProofUrl = shouldUpdateProof ? options?.paymentProofUrl ?? null : undefined;
+
+    if (order.status === OrderStatus.PAID) {
+      const updatedOrder = await prisma.$transaction(async (tx) => {
+        const orderColumns = await tx.$queryRaw<Array<{ column_name: string }>>`
+          SELECT column_name
+          FROM information_schema.columns
+          WHERE table_schema = DATABASE() AND table_name = 'Order'
+        `;
+        const columnNames = orderColumns.map((col) => col.column_name);
+        const hasAmountToTransfer = columnNames.includes("amountToTransfer");
+        const hasTransferStatus = columnNames.includes("transferStatus");
+        const hasTransferBatchId = columnNames.includes("transferBatchId");
+        const hasDistrictId = columnNames.includes("districtId");
+        const hasDistrictAdminId = columnNames.includes("districtAdminId");
+        const hasResponsibleUserId = columnNames.includes("responsibleUserId");
+
+        const transferAmount = Math.max(
+          order.amountToTransfer ?? order.netAmountCents ?? order.totalCents,
+          0
+        );
+
+        const districtId = hasDistrictId
+          ? resolveOrderDistrictId(
+              order.registrations ?? [],
+              order.event?.districtId ?? order.districtId ?? null
+            )
+          : null;
+        const districtAdminId =
+          hasDistrictAdminId && districtId
+            ? await this.resolveDistrictAdminId(districtId, tx)
+            : null;
+        const responsibleUserId = hasResponsibleUserId
+          ? order.responsibleUserId ?? order.event?.createdById ?? null
+          : null;
+
+        const updateData: any = {};
+        if (shouldUpdateProof) {
+          updateData.manualPaymentProofUrl = newProofUrl ?? null;
+        }
+        if (
+          hasAmountToTransfer &&
+          (!order.amountToTransfer || order.amountToTransfer !== transferAmount)
+        ) {
+          updateData.amountToTransfer = transferAmount;
+        }
+        if (hasDistrictId && districtId && order.districtId !== districtId) {
+          updateData.districtId = districtId;
+        }
+        if (
+          hasDistrictAdminId &&
+          (order.districtAdminId ?? null) !== (districtAdminId ?? null)
+        ) {
+          updateData.districtAdminId = districtAdminId;
+        }
+        if (
+          hasResponsibleUserId &&
+          (order.responsibleUserId ?? null) !== (responsibleUserId ?? null)
+        ) {
+          updateData.responsibleUserId = responsibleUserId;
+        }
+        if (hasTransferStatus && isPendingTransferStatus(order.transferStatus)) {
+          updateData.transferStatus = OrderTransferStatus.PENDING;
+          if (hasTransferBatchId) {
+            updateData.transferBatchId = null;
+          }
+        }
+
+        if (!Object.keys(updateData).length) {
+          return order;
+        }
+
+        return tx.order.update({
+          where: { id: orderId },
+          data: updateData
+        });
+      });
+
+      if (shouldUpdateProof && order.manualPaymentProofUrl && order.manualPaymentProofUrl !== newProofUrl) {
+        await storageService.deleteByUrl(order.manualPaymentProofUrl).catch(() => undefined);
+      }
+      return updatedOrder;
+    }
 
     let effectiveVersion = options?.preferenceVersion ?? null;
     if (!effectiveVersion && !isManualPayment(paymentId)) {
@@ -829,14 +1122,6 @@ export class OrderService {
       return order;
     }
 
-    const paidAt = options?.paidAt ?? new Date();
-    const paymentMethod =
-      options?.paymentMethod ?? (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
-    const manualReference =
-      options?.manualReference ?? (isManualPayment(paymentId) ? paymentId : null);
-    const shouldUpdateProof = Object.prototype.hasOwnProperty.call(options ?? {}, "paymentProofUrl");
-    const newProofUrl = shouldUpdateProof ? options?.paymentProofUrl ?? null : undefined;
-
     // Calcular taxas do Mercado Pago se for pagamento via MP
     let feeCents = 0;
     let netAmountCents = order.totalCents;
@@ -862,8 +1147,15 @@ export class OrderService {
         FROM information_schema.columns
         WHERE table_schema = DATABASE() AND table_name = 'Order'
       `;
-      const hasFeeCents = orderColumns.some((col) => col.column_name === "feeCents");
-      const hasNetAmountCents = orderColumns.some((col) => col.column_name === "netAmountCents");
+      const columnNames = orderColumns.map((col) => col.column_name);
+      const hasFeeCents = columnNames.includes("feeCents");
+      const hasNetAmountCents = columnNames.includes("netAmountCents");
+      const hasAmountToTransfer = columnNames.includes("amountToTransfer");
+      const hasDistrictId = columnNames.includes("districtId");
+      const hasDistrictAdminId = columnNames.includes("districtAdminId");
+      const hasTransferStatus = columnNames.includes("transferStatus");
+      const hasTransferBatchId = columnNames.includes("transferBatchId");
+      const hasResponsibleUserId = columnNames.includes("responsibleUserId");
 
       const updateData: any = {
         status: OrderStatus.PAID,
@@ -876,12 +1168,55 @@ export class OrderService {
         updateData.manualPaymentProofUrl = newProofUrl ?? null;
       }
 
+      const transferAmount = Math.max(netAmountCents ?? order.totalCents, 0);
+      const districtId = hasDistrictId
+        ? resolveOrderDistrictId(
+            order.registrations ?? [],
+            order.event?.districtId ?? order.districtId ?? null
+          )
+        : null;
+      const districtAdminId =
+        hasDistrictAdminId && districtId
+          ? await this.resolveDistrictAdminId(districtId, tx)
+          : null;
+      const responsibleUserId = hasResponsibleUserId
+        ? order.responsibleUserId ?? order.event?.createdById ?? null
+        : null;
+      const transferStatus =
+        order.transferStatus === OrderTransferStatus.TRANSFERRED
+          ? order.transferStatus
+          : OrderTransferStatus.PENDING;
+
       // Adicionar campos financeiros apenas se existirem
       if (hasFeeCents) {
         updateData.feeCents = feeCents;
       }
       if (hasNetAmountCents) {
         updateData.netAmountCents = netAmountCents;
+      }
+      if (hasAmountToTransfer) {
+        updateData.amountToTransfer = transferAmount;
+      }
+      if (hasDistrictId && districtId && order.districtId !== districtId) {
+        updateData.districtId = districtId;
+      }
+      if (
+        hasDistrictAdminId &&
+        (order.districtAdminId ?? null) !== (districtAdminId ?? null)
+      ) {
+        updateData.districtAdminId = districtAdminId;
+      }
+      if (
+        hasResponsibleUserId &&
+        (order.responsibleUserId ?? null) !== (responsibleUserId ?? null)
+      ) {
+        updateData.responsibleUserId = responsibleUserId;
+      }
+      if (hasTransferStatus && transferStatus && order.transferStatus !== OrderTransferStatus.TRANSFERRED) {
+        updateData.transferStatus = transferStatus;
+        if (hasTransferBatchId) {
+          updateData.transferBatchId = null;
+        }
       }
 
       const updatedOrder = await tx.order.update({
@@ -894,7 +1229,8 @@ export class OrderService {
         data: {
           status: RegistrationStatus.PAID,
           paidAt,
-          paymentMethod
+          paymentMethod,
+          responsibleUserId: order.event?.createdById ?? order.responsibleUserId ?? null
         }
       });
       return updatedOrder;

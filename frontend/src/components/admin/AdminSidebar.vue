@@ -9,7 +9,7 @@
       <button
         type="button"
         class="mb-8 flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#5a6bff] shadow-[0_10px_20px_rgba(76,87,125,0.15)] transition hover:bg-[#f8f9ff] dark:border-[rgba(255,255,255,0.1)] dark:bg-[#10142b] dark:text-white"
-        @click="$emit('toggle')"
+        @click="emit('toggle')"
       >
         <Bars3Icon class="h-5 w-5" aria-hidden="true" />
         <span class="sr-only">Alternar menu</span>
@@ -44,7 +44,7 @@
 
   <transition name="sidebar-overlay">
     <div v-if="isOpen" class="fixed inset-0 z-40 flex md:hidden">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="$emit('toggle')" />
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="emit('toggle')" />
       <transition name="sidebar-drawer">
         <aside class="relative ml-0 flex h-full w-72 flex-col rounded-r-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)] px-5 py-6 shadow-2xl">
           <div class="flex items-center justify-between">
@@ -52,7 +52,7 @@
           <button
             type="button"
             class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)]"
-            @click="$emit('toggle')"
+            @click="emit('toggle')"
           >
             <XMarkIcon class="h-5 w-5" aria-hidden="true" />
             <span class="sr-only">Fechar menu</span>
@@ -97,6 +97,10 @@ type MenuItem = {
 const props = defineProps<{
   isOpen: boolean;
   menuItems: MenuItem[];
+}>();
+
+const emit = defineEmits<{
+  (event: "toggle"): void;
 }>();
 
 const route = useRoute();

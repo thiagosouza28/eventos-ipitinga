@@ -21,6 +21,8 @@ type EventLotEntity = Awaited<ReturnType<typeof eventLotService.list>>[number];
 type ActorUser = {
   id?: string | null;
   role?: string | null;
+  districtScopeId?: string | null;
+  churchId?: string | null;
 };
 
 const buildSlug = (title: string) =>
@@ -53,6 +55,21 @@ const serializeLot = (lot: EventLotEntity | null | undefined) => {
 };
 
 export class EventService {
+  private async resolveDistrictAdminId(districtId: string | null) {
+    if (!districtId) {
+      return null;
+    }
+    const admin = await prisma.user.findFirst({
+      where: {
+        districtScopeId: districtId,
+        role: "AdminDistrital",
+        status: "ACTIVE"
+      },
+      orderBy: { createdAt: "asc" }
+    });
+    return admin?.id ?? null;
+  }
+
   private assertCanManageEvent(event: { createdById?: string | null }, actor?: ActorUser) {
     if (!actor) {
       throw new AppError("Permissão insuficiente", 403);
@@ -155,15 +172,33 @@ export class EventService {
     const where: Prisma.EventWhereInput = ministryIds && ministryIds.length ? { ministryId: { in: ministryIds } } : {};
     const events = await prisma.event.findMany({
       where,
-      orderBy: { startDate: "desc" },
-      include: { ministry: true }
+      orderBy: { startDate: "desc" }
     });
 
     if (events.length === 0) {
       return [];
     }
 
-    const lotsMap = await this.getLotsMap(events.map((event) => event.id));
+    const districtIds = Array.from(new Set(events.map((event) => event.districtId).filter(Boolean)));
+    const churchIds = Array.from(new Set(events.map((event) => event.churchId).filter(Boolean)));
+    const ministryIdsSet = Array.from(new Set(events.map((event) => event.ministryId).filter(Boolean)));
+
+    const [districts, churches, ministries, lotsMap] = await Promise.all([
+      districtIds.length
+        ? prisma.district.findMany({ where: { id: { in: districtIds as string[] } } })
+        : [],
+      churchIds.length
+        ? prisma.church.findMany({ where: { id: { in: churchIds as string[] } } })
+        : [],
+      ministryIdsSet.length
+        ? prisma.ministry.findMany({ where: { id: { in: ministryIdsSet as string[] } } })
+        : [],
+      this.getLotsMap(events.map((event) => event.id))
+    ]);
+
+    const districtMap = new Map(districts.map((item) => [item.id, item]));
+    const churchMap = new Map(churches.map((item) => [item.id, item]));
+    const ministryMap = new Map(ministries.map((item) => [item.id, item]));
 
     return events.map((event) => {
       const isFree = Boolean((event as any).isFree);
@@ -180,7 +215,9 @@ export class EventService {
         paymentMethods: parsePaymentMethods(event.paymentMethods),
         currentLot: serializeLot(activeLot),
         currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
-        ministry: event.ministry
+        ministry: event.ministryId ? ministryMap.get(event.ministryId) ?? null : null,
+        district: districtMap.get(event.districtId) ?? null,
+        church: event.churchId ? churchMap.get(event.churchId) ?? null : null
       };
     });
   }
@@ -218,6 +255,8 @@ export class EventService {
     paymentMethods?: PaymentMethod[];
     pendingPaymentValueRule?: PendingPaymentValueRule;
     ministryId: string;
+    districtId: string;
+    churchId?: string | null;
     },
     actor?: ActorUser
   ) {
@@ -238,16 +277,55 @@ export class EventService {
       throw new AppError("Ministerio invalido", 400);
     }
 
+    const district = await prisma.district.findUnique({ where: { id: data.districtId } });
+    if (!district) {
+      throw new AppError("Distrito invalido", 400);
+    }
+
+    const isActorDistrictOwner =
+      actor?.districtScopeId && data.districtId === actor.districtScopeId;
+
+    let churchId = data.churchId ?? null;
+    if (isActorDistrictOwner) {
+      if (!actor?.churchId) {
+        throw new AppError(
+          "Usuario nao possui igreja vinculada para eventos do proprio distrito.",
+          400
+        );
+      }
+      churchId = actor.churchId;
+    }
+
+    if (churchId) {
+      const church = await prisma.church.findFirst({
+        where: { id: churchId, districtId: data.districtId }
+      });
+      if (!church) {
+        throw new AppError("Igreja nao pertence ao distrito selecionado.", 400);
+      }
+    }
+
     const event = await prisma.event.create({
       data: {
-        ...data,
+        title: data.title,
+        description: data.description,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        location: data.location,
+        bannerUrl: data.bannerUrl,
+        districtId: data.districtId,
+        churchId,
         priceCents: data.isFree ? 0 : data.priceCents ?? 0,
         paymentMethods: serializePaymentMethods(
           data.paymentMethods ?? DEFAULT_PAYMENT_METHODS
         ),
         pendingPaymentValueRule: data.pendingPaymentValueRule ?? DEFAULT_PENDING_PAYMENT_VALUE_RULE,
         slug,
-        createdById: actor?.id ?? null
+        createdById: actor?.id ?? null,
+        ministryId: data.ministryId,
+        isFree: data.isFree,
+        isActive: data.isActive ?? true,
+        minAgeYears: data.minAgeYears ?? null
       }
     });
     const serialized = {
@@ -280,6 +358,8 @@ export class EventService {
       slug?: string;
       pendingPaymentValueRule?: PendingPaymentValueRule;
       ministryId?: string;
+      districtId?: string;
+      churchId?: string | null;
     }>,
     actor?: ActorUser
   ) {
@@ -316,6 +396,46 @@ export class EventService {
       payload.pendingPaymentValueRule = data.pendingPaymentValueRule;
     }
 
+    const targetDistrictId = data.districtId ?? event.districtId;
+    if (!targetDistrictId) {
+      throw new AppError("Distrito invalido", 400);
+    }
+    const districtChanged = Boolean(data.districtId && data.districtId !== event.districtId);
+    const targetChurchIdPayload = data.churchId ?? null;
+
+    if (targetDistrictId) {
+      const district = await prisma.district.findUnique({ where: { id: targetDistrictId } });
+      if (!district) {
+        throw new AppError("Distrito invalido", 400);
+      }
+      payload.district = { connect: { id: targetDistrictId } };
+    }
+
+    let effectiveChurchId = targetChurchIdPayload ?? event.churchId ?? null;
+    const isActorDistrictOwner =
+      actor?.districtScopeId && targetDistrictId && actor.districtScopeId === targetDistrictId;
+    if (isActorDistrictOwner) {
+      if (!actor?.churchId) {
+        throw new AppError(
+          "Usuario nao possui igreja vinculada para eventos do proprio distrito.",
+          400
+        );
+      }
+      effectiveChurchId = actor.churchId;
+    }
+
+    if (effectiveChurchId) {
+      const church = await prisma.church.findFirst({
+        where: { id: effectiveChurchId, districtId: targetDistrictId }
+      });
+      if (!church) {
+        throw new AppError("Igreja nao pertence ao distrito selecionado.", 400);
+      }
+      payload.church = { connect: { id: effectiveChurchId } };
+    } else if (data.churchId === null) {
+      payload.church = { disconnect: true };
+    }
+
     if (data.ministryId !== undefined) {
       const ministry = await prisma.ministry.findUnique({ where: { id: data.ministryId } });
       if (!ministry || !ministry.isActive) {
@@ -337,6 +457,17 @@ export class EventService {
       data: payload
     });
 
+    if (districtChanged) {
+      const districtAdminId = await this.resolveDistrictAdminId(updated.districtId);
+      await prisma.order.updateMany({
+        where: { eventId: id },
+        data: {
+          districtId: updated.districtId,
+          districtAdminId: districtAdminId ?? null
+        }
+      });
+    }
+
     if (data.ministryId && data.ministryId !== event.ministryId) {
       await prisma.registration.updateMany({
         where: { eventId: id },
@@ -355,7 +486,9 @@ export class EventService {
       metadata: payload
     });
     return serialized;
-  }  findActiveLot(eventId: string, referenceDate = new Date()) {
+  }
+
+  findActiveLot(eventId: string, referenceDate = new Date()) {
     return eventLotService.findActive(eventId, referenceDate);
   }
 

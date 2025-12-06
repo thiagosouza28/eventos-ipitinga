@@ -1,4 +1,4 @@
-/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+﻿/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -72,11 +72,11 @@ const __VLS_3 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
 const __VLS_4 = __VLS_asFunctionalComponent(__VLS_3, new __VLS_3({
-    to: "/pendencias",
+    to: "/comprovante",
     ...{ class: "inline-flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800 sm:w-auto sm:justify-start" },
 }));
 const __VLS_5 = __VLS_4({
-    to: "/pendencias",
+    to: "/comprovante",
     ...{ class: "inline-flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800 sm:w-auto sm:justify-start" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_4));
 __VLS_6.slots.default;
@@ -329,3 +329,4 @@ export default (await import('vue')).defineComponent({
 });
 ; /* PartiallyEnd: #4569/main.vue */
 //# sourceMappingURL=EventLanding.vue.js.map
+

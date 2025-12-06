@@ -35,7 +35,9 @@ const createSchema = z.object({
   isActive: z.boolean().optional(),
   paymentMethods: z.array(paymentMethodSchema).min(1).optional(),
   pendingPaymentValueRule: pendingPaymentValueRuleSchema.optional(),
-  ministryId: z.string().cuid()
+  ministryId: z.string().cuid(),
+  districtId: z.string().cuid(),
+  churchId: z.string().cuid().optional()
 });
 
 const updateSchema = createSchema.partial();

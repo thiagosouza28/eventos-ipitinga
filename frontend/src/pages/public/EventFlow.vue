@@ -103,7 +103,7 @@
 
       <BaseCard v-if="currentStep === 1">
         <div
-          v-if="pendingOrders.length > 0"
+          v-if="false"
           class="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
         >
           <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
@@ -131,7 +131,7 @@
               </div>
             </div>
             <RouterLink
-              :to="{ name: 'pending-orders', params: { cpf: buyerCpf } }"
+              :to="{ name: 'admin-pending-orders', params: { cpf: buyerCpf } }"
               class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50"
             >
               Ver todas as pend�fªncias
@@ -1010,7 +1010,7 @@ const disableStatePersistence = () => {
 
   const steps = computed(() => {
     const base = [
-      { title: "CPF", description: "Verifique pedidos pendentes" },
+      { title: "CPF", description: "Informe o CPF do responsável" },
       { title: "Unidade", description: "Escolha distrito e igreja" },
       { title: "Participantes", description: "Dados individuais" },
       { title: "Revisão", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
@@ -1519,7 +1519,7 @@ const disableStatePersistence = () => {
 
     try {
       const response = await eventStore.checkPendingOrder(cpfDigits);
-      pendingOrders.value = response?.pendingOrders ?? [];
+      pendingOrders.value = [];
 
       const suggestion = response?.suggestedChurch;
       if (suggestion) {
@@ -1834,6 +1834,9 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
+
+
+
 
 
 

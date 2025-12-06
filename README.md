@@ -119,3 +119,153 @@ Para uma visÃ£o completa em Markdown ou Postman, consulte `docs/eventos-ipitinga
 ## Contato
 
 Caso precise de ajuda com as variÃ¡veis de produÃ§Ã£o (chaves Mercado Pago, SMTP ou banco) consulte o time responsÃ¡vel ou revise o README interno da organizaÃ§Ã£o.
+
+## API para app Android (rotas e funÇõÇæes)
+
+- Prefixo base: `/api` (configurado em `backend/src/app.ts`).
+- AutenticaÇõÇœo: JWT via header `Authorization: Bearer <token>` nas rotas `/api/admin/...`; rotas pÇ§blicas nÇœo exigem token.
+- PermissÇµes: RBAC definido em `backend/src/config/permissions.ts` e aplicado por `authorizePermission`.
+- Formatos: JSON por padrÇœo; uploads usam `multipart/form-data` (campo `file`); relatÇürios/recibos geram PDF.
+
+### Funcionalidades chave
+
+- InscriÇõÇæes individuais ou em lote com criaÇõÇœo de pedido.
+- Pagamentos Mercado Pago (PIX, link) incluindo pagamentos em lote, marcaÇõÇœes manuais e estornos.
+- CatÇ­logos e cadastros (distritos, igrejas, ministÇ©rios, eventos, lotes, usuÇürios e perfis).
+- Recibos/relatÇürios em PDF (inscriÇõÇæes, finanÇõas, recibo individual).
+- Check-in por QR/link com confirmaÇõÇœo por senha e dashboard em tempo real.
+- GestÇœo financeira (despesas, resumos por evento/distrito/igreja, transferÇ¦ncias para distritos/responsÇíveis).
+
+### Rotas pÇ§blicas (sem token)
+
+- GET `/api/system/config`: configuraÇõÇœo pÇ§blica do sistema (textos/cores/links).
+- GET `/api/events`: lista eventos pÇ§blicos ativos.
+- GET `/api/events/:slug`: detalhes de evento pelo slug.
+- POST `/api/inscriptions/start`: inicia fluxo e retorna pedidos pendentes para um CPF em um evento.
+- POST `/api/inscriptions/check`: verifica se um CPF jÇ­ possui inscriÇõÇœo/perfil.
+- GET `/api/orders/pending`: lista pedidos pendentes por CPF (`cpf` na query).
+- POST `/api/orders/bulk-payment`: gera preferÇ¦ncia de pagamento em lote para pedidos existentes.
+- POST `/api/inscriptions/batch`: cria pedido e inscriÇõÇæes (fluxo pÇ§blico).
+- GET `/api/payments/order/:orderId`: dados/links de pagamento do pedido.
+- GET `/api/payments/preference/:preferenceId`: consulta uma preferÇ¦ncia Mercado Pago.
+- POST `/api/payments/pix/create`: gera preferÇ¦ncia PIX (QR/copia-e-cola) para um pedido.
+- POST `/api/receipts/lookup`: busca recibos por CPF ou inscriÇõÇœ.
+- GET `/api/receipts/:registrationId.pdf`: download do recibo em PDF.
+- GET `/api/checkin/validate`: validaÇõÇœ de link/QR de check-in.
+- POST `/api/checkin/confirm`: confirma check-in via link com senha.
+- POST `/api/webhooks/mercadopago`: webhook oficial do Mercado Pago.
+- POST `/api/webhooks/pix`: webhook unificado de pagamentos PIX.
+- GET `/api/catalog/districts`: catÇ­logo de distritos.
+- GET `/api/catalog/churches`: catÇ­logo de igrejas.
+- GET `/api/catalog/churches/director`: localiza igreja pelo CPF do diretor.
+- GET `/api/catalog/ministries`: catÇ­logo de ministÇ©rios.
+- GET `/api/public/districts`: alias pÇ§blico para distritos.
+- GET `/api/public/churches`: alias pÇ§blico para igrejas.
+
+### AutenticaÇõÇœ
+
+- POST `/api/admin/login`: login (CPF/e-mail + senha) e emissÇœo de token/permissÇµes.
+- POST `/api/admin/password/recover`: envia senha temporÇüria por e-mail.
+- POST `/api/admin/profile/change-password`: troca de senha autenticada.
+
+### ConfiguraÇõÇœ do sistema e PIX (admin)
+
+- GET `/api/admin/system/config`: leitura da configuraÇõÇœ do sistema (AdminGeral + `system:view`).
+- PUT `/api/admin/system/config`: atualizaÇõÇœ do sistema (AdminGeral + `system:edit`).
+- GET `/api/admin/payments/pix-config`: consulta integraÇõÇœ PIX (AdminGeral).
+- PUT `/api/admin/payments/pix-config`: cria/atualiza integraÇõÇœ PIX (AdminGeral).
+
+### Cadastros territoriais (admin)
+
+- GET `/api/admin/districts`: lista distritos (`districts:view`).
+- POST `/api/admin/districts`: cria distrito (`districts:create`).
+- PATCH `/api/admin/districts/:id`: edita distrito (`districts:edit`).
+- DELETE `/api/admin/districts/:id`: remove distrito (`districts:delete`).
+- GET `/api/admin/ministries`: lista ministÇ©rios (`ministries:view`).
+- POST `/api/admin/ministries`: cria ministÇ©rio (`ministries:create`).
+- PATCH `/api/admin/ministries/:id`: edita ministÇ©rio (`ministries:edit`).
+- DELETE `/api/admin/ministries/:id`: remove ministÇ©rio (`ministries:delete`).
+- GET `/api/admin/churches`: lista igrejas (`churches:view`).
+- POST `/api/admin/churches`: cria igreja (`churches:create`).
+- PATCH `/api/admin/churches/:id`: edita igreja (`churches:edit`).
+- DELETE `/api/admin/churches/:id`: remove igreja (`churches:delete`).
+
+### UsuÇürios e perfis (admin)
+
+- GET `/api/admin/users`: lista usuÇürios (AdminGeral + `users:view`).
+- POST `/api/admin/users`: cria usuÇürio (AdminGeral + `users:create`).
+- PATCH `/api/admin/users/:id`: edita usuÇürio (AdminGeral + `users:edit`).
+- POST `/api/admin/users/:id/reset-password`: reseta senha (AdminGeral + `users:edit`).
+- PATCH `/api/admin/users/:id/status`: ativa/desativa usuÇürio (AdminGeral + `users:edit`).
+- DELETE `/api/admin/users/:id`: remove usuÇürio (AdminGeral + `users:delete`).
+- GET `/api/admin/profiles`: lista perfis (`profiles:view`).
+- POST `/api/admin/profiles`: cria perfil (`profiles:create`).
+- PATCH `/api/admin/profiles/:id`: edita perfil (`profiles:edit`).
+- PATCH `/api/admin/profiles/:id/status`: ativa/desativa perfil (`profiles:edit`).
+- DELETE `/api/admin/profiles/:id`: remove perfil (`profiles:delete`).
+
+### Eventos, lotes e uploads (admin)
+
+- GET `/api/admin/events`: lista eventos (`events:view`).
+- POST `/api/admin/events`: cria evento (`events:create`).
+- PATCH `/api/admin/events/:id`: atualiza evento (`events:edit`).
+- DELETE `/api/admin/events/:id`: exclui evento (`events:delete`).
+- POST `/api/admin/uploads`: upload de imagem/arquivo (campo `file`, `events:edit`).
+- GET `/api/admin/events/:eventId/lots`: lista lotes (`events:view`).
+- POST `/api/admin/events/:eventId/lots`: cria lote (`events:edit`).
+- PATCH `/api/admin/events/:eventId/lots/:lotId`: edita lote (`events:edit`).
+- DELETE `/api/admin/events/:eventId/lots/:lotId`: remove lote (`events:delete`).
+
+### Pedidos, pagamentos e inscriÇõÇæes (admin)
+
+- POST `/api/admin/inscriptions/batch`: cria pedido/inscriÇõÇæes em modo administrativo (`registrations:create`).
+- GET `/api/admin/orders`: lista pedidos com filtros (`orders:view`).
+- POST `/api/admin/orders/:id/mark-paid`: marca pedido como pago (`orders:financial`).
+- GET `/api/admin/registrations`: lista inscriÇõÇæes (`registrations:view`).
+- GET `/api/admin/registrations/report`: dados agregados (`registrations:reports`).
+- GET `/api/admin/registrations/report.pdf`: relatÇürio em PDF (`registrations:reports`).
+- PATCH `/api/admin/registrations/:id`: atualiza inscriÇõÇœ (`registrations:edit`).
+- DELETE `/api/admin/registrations/:id`: remove inscriÇõÇœ (`registrations:delete`).
+- POST `/api/admin/registrations/:id/cancel`: cancela inscriÇõÇœ (`registrations:deactivate`).
+- POST `/api/admin/registrations/:id/reactivate`: reativa inscriÇõÇœ (`registrations:approve`).
+- POST `/api/admin/registrations/:id/refund`: estorna inscriÇõÇœ (`registrations:financial`).
+- POST `/api/admin/registrations/mark-paid`: marca inscriÇõÇæes como pagas (`registrations:financial`).
+- POST `/api/admin/registrations/:id/payment-link`: regenera link de pagamento (`registrations:edit`).
+- GET `/api/admin/registrations/:id/history`: histÇürico de eventos da inscriÇõÇœ (`registrations:view`).
+- GET `/api/admin/registrations/:id/receipt-link`: link do recibo (`registrations:view`).
+
+### Check-in (pÇ§blico e admin)
+
+- GET `/api/checkin/validate`: valida QR/link.
+- POST `/api/checkin/confirm`: confirmaÇõÇœ via link com senha.
+- GET `/api/admin/checkin/:eventId`: dashboard do evento (`checkin:view`).
+- POST `/api/admin/checkin/scan`: valida QR/assinatura (`checkin:approve`).
+- POST `/api/admin/checkin/manual`: busca por CPF + data de nascimento (`checkin:approve`).
+- POST `/api/admin/checkin/confirm`: confirma check-in administrativo (`checkin:approve`).
+
+### Despesas (admin)
+
+- GET `/api/admin/events/:eventId/expenses`: lista despesas do evento (`financial:view`).
+- POST `/api/admin/events/:eventId/expenses`: cria despesa (`financial:create`).
+- GET `/api/admin/expenses/:id`: detalha despesa (`financial:view`).
+- PATCH `/api/admin/expenses/:id`: edita despesa (`financial:edit`).
+- DELETE `/api/admin/expenses/:id`: remove despesa (`financial:delete`).
+
+### Financeiro e relatÇürios (admin)
+
+- GET `/api/admin/financial/summary`: resumo geral (`financial:view`).
+- GET `/api/admin/financial/events/:eventId`: resumo por evento (`financial:view`).
+- GET `/api/admin/financial/events/:eventId/districts/:districtId`: resumo do distrito (`financial:view`).
+- GET `/api/admin/financial/events/:eventId/churches/:churchId`: resumo da igreja (`financial:view`).
+- GET `/api/admin/financial/events/:eventId/report.pdf`: relatÇürio financeiro em PDF (`financial:reports`).
+
+### TransferÇ¦ncias e cobranÇõÇæes por distrito/responsÇível (admin)
+
+- GET `/api/admin/finance/districts`: painel de distritos (`financial:view`).
+- GET `/api/admin/finance/districts/:id/pending-orders`: pedidos pendentes do distrito (`financial:view`).
+- GET `/api/admin/finance/districts/:id/transfers`: histÇürico de transferÇ¦ncias (`financial:view`).
+- POST `/api/admin/finance/districts/:districtId/transfer`: registra transferÇõÇœ/baixa (`financial:financial`).
+- GET `/api/admin/finance/responsibles`: painel por responsÇível (`financial:view`).
+- GET `/api/admin/finance/responsibles/:id/pending-orders`: pedidos pendentes por responsÇível (`financial:view`).
+- GET `/api/admin/finance/responsibles/:id/transfers`: histÇürico de transferÇ¦ncias do responsÇível (`financial:view`).
+- POST `/api/admin/finance/responsibles/:responsibleUserId/transfer`: registra transferÇõÇœ para responsÇível (`financial:financial`).

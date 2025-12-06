@@ -8,7 +8,23 @@ import { maskCpf, formatCurrency } from "../../utils/format";
 const admin = useAdminStore();
 const catalog = useCatalogStore();
 const filters = reactive({ eventId: "", status: "" });
+const orderStatusLabels = {
+    PENDING: "Pendente",
+    PAID: "Pago",
+    PARTIALLY_REFUNDED: "Reembolsado parcialmente",
+    CANCELED: "Cancelado",
+    EXPIRED: "Expirado"
+};
 const orderStatuses = ["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"];
+const orderStatusOptions = orderStatuses.map((status) => ({ value: status, label: orderStatusLabels[status] }));
+const registrationStatusLabels = {
+    DRAFT: "Rascunho",
+    PENDING_PAYMENT: "Pendente",
+    PAID: "Pago",
+    CANCELED: "Cancelada",
+    REFUNDED: "Estornada",
+    CHECKED_IN: "Check-in realizado"
+};
 const expandedOrderId = ref(null);
 onMounted(async () => {
     await Promise.all([admin.loadEvents(), catalog.loadDistricts(), catalog.loadChurches()]);
@@ -30,6 +46,8 @@ const findChurchName = (churchId) => catalog.churches.find((church) => church.id
 const toggleOrderDetails = (orderId) => {
     expandedOrderId.value = expandedOrderId.value === orderId ? null : orderId;
 };
+const formatOrderStatus = (status) => orderStatusLabels[status] ?? status;
+const formatRegistrationStatus = (status) => registrationStatusLabels[status] ?? status;
 const statusBadge = (status) => {
     switch (status) {
         case "PAID":
@@ -132,12 +150,12 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElement
 __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
     value: "",
 });
-for (const [status] of __VLS_getVForSourceType((__VLS_ctx.orderStatuses))) {
+for (const [status] of __VLS_getVForSourceType((__VLS_ctx.orderStatusOptions))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        key: (status),
-        value: (status),
+        key: (status.value),
+        value: (status.value),
     });
-    (status);
+    (status.label);
 }
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "flex gap-2" },
@@ -219,7 +237,7 @@ for (const [order] of __VLS_getVForSourceType((__VLS_ctx.admin.orders))) {
                 __VLS_ctx.statusBadge(order.status)
             ]) },
     });
-    (order.status);
+    (__VLS_ctx.formatOrderStatus(order.status));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
         ...{ class: "py-3 text-right font-semibold text-neutral-800 dark:text-neutral-100" },
     });
@@ -311,7 +329,7 @@ for (const [order] of __VLS_getVForSourceType((__VLS_ctx.admin.orders))) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: (['rounded-full px-3 py-1 text-xs font-semibold uppercase', __VLS_ctx.statusBadge(order.status)]) },
     });
-    (order.status);
+    (__VLS_ctx.formatOrderStatus(order.status));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400" },
     });
@@ -382,7 +400,7 @@ for (const [order] of __VLS_getVForSourceType((__VLS_ctx.admin.orders))) {
                     ...{ class: "mt-2 inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase" },
                     ...{ class: (__VLS_ctx.registrationStatusBadge(registration.status)) },
                 });
-                (registration.status);
+                (__VLS_ctx.formatRegistrationStatus(registration.status));
             }
         }
     }
@@ -692,7 +710,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             formatCurrency: formatCurrency,
             admin: admin,
             filters: filters,
-            orderStatuses: orderStatuses,
+            orderStatusOptions: orderStatusOptions,
             expandedOrderId: expandedOrderId,
             applyFilters: applyFilters,
             resetFilters: resetFilters,
@@ -700,6 +718,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             findDistrictName: findDistrictName,
             findChurchName: findChurchName,
             toggleOrderDetails: toggleOrderDetails,
+            formatOrderStatus: formatOrderStatus,
+            formatRegistrationStatus: formatRegistrationStatus,
             statusBadge: statusBadge,
             registrationStatusBadge: registrationStatusBadge,
         };

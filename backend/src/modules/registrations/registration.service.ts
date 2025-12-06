@@ -53,7 +53,7 @@ const toPublicPhotoUrl = (value?: string | null) => {
   return `${base}/uploads/${sanitized}`;
 };
 
-// FormataÃ§Ã£o de data sem timezone (para datas de nascimento)
+// Formatação de data sem timezone (para datas de nascimento)
 const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
@@ -61,17 +61,17 @@ const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
 });
 
 const formatDateBr = (date: Date | null | undefined) =>
-  date ? brDateFormatter.format(date) : "NÃ£o informado";
+  date ? brDateFormatter.format(date) : "Não informado";
 
-// FormataÃ§Ã£o de data de nascimento usando componentes UTC diretamente
+// Formatação de data de nascimento usando componentes UTC diretamente
 // Isso garante que a data exibida seja exatamente a data UTC salva no banco,
-// sem conversÃ£o de timezone que pode causar mudanÃ§a de dia
+// sem conversão de timezone que pode causar mudança de dia
 const formatBirthDateBr = (date: Date | null | undefined) => {
-  if (!date) return "NÃ£o informado";
+  if (!date) return "Não informado";
   
   // Extrair componentes UTC diretamente da data
-  // Quando a data Ã© salva como "1998-11-05T00:00:00.000Z", queremos exibir "05/11/1998"
-  // Usando UTC garantimos que nÃ£o haverÃ¡ mudanÃ§a de dia por causa do fuso horÃ¡rio
+  // Quando a data é salva como "1998-11-05T00:00:00.000Z", queremos exibir "05/11/1998"
+  // Usando UTC garantimos que não haverá mudança de dia por causa do fuso horário
   const day = String(date.getUTCDate()).padStart(2, "0");
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const year = date.getUTCFullYear();
@@ -174,7 +174,7 @@ export class RegistrationService {
       }
     });
     if (exists) {
-      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} jÃ¡ possui inscriÃ§Ã£o para este evento. NÃ£o Ã© possÃ­vel fazer mais de uma inscriÃ§Ã£o com o mesmo CPF no mesmo evento.`);
+      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} já possui inscrição para este evento. Não é possível fazer mais de uma inscrição com o mesmo CPF no mesmo evento.`);
     }
   }
 
@@ -314,10 +314,10 @@ export class RegistrationService {
           const period =
             event && event.startDate && event.endDate
               ? `${formatDateBr(event.startDate)} - ${formatDateBr(event.endDate)}`
-              : "NÃ£o informado";
+              : "Não informado";
           resultMap.set(idKey, {
             id: key,
-            name: event?.title ?? "NÃ£o informado",
+            name: event?.title ?? "Não informado",
             period,
             totals: REGISTRATION_STATUSES.reduce(
               (acc, status) => Object.assign(acc, { [status]: 0 }),
@@ -370,8 +370,8 @@ export class RegistrationService {
         const church = key ? churchMap.get(key) : null;
         resultMap.set(idKey, {
           id: key,
-          name: church?.name ?? "NÃ£o informado",
-          districtName: church?.district?.name ?? "NÃ£o informado",
+          name: church?.name ?? "Não informado",
+          districtName: church?.district?.name ?? "Não informado",
           totals: REGISTRATION_STATUSES.reduce(
             (acc, status) => Object.assign(acc, { [status]: 0 }),
             { total: 0 } as Record<typeof REGISTRATION_STATUSES[number] | "total", number>
@@ -426,7 +426,7 @@ export class RegistrationService {
       const birthDateParts = data.birthDate.split('-');
       payload.birthDate = new Date(Date.UTC(
         parseInt(birthDateParts[0], 10), // ano
-        parseInt(birthDateParts[1], 10) - 1, // mÃªs (0-indexed)
+        parseInt(birthDateParts[1], 10) - 1, // mês (0-indexed)
         parseInt(birthDateParts[2], 10) // dia
       ));
       payload.ageYears = ageYears;
@@ -488,7 +488,7 @@ export class RegistrationService {
     });
     if (!registration) throw new NotFoundError("Inscricao nao encontrada");
     if (registration.status === "PAID") {
-      throw new AppError("NÃ£o Ã© possÃ­vel cancelar inscriÃ§Ã£o paga (solicite estorno)", 400);
+      throw new AppError("Não é possível cancelar inscrição paga (solicite estorno)", 400);
     }
     await prisma.registration.update({
       where: { id },
@@ -679,8 +679,8 @@ export class RegistrationService {
         : registration.birthDate
           ? calculateAge(registration.birthDate)
           : 0;
-    const districtName = registration.district?.name ?? "Nao informado";
-    const churchName = registration.church?.name ?? "Nao informado";
+    const districtName = registration.district?.name ?? "Não informado";
+    const churchName = registration.church?.name ?? "Não informado";
     const paymentDate = registration.paidAt ?? registration.createdAt;
 
     const { pdfBuffer, validationUrl } = await generateReceiptPdf({
@@ -854,7 +854,7 @@ export class RegistrationService {
         if (groupBy === "event") {
           groupsMap.set(mapKey, {
             id: key,
-            title: params.registrationEventTitle ?? "Evento nao informado",
+            title: params.registrationEventTitle ?? "Evento Não informado",
             subtitle: params.registrationEventPeriod ?? null,
             extraInfo: params.registrationEventLocation ?? null,
             participants: []
@@ -893,13 +893,13 @@ export class RegistrationService {
 
       group.participants.push({
         fullName: registration.fullName,
-        churchName: church?.name ?? "Nao informado",
-        districtName: district?.name ?? "Nao informado",
+        churchName: church?.name ?? "Não informado",
+        districtName: district?.name ?? "Não informado",
         birthDate: registration.birthDate
           ? formatDateBr(registration.birthDate)
-          : "Nao informado",
+          : "Não informado",
         ageYears: registration.ageYears ?? null,
-        eventTitle: event?.title ?? "Nao informado",
+        eventTitle: event?.title ?? "Não informado",
         status: registration.status
       });
     });
@@ -941,7 +941,7 @@ export class RegistrationService {
       const church = r.church;
       const district = r.district ?? church?.district;
 
-      const birthDateBr = r.birthDate ? formatBirthDateBr(r.birthDate) : "Nao informado";
+      const birthDateBr = r.birthDate ? formatBirthDateBr(r.birthDate) : "Não informado";
       let age: number | null = r.ageYears ?? null;
       if (age == null && r.birthDate) {
         try { age = this.computeAge(r.birthDate.toISOString().slice(0, 10)); } catch {}
@@ -951,8 +951,8 @@ export class RegistrationService {
         fullName: r.fullName,
         birthDate: birthDateBr,
         ageYears: age,
-        churchName: church?.name ?? "Nao informado",
-        districtName: district?.name ?? "Nao informado",
+        churchName: church?.name ?? "Não informado",
+        districtName: district?.name ?? "Não informado",
         photoUrl: toPublicPhotoUrl(r.photoUrl) ?? DEFAULT_PHOTO_DATA_URL,
         eventTitle: event?.title ?? undefined
       };
@@ -1082,4 +1082,19 @@ export class RegistrationService {
 }
 
 export const registrationService = new RegistrationService();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

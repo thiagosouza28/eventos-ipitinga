@@ -57,6 +57,10 @@ export type PendingPaymentValueRule =
   | "KEEP_ORIGINAL"
   | "UPDATE_TO_ACTIVE_LOT";
 
+export type PixType = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM" | "EVP";
+export type OrderTransferStatus = "PENDING" | "TRANSFERRED" | "FAILED";
+export type TransferStatus = "PENDING" | "SUCCESS" | "FAILED";
+
 export interface District {
   id: string;
   name: string;
@@ -73,6 +77,19 @@ export interface Church {
   directorEmail?: string | null;
   directorWhatsapp?: string | null;
   directorPhotoUrl?: string | null;
+}
+
+export interface PixGatewayConfig {
+  id: number;
+  provider: string;
+  clientId?: string | null;
+  clientSecret?: string | null;
+  apiKey?: string | null;
+  webhookUrl?: string | null;
+  certificatePath?: string | null;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Ministry {
@@ -111,6 +128,8 @@ export interface Event {
   minAgeYears?: number | null;
   slug: string;
   isActive: boolean;
+  districtId: string;
+  churchId?: string | null;
   currentPriceCents?: number;
   currentLot?: EventLot | null;
   lots?: EventLot[];
@@ -118,6 +137,8 @@ export interface Event {
   pendingPaymentValueRule: PendingPaymentValueRule;
   ministryId?: string | null;
   ministry?: Ministry | null;
+  district?: District | null;
+  church?: Church | null;
 }
 
 export interface AdminUser {
@@ -137,6 +158,59 @@ export interface AdminUser {
   createdAt?: string;
   status: UserStatus;
   profile?: AdminProfile | null;
+  pixType?: PixType | null;
+  pixKey?: string | null;
+  pixOwnerName?: string | null;
+  pixOwnerDocument?: string | null;
+  pixBankName?: string | null;
+  pixStatus?: "VALIDATED" | "PENDING" | null;
+}
+
+export interface TransferRecord {
+  id: string;
+  amount: number;
+  status: TransferStatus;
+  errorMessage?: string | null;
+  createdAt: string;
+  mpTransferId?: string | null;
+  orderIds?: string[] | null;
+  pixKey?: string | null;
+  pixType?: PixType | null;
+  pixOwnerName?: string | null;
+  pixOwnerDocument?: string | null;
+  pixBankName?: string | null;
+  createdBy?: { id: string; name?: string | null; email?: string | null } | null;
+}
+
+export interface ResponsibleFinanceSummary {
+  responsible: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    pixType?: PixType | null;
+    pixKey?: string | null;
+    pixOwnerName?: string | null;
+    pixOwnerDocument?: string | null;
+    pixBankName?: string | null;
+  };
+  totals: {
+    collectedCents: number;
+    feesCents: number;
+    netCents: number;
+    transferredCents: number;
+    availableCents: number;
+  };
+  pendingOrdersCount: number;
+  lastTransfer: TransferRecord | null;
+  transfersCount: number;
+}
+
+export interface ResponsiblePendingOrder {
+  id: string;
+  amountToTransfer: number;
+  transferStatus: OrderTransferStatus;
+  event?: { id: string; title: string } | null;
+  registrations?: Array<{ id: string; fullName: string; priceCents: number; districtId?: string | null }>;
 }
 
 export interface Registration {

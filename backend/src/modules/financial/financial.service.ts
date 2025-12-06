@@ -1,15 +1,24 @@
 import { prisma } from "../../lib/prisma";
-import { NotFoundError } from "../../utils/errors";
+import { AppError, NotFoundError } from "../../utils/errors";
 
 export class FinancialService {
   /**
    * Retorna o resumo financeiro de um evento
    */
   async getEventSummary(eventId: string) {
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
+    const event = await prisma.event.findUnique({
+      where: { id: eventId }
+    });
     if (!event) {
       throw new NotFoundError("Evento nao encontrado");
     }
+
+    const district = event.districtId
+      ? await prisma.district.findUnique({
+          where: { id: event.districtId },
+          select: { id: true, name: true }
+        })
+      : null;
 
     // Verificar se as colunas existem antes de usar
     const columns = await prisma.$queryRaw<Array<{ column_name?: string; COLUMN_NAME?: string }>>`
@@ -27,22 +36,29 @@ export class FinancialService {
     const feeCentsSelect = hasFeeCents ? "COALESCE(o.feeCents, 0) as feeCents" : "0 as feeCents";
     const netAmountCentsSelect = hasNetAmountCents ? "COALESCE(o.netAmountCents, o.totalCents) as netAmountCents" : "o.totalCents as netAmountCents";
 
-    const paidOrdersRaw = await prisma.$queryRawUnsafe<Array<{
+    let paidOrdersRaw: Array<{
       id: string;
       totalCents: bigint | number;
       feeCents: bigint | number | null;
       netAmountCents: bigint | number | null;
       paymentMethod?: string | null;
-    }>>(`
-      SELECT 
-        o.id,
-        o.totalCents,
-        ${feeCentsSelect},
-        ${netAmountCentsSelect},
-        o.paymentMethod
-      FROM \`Order\` o
-      WHERE o.eventId = '${eventId}' AND o.status = 'PAID'
-    `);
+    }> = [];
+    try {
+      paidOrdersRaw = await prisma.$queryRawUnsafe(`
+        SELECT 
+          o.id,
+          o.totalCents,
+          ${feeCentsSelect},
+          ${netAmountCentsSelect},
+          o.paymentMethod
+        FROM \`Order\` o
+        WHERE o.eventId = '${eventId}' AND o.status = 'PAID'
+      `);
+    } catch (error: any) {
+      throw new AppError("Falha ao consultar pedidos pagos do evento", 500, {
+        error: error?.message
+      });
+    }
 
     // Converter BigInt para Number
     const paidOrdersBase = paidOrdersRaw.map(row => ({
@@ -173,7 +189,14 @@ export class FinancialService {
       event: {
         id: event.id,
         title: event.title,
-        slug: event.slug
+        slug: event.slug,
+        districtId: event.districtId,
+        district: district
+          ? {
+              id: district.id,
+              name: district.name
+            }
+          : null
       },
       totals: {
         grossCents: totalGrossCents,
@@ -397,9 +420,12 @@ export class FinancialService {
           o.paymentMethod,
           e.id as event_id,
           e.title as event_title,
-          e.slug as event_slug
+          e.slug as event_slug,
+          e.districtId as event_district_id,
+          d.name as event_district_name
         FROM \`Order\` o
         INNER JOIN \`Event\` e ON o.eventId = e.id
+        LEFT JOIN \`District\` d ON e.districtId = d.id
         WHERE o.status = 'PAID'
       `;
 
@@ -414,6 +440,8 @@ export class FinancialService {
         event_id: string;
         event_title: string;
         event_slug: string;
+        event_district_id?: string | null;
+        event_district_name?: string | null;
       }>>(query);
 
       // Converter BigInt para Number (SQLite retorna inteiros como BigInt)
@@ -427,7 +455,9 @@ export class FinancialService {
         event: {
           id: row.event_id,
           title: row.event_title,
-          slug: row.event_slug
+          slug: row.event_slug,
+          districtId: row.event_district_id ?? null,
+          districtName: row.event_district_name ?? null
         }
       }));
 
@@ -474,7 +504,7 @@ export class FinancialService {
 
     // Agrupar por evento
     const eventSummaries = new Map<string, {
-      event: { id: string; title: string; slug: string };
+      event: { id: string; title: string; slug: string; districtId?: string | null; districtName?: string | null };
       grossCents: number;
       feesCents: number;
       netCents: number;

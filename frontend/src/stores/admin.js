@@ -11,6 +11,9 @@ export const useAdminStore = defineStore("admin", () => {
     const dashboard = ref(null);
     const users = ref([]);
     const profiles = ref([]);
+    const responsibleFinance = ref([]);
+    const responsiblePending = ref({});
+    const responsibleTransfers = ref({});
     const extractArray = (input, fallbackKeys = []) => {
         if (Array.isArray(input)) {
             return input;
@@ -97,6 +100,30 @@ export const useAdminStore = defineStore("admin", () => {
         return api.get(`/admin/financial/events/${eventId}/report.pdf`, {
             responseType: "arraybuffer"
         });
+    };
+    const loadResponsibleFinance = async () => {
+        const response = await api.get("/admin/finance/responsibles");
+        responsibleFinance.value = response.data;
+        return responsibleFinance.value;
+    };
+    const loadResponsiblePendingOrders = async (responsibleId) => {
+        const response = await api.get(`/admin/finance/responsibles/${responsibleId}/pending-orders`);
+        const list = response.data;
+        responsiblePending.value = { ...responsiblePending.value, [responsibleId]: list };
+        return list;
+    };
+    const loadResponsibleTransfers = async (responsibleId) => {
+        const response = await api.get(`/admin/finance/responsibles/${responsibleId}/transfers`);
+        const list = response.data;
+        responsibleTransfers.value = { ...responsibleTransfers.value, [responsibleId]: list };
+        return list;
+    };
+    const createResponsibleTransfer = async (responsibleId) => {
+        const response = await api.post(`/admin/finance/responsibles/${responsibleId}/transfer`);
+        await loadResponsibleFinance();
+        await loadResponsiblePendingOrders(responsibleId);
+        await loadResponsibleTransfers(responsibleId);
+        return response.data;
     };
     const updateRegistration = async (id, payload) => {
         await api.patch(`/admin/registrations/${id}`, payload);
@@ -275,6 +302,13 @@ export const useAdminStore = defineStore("admin", () => {
         loadRegistrations,
         downloadRegistrationReport,
         downloadFinancialReport,
+        responsibleFinance,
+        responsiblePending,
+        responsibleTransfers,
+        loadResponsibleFinance,
+        loadResponsiblePendingOrders,
+        loadResponsibleTransfers,
+        createResponsibleTransfer,
         updateRegistration,
         cancelRegistration,
         reactivateRegistration,

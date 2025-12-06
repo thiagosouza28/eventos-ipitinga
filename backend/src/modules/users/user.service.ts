@@ -21,6 +21,12 @@ type UserInput = {
   photoUrl?: string | null;
   profileId?: string | null;
   status?: UserStatus;
+  pixType?: string | null;
+  pixKey?: string | null;
+  pixOwnerName?: string | null;
+  pixOwnerDocument?: string | null;
+  pixBankName?: string | null;
+  pixStatus?: string | null;
 };
 
 const normalizeCpf = (value?: string | null) => {
@@ -28,6 +34,22 @@ const normalizeCpf = (value?: string | null) => {
   const digits = value.replace(/\D/g, "");
   return digits || null;
 };
+
+const normalizeDocument = (value?: string | null) => {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "");
+  return digits || null;
+};
+
+const hasPixPayload = (payload: Partial<UserInput>) =>
+  Boolean(
+    payload.pixType ||
+      payload.pixKey ||
+      payload.pixOwnerName ||
+      payload.pixOwnerDocument ||
+      payload.pixBankName ||
+      payload.pixStatus
+  );
 
 const syncMinistries = async (userId: string, ministryIds?: string[]) => {
   await prisma.ministryUser.deleteMany({ where: { userId } });
@@ -82,7 +104,13 @@ const serializeUser = (user: any) => {
     ministries: user.ministries?.map((relation: any) => ({
       id: relation.ministryId,
       name: relation.ministry?.name ?? ""
-    })) ?? []
+    })) ?? [],
+    pixType: user.pixType ?? null,
+    pixKey: user.pixKey ?? null,
+    pixOwnerName: user.pixOwnerName ?? null,
+    pixOwnerDocument: user.pixOwnerDocument ?? null,
+    pixBankName: user.pixBankName ?? null,
+    pixStatus: user.pixStatus ?? null
   };
 };
 
@@ -96,7 +124,7 @@ export class UserService {
     return users.map(serializeUser);
   }
 
-  async create(payload: UserInput, actorUserId?: string) {
+  async create(payload: UserInput, actorUser?: { id?: string; role?: string }) {
     const email = payload.email.toLowerCase().trim();
     const cpf = normalizeCpf(payload.cpf);
     if (cpf) {
@@ -119,6 +147,10 @@ export class UserService {
       if (count !== payload.ministryIds.length) {
         throw new AppError("Ministerio informado nao encontrado", 400);
       }
+    }
+
+    if (payload.role === "AdminDistrital" && hasPixPayload(payload) && actorUser?.role !== "AdminGeral") {
+      throw new AppError("Apenas Administradores Gerais podem definir chave PIX de administradores distritais.", 403);
     }
 
     const temporaryPassword = generateTemporaryPassword();
@@ -146,7 +178,13 @@ export class UserService {
         status: payload.status ?? UserStatus.ACTIVE,
         passwordHash,
         isTemporaryPassword: true,
-        passwordUpdatedAt: null
+        passwordUpdatedAt: null,
+        pixType: payload.pixType ?? null,
+        pixKey: payload.pixKey?.trim() ?? null,
+        pixOwnerName: payload.pixOwnerName?.trim() ?? null,
+        pixOwnerDocument: normalizeDocument(payload.pixOwnerDocument),
+        pixBankName: payload.pixBankName?.trim() ?? null,
+        pixStatus: (payload.pixStatus as any) ?? "PENDING"
       },
       include: userIncludes
     });
@@ -154,7 +192,7 @@ export class UserService {
     await syncMinistries(user.id, payload.ministryIds);
 
     await auditService.log({
-      actorUserId,
+      actorUserId: actorUser?.id,
       action: "USER_CREATED",
       entity: "user",
       entityId: user.id,
@@ -167,7 +205,7 @@ export class UserService {
     };
   }
 
-  async update(id: string, payload: Partial<UserInput>, actorUserId?: string) {
+  async update(id: string, payload: Partial<UserInput>, actorUser?: { id?: string; role?: string }) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundError("Usuario nao encontrado");
@@ -193,6 +231,10 @@ export class UserService {
 
     if (payload.role === "CoordenadorMinisterio" && (!payload.ministryIds || !payload.ministryIds.length)) {
       throw new AppError("Selecione ao menos um ministerio para o usuario", 400);
+    }
+
+    if (user.role === "AdminDistrital" && hasPixPayload(payload) && actorUser?.role !== "AdminGeral") {
+      throw new AppError("Apenas Administradores Gerais podem editar a chave PIX de administradores distritais.", 403);
     }
 
     let photoUrlUpdate: string | null | undefined;
@@ -227,8 +269,15 @@ export class UserService {
         ministryId: payload.ministryIds ? payload.ministryIds[0] ?? null : undefined,
         photoUrl: photoUrlUpdate,
         profileId: profileIdUpdate,
-        status: payload.status ?? undefined
-      },
+        status: payload.status ?? undefined,
+        pixType: payload.pixType ?? undefined,
+        pixKey: payload.pixKey !== undefined ? payload.pixKey?.trim() ?? null : undefined,
+        pixOwnerName: payload.pixOwnerName !== undefined ? payload.pixOwnerName?.trim() ?? null : undefined,
+        pixOwnerDocument:
+          payload.pixOwnerDocument !== undefined ? normalizeDocument(payload.pixOwnerDocument) : undefined,
+        pixBankName: payload.pixBankName !== undefined ? payload.pixBankName?.trim() ?? null : undefined,
+        pixStatus: (payload.pixStatus as any) ?? undefined
+      } as any,
       include: userIncludes
     });
 
@@ -237,7 +286,7 @@ export class UserService {
     }
 
     await auditService.log({
-      actorUserId,
+      actorUserId: actorUser?.id,
       action: "USER_UPDATED",
       entity: "user",
       entityId: id,

@@ -5,7 +5,12 @@ import { authorize, authorizePermission } from "../middlewares/rbac-middleware";
 import { applyScope } from "../middlewares/scope-middleware";
 import { enforcePasswordUpdate } from "../middlewares/force-password-middleware";
 import { hydratePermissions } from "../middlewares/permissions-middleware";
-import { loginHandler, changePasswordHandler, recoverPasswordHandler } from "../controllers/auth.controller";
+import {
+  loginHandler,
+  changePasswordHandler,
+  recoverPasswordHandler,
+  getProfileHandler
+} from "../controllers/auth.controller";
 import {
   createChurchHandler,
   listChurchesHandler,
@@ -91,6 +96,14 @@ import {
   getGeneralSummaryHandler,
   downloadEventFinancialReportHandler
 } from "../controllers/financial.controller";
+import {
+  createPixPaymentHandler,
+  unifiedPixWebhookHandler
+} from "../controllers/pix.controller";
+import {
+  getPixConfigHandler,
+  upsertPixConfigHandler
+} from "../controllers/pix-config.controller";
 import { uploadMiddleware } from "../config/upload";
 import { uploadImageHandler } from "../controllers/upload.controller";
 import {
@@ -113,6 +126,18 @@ import {
   getAdminSystemConfigHandler,
   updateSystemConfigHandler
 } from "../controllers/system-config.controller";
+import {
+  listDistrictFinanceHandler,
+  listDistrictPendingOrdersHandler,
+  listDistrictTransfersHandler,
+  createDistrictTransferHandler
+} from "../controllers/district-finance.controller";
+import {
+  listResponsibleFinanceHandler,
+  listResponsiblePendingOrdersHandler,
+  listResponsibleTransfersHandler,
+  createResponsibleTransferHandler
+} from "../controllers/responsible-finance.controller";
 
 export const router = Router();
 
@@ -123,7 +148,6 @@ router.get("/events", listPublicEventsHandler);
 router.get("/events/:slug", getEventBySlugHandler);
 router.post("/inscriptions/start", startInscriptionHandler);
 router.post("/inscriptions/check", checkParticipantCpfHandler);
-router.get("/orders/pending", listPendingOrdersHandler);
 router.post("/orders/bulk-payment", bulkPaymentHandler);
 router.post("/inscriptions/batch", createBatchInscriptionHandler);
 // Versão autenticada para criação de inscrições em modo administrativo
@@ -135,11 +159,13 @@ router.post(
 );
 router.get("/payments/order/:orderId", getOrderPaymentHandler);
 router.get("/payments/preference/:preferenceId", getPaymentByPreferenceIdHandler);
+router.post("/payments/pix/create", createPixPaymentHandler);
 router.post("/receipts/lookup", lookupReceiptsHandler);
 router.get("/receipts/:registrationId.pdf", downloadReceiptHandler);
 router.get("/checkin/validate", validateCheckinLinkHandler);
 router.post("/checkin/confirm", confirmCheckinLinkHandler);
 router.post("/webhooks/mercadopago", mercadoPagoWebhookHandler);
+router.post("/webhooks/pix", unifiedPixWebhookHandler);
 router.get("/catalog/districts", listDistrictsHandler);
 router.get("/catalog/churches", listChurchesHandler);
 router.get("/catalog/churches/director", findChurchByDirectorCpfHandler);
@@ -150,6 +176,7 @@ router.get("/public/churches", listChurchesHandler);
 // AutenticaÃ§Ã£o
 router.post("/admin/login", loginHandler);
 router.post("/admin/password/recover", recoverPasswordHandler);
+router.get("/profile", authenticate, getProfileHandler);
 
 // Admin protegido
 router.use("/admin", authenticate, hydratePermissions, applyScope, enforcePasswordUpdate);
@@ -165,6 +192,16 @@ router.put(
   authorize("AdminGeral"),
   authorizePermission("system", "edit"),
   updateSystemConfigHandler
+);
+router.get(
+  "/admin/payments/pix-config",
+  authorize("AdminGeral"),
+  getPixConfigHandler
+);
+router.put(
+  "/admin/payments/pix-config",
+  authorize("AdminGeral"),
+  upsertPixConfigHandler
 );
 
 router.post("/admin/profile/change-password", changePasswordHandler);
@@ -245,6 +282,7 @@ router.delete(
 );
 
 router.get("/admin/orders", authorizePermission("orders", "view"), listOrdersHandler);
+router.get("/admin/orders/pending", authorizePermission("orders", "view"), listPendingOrdersHandler);
 router.post("/admin/orders/:id/mark-paid", authorizePermission("orders", "financial"), markOrderPaidHandler);
 
 router.get("/admin/registrations", authorizePermission("registrations", "view"), listRegistrationsHandler);
@@ -282,8 +320,7 @@ router.post(
 );
 
 router.post(
-  "/admin/registrations/:id/payment-link",
-  authorizePermission("registrations", "edit"),
+  "/admin/registrations/:id/payment-link",\n  authorizePermission("registrations", "financial"),
   regenerateRegistrationPaymentLinkHandler
 );
 
@@ -341,9 +378,48 @@ router.get(
   authorizePermission("financial", "reports"),
   downloadEventFinancialReportHandler
 );
+router.get(
+  "/admin/finance/districts",
+  authorizePermission("financial", "view"),
+  listDistrictFinanceHandler
+);
+router.get(
+  "/admin/finance/districts/:id/pending-orders",
+  authorizePermission("financial", "view"),
+  listDistrictPendingOrdersHandler
+);
+router.get(
+  "/admin/finance/districts/:id/transfers",
+  authorizePermission("financial", "view"),
+  listDistrictTransfersHandler
+);
+router.post(
+  "/admin/finance/districts/:districtId/transfer",
+  authorizePermission("financial", "financial"),
+  createDistrictTransferHandler
+);
+router.get(
+  "/admin/finance/responsibles",
+  authorizePermission("financial", "view"),
+  listResponsibleFinanceHandler
+);
+router.get(
+  "/admin/finance/responsibles/:id/pending-orders",
+  authorizePermission("financial", "view"),
+  listResponsiblePendingOrdersHandler
+);
+router.get(
+  "/admin/finance/responsibles/:id/transfers",
+  authorizePermission("financial", "view"),
+  listResponsibleTransfersHandler
+);
+router.post(
+  "/admin/finance/responsibles/:responsibleUserId/transfer",
+  authorizePermission("financial", "financial"),
+  createResponsibleTransferHandler
+);
 
 export default router;
-
 
 
 

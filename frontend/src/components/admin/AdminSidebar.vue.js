@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from "vue-router";
 import { Bars3Icon, XMarkIcon } from "@heroicons/vue/24/outline";
 import { useAuthStore } from "../../stores/auth";
 const props = defineProps();
+const emit = defineEmits();
 const route = useRoute();
 const auth = useAuthStore();
 const isRouteActive = (to) => {
@@ -43,7 +44,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.aside, __VLS_intrinsicElements
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
     ...{ onClick: (...[$event]) => {
-            __VLS_ctx.$emit('toggle');
+            __VLS_ctx.emit('toggle');
         } },
     type: "button",
     ...{ class: "mb-8 flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-[#5a6bff] shadow-[0_10px_20px_rgba(76,87,125,0.15)] transition hover:bg-[#f8f9ff] dark:border-[rgba(255,255,255,0.1)] dark:bg-[#10142b] dark:text-white" },
@@ -139,7 +140,7 @@ if (__VLS_ctx.isOpen) {
         ...{ onClick: (...[$event]) => {
                 if (!(__VLS_ctx.isOpen))
                     return;
-                __VLS_ctx.$emit('toggle');
+                __VLS_ctx.emit('toggle');
             } },
         ...{ class: "absolute inset-0 bg-black/40 backdrop-blur-sm" },
     });
@@ -166,7 +167,7 @@ if (__VLS_ctx.isOpen) {
         ...{ onClick: (...[$event]) => {
                 if (!(__VLS_ctx.isOpen))
                     return;
-                __VLS_ctx.$emit('toggle');
+                __VLS_ctx.emit('toggle');
             } },
         type: "button",
         ...{ class: "inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)]" },
@@ -361,16 +362,19 @@ const __VLS_self = (await import('vue')).defineComponent({
             RouterLink: RouterLink,
             Bars3Icon: Bars3Icon,
             XMarkIcon: XMarkIcon,
+            emit: emit,
             isActive: isActive,
             visibleMenuItems: visibleMenuItems,
         };
     },
+    __typeEmits: {},
     __typeProps: {},
 });
 export default (await import('vue')).defineComponent({
     setup() {
         return {};
     },
+    __typeEmits: {},
     __typeProps: {},
 });
 ; /* PartiallyEnd: #4569/main.vue */

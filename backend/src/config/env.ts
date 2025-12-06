@@ -44,6 +44,7 @@ const envSchema = z.object({
   MP_WEBHOOK_SECRET: z.string().optional(),
   MP_INTEGRATOR_ID: z.string().optional(),
   MP_WEBHOOK_PUBLIC_URL: z.string().url().optional(),
+  MP_TRANSFER_URL: z.string().url().default("https://api.mercadopago.com/v1/transfers"),
   PDF_SIGN_SECRET: z.string().min(1),
   HMAC_SECRET: z.string().min(1),
   CORS_ORIGINS: z.string().default("http://localhost:5173"),

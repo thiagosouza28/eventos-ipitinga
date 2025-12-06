@@ -14,8 +14,11 @@ model District {
   pastorName    String?
   createdAt     DateTime       @default(now())
   churches      Church[]
+  events        Event[]
   registrations Registration[]
   users         User[]         @relation("DistrictUsers")
+  orders        Order[]
+  transfers     Transfer[]
 }
 
 model Church {
@@ -32,6 +35,7 @@ model Church {
   district          District       @relation(fields: [districtId], references: [id])
   registrations     Registration[]
   users             User[]         @relation("ChurchUsers")
+  events            Event[]
 
   @@unique([name, districtId])
   @@index([districtId])
@@ -55,8 +59,12 @@ model Event {
   createdAt               DateTime       @default(now())
   ministryId              String?
   createdById             String?
+  districtId              String
+  churchId                String?
   createdBy               User?          @relation("EventCreators", fields: [createdById], references: [id])
   ministry                Ministry?      @relation(fields: [ministryId], references: [id])
+  district                District       @relation(fields: [districtId], references: [id])
+  church                  Church?        @relation(fields: [churchId], references: [id])
   lots                    EventLot[]
   expenses                Expense[]
   orders                  Order[]
@@ -64,44 +72,56 @@ model Event {
 
   @@index([ministryId])
   @@index([createdById], map: "Event_createdById_fkey")
+  @@index([districtId])
+  @@index([churchId])
 }
 
 model Order {
-  id                     String         @id @default(cuid())
+  id                     String               @id @default(cuid())
   eventId                String
   buyerCpf               String
   totalCents             Int
-  status                 String         @default("PENDING")
-  paymentMethod          String         @default("PIX_MP")
+  status                 String               @default("PENDING")
+  paymentMethod          String               @default("PIX_MP")
   mpPaymentId            String?
   mpPreferenceId         String?
-  preferenceVersion      Int            @default(0)
+  preferenceVersion      Int                  @default(0)
   pricingLotId           String?
-  externalReference      String         @unique
+  externalReference      String               @unique
   expiresAt              DateTime
   paidAt                 DateTime?
   manualPaymentReference String?
-  manualPaymentProofUrl  String?        @db.LongText
-  feeCents               Int            @default(0)
-  netAmountCents         Int            @default(0)
-  origin                 OrderOrigin    @default(MARKETPLACE)
+  manualPaymentProofUrl  String?              @db.LongText
+  feeCents               Int                  @default(0)
+  netAmountCents         Int                  @default(0)
+  origin                 OrderOrigin          @default(MARKETPLACE)
   responsibleName        String?
   responsibleDocument    String?
   responsibleEmail       String?
   responsiblePhone       String?
   amountReceivedCents    Int?
-  manualNotes            String?        @db.LongText
+  manualNotes            String?              @db.LongText
   confirmedById          String?
   confirmedAt            DateTime?
-  createdAt              DateTime       @default(now())
-  event                  Event          @relation(fields: [eventId], references: [id])
-  pricingLot             EventLot?      @relation(fields: [pricingLotId], references: [id])
+  districtId             String?
+  districtAdminId        String?
+  responsibleUserId      String?
+  amountToTransfer       Int                  @default(0)
+  transferStatus         OrderTransferStatus?
+  transferBatchId        String?
+  createdAt              DateTime             @default(now())
+  event                  Event                @relation(fields: [eventId], references: [id])
+  pricingLot             EventLot?            @relation(fields: [pricingLotId], references: [id])
   refunds                Refund[]
   registrations          Registration[]
   webhookEvents          WebhookEvent[]
   items                  OrderItem[]
   serviceOrders          ServiceOrder[]
-  confirmedBy            User?          @relation("ManualOrderConfirmedBy", fields: [confirmedById], references: [id])
+  confirmedBy            User?                @relation("ManualOrderConfirmedBy", fields: [confirmedById], references: [id])
+  district               District?            @relation(fields: [districtId], references: [id])
+  districtAdmin          User?                @relation("OrderDistrictAdmin", fields: [districtAdminId], references: [id])
+  responsibleUser        User?                @relation("OrderResponsibleUser", fields: [responsibleUserId], references: [id])
+  transferBatch          Transfer?            @relation("TransferOrders", fields: [transferBatchId], references: [id])
 
   @@index([eventId])
   @@index([buyerCpf])
@@ -109,35 +129,42 @@ model Order {
   @@index([pricingLotId], map: "Order_pricingLotId_fkey")
   @@index([origin])
   @@index([confirmedById])
+  @@index([districtId])
+  @@index([districtAdminId])
+  @@index([responsibleUserId])
+  @@index([transferStatus])
+  @@index([transferBatchId])
 }
 
 model Registration {
-  id            String      @id @default(cuid())
-  orderId       String
-  eventId       String
-  fullName      String
-  cpf           String
-  birthDate     DateTime
-  ageYears      Int
-  priceCents    Int         @default(0)
-  districtId    String
-  churchId      String
-  photoUrl      String?     @db.LongText
-  gender        String?
-  paymentMethod String?
-  status        String      @default("DRAFT")
-  receiptPdfUrl String?
-  checkinAt     DateTime?
-  paidAt        DateTime?
-  createdAt     DateTime    @default(now())
-  ministryId    String?
-  refunds       Refund[]
-  church        Church      @relation(fields: [churchId], references: [id])
-  district      District    @relation(fields: [districtId], references: [id])
-  event         Event       @relation(fields: [eventId], references: [id])
-  ministry      Ministry?   @relation(fields: [ministryId], references: [id])
-  order         Order       @relation(fields: [orderId], references: [id])
-  orderItems    OrderItem[]
+  id                String      @id @default(cuid())
+  orderId           String
+  eventId           String
+  fullName          String
+  cpf               String
+  birthDate         DateTime
+  ageYears          Int
+  priceCents        Int         @default(0)
+  districtId        String
+  churchId          String
+  responsibleUserId String?
+  photoUrl          String?     @db.LongText
+  gender            String?
+  paymentMethod     String?
+  status            String      @default("DRAFT")
+  receiptPdfUrl     String?
+  checkinAt         DateTime?
+  paidAt            DateTime?
+  createdAt         DateTime    @default(now())
+  ministryId        String?
+  refunds           Refund[]
+  church            Church      @relation(fields: [churchId], references: [id])
+  district          District    @relation(fields: [districtId], references: [id])
+  event             Event       @relation(fields: [eventId], references: [id])
+  ministry          Ministry?   @relation(fields: [ministryId], references: [id])
+  order             Order       @relation(fields: [orderId], references: [id])
+  responsibleUser   User?       @relation("RegistrationResponsibleUser", fields: [responsibleUserId], references: [id])
+  orderItems        OrderItem[]
 
   @@unique([eventId, cpf])
   @@index([orderId])
@@ -147,6 +174,7 @@ model Registration {
   @@index([churchId], map: "Registration_churchId_fkey")
   @@index([districtId], map: "Registration_districtId_fkey")
   @@index([ministryId], map: "Registration_ministryId_fkey")
+  @@index([responsibleUserId])
 }
 
 model Refund {
@@ -192,34 +220,46 @@ model AuditLog {
 }
 
 model User {
-  id                    String           @id @default(cuid())
-  name                  String
-  email                 String           @unique
-  passwordHash          String
-  role                  String
-  districtScopeId       String?
-  churchId              String?          @map("churchScopeId")
-  ministryId            String?
-  createdAt             DateTime         @default(now())
-  cpf                   String?          @unique
-  isTemporaryPassword   Boolean          @default(false) @map("mustChangePassword")
-  passwordUpdatedAt     DateTime?
-  phone                 String?
-  photoUrl              String?          @db.LongText
-  profileId             String?
-  status                UserStatus       @default(ACTIVE)
-  auditLogs             AuditLog[]
-  eventsCreated         Event[]          @relation("EventCreators")
-  ministries            MinistryUser[]
-  systemConfigsUpdated  SystemConfig[]   @relation("SystemConfigUpdatedBy")
-  church                Church?          @relation("ChurchUsers", fields: [churchId], references: [id])
-  districtScope         District?        @relation("DistrictUsers", fields: [districtScopeId], references: [id])
-  primaryMinistry       Ministry?        @relation("UserPrimaryMinistry", fields: [ministryId], references: [id])
-  profile               Profile?         @relation(fields: [profileId], references: [id])
-  permissionsOverride   UserPermission[]
-  confirmedManualOrders Order[]          @relation("ManualOrderConfirmedBy")
-  confirmedOrderItems   OrderItem[]      @relation("OrderItemConfirmedBy")
-  issuedServiceOrders   ServiceOrder[]   @relation("ServiceOrderIssuedBy")
+  id                       String           @id @default(cuid())
+  name                     String
+  email                    String           @unique
+  passwordHash             String
+  role                     String
+  districtScopeId          String?
+  churchId                 String?          @map("churchScopeId")
+  ministryId               String?
+  createdAt                DateTime         @default(now())
+  cpf                      String?          @unique
+  isTemporaryPassword      Boolean          @default(false) @map("mustChangePassword")
+  passwordUpdatedAt        DateTime?
+  phone                    String?
+  photoUrl                 String?          @db.LongText
+  profileId                String?
+  status                   UserStatus       @default(ACTIVE)
+  pixType                  PixType?
+  pixKey                   String?
+  pixOwnerName             String?
+  pixOwnerDocument         String?
+  pixBankName              String?
+  pixStatus                PixStatus        @default(PENDING)
+  auditLogs                AuditLog[]
+  eventsCreated            Event[]          @relation("EventCreators")
+  ministries               MinistryUser[]
+  systemConfigsUpdated     SystemConfig[]   @relation("SystemConfigUpdatedBy")
+  church                   Church?          @relation("ChurchUsers", fields: [churchId], references: [id])
+  districtScope            District?        @relation("DistrictUsers", fields: [districtScopeId], references: [id])
+  primaryMinistry          Ministry?        @relation("UserPrimaryMinistry", fields: [ministryId], references: [id])
+  profile                  Profile?         @relation(fields: [profileId], references: [id])
+  permissionsOverride      UserPermission[]
+  confirmedManualOrders    Order[]          @relation("ManualOrderConfirmedBy")
+  confirmedOrderItems      OrderItem[]      @relation("OrderItemConfirmedBy")
+  issuedServiceOrders      ServiceOrder[]   @relation("ServiceOrderIssuedBy")
+  districtOrders           Order[]          @relation("OrderDistrictAdmin")
+  responsibleOrders        Order[]          @relation("OrderResponsibleUser")
+  responsibleRegistrations Registration[]   @relation("RegistrationResponsibleUser")
+  transfersCreated         Transfer[]       @relation("TransferCreatedBy")
+  districtTransfers        Transfer[]       @relation("TransferDistrictAdmin")
+  responsibleTransfers     Transfer[]       @relation("TransferResponsibleUser")
 
   @@index([profileId])
   @@index([churchId], map: "User_churchScopeId_fkey")
@@ -355,6 +395,20 @@ enum OrderOrigin {
   MANUAL
 }
 
+enum PixType {
+  CPF
+  CNPJ
+  EMAIL
+  PHONE
+  EVP
+  RANDOM
+}
+
+enum PixStatus {
+  VALIDATED
+  PENDING
+}
+
 enum OrderItemStatus {
   PENDING
   CONFIRMED
@@ -397,4 +451,58 @@ model ServiceOrder {
   @@unique([orderId, number])
   @@index([orderId])
   @@index([issuedById])
+}
+
+model Transfer {
+  id                String         @id @default(cuid())
+  districtId        String?
+  districtAdminId   String?
+  responsibleUserId String?
+  amount            Int
+  pixType           PixType?
+  pixKey            String?
+  pixOwnerName      String?
+  pixOwnerDocument  String?
+  pixBankName       String?
+  orderIds          Json
+  mpTransferId      String?
+  status            TransferStatus @default(PENDING)
+  errorMessage      String?
+  createdById       String?
+  createdAt         DateTime       @default(now())
+  district          District?      @relation(fields: [districtId], references: [id])
+  districtAdmin     User?          @relation("TransferDistrictAdmin", fields: [districtAdminId], references: [id])
+  responsibleUser   User?          @relation("TransferResponsibleUser", fields: [responsibleUserId], references: [id])
+  createdBy         User?          @relation("TransferCreatedBy", fields: [createdById], references: [id])
+  orders            Order[]        @relation("TransferOrders")
+
+  @@index([districtId])
+  @@index([districtAdminId])
+  @@index([responsibleUserId])
+  @@index([status])
+}
+
+enum OrderTransferStatus {
+  PENDING
+  TRANSFERRED
+  FAILED
+}
+
+enum TransferStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model PixGatewayConfig {
+  id              Int      @id @default(autoincrement())
+  provider        String
+  clientId        String?
+  clientSecret    String?
+  apiKey          String?
+  webhookUrl      String?
+  certificatePath String?
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

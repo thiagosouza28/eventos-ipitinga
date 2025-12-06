@@ -31,15 +31,17 @@ const baseAdminMenu = [
     { label: "Eventos", to: { name: "admin-events" }, icon: CalendarDaysIcon, module: "events" },
     { label: "Distritos", to: { name: "admin-districts" }, icon: MapPinIcon, module: "districts" },
     { label: "Igrejas", to: { name: "admin-churches" }, icon: BuildingOffice2Icon, module: "churches" },
-    { label: "Ministérios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
-    { label: "Usuários", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
-    { label: "Permissões", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
+    { label: "Ministerios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
+    { label: "Usuarios", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
+    { label: "Permissoes", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
     { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon, module: "orders" },
-    { label: "Inscrições", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
-    { label: "Relatórios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
+    { label: "Inscricoes", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
+    { label: "Relatorios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
     { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
+    { label: "Financeiro Distrital", to: { name: "admin-district-finance" }, icon: BanknotesIcon, module: "financial" },
     { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
-    { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
+    { label: "PIX / Pagamentos", to: { name: "admin-pix-config" }, icon: Cog6ToothIcon, requiresRole: "AdminGeral" },
+    { label: "Configuracoes", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
 ];
 const adminMenuItems = computed(() => baseAdminMenu.filter((item) => {
     if (item.requiresRole && auth.user?.role !== item.requiresRole) {
@@ -119,7 +121,7 @@ const greetingMessage = computed(() => {
     if (!displayName)
         return "";
     const hour = currentTime.value.getHours();
-    let greeting = "Olá";
+    let greeting = "Ol�";
     if (hour >= 5 && hour < 12) {
         greeting = "Bom dia";
     }

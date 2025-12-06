@@ -204,7 +204,10 @@ class PaymentService {
     }
 
     const { totalCents } = await buildPreferenceItemsForOrder(order);
-    const pixExpirationDate = resolvePixExpirationDate(order.createdAt);
+    // Se o pedido foi criado hÇ muito tempo, a data de expiraÇõÇœ baseada no createdAt pode ficar no passado.
+    // Gera sempre a expiraÇõÇœ de PIX a partir de agora para garantir validade aceita pelo Mercado Pago.
+    const now = new Date();
+    const pixExpirationDate = resolvePixExpirationDate(now);
     const participantNames = order.registrations.map((r) => r.fullName).filter(Boolean);
     const description = buildPaymentDescription(order.event?.title, participantNames);
     const statementDescriptor = buildStatementDescriptor(order.event?.title, participantNames);
@@ -264,7 +267,7 @@ class PaymentService {
 
     const desiredExpiresAt = resolveEffectiveExpirationDate(
       order.paymentMethod as PaymentMethod,
-      order.createdAt,
+      now,
       order.expiresAt
     );
     if (

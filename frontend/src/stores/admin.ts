@@ -9,7 +9,10 @@ import type {
   Registration,
   AdminUser,
   AdminProfile,
-  UserStatus
+  UserStatus,
+  ResponsibleFinanceSummary,
+  ResponsiblePendingOrder,
+  TransferRecord
 } from "../types/api";
 
 export const useAdminStore = defineStore("admin", () => {
@@ -22,6 +25,9 @@ export const useAdminStore = defineStore("admin", () => {
   const dashboard = ref<Record<string, unknown> | null>(null);
   const users = ref<AdminUser[]>([]);
   const profiles = ref<AdminProfile[]>([]);
+  const responsibleFinance = ref<ResponsibleFinanceSummary[]>([]);
+  const responsiblePending = ref<Record<string, ResponsiblePendingOrder[]>>({});
+  const responsibleTransfers = ref<Record<string, TransferRecord[]>>({});
 
   const extractArray = <T>(input: unknown, fallbackKeys: string[] = []): T[] => {
     if (Array.isArray(input)) {
@@ -134,6 +140,34 @@ export const useAdminStore = defineStore("admin", () => {
     return api.get<ArrayBuffer>(`/admin/financial/events/${eventId}/report.pdf`, {
       responseType: "arraybuffer"
     });
+  };
+
+  const loadResponsibleFinance = async () => {
+    const response = await api.get("/admin/finance/responsibles");
+    responsibleFinance.value = response.data as ResponsibleFinanceSummary[];
+    return responsibleFinance.value;
+  };
+
+  const loadResponsiblePendingOrders = async (responsibleId: string) => {
+    const response = await api.get(`/admin/finance/responsibles/${responsibleId}/pending-orders`);
+    const list = response.data as ResponsiblePendingOrder[];
+    responsiblePending.value = { ...responsiblePending.value, [responsibleId]: list };
+    return list;
+  };
+
+  const loadResponsibleTransfers = async (responsibleId: string) => {
+    const response = await api.get(`/admin/finance/responsibles/${responsibleId}/transfers`);
+    const list = response.data as TransferRecord[];
+    responsibleTransfers.value = { ...responsibleTransfers.value, [responsibleId]: list };
+    return list;
+  };
+
+  const createResponsibleTransfer = async (responsibleId: string) => {
+    const response = await api.post(`/admin/finance/responsibles/${responsibleId}/transfer`);
+    await loadResponsibleFinance();
+    await loadResponsiblePendingOrders(responsibleId);
+    await loadResponsibleTransfers(responsibleId);
+    return response.data;
   };
 
   const updateRegistration = async (id: string, payload: Record<string, unknown>) => {
@@ -318,6 +352,12 @@ export const useAdminStore = defineStore("admin", () => {
     photoUrl?: string | null;
     profileId?: string | null;
     status?: UserStatus;
+    pixType?: AdminUser["pixType"];
+    pixKey?: string | null;
+    pixOwnerName?: string | null;
+    pixOwnerDocument?: string | null;
+    pixBankName?: string | null;
+    pixStatus?: AdminUser["pixStatus"];
   };
 
   type ProfilePermissionPayload = {
@@ -417,6 +457,13 @@ export const useAdminStore = defineStore("admin", () => {
     loadRegistrations,
     downloadRegistrationReport,
     downloadFinancialReport,
+    responsibleFinance,
+    responsiblePending,
+    responsibleTransfers,
+    loadResponsibleFinance,
+    loadResponsiblePendingOrders,
+    loadResponsibleTransfers,
+    createResponsibleTransfer,
     updateRegistration,
     cancelRegistration,
     reactivateRegistration,

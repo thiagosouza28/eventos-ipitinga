@@ -384,7 +384,7 @@ const loadPendingOrders = async (cpf: string) => {
   cpfError.value = "";
   
   try {
-    const response = await api.get("/orders/pending", {
+    const response = await api.get("/admin/orders/pending", {
       params: { cpf: cpf.trim() }
     });
     

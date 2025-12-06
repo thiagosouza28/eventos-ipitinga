@@ -97,6 +97,17 @@ export class AuthService {
     });
   }
 
+  async getSession(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: userInclude
+    });
+    if (!user) {
+      throw new UnauthorizedError();
+    }
+    return this.buildSession(user);
+  }
+
   private async findByIdentifier(identifier: string) {
     const trimmed = identifier.trim();
     if (!trimmed) return null;

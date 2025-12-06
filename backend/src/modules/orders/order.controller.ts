@@ -124,25 +124,8 @@ const applyScopedLocationFilters = (
 
 export const startInscriptionHandler = async (request: Request, response: Response) => {
   const payload = startSchema.parse(request.body);
-  const pendingOrders = await orderService.findPendingOrder(payload.eventId, payload.buyerCpf);
-  
-  const pendingDetails = await Promise.all(
-    pendingOrders.map(async (order) => ({
-      orderId: order.id,
-      expiresAt: order.expiresAt,
-      totalCents: order.totalCents,
-      registrations: order.registrations.map(reg => ({
-        id: reg.id,
-        fullName: reg.fullName,
-        cpf: reg.cpf
-      })),
-      payment: await orderService.getPayment(order.id)
-    }))
-  );
-
-  return response.json({
-    pendingOrders: pendingDetails
-  });
+  // Não retornar pedidos pendentes no fluxo público
+  return response.json({ pendingOrders: [] });
 };
 
 export const createBatchInscriptionHandler = async (request: Request, response: Response) => {

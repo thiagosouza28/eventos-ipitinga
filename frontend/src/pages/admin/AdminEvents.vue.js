@@ -9,6 +9,7 @@ import Modal from "../../components/ui/Modal.vue";
 import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
@@ -17,7 +18,11 @@ import { API_BASE_URL } from "../../config/api";
 import { useModulePermissions } from "../../composables/usePermissions";
 import { DEFAULT_PENDING_PAYMENT_VALUE_RULE, PENDING_PAYMENT_VALUE_RULES, getPendingPaymentValueRuleDescription, getPendingPaymentValueRuleLabel } from "../../config/pendingPaymentValueRules";
 const admin = useAdminStore();
+const auth = useAuthStore();
 const catalog = useCatalogStore();
+const currentUser = computed(() => auth.user);
+const userDistrictId = computed(() => currentUser.value?.districtScopeId ?? "");
+const userChurchId = computed(() => currentUser.value?.churchId ?? "");
 const eventPermissions = useModulePermissions("events");
 const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
@@ -27,6 +32,12 @@ const defaultPaymentMethodValues = () => PAYMENT_METHODS.map((option) => option.
 const activeMinistries = computed(() => catalog.ministries.filter((ministry) => ministry.isActive));
 const allMinistryOptions = computed(() => catalog.ministries);
 const pickDefaultMinistryId = () => activeMinistries.value[0]?.id ?? "";
+const districtOptions = computed(() => catalog.districts);
+const churchesCache = reactive({});
+const churchesLoading = reactive({
+    create: false,
+    edit: false
+});
 const toPriceCents = (input) => {
     if (input === null || input === undefined)
         return 0;
@@ -43,6 +54,53 @@ const formatPriceDisplay = (valueInCents) => (valueInCents / 100).toLocaleString
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
 });
+const churchOptionsForDistrict = (districtId) => churchesCache[districtId] ?? [];
+const createChurchOptions = computed(() => createForm.districtId ? churchOptionsForDistrict(createForm.districtId) : []);
+const editChurchOptions = computed(() => editForm.districtId ? churchOptionsForDistrict(editForm.districtId) : []);
+const isOwnDistrictSelected = (districtId) => Boolean(districtId && districtId === userDistrictId.value);
+const applyChurchLock = (mode, districtId) => {
+    const lockRef = mode === "create" ? createChurchLocked : editChurchLocked;
+    const form = mode === "create" ? createForm : editForm;
+    const locked = isOwnDistrictSelected(districtId ?? "");
+    lockRef.value = locked;
+    if (locked) {
+        form.churchId = userChurchId.value || "";
+    }
+    else if (!districtId) {
+        form.churchId = "";
+    }
+};
+const loadChurchesForDistrict = async (districtId, mode) => {
+    if (!districtId) {
+        return;
+    }
+    churchesLoading[mode] = true;
+    try {
+        await catalog.loadChurches(districtId);
+        churchesCache[districtId] = [...catalog.churches];
+    }
+    catch (error) {
+        showError("Falha ao carregar igrejas do distrito", error);
+    }
+    finally {
+        churchesLoading[mode] = false;
+    }
+};
+const handleDistrictChange = async (mode, districtId, previousDistrictId) => {
+    const form = mode === "create" ? createForm : editForm;
+    if (previousDistrictId && previousDistrictId !== districtId) {
+        form.churchId = "";
+    }
+    applyChurchLock(mode, districtId);
+    if (!districtId) {
+        return;
+    }
+    await loadChurchesForDistrict(districtId, mode);
+    const locked = mode === "create" ? createChurchLocked.value : editChurchLocked.value;
+    if (locked && userChurchId.value) {
+        form.churchId = userChurchId.value;
+    }
+};
 const slugifyValue = (value) => value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -79,7 +137,9 @@ const createForm = reactive({
     minAgeYears: "",
     paymentMethods: defaultPaymentMethodValues(),
     pendingPaymentValueRule: defaultPendingPaymentValueRule,
-    ministryId: ""
+    ministryId: "",
+    districtId: "",
+    churchId: ""
 });
 const editForm = reactive({
     title: "",
@@ -93,7 +153,9 @@ const editForm = reactive({
     minAgeYears: "",
     paymentMethods: defaultPaymentMethodValues(),
     pendingPaymentValueRule: defaultPendingPaymentValueRule,
-    ministryId: ""
+    ministryId: "",
+    districtId: "",
+    churchId: ""
 });
 const editingEventId = ref(null);
 const loadingEvents = ref(true);
@@ -101,6 +163,8 @@ const savingCreate = ref(false);
 const savingEdit = ref(false);
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
+const createChurchLocked = ref(false);
+const editChurchLocked = ref(false);
 const confirmDelete = reactive({
     open: false,
     target: null
@@ -142,6 +206,12 @@ watch(activeMinistries, () => {
         editForm.ministryId = "";
     }
 }, { deep: true });
+watch(() => createForm.districtId, (next, prev) => {
+    handleDistrictChange("create", next, prev);
+});
+watch(() => editForm.districtId, (next, prev) => {
+    handleDistrictChange("edit", next, prev);
+});
 const formatDateTimeBr = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -358,6 +428,15 @@ const resetCreateForm = () => {
     createForm.paymentMethods = defaultPaymentMethodValues();
     createForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
     createForm.ministryId = pickDefaultMinistryId();
+    createForm.districtId = userDistrictId.value || "";
+    createForm.churchId = userDistrictId.value ? userChurchId.value || "" : "";
+    applyChurchLock("create", createForm.districtId);
+    if (createForm.districtId) {
+        loadChurchesForDistrict(createForm.districtId, "create");
+    }
+    else {
+        createChurchLocked.value = false;
+    }
 };
 const resetEditForm = () => {
     editForm.title = "";
@@ -372,6 +451,9 @@ const resetEditForm = () => {
     editForm.paymentMethods = defaultPaymentMethodValues();
     editForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
     editForm.ministryId = pickDefaultMinistryId();
+    editForm.districtId = "";
+    editForm.churchId = "";
+    editChurchLocked.value = false;
 };
 const openCreateModal = () => {
     if (!assertPermission(eventPermissions.canCreate.value, "Você não possui permissão para criar eventos.")) {
@@ -501,6 +583,17 @@ const submitCreate = async () => {
         showError("Falha ao criar evento", { message: "Selecione o ministerio responsavel pelo evento." });
         return;
     }
+    if (!createForm.districtId) {
+        showError("Falha ao criar evento", { message: "Selecione o distrito do evento." });
+        return;
+    }
+    if (createChurchLocked.value && !userChurchId.value) {
+        showError("Falha ao criar evento", {
+            message: "Cadastre sua igreja no perfil para vincular eventos do proprio distrito automaticamente."
+        });
+        return;
+    }
+    const selectedChurchId = (createChurchLocked.value ? userChurchId.value : createForm.churchId) || undefined;
     const normalizedSlug = sanitizeSlugInput(createForm.slug);
     savingCreate.value = true;
     try {
@@ -518,7 +611,9 @@ const submitCreate = async () => {
             pendingPaymentValueRule: createForm.pendingPaymentValueRule,
             minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
             isActive: true,
-            ministryId: createForm.ministryId
+            ministryId: createForm.ministryId,
+            districtId: createForm.districtId,
+            churchId: selectedChurchId
         });
         resetCreateForm();
         createModalOpen.value = false;
@@ -544,6 +639,17 @@ const submitEdit = async () => {
         showError("Falha ao atualizar evento", { message: "Selecione o ministerio responsavel pelo evento." });
         return;
     }
+    if (!editForm.districtId) {
+        showError("Falha ao atualizar evento", { message: "Selecione o distrito do evento." });
+        return;
+    }
+    if (editChurchLocked.value && !userChurchId.value) {
+        showError("Falha ao atualizar evento", {
+            message: "Cadastre sua igreja no perfil para vincular eventos do proprio distrito automaticamente."
+        });
+        return;
+    }
+    const selectedChurchId = (editChurchLocked.value ? userChurchId.value : editForm.churchId) || undefined;
     const normalizedSlug = sanitizeSlugInput(editForm.slug);
     savingEdit.value = true;
     try {
@@ -561,7 +667,9 @@ const submitEdit = async () => {
             priceCents: 0,
             paymentMethods: [...editForm.paymentMethods],
             pendingPaymentValueRule: editForm.pendingPaymentValueRule,
-            ministryId: editForm.ministryId
+            ministryId: editForm.ministryId,
+            districtId: editForm.districtId,
+            churchId: selectedChurchId
         });
         cancelEdit();
     }
@@ -593,6 +701,12 @@ const startEdit = (event) => {
     editForm.pendingPaymentValueRule =
         event.pendingPaymentValueRule ?? defaultPendingPaymentValueRule;
     editForm.ministryId = event.ministryId ?? "";
+    editForm.districtId = event.districtId ?? "";
+    editForm.churchId = event.churchId ?? "";
+    applyChurchLock("edit", editForm.districtId);
+    if (editForm.districtId) {
+        handleDistrictChange("edit", editForm.districtId);
+    }
     editModalOpen.value = true;
 };
 const cancelEdit = () => {
@@ -674,16 +788,28 @@ onMounted(async () => {
         return;
     }
     try {
-        await Promise.all([admin.loadEvents(), catalog.loadMinistries()]);
+        const loaders = [
+            admin.loadEvents(),
+            catalog.loadMinistries(),
+            catalog.loadDistricts()
+        ];
+        if (userDistrictId.value) {
+            loaders.push(loadChurchesForDistrict(userDistrictId.value, "create"));
+        }
+        await Promise.all(loaders);
         if (!createForm.ministryId) {
             createForm.ministryId = pickDefaultMinistryId();
+        }
+        if (!createForm.districtId && userDistrictId.value) {
+            createForm.districtId = userDistrictId.value;
+            applyChurchLock("create", createForm.districtId);
         }
         if (!admin.events.length && eventPermissions.canCreate.value) {
             createModalOpen.value = true;
         }
     }
     catch (error) {
-        showError("Falha ao carregar eventos ou ministérios", error);
+        showError("Falha ao carregar eventos ou catalogos", error);
     }
     finally {
         loadingEvents.value = false;
@@ -858,6 +984,9 @@ if (__VLS_ctx.eventPermissions.canList) {
             ...{ class: "px-4 py-3" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "px-4 py-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
             ...{ class: "px-4 py-3 text-right" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({
@@ -878,6 +1007,17 @@ if (__VLS_ctx.eventPermissions.canList) {
                 ...{ class: "text-xs text-neutral-500" },
             });
             (event.slug);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "font-semibold text-neutral-900 dark:text-neutral-100" },
+            });
+            (event.district?.name ?? "N??o informado");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (event.church?.name ?? "Igreja n??o vinculada");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                 ...{ class: "px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
             });
@@ -972,7 +1112,7 @@ if (__VLS_ctx.eventPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                 ...{ class: "px-4 py-6 text-sm text-neutral-500" },
-                colspan: "7",
+                colspan: "8",
             });
         }
     }
@@ -1036,6 +1176,18 @@ if (__VLS_ctx.eventPermissions.canList) {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             (event.currentLot?.name ?? "--");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            (event.district?.name ?? "Nao informado");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            (event.church?.name ?? "Nao vinculada");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "col-span-2" },
             });
@@ -1320,6 +1472,51 @@ if (__VLS_ctx.eventPermissions.canList) {
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
     (__VLS_ctx.createForm.minAgeYears);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.createForm.districtId),
+        required: true,
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    for (const [district] of __VLS_getVForSourceType((__VLS_ctx.districtOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (district.id),
+            value: (district.id),
+        });
+        (district.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.createForm.churchId),
+        disabled: (__VLS_ctx.createChurchLocked || !__VLS_ctx.createForm.districtId || __VLS_ctx.churchesLoading.create),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    (__VLS_ctx.createChurchLocked ? "Usando sua igreja vinculada" : "Selecione...");
+    for (const [church] of __VLS_getVForSourceType((__VLS_ctx.createChurchOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (church.id),
+            value: (church.id),
+        });
+        (church.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -1589,6 +1786,51 @@ if (__VLS_ctx.eventPermissions.canList) {
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
     });
     (__VLS_ctx.editForm.minAgeYears);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.editForm.districtId),
+        required: true,
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    for (const [district] of __VLS_getVForSourceType((__VLS_ctx.districtOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (district.id),
+            value: (district.id),
+        });
+        (district.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.editForm.churchId),
+        disabled: (__VLS_ctx.editChurchLocked || !__VLS_ctx.editForm.districtId || __VLS_ctx.churchesLoading.edit),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    (__VLS_ctx.editChurchLocked ? "Usando sua igreja vinculada" : "Selecione...");
+    for (const [church] of __VLS_getVForSourceType((__VLS_ctx.editChurchOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (church.id),
+            value: (church.id),
+        });
+        (church.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -1774,7 +2016,27 @@ if (__VLS_ctx.eventPermissions.canList) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({
             ...{ class: "mt-1 font-semibold text-white" },
         });
-        (__VLS_ctx.details.event?.ministry?.name ?? 'Não vinculado');
+        (__VLS_ctx.details.event?.ministry?.name ?? 'Nao vinculado');
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "rounded-2xl border border-white/10 bg-white/5 p-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.dt, __VLS_intrinsicElements.dt)({
+            ...{ class: "text-xs uppercase tracking-[0.3em] text-white/60" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({
+            ...{ class: "mt-1 font-semibold text-white" },
+        });
+        (__VLS_ctx.details.event?.district?.name ?? 'Nao informado');
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "rounded-2xl border border-white/10 bg-white/5 p-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.dt, __VLS_intrinsicElements.dt)({
+            ...{ class: "text-xs uppercase tracking-[0.3em] text-white/60" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({
+            ...{ class: "mt-1 font-semibold text-white" },
+        });
+        (__VLS_ctx.details.event?.church?.name ?? 'Nao vinculada');
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "rounded-2xl border border-white/10 bg-white/5 p-4" },
         });
@@ -1824,7 +2086,7 @@ if (__VLS_ctx.eventPermissions.canList) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({
             ...{ class: "mt-1 font-semibold text-white" },
         });
-        (__VLS_ctx.details.event?.minAgeYears ?? 'Não informada');
+        (__VLS_ctx.details.event?.minAgeYears ?? 'Nao informada');
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "rounded-2xl border border-white/10 bg-white/5 p-4 sm:col-span-2" },
         });
@@ -2272,6 +2534,8 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
 /** @type {__VLS_StyleScopedClasses['divide-y']} */ ;
 /** @type {__VLS_StyleScopedClasses['divide-neutral-100']} */ ;
@@ -2283,6 +2547,17 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2418,6 +2693,12 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
@@ -2674,6 +2955,45 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2952,6 +3272,45 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -3149,6 +3508,30 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
@@ -3527,6 +3910,10 @@ const __VLS_self = (await import('vue')).defineComponent({
             paymentMethodOptions: paymentMethodOptions,
             pendingPaymentValueRuleOptions: pendingPaymentValueRuleOptions,
             allMinistryOptions: allMinistryOptions,
+            districtOptions: districtOptions,
+            churchesLoading: churchesLoading,
+            createChurchOptions: createChurchOptions,
+            editChurchOptions: editChurchOptions,
             applySlugSuggestion: applySlugSuggestion,
             createForm: createForm,
             editForm: editForm,
@@ -3535,6 +3922,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             savingEdit: savingEdit,
             createModalOpen: createModalOpen,
             editModalOpen: editModalOpen,
+            createChurchLocked: createChurchLocked,
+            editChurchLocked: editChurchLocked,
             confirmDelete: confirmDelete,
             confirmDeleteDescription: confirmDeleteDescription,
             details: details,

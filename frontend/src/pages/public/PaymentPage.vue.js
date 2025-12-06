@@ -115,11 +115,11 @@ const manualInstructions = computed(() => {
     const method = payment.value?.paymentMethod;
     switch (method) {
         case "CASH":
-            return "Dirija-se ao caixa indicado e informe o CPF utilizado na inscricao para concluir o pagamento.";
+            return "Dirija-se ao caixa indicado e informe o CPF utilizado na inscrição para concluir o pagamento.";
         case "CARD_FULL":
-            return "O pagamento serÃ¡ efetuado presencialmente via mÃ¡quina de cartÃ£o. Lembre-se de levar um documento com foto.";
+            return "O pagamento será efetuado presencialmente via máquina de cartão. Lembre-se de levar um documento com foto.";
         case "CARD_INSTALLMENTS":
-            return "O parcelamento Ã© realizado presencialmente e as taxas sÃ£o repassadas ao participante.";
+            return "O parcelamento é realizado presencialmente e as taxas são repassadas ao participante.";
         default:
             return "";
     }
@@ -194,8 +194,8 @@ const downloadReceipts = async (mode = "manual") => {
         console.error("Erro ao baixar comprovantes", error);
         receiptDownloadError.value =
             mode === "auto"
-                ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botÃ£o abaixo para tentar novamente."
-                : "NÃ£o foi possÃ­vel baixar os comprovantes. Tente novamente.";
+                ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botão abaixo para tentar novamente."
+                : "Não foi possível baixar os comprovantes. Tente novamente.";
         return false;
     }
     finally {
@@ -218,7 +218,7 @@ const handleSingleReceiptDownload = async (registrationId) => {
         return;
     const index = receiptLinks.value.findIndex((receipt) => receipt.registrationId === registrationId);
     if (index < 0) {
-        receiptDownloadError.value = "NÃ£o encontramos este comprovante. Atualize a pÃ¡gina e tente novamente.";
+        receiptDownloadError.value = "Não encontramos este comprovante. Atualize a página e tente novamente.";
         return;
     }
     downloadingReceipts.value = true;
@@ -228,7 +228,7 @@ const handleSingleReceiptDownload = async (registrationId) => {
     }
     catch (error) {
         console.error("Erro ao baixar comprovante individual", error);
-        receiptDownloadError.value = "NÃ£o foi possÃ­vel baixar este comprovante. Tente novamente.";
+        receiptDownloadError.value = "Não foi possível baixar este comprovante. Tente novamente.";
     }
     finally {
         downloadingReceipts.value = false;
@@ -236,30 +236,30 @@ const handleSingleReceiptDownload = async (registrationId) => {
 };
 const statusTitle = computed(() => {
     if (isFreeEvent.value)
-        return "InscriÃ§Ãµes confirmadas";
+        return "Inscrições confirmadas";
     if (isManualPayment.value) {
         if (isPaid.value)
             return "Pagamento registrado";
-        return "Pagamento pendente de confirmaÃ§Ã£o";
+        return "Pagamento pendente de confirmação";
     }
     if (isPaid.value)
         return "Pagamento aprovado";
     if (payment.value?.status === "CANCELED")
         return "Pagamento cancelado";
-    return "Aguardando confirmaÃ§Ã£o";
+    return "Aguardando confirmação";
 });
 const statusMessage = computed(() => {
     if (isFreeEvent.value) {
-        return "Este evento Ã© gratuito. Suas inscriÃ§Ãµes foram confirmadas automaticamente, sem necessidade de pagamento.";
+        return "Este evento é gratuito. Suas inscrições foram confirmadas automaticamente, sem necessidade de pagamento.";
     }
     if (isManualPayment.value) {
         if (isPaid.value) {
-            return "Pagamento registrado pela tesouraria. As inscriÃ§Ãµes estÃ£o confirmadas.";
+            return "Pagamento registrado pela tesouraria. As inscrições estão confirmadas.";
         }
         return "Apresente este comprovante na tesouraria para concluir o pagamento. Assim que o recebimento for registrado, atualizaremos automaticamente.";
     }
     if (isPaid.value) {
-        return "Tudo certo! As inscriÃ§Ãµes foram confirmadas e os recibos serÃ£o disponibilizados em instantes.";
+        return "Tudo certo! As inscrições foram confirmadas e os recibos serão disponibilizados em instantes.";
     }
     if (payment.value?.status === "CANCELED") {
         return "O pagamento foi cancelado pelo Mercado Pago. Gere um novo checkout para tentar novamente.";
@@ -335,15 +335,15 @@ const copyPixCode = async () => {
     await navigator.clipboard.writeText(payment.value.pixQrData.qr_code);
     alert("Codigo Pix copiado!");
 };
-// FunÃ§Ã£o para abrir checkout - garante que apenas este pedido seja processado
+// Função para abrir checkout - garante que apenas este pedido seja processado
 const handleOpenCheckout = () => {
-    // Garantir que temos o initPoint para APENAS este pedido especÃ­fico
+    // Garantir que temos o initPoint para APENAS este pedido específico
     if (!payment.value?.initPoint) {
-        console.error("initPoint nÃ£o disponÃ­vel para o pedido", props.orderId);
+        console.error("initPoint não disponível para o pedido", props.orderId);
         return;
     }
     // Usar APENAS o initPoint do pagamento atual, que foi gerado para props.orderId
-    // NÃ£o usar nenhum estado compartilhado ou seleÃ§Ã£o de outros pedidos
+    // Não usar nenhum estado compartilhado ou seleção de outros pedidos
     const singleOrderInitPoint = payment.value.initPoint;
     // Abrir em nova aba o checkout para APENAS este pedido
     window.open(singleOrderInitPoint, "_blank", "noopener,noreferrer");
@@ -354,7 +354,7 @@ const startPolling = () => {
         await loadPayment();
         if (isPaid.value || payment.value?.status === "CANCELED") {
             stopPolling();
-            // Se foi pago, recarregar a pÃ¡gina apÃ³s 2 segundos para mostrar confirmaÃ§Ã£o
+            // Se foi pago, recarregar a página após 2 segundos para mostrar confirmação
             if (isPaid.value) {
                 setTimeout(() => {
                     window.location.reload();
@@ -415,8 +415,8 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)(
     ...{ class: "text-neutral-500 dark:text-neutral-400" },
 });
 (__VLS_ctx.isFreeEvent
-    ? "Este evento Ã© gratuito. As inscriÃ§Ãµes foram confirmadas automaticamente e nenhum pagamento Ã© necessÃ¡rio."
-    : "Conclua o pagamento para garantir as inscriÃ§Ãµes. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente.");
+    ? "Este evento é gratuito. As inscrições foram confirmadas automaticamente e nenhum pagamento é necessário."
+    : "Conclua o pagamento para garantir as inscrições. Assim que o Mercado Pago aprovar, atualizamos tudo automaticamente.");
 var __VLS_2;
 if (__VLS_ctx.payment) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
@@ -815,13 +815,13 @@ if (__VLS_ctx.isPaid) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
         ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
     });
-    (__VLS_ctx.isFreeEvent ? "InscriÃ§Ãµes confirmadas" : "Pagamento confirmado");
+    (__VLS_ctx.isFreeEvent ? "Inscrições confirmadas" : "Pagamento confirmado");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
     });
     (__VLS_ctx.isFreeEvent
-        ? "Os recibos estÃ£o disponÃ­veis para consulta com o CPF e a data de nascimento dos participantes."
-        : "Os recibos sÃ£o gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes.");
+        ? "Os recibos estão disponíveis para consulta com o CPF e a data de nascimento dos participantes."
+        : "Os recibos são gerados automaticamente e podem ser consultados com o CPF e a data de nascimento dos participantes.");
     const __VLS_13 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore

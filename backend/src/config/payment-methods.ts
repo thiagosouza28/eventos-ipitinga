@@ -25,7 +25,7 @@ export const FreePaymentMethods: PaymentMethod[] = [
 export const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [PaymentMethod.PIX_MP];
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  [PaymentMethod.PIX_MP]: "PIX - Mercado Pago",
+  [PaymentMethod.PIX_MP]: "PIX",
   [PaymentMethod.CASH]: "Dinheiro",
   [PaymentMethod.CARD_FULL]: "Cartão à vista",
   [PaymentMethod.CARD_INSTALLMENTS]: "Cartão parcelado",

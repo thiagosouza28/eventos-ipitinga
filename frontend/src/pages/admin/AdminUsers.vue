@@ -94,7 +94,7 @@
               <option v-for="option in baseRoleOptions" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
-              <optgroup v-if="catalog.ministries.length" label="Coordenadores por ministÃ©rio">
+              <optgroup v-if="catalog.ministries.length" label="Coordenadores por ministério">
                 <option
                   v-for="ministry in catalog.ministries"
                   :key="ministry.id"
@@ -153,6 +153,72 @@
               </option>
             </select>
           </div>
+          <div v-if="editDialog.form.role === 'AdminDistrital'" class="md:col-span-2 grid gap-3 md:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Tipo de chave PIX</label>
+              <select
+                v-model="editDialog.form.pixType"
+                :disabled="!canEditPixEdit"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              >
+                <option v-for="option in pixTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Chave PIX</label>
+              <input
+                v-model="editDialog.form.pixKey"
+                :disabled="!canEditPixEdit"
+                type="text"
+                required
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Banco / Instituicao (opcional)</label>
+              <input
+                v-model="editDialog.form.pixBankName"
+                :disabled="!canEditPixEdit"
+                type="text"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Status da chave</label>
+              <select
+                v-model="editDialog.form.pixStatus"
+                :disabled="!canEditPixEdit"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              >
+                <option v-for="option in pixStatusOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nome do titular (opcional)</label>
+              <input
+                v-model="editDialog.form.pixOwnerName"
+                :disabled="!canEditPixEdit"
+                type="text"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF/CNPJ do titular (opcional)</label>
+              <input
+                v-model="editDialog.form.pixOwnerDocument"
+                :disabled="!canEditPixEdit"
+                type="text"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <p v-if="!canEditPixEdit" class="text-xs text-amber-600 dark:text-amber-300 md:col-span-2">
+              Apenas administradores gerais podem definir ou editar a chave PIX de administradores distritais.
+            </p>
+          </div>
           <div class="md:col-span-2">
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Foto de perfil</label>
             <div class="mt-2 flex items-center gap-4">
@@ -186,7 +252,7 @@
             </div>
           </div>
           <div v-if="editRequiresMinistry" class="md:col-span-2">
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">MinistÃ©rios</label>
+            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Ministérios</label>
             <div class="mt-2 grid gap-2 sm:grid-cols-2">
               <label
                 v-for="ministry in catalog.ministries"
@@ -222,7 +288,7 @@
               v-if="editDialog.loading"
               class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent"
             />
-            <span>{{ editDialog.loading ? "Salvando..." : "Salvar alteraÃ§Ãµes" }}</span>
+            <span>{{ editDialog.loading ? "Salvando..." : "Salvar alterações" }}</span>
           </button>
         </div>
       </form>
@@ -342,6 +408,72 @@
               </option>
             </select>
           </div>
+          <div v-if="form.role === 'AdminDistrital'" class="md:col-span-2 grid gap-3 md:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Tipo de chave PIX</label>
+              <select
+                v-model="form.pixType"
+                :disabled="!canEditPixCreate"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              >
+                <option v-for="option in pixTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Chave PIX</label>
+              <input
+                v-model="form.pixKey"
+                :disabled="!canEditPixCreate"
+                type="text"
+                required
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Banco / Instituicao (opcional)</label>
+              <input
+                v-model="form.pixBankName"
+                :disabled="!canEditPixCreate"
+                type="text"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Status da chave</label>
+              <select
+                v-model="form.pixStatus"
+                :disabled="!canEditPixCreate"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              >
+                <option v-for="option in pixStatusOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Nome do titular (opcional)</label>
+              <input
+                v-model="form.pixOwnerName"
+                :disabled="!canEditPixCreate"
+                type="text"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">CPF/CNPJ do titular (opcional)</label>
+              <input
+                v-model="form.pixOwnerDocument"
+                :disabled="!canEditPixCreate"
+                type="text"
+                class="mt-1 w-full rounded-sm border border-neutral-300 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <p v-if="!canEditPixCreate" class="text-xs text-amber-600 dark:text-amber-300 md:col-span-2">
+              Apenas administradores gerais podem definir ou editar a chave PIX de administradores distritais.
+            </p>
+          </div>
           <div v-if="requiresMinistry" class="md:col-span-2">
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">Ministérios</label>
             <div class="mt-2 grid gap-2 sm:grid-cols-2">
@@ -456,7 +588,7 @@
       </div>
       <TableSkeleton
         v-if="initialLoading"
-        helperText="ðŸ”„ Carregando usuÃ¡rios..."
+        helperText="Carregando usuários..."
       />
       <div v-else>
         <div
@@ -629,7 +761,7 @@
                 </div>
               </div>
               <div class="col-span-2">
-                <p class="font-semibold text-neutral-800 dark:text-neutral-100">MinistÃ©rios</p>
+                <p class="font-semibold text-neutral-800 dark:text-neutral-100">Ministérios</p>
                 <p>
                   <span v-if="user.ministries?.length">{{ user.ministries.map((m) => m.name).join(", ") }}</span>
                   <span v-else class="text-neutral-400 dark:text-neutral-500">--</span>
@@ -698,12 +830,14 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useCatalogStore } from "../../stores/catalog";
+import { useAuthStore } from "../../stores/auth";
 import type { AdminUser, Role, UserStatus } from "../../types/api";
 import { useModulePermissions } from "../../composables/usePermissions";
 import { maskCpf as maskCpfUtil } from "../../utils/format";
 
 const admin = useAdminStore();
 const catalog = useCatalogStore();
+const auth = useAuthStore();
 const userPermissions = useModulePermissions("users");
 
 const showCreateForm = ref(false);
@@ -712,6 +846,23 @@ const savingUser = ref(false);
 const lastTempPassword = ref<{ user: string; password: string } | null>(null);
 const ministryError = ref("");
 const editMinistryError = ref("");
+
+const currentUser = computed(() => auth.user);
+const isAdminGeral = computed(() => currentUser.value?.role === "AdminGeral");
+
+const pixTypeOptions = [
+  { value: "CPF", label: "CPF" },
+  { value: "CNPJ", label: "CNPJ" },
+  { value: "EMAIL", label: "E-mail" },
+  { value: "PHONE", label: "Telefone" },
+  { value: "RANDOM", label: "Chave aleatoria" },
+  { value: "EVP", label: "Chave EVP" }
+];
+
+const pixStatusOptions = [
+  { value: "PENDING", label: "Pendente" },
+  { value: "VALIDATED", label: "Validada" }
+];
 
 const form = reactive<{
   name: string;
@@ -724,6 +875,12 @@ const form = reactive<{
   ministryIds: string[];
   profileId: string;
   status: UserStatus;
+  pixType: "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "RANDOM" | "EVP" | "";
+  pixKey: string;
+  pixOwnerName: string;
+  pixOwnerDocument: string;
+  pixBankName: string;
+  pixStatus: "PENDING" | "VALIDATED";
 }>({
   name: "",
   email: "",
@@ -734,7 +891,13 @@ const form = reactive<{
   churchScopeId: "",
   ministryIds: [],
   profileId: "",
-  status: "ACTIVE"
+  status: "ACTIVE",
+  pixType: "CPF",
+  pixKey: "",
+  pixOwnerName: "",
+  pixOwnerDocument: "",
+  pixBankName: "",
+  pixStatus: "PENDING"
 });
 
 const editDialog = reactive({
@@ -753,7 +916,13 @@ const editDialog = reactive({
     churchScopeId: "",
     ministryIds: [] as string[],
     profileId: "",
-    status: "ACTIVE" as UserStatus
+    status: "ACTIVE" as UserStatus,
+    pixType: "CPF" as AdminUser["pixType"],
+    pixKey: "",
+    pixOwnerName: "",
+    pixOwnerDocument: "",
+    pixBankName: "",
+    pixStatus: "PENDING" as AdminUser["pixStatus"]
   }
 });
 
@@ -808,6 +977,10 @@ const requiresMinistry = computed(() => roleRequiresMinistry(form.role));
 const editRequiresDistrict = computed(() => roleRequiresDistrict(editDialog.form.role));
 const editRequiresChurch = computed(() => roleRequiresChurch(editDialog.form.role));
 const editRequiresMinistry = computed(() => roleRequiresMinistry(editDialog.form.role));
+const isCreateAdminDistrital = computed(() => form.role === "AdminDistrital");
+const isEditAdminDistrital = computed(() => editDialog.form.role === "AdminDistrital");
+const canEditPixCreate = computed(() => !isCreateAdminDistrital.value || isAdminGeral.value);
+const canEditPixEdit = computed(() => !isEditAdminDistrital.value || isAdminGeral.value);
 
 const createRoleSelectValue = computed(() => {
   if (form.role === "CoordenadorMinisterio") {
@@ -897,6 +1070,12 @@ const resetForm = () => {
   form.ministryIds = [];
   form.profileId = "";
   form.status = "ACTIVE";
+  form.pixType = "CPF";
+  form.pixKey = "";
+  form.pixOwnerName = "";
+  form.pixOwnerDocument = "";
+  form.pixBankName = "";
+  form.pixStatus = "PENDING";
   ministryError.value = "";
 };
 
@@ -963,6 +1142,14 @@ const handleCreateUser = async () => {
     if (form.profileId) {
       payload.profileId = form.profileId;
     }
+    if (form.role === "AdminDistrital") {
+      payload.pixType = form.pixType;
+      payload.pixKey = form.pixKey.trim() || null;
+      payload.pixOwnerName = form.pixOwnerName.trim() || null;
+      payload.pixOwnerDocument = form.pixOwnerDocument.trim() || null;
+      payload.pixBankName = form.pixBankName.trim() || null;
+      payload.pixStatus = form.pixStatus;
+    }
 
     const response = await admin.createUser(payload);
     lastTempPassword.value = {
@@ -994,6 +1181,12 @@ const openEditDialog = (user: AdminUser) => {
   editDialog.form.ministryIds = user.ministries?.map((ministry) => ministry.id) ?? [];
   editDialog.form.profileId = user.profile?.id ?? "";
   editDialog.form.status = user.status ?? "ACTIVE";
+  editDialog.form.pixType = (user.pixType as any) ?? "CPF";
+  editDialog.form.pixKey = user.pixKey ?? "";
+  editDialog.form.pixOwnerName = user.pixOwnerName ?? "";
+  editDialog.form.pixOwnerDocument = user.pixOwnerDocument ?? "";
+  editDialog.form.pixBankName = user.pixBankName ?? "";
+  editDialog.form.pixStatus = (user.pixStatus as any) ?? "PENDING";
   editDialog.photoPreview = user.photoUrl ?? "";
   editDialog.photoPayload = undefined;
   editMinistryError.value = "";
@@ -1006,6 +1199,12 @@ const closeEditDialog = () => {
   editDialog.userId = "";
   editDialog.photoPreview = "";
   editDialog.photoPayload = undefined;
+  editDialog.form.pixType = "CPF";
+  editDialog.form.pixKey = "";
+  editDialog.form.pixOwnerName = "";
+  editDialog.form.pixOwnerDocument = "";
+  editDialog.form.pixBankName = "";
+  editDialog.form.pixStatus = "PENDING";
   editMinistryError.value = "";
 };
 
@@ -1069,6 +1268,14 @@ const handleUpdateUser = async () => {
     payload.cpf = editDialog.form.cpf.trim() ? normalizeCpf(editDialog.form.cpf) ?? undefined : null;
     payload.phone = editDialog.form.phone.trim() || null;
     payload.profileId = editDialog.form.profileId || null;
+    if (editDialog.form.role === "AdminDistrital") {
+      payload.pixType = editDialog.form.pixType;
+      payload.pixKey = editDialog.form.pixKey.trim() || null;
+      payload.pixOwnerName = editDialog.form.pixOwnerName.trim() || null;
+      payload.pixOwnerDocument = editDialog.form.pixOwnerDocument.trim() || null;
+      payload.pixBankName = editDialog.form.pixBankName.trim() || null;
+      payload.pixStatus = editDialog.form.pixStatus;
+    }
     if (editDialog.photoPayload !== undefined) {
       payload.photoUrl = editDialog.photoPayload;
     }
@@ -1212,6 +1419,13 @@ watch(
   () => form.role,
   () => {
     if (!requiresMinistry.value) form.ministryIds = [];
+    if (form.role !== "AdminDistrital") {
+      form.pixKey = "";
+      form.pixOwnerName = "";
+      form.pixOwnerDocument = "";
+      form.pixBankName = "";
+      form.pixStatus = "PENDING";
+    }
   }
 );
 
@@ -1219,10 +1433,16 @@ watch(
   () => editDialog.form.role,
   () => {
     if (!editRequiresMinistry.value) editDialog.form.ministryIds = [];
+    if (editDialog.form.role !== "AdminDistrital") {
+      editDialog.form.pixKey = "";
+      editDialog.form.pixOwnerName = "";
+      editDialog.form.pixOwnerDocument = "";
+      editDialog.form.pixBankName = "";
+      editDialog.form.pixStatus = "PENDING";
+    }
   }
 );
 </script>
-
 
 
 

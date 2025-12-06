@@ -159,7 +159,9 @@ exports.Prisma.EventScalarFieldEnum = {
   pendingPaymentValueRule: 'pendingPaymentValueRule',
   createdAt: 'createdAt',
   ministryId: 'ministryId',
-  createdById: 'createdById'
+  createdById: 'createdById',
+  districtId: 'districtId',
+  churchId: 'churchId'
 };
 
 exports.Prisma.OrderScalarFieldEnum = {
@@ -189,6 +191,12 @@ exports.Prisma.OrderScalarFieldEnum = {
   manualNotes: 'manualNotes',
   confirmedById: 'confirmedById',
   confirmedAt: 'confirmedAt',
+  districtId: 'districtId',
+  districtAdminId: 'districtAdminId',
+  responsibleUserId: 'responsibleUserId',
+  amountToTransfer: 'amountToTransfer',
+  transferStatus: 'transferStatus',
+  transferBatchId: 'transferBatchId',
   createdAt: 'createdAt'
 };
 
@@ -203,6 +211,7 @@ exports.Prisma.RegistrationScalarFieldEnum = {
   priceCents: 'priceCents',
   districtId: 'districtId',
   churchId: 'churchId',
+  responsibleUserId: 'responsibleUserId',
   photoUrl: 'photoUrl',
   gender: 'gender',
   paymentMethod: 'paymentMethod',
@@ -261,7 +270,13 @@ exports.Prisma.UserScalarFieldEnum = {
   phone: 'phone',
   photoUrl: 'photoUrl',
   profileId: 'profileId',
-  status: 'status'
+  status: 'status',
+  pixType: 'pixType',
+  pixKey: 'pixKey',
+  pixOwnerName: 'pixOwnerName',
+  pixOwnerDocument: 'pixOwnerDocument',
+  pixBankName: 'pixBankName',
+  pixStatus: 'pixStatus'
 };
 
 exports.Prisma.SystemConfigScalarFieldEnum = {
@@ -376,6 +391,38 @@ exports.Prisma.ServiceOrderScalarFieldEnum = {
   issuedById: 'issuedById'
 };
 
+exports.Prisma.TransferScalarFieldEnum = {
+  id: 'id',
+  districtId: 'districtId',
+  districtAdminId: 'districtAdminId',
+  responsibleUserId: 'responsibleUserId',
+  amount: 'amount',
+  pixType: 'pixType',
+  pixKey: 'pixKey',
+  pixOwnerName: 'pixOwnerName',
+  pixOwnerDocument: 'pixOwnerDocument',
+  pixBankName: 'pixBankName',
+  orderIds: 'orderIds',
+  mpTransferId: 'mpTransferId',
+  status: 'status',
+  errorMessage: 'errorMessage',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PixGatewayConfigScalarFieldEnum = {
+  id: 'id',
+  provider: 'provider',
+  clientId: 'clientId',
+  clientSecret: 'clientSecret',
+  apiKey: 'apiKey',
+  webhookUrl: 'webhookUrl',
+  certificatePath: 'certificatePath',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -405,15 +452,41 @@ exports.OrderOrigin = exports.$Enums.OrderOrigin = {
   MANUAL: 'MANUAL'
 };
 
+exports.OrderTransferStatus = exports.$Enums.OrderTransferStatus = {
+  PENDING: 'PENDING',
+  TRANSFERRED: 'TRANSFERRED',
+  FAILED: 'FAILED'
+};
+
 exports.UserStatus = exports.$Enums.UserStatus = {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE'
+};
+
+exports.PixType = exports.$Enums.PixType = {
+  CPF: 'CPF',
+  CNPJ: 'CNPJ',
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+  EVP: 'EVP',
+  RANDOM: 'RANDOM'
+};
+
+exports.PixStatus = exports.$Enums.PixStatus = {
+  VALIDATED: 'VALIDATED',
+  PENDING: 'PENDING'
 };
 
 exports.OrderItemStatus = exports.$Enums.OrderItemStatus = {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
   CANCELED: 'CANCELED'
+};
+
+exports.TransferStatus = exports.$Enums.TransferStatus = {
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED'
 };
 
 exports.Prisma.ModelName = {
@@ -435,7 +508,9 @@ exports.Prisma.ModelName = {
   ProfilePermission: 'ProfilePermission',
   UserPermission: 'UserPermission',
   OrderItem: 'OrderItem',
-  ServiceOrder: 'ServiceOrder'
+  ServiceOrder: 'ServiceOrder',
+  Transfer: 'Transfer',
+  PixGatewayConfig: 'PixGatewayConfig'
 };
 
 /**

@@ -108,6 +108,16 @@ export type OrderItem = $Result.DefaultSelection<Prisma.$OrderItemPayload>
  * 
  */
 export type ServiceOrder = $Result.DefaultSelection<Prisma.$ServiceOrderPayload>
+/**
+ * Model Transfer
+ * 
+ */
+export type Transfer = $Result.DefaultSelection<Prisma.$TransferPayload>
+/**
+ * Model PixGatewayConfig
+ * 
+ */
+export type PixGatewayConfig = $Result.DefaultSelection<Prisma.$PixGatewayConfigPayload>
 
 /**
  * Enums
@@ -121,12 +131,41 @@ export namespace $Enums {
 export type OrderOrigin = (typeof OrderOrigin)[keyof typeof OrderOrigin]
 
 
+export const OrderTransferStatus: {
+  PENDING: 'PENDING',
+  TRANSFERRED: 'TRANSFERRED',
+  FAILED: 'FAILED'
+};
+
+export type OrderTransferStatus = (typeof OrderTransferStatus)[keyof typeof OrderTransferStatus]
+
+
 export const UserStatus: {
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE'
 };
 
 export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus]
+
+
+export const PixType: {
+  CPF: 'CPF',
+  CNPJ: 'CNPJ',
+  EMAIL: 'EMAIL',
+  PHONE: 'PHONE',
+  EVP: 'EVP',
+  RANDOM: 'RANDOM'
+};
+
+export type PixType = (typeof PixType)[keyof typeof PixType]
+
+
+export const PixStatus: {
+  VALIDATED: 'VALIDATED',
+  PENDING: 'PENDING'
+};
+
+export type PixStatus = (typeof PixStatus)[keyof typeof PixStatus]
 
 
 export const OrderItemStatus: {
@@ -137,19 +176,44 @@ export const OrderItemStatus: {
 
 export type OrderItemStatus = (typeof OrderItemStatus)[keyof typeof OrderItemStatus]
 
+
+export const TransferStatus: {
+  PENDING: 'PENDING',
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED'
+};
+
+export type TransferStatus = (typeof TransferStatus)[keyof typeof TransferStatus]
+
 }
 
 export type OrderOrigin = $Enums.OrderOrigin
 
 export const OrderOrigin: typeof $Enums.OrderOrigin
 
+export type OrderTransferStatus = $Enums.OrderTransferStatus
+
+export const OrderTransferStatus: typeof $Enums.OrderTransferStatus
+
 export type UserStatus = $Enums.UserStatus
 
 export const UserStatus: typeof $Enums.UserStatus
 
+export type PixType = $Enums.PixType
+
+export const PixType: typeof $Enums.PixType
+
+export type PixStatus = $Enums.PixStatus
+
+export const PixStatus: typeof $Enums.PixStatus
+
 export type OrderItemStatus = $Enums.OrderItemStatus
 
 export const OrderItemStatus: typeof $Enums.OrderItemStatus
+
+export type TransferStatus = $Enums.TransferStatus
+
+export const TransferStatus: typeof $Enums.TransferStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -463,6 +527,26 @@ export class PrismaClient<
     * ```
     */
   get serviceOrder(): Prisma.ServiceOrderDelegate<ExtArgs>;
+
+  /**
+   * `prisma.transfer`: Exposes CRUD operations for the **Transfer** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Transfers
+    * const transfers = await prisma.transfer.findMany()
+    * ```
+    */
+  get transfer(): Prisma.TransferDelegate<ExtArgs>;
+
+  /**
+   * `prisma.pixGatewayConfig`: Exposes CRUD operations for the **PixGatewayConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PixGatewayConfigs
+    * const pixGatewayConfigs = await prisma.pixGatewayConfig.findMany()
+    * ```
+    */
+  get pixGatewayConfig(): Prisma.PixGatewayConfigDelegate<ExtArgs>;
 }
 
 export namespace Prisma {
@@ -922,7 +1006,9 @@ export namespace Prisma {
     ProfilePermission: 'ProfilePermission',
     UserPermission: 'UserPermission',
     OrderItem: 'OrderItem',
-    ServiceOrder: 'ServiceOrder'
+    ServiceOrder: 'ServiceOrder',
+    Transfer: 'Transfer',
+    PixGatewayConfig: 'PixGatewayConfig'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -938,7 +1024,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "systemConfig" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission" | "orderItem" | "serviceOrder"
+      modelProps: "district" | "church" | "event" | "order" | "registration" | "refund" | "webhookEvent" | "auditLog" | "user" | "systemConfig" | "eventLot" | "expense" | "ministry" | "ministryUser" | "profile" | "profilePermission" | "userPermission" | "orderItem" | "serviceOrder" | "transfer" | "pixGatewayConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2196,6 +2282,138 @@ export namespace Prisma {
           }
         }
       }
+      Transfer: {
+        payload: Prisma.$TransferPayload<ExtArgs>
+        fields: Prisma.TransferFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TransferFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TransferFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>
+          }
+          findFirst: {
+            args: Prisma.TransferFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TransferFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>
+          }
+          findMany: {
+            args: Prisma.TransferFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>[]
+          }
+          create: {
+            args: Prisma.TransferCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>
+          }
+          createMany: {
+            args: Prisma.TransferCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.TransferDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>
+          }
+          update: {
+            args: Prisma.TransferUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>
+          }
+          deleteMany: {
+            args: Prisma.TransferDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TransferUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.TransferUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TransferPayload>
+          }
+          aggregate: {
+            args: Prisma.TransferAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTransfer>
+          }
+          groupBy: {
+            args: Prisma.TransferGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TransferGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TransferCountArgs<ExtArgs>
+            result: $Utils.Optional<TransferCountAggregateOutputType> | number
+          }
+        }
+      }
+      PixGatewayConfig: {
+        payload: Prisma.$PixGatewayConfigPayload<ExtArgs>
+        fields: Prisma.PixGatewayConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PixGatewayConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PixGatewayConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.PixGatewayConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PixGatewayConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>
+          }
+          findMany: {
+            args: Prisma.PixGatewayConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>[]
+          }
+          create: {
+            args: Prisma.PixGatewayConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>
+          }
+          createMany: {
+            args: Prisma.PixGatewayConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.PixGatewayConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>
+          }
+          update: {
+            args: Prisma.PixGatewayConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.PixGatewayConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PixGatewayConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.PixGatewayConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PixGatewayConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.PixGatewayConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePixGatewayConfig>
+          }
+          groupBy: {
+            args: Prisma.PixGatewayConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PixGatewayConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PixGatewayConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<PixGatewayConfigCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2358,14 +2576,20 @@ export namespace Prisma {
 
   export type DistrictCountOutputType = {
     churches: number
+    events: number
     registrations: number
     users: number
+    orders: number
+    transfers: number
   }
 
   export type DistrictCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     churches?: boolean | DistrictCountOutputTypeCountChurchesArgs
+    events?: boolean | DistrictCountOutputTypeCountEventsArgs
     registrations?: boolean | DistrictCountOutputTypeCountRegistrationsArgs
     users?: boolean | DistrictCountOutputTypeCountUsersArgs
+    orders?: boolean | DistrictCountOutputTypeCountOrdersArgs
+    transfers?: boolean | DistrictCountOutputTypeCountTransfersArgs
   }
 
   // Custom InputTypes
@@ -2389,6 +2613,13 @@ export namespace Prisma {
   /**
    * DistrictCountOutputType without action
    */
+  export type DistrictCountOutputTypeCountEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventWhereInput
+  }
+
+  /**
+   * DistrictCountOutputType without action
+   */
   export type DistrictCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: RegistrationWhereInput
   }
@@ -2400,6 +2631,20 @@ export namespace Prisma {
     where?: UserWhereInput
   }
 
+  /**
+   * DistrictCountOutputType without action
+   */
+  export type DistrictCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+  /**
+   * DistrictCountOutputType without action
+   */
+  export type DistrictCountOutputTypeCountTransfersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransferWhereInput
+  }
+
 
   /**
    * Count Type ChurchCountOutputType
@@ -2408,11 +2653,13 @@ export namespace Prisma {
   export type ChurchCountOutputType = {
     registrations: number
     users: number
+    events: number
   }
 
   export type ChurchCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     registrations?: boolean | ChurchCountOutputTypeCountRegistrationsArgs
     users?: boolean | ChurchCountOutputTypeCountUsersArgs
+    events?: boolean | ChurchCountOutputTypeCountEventsArgs
   }
 
   // Custom InputTypes
@@ -2438,6 +2685,13 @@ export namespace Prisma {
    */
   export type ChurchCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserWhereInput
+  }
+
+  /**
+   * ChurchCountOutputType without action
+   */
+  export type ChurchCountOutputTypeCountEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventWhereInput
   }
 
 
@@ -2619,6 +2873,12 @@ export namespace Prisma {
     confirmedManualOrders: number
     confirmedOrderItems: number
     issuedServiceOrders: number
+    districtOrders: number
+    responsibleOrders: number
+    responsibleRegistrations: number
+    transfersCreated: number
+    districtTransfers: number
+    responsibleTransfers: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2630,6 +2890,12 @@ export namespace Prisma {
     confirmedManualOrders?: boolean | UserCountOutputTypeCountConfirmedManualOrdersArgs
     confirmedOrderItems?: boolean | UserCountOutputTypeCountConfirmedOrderItemsArgs
     issuedServiceOrders?: boolean | UserCountOutputTypeCountIssuedServiceOrdersArgs
+    districtOrders?: boolean | UserCountOutputTypeCountDistrictOrdersArgs
+    responsibleOrders?: boolean | UserCountOutputTypeCountResponsibleOrdersArgs
+    responsibleRegistrations?: boolean | UserCountOutputTypeCountResponsibleRegistrationsArgs
+    transfersCreated?: boolean | UserCountOutputTypeCountTransfersCreatedArgs
+    districtTransfers?: boolean | UserCountOutputTypeCountDistrictTransfersArgs
+    responsibleTransfers?: boolean | UserCountOutputTypeCountResponsibleTransfersArgs
   }
 
   // Custom InputTypes
@@ -2697,6 +2963,48 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountIssuedServiceOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ServiceOrderWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountDistrictOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountResponsibleOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountResponsibleRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTransfersCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransferWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountDistrictTransfersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransferWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountResponsibleTransfersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransferWhereInput
   }
 
 
@@ -2826,6 +3134,37 @@ export namespace Prisma {
    */
   export type ProfileCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserWhereInput
+  }
+
+
+  /**
+   * Count Type TransferCountOutputType
+   */
+
+  export type TransferCountOutputType = {
+    orders: number
+  }
+
+  export type TransferCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    orders?: boolean | TransferCountOutputTypeCountOrdersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TransferCountOutputType without action
+   */
+  export type TransferCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TransferCountOutputType
+     */
+    select?: TransferCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TransferCountOutputType without action
+   */
+  export type TransferCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrderWhereInput
   }
 
 
@@ -2990,8 +3329,11 @@ export namespace Prisma {
     pastorName?: boolean
     createdAt?: boolean
     churches?: boolean | District$churchesArgs<ExtArgs>
+    events?: boolean | District$eventsArgs<ExtArgs>
     registrations?: boolean | District$registrationsArgs<ExtArgs>
     users?: boolean | District$usersArgs<ExtArgs>
+    orders?: boolean | District$ordersArgs<ExtArgs>
+    transfers?: boolean | District$transfersArgs<ExtArgs>
     _count?: boolean | DistrictCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["district"]>
 
@@ -3005,8 +3347,11 @@ export namespace Prisma {
 
   export type DistrictInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     churches?: boolean | District$churchesArgs<ExtArgs>
+    events?: boolean | District$eventsArgs<ExtArgs>
     registrations?: boolean | District$registrationsArgs<ExtArgs>
     users?: boolean | District$usersArgs<ExtArgs>
+    orders?: boolean | District$ordersArgs<ExtArgs>
+    transfers?: boolean | District$transfersArgs<ExtArgs>
     _count?: boolean | DistrictCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -3014,8 +3359,11 @@ export namespace Prisma {
     name: "District"
     objects: {
       churches: Prisma.$ChurchPayload<ExtArgs>[]
+      events: Prisma.$EventPayload<ExtArgs>[]
       registrations: Prisma.$RegistrationPayload<ExtArgs>[]
       users: Prisma.$UserPayload<ExtArgs>[]
+      orders: Prisma.$OrderPayload<ExtArgs>[]
+      transfers: Prisma.$TransferPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -3363,8 +3711,11 @@ export namespace Prisma {
   export interface Prisma__DistrictClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     churches<T extends District$churchesArgs<ExtArgs> = {}>(args?: Subset<T, District$churchesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findMany"> | Null>
+    events<T extends District$eventsArgs<ExtArgs> = {}>(args?: Subset<T, District$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
     registrations<T extends District$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, District$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     users<T extends District$usersArgs<ExtArgs> = {}>(args?: Subset<T, District$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
+    orders<T extends District$ordersArgs<ExtArgs> = {}>(args?: Subset<T, District$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
+    transfers<T extends District$transfersArgs<ExtArgs> = {}>(args?: Subset<T, District$transfersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3717,6 +4068,26 @@ export namespace Prisma {
   }
 
   /**
+   * District.events
+   */
+  export type District$eventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Event
+     */
+    select?: EventSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventInclude<ExtArgs> | null
+    where?: EventWhereInput
+    orderBy?: EventOrderByWithRelationInput | EventOrderByWithRelationInput[]
+    cursor?: EventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EventScalarFieldEnum | EventScalarFieldEnum[]
+  }
+
+  /**
    * District.registrations
    */
   export type District$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3754,6 +4125,46 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * District.orders
+   */
+  export type District$ordersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
+  }
+
+  /**
+   * District.transfers
+   */
+  export type District$transfersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    where?: TransferWhereInput
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    cursor?: TransferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
   }
 
   /**
@@ -3978,6 +4389,7 @@ export namespace Prisma {
     district?: boolean | DistrictDefaultArgs<ExtArgs>
     registrations?: boolean | Church$registrationsArgs<ExtArgs>
     users?: boolean | Church$usersArgs<ExtArgs>
+    events?: boolean | Church$eventsArgs<ExtArgs>
     _count?: boolean | ChurchCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["church"]>
 
@@ -3999,6 +4411,7 @@ export namespace Prisma {
     district?: boolean | DistrictDefaultArgs<ExtArgs>
     registrations?: boolean | Church$registrationsArgs<ExtArgs>
     users?: boolean | Church$usersArgs<ExtArgs>
+    events?: boolean | Church$eventsArgs<ExtArgs>
     _count?: boolean | ChurchCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -4008,6 +4421,7 @@ export namespace Prisma {
       district: Prisma.$DistrictPayload<ExtArgs>
       registrations: Prisma.$RegistrationPayload<ExtArgs>[]
       users: Prisma.$UserPayload<ExtArgs>[]
+      events: Prisma.$EventPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -4363,6 +4777,7 @@ export namespace Prisma {
     district<T extends DistrictDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DistrictDefaultArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     registrations<T extends Church$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Church$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
     users<T extends Church$usersArgs<ExtArgs> = {}>(args?: Subset<T, Church$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany"> | Null>
+    events<T extends Church$eventsArgs<ExtArgs> = {}>(args?: Subset<T, Church$eventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4741,6 +5156,26 @@ export namespace Prisma {
   }
 
   /**
+   * Church.events
+   */
+  export type Church$eventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Event
+     */
+    select?: EventSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventInclude<ExtArgs> | null
+    where?: EventWhereInput
+    orderBy?: EventOrderByWithRelationInput | EventOrderByWithRelationInput[]
+    cursor?: EventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EventScalarFieldEnum | EventScalarFieldEnum[]
+  }
+
+  /**
    * Church without action
    */
   export type ChurchDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4795,6 +5230,8 @@ export namespace Prisma {
     createdAt: Date | null
     ministryId: string | null
     createdById: string | null
+    districtId: string | null
+    churchId: string | null
   }
 
   export type EventMaxAggregateOutputType = {
@@ -4815,6 +5252,8 @@ export namespace Prisma {
     createdAt: Date | null
     ministryId: string | null
     createdById: string | null
+    districtId: string | null
+    churchId: string | null
   }
 
   export type EventCountAggregateOutputType = {
@@ -4835,6 +5274,8 @@ export namespace Prisma {
     createdAt: number
     ministryId: number
     createdById: number
+    districtId: number
+    churchId: number
     _all: number
   }
 
@@ -4867,6 +5308,8 @@ export namespace Prisma {
     createdAt?: true
     ministryId?: true
     createdById?: true
+    districtId?: true
+    churchId?: true
   }
 
   export type EventMaxAggregateInputType = {
@@ -4887,6 +5330,8 @@ export namespace Prisma {
     createdAt?: true
     ministryId?: true
     createdById?: true
+    districtId?: true
+    churchId?: true
   }
 
   export type EventCountAggregateInputType = {
@@ -4907,6 +5352,8 @@ export namespace Prisma {
     createdAt?: true
     ministryId?: true
     createdById?: true
+    districtId?: true
+    churchId?: true
     _all?: true
   }
 
@@ -5014,6 +5461,8 @@ export namespace Prisma {
     createdAt: Date
     ministryId: string | null
     createdById: string | null
+    districtId: string
+    churchId: string | null
     _count: EventCountAggregateOutputType | null
     _avg: EventAvgAggregateOutputType | null
     _sum: EventSumAggregateOutputType | null
@@ -5053,8 +5502,12 @@ export namespace Prisma {
     createdAt?: boolean
     ministryId?: boolean
     createdById?: boolean
+    districtId?: boolean
+    churchId?: boolean
     createdBy?: boolean | Event$createdByArgs<ExtArgs>
     ministry?: boolean | Event$ministryArgs<ExtArgs>
+    district?: boolean | DistrictDefaultArgs<ExtArgs>
+    church?: boolean | Event$churchArgs<ExtArgs>
     lots?: boolean | Event$lotsArgs<ExtArgs>
     expenses?: boolean | Event$expensesArgs<ExtArgs>
     orders?: boolean | Event$ordersArgs<ExtArgs>
@@ -5081,11 +5534,15 @@ export namespace Prisma {
     createdAt?: boolean
     ministryId?: boolean
     createdById?: boolean
+    districtId?: boolean
+    churchId?: boolean
   }
 
   export type EventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     createdBy?: boolean | Event$createdByArgs<ExtArgs>
     ministry?: boolean | Event$ministryArgs<ExtArgs>
+    district?: boolean | DistrictDefaultArgs<ExtArgs>
+    church?: boolean | Event$churchArgs<ExtArgs>
     lots?: boolean | Event$lotsArgs<ExtArgs>
     expenses?: boolean | Event$expensesArgs<ExtArgs>
     orders?: boolean | Event$ordersArgs<ExtArgs>
@@ -5098,6 +5555,8 @@ export namespace Prisma {
     objects: {
       createdBy: Prisma.$UserPayload<ExtArgs> | null
       ministry: Prisma.$MinistryPayload<ExtArgs> | null
+      district: Prisma.$DistrictPayload<ExtArgs>
+      church: Prisma.$ChurchPayload<ExtArgs> | null
       lots: Prisma.$EventLotPayload<ExtArgs>[]
       expenses: Prisma.$ExpensePayload<ExtArgs>[]
       orders: Prisma.$OrderPayload<ExtArgs>[]
@@ -5121,6 +5580,8 @@ export namespace Prisma {
       createdAt: Date
       ministryId: string | null
       createdById: string | null
+      districtId: string
+      churchId: string | null
     }, ExtArgs["result"]["event"]>
     composites: {}
   }
@@ -5463,6 +5924,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     createdBy<T extends Event$createdByArgs<ExtArgs> = {}>(args?: Subset<T, Event$createdByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     ministry<T extends Event$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Event$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    district<T extends DistrictDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DistrictDefaultArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    church<T extends Event$churchArgs<ExtArgs> = {}>(args?: Subset<T, Event$churchArgs<ExtArgs>>): Prisma__ChurchClient<$Result.GetResult<Prisma.$ChurchPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     lots<T extends Event$lotsArgs<ExtArgs> = {}>(args?: Subset<T, Event$lotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventLotPayload<ExtArgs>, T, "findMany"> | Null>
     expenses<T extends Event$expensesArgs<ExtArgs> = {}>(args?: Subset<T, Event$expensesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExpensePayload<ExtArgs>, T, "findMany"> | Null>
     orders<T extends Event$ordersArgs<ExtArgs> = {}>(args?: Subset<T, Event$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
@@ -5513,6 +5976,8 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"Event", 'DateTime'>
     readonly ministryId: FieldRef<"Event", 'String'>
     readonly createdById: FieldRef<"Event", 'String'>
+    readonly districtId: FieldRef<"Event", 'String'>
+    readonly churchId: FieldRef<"Event", 'String'>
   }
     
 
@@ -5842,6 +6307,21 @@ export namespace Prisma {
   }
 
   /**
+   * Event.church
+   */
+  export type Event$churchArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Church
+     */
+    select?: ChurchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ChurchInclude<ExtArgs> | null
+    where?: ChurchWhereInput
+  }
+
+  /**
    * Event.lots
    */
   export type Event$lotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5954,6 +6434,7 @@ export namespace Prisma {
     feeCents: number | null
     netAmountCents: number | null
     amountReceivedCents: number | null
+    amountToTransfer: number | null
   }
 
   export type OrderSumAggregateOutputType = {
@@ -5962,6 +6443,7 @@ export namespace Prisma {
     feeCents: number | null
     netAmountCents: number | null
     amountReceivedCents: number | null
+    amountToTransfer: number | null
   }
 
   export type OrderMinAggregateOutputType = {
@@ -5991,6 +6473,12 @@ export namespace Prisma {
     manualNotes: string | null
     confirmedById: string | null
     confirmedAt: Date | null
+    districtId: string | null
+    districtAdminId: string | null
+    responsibleUserId: string | null
+    amountToTransfer: number | null
+    transferStatus: $Enums.OrderTransferStatus | null
+    transferBatchId: string | null
     createdAt: Date | null
   }
 
@@ -6021,6 +6509,12 @@ export namespace Prisma {
     manualNotes: string | null
     confirmedById: string | null
     confirmedAt: Date | null
+    districtId: string | null
+    districtAdminId: string | null
+    responsibleUserId: string | null
+    amountToTransfer: number | null
+    transferStatus: $Enums.OrderTransferStatus | null
+    transferBatchId: string | null
     createdAt: Date | null
   }
 
@@ -6051,6 +6545,12 @@ export namespace Prisma {
     manualNotes: number
     confirmedById: number
     confirmedAt: number
+    districtId: number
+    districtAdminId: number
+    responsibleUserId: number
+    amountToTransfer: number
+    transferStatus: number
+    transferBatchId: number
     createdAt: number
     _all: number
   }
@@ -6062,6 +6562,7 @@ export namespace Prisma {
     feeCents?: true
     netAmountCents?: true
     amountReceivedCents?: true
+    amountToTransfer?: true
   }
 
   export type OrderSumAggregateInputType = {
@@ -6070,6 +6571,7 @@ export namespace Prisma {
     feeCents?: true
     netAmountCents?: true
     amountReceivedCents?: true
+    amountToTransfer?: true
   }
 
   export type OrderMinAggregateInputType = {
@@ -6099,6 +6601,12 @@ export namespace Prisma {
     manualNotes?: true
     confirmedById?: true
     confirmedAt?: true
+    districtId?: true
+    districtAdminId?: true
+    responsibleUserId?: true
+    amountToTransfer?: true
+    transferStatus?: true
+    transferBatchId?: true
     createdAt?: true
   }
 
@@ -6129,6 +6637,12 @@ export namespace Prisma {
     manualNotes?: true
     confirmedById?: true
     confirmedAt?: true
+    districtId?: true
+    districtAdminId?: true
+    responsibleUserId?: true
+    amountToTransfer?: true
+    transferStatus?: true
+    transferBatchId?: true
     createdAt?: true
   }
 
@@ -6159,6 +6673,12 @@ export namespace Prisma {
     manualNotes?: true
     confirmedById?: true
     confirmedAt?: true
+    districtId?: true
+    districtAdminId?: true
+    responsibleUserId?: true
+    amountToTransfer?: true
+    transferStatus?: true
+    transferBatchId?: true
     createdAt?: true
     _all?: true
   }
@@ -6276,6 +6796,12 @@ export namespace Prisma {
     manualNotes: string | null
     confirmedById: string | null
     confirmedAt: Date | null
+    districtId: string | null
+    districtAdminId: string | null
+    responsibleUserId: string | null
+    amountToTransfer: number
+    transferStatus: $Enums.OrderTransferStatus | null
+    transferBatchId: string | null
     createdAt: Date
     _count: OrderCountAggregateOutputType | null
     _avg: OrderAvgAggregateOutputType | null
@@ -6325,6 +6851,12 @@ export namespace Prisma {
     manualNotes?: boolean
     confirmedById?: boolean
     confirmedAt?: boolean
+    districtId?: boolean
+    districtAdminId?: boolean
+    responsibleUserId?: boolean
+    amountToTransfer?: boolean
+    transferStatus?: boolean
+    transferBatchId?: boolean
     createdAt?: boolean
     event?: boolean | EventDefaultArgs<ExtArgs>
     pricingLot?: boolean | Order$pricingLotArgs<ExtArgs>
@@ -6334,6 +6866,10 @@ export namespace Prisma {
     items?: boolean | Order$itemsArgs<ExtArgs>
     serviceOrders?: boolean | Order$serviceOrdersArgs<ExtArgs>
     confirmedBy?: boolean | Order$confirmedByArgs<ExtArgs>
+    district?: boolean | Order$districtArgs<ExtArgs>
+    districtAdmin?: boolean | Order$districtAdminArgs<ExtArgs>
+    responsibleUser?: boolean | Order$responsibleUserArgs<ExtArgs>
+    transferBatch?: boolean | Order$transferBatchArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["order"]>
 
@@ -6365,6 +6901,12 @@ export namespace Prisma {
     manualNotes?: boolean
     confirmedById?: boolean
     confirmedAt?: boolean
+    districtId?: boolean
+    districtAdminId?: boolean
+    responsibleUserId?: boolean
+    amountToTransfer?: boolean
+    transferStatus?: boolean
+    transferBatchId?: boolean
     createdAt?: boolean
   }
 
@@ -6377,6 +6919,10 @@ export namespace Prisma {
     items?: boolean | Order$itemsArgs<ExtArgs>
     serviceOrders?: boolean | Order$serviceOrdersArgs<ExtArgs>
     confirmedBy?: boolean | Order$confirmedByArgs<ExtArgs>
+    district?: boolean | Order$districtArgs<ExtArgs>
+    districtAdmin?: boolean | Order$districtAdminArgs<ExtArgs>
+    responsibleUser?: boolean | Order$responsibleUserArgs<ExtArgs>
+    transferBatch?: boolean | Order$transferBatchArgs<ExtArgs>
     _count?: boolean | OrderCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -6391,6 +6937,10 @@ export namespace Prisma {
       items: Prisma.$OrderItemPayload<ExtArgs>[]
       serviceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
       confirmedBy: Prisma.$UserPayload<ExtArgs> | null
+      district: Prisma.$DistrictPayload<ExtArgs> | null
+      districtAdmin: Prisma.$UserPayload<ExtArgs> | null
+      responsibleUser: Prisma.$UserPayload<ExtArgs> | null
+      transferBatch: Prisma.$TransferPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -6419,6 +6969,12 @@ export namespace Prisma {
       manualNotes: string | null
       confirmedById: string | null
       confirmedAt: Date | null
+      districtId: string | null
+      districtAdminId: string | null
+      responsibleUserId: string | null
+      amountToTransfer: number
+      transferStatus: $Enums.OrderTransferStatus | null
+      transferBatchId: string | null
       createdAt: Date
     }, ExtArgs["result"]["order"]>
     composites: {}
@@ -6768,6 +7324,10 @@ export namespace Prisma {
     items<T extends Order$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Order$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany"> | Null>
     serviceOrders<T extends Order$serviceOrdersArgs<ExtArgs> = {}>(args?: Subset<T, Order$serviceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany"> | Null>
     confirmedBy<T extends Order$confirmedByArgs<ExtArgs> = {}>(args?: Subset<T, Order$confirmedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    district<T extends Order$districtArgs<ExtArgs> = {}>(args?: Subset<T, Order$districtArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    districtAdmin<T extends Order$districtAdminArgs<ExtArgs> = {}>(args?: Subset<T, Order$districtAdminArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    responsibleUser<T extends Order$responsibleUserArgs<ExtArgs> = {}>(args?: Subset<T, Order$responsibleUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    transferBatch<T extends Order$transferBatchArgs<ExtArgs> = {}>(args?: Subset<T, Order$transferBatchArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6823,6 +7383,12 @@ export namespace Prisma {
     readonly manualNotes: FieldRef<"Order", 'String'>
     readonly confirmedById: FieldRef<"Order", 'String'>
     readonly confirmedAt: FieldRef<"Order", 'DateTime'>
+    readonly districtId: FieldRef<"Order", 'String'>
+    readonly districtAdminId: FieldRef<"Order", 'String'>
+    readonly responsibleUserId: FieldRef<"Order", 'String'>
+    readonly amountToTransfer: FieldRef<"Order", 'Int'>
+    readonly transferStatus: FieldRef<"Order", 'OrderTransferStatus'>
+    readonly transferBatchId: FieldRef<"Order", 'String'>
     readonly createdAt: FieldRef<"Order", 'DateTime'>
   }
     
@@ -7253,6 +7819,66 @@ export namespace Prisma {
   }
 
   /**
+   * Order.district
+   */
+  export type Order$districtArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the District
+     */
+    select?: DistrictSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DistrictInclude<ExtArgs> | null
+    where?: DistrictWhereInput
+  }
+
+  /**
+   * Order.districtAdmin
+   */
+  export type Order$districtAdminArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Order.responsibleUser
+   */
+  export type Order$responsibleUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Order.transferBatch
+   */
+  export type Order$transferBatchArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    where?: TransferWhereInput
+  }
+
+  /**
    * Order without action
    */
   export type OrderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7300,6 +7926,7 @@ export namespace Prisma {
     priceCents: number | null
     districtId: string | null
     churchId: string | null
+    responsibleUserId: string | null
     photoUrl: string | null
     gender: string | null
     paymentMethod: string | null
@@ -7322,6 +7949,7 @@ export namespace Prisma {
     priceCents: number | null
     districtId: string | null
     churchId: string | null
+    responsibleUserId: string | null
     photoUrl: string | null
     gender: string | null
     paymentMethod: string | null
@@ -7344,6 +7972,7 @@ export namespace Prisma {
     priceCents: number
     districtId: number
     churchId: number
+    responsibleUserId: number
     photoUrl: number
     gender: number
     paymentMethod: number
@@ -7378,6 +8007,7 @@ export namespace Prisma {
     priceCents?: true
     districtId?: true
     churchId?: true
+    responsibleUserId?: true
     photoUrl?: true
     gender?: true
     paymentMethod?: true
@@ -7400,6 +8030,7 @@ export namespace Prisma {
     priceCents?: true
     districtId?: true
     churchId?: true
+    responsibleUserId?: true
     photoUrl?: true
     gender?: true
     paymentMethod?: true
@@ -7422,6 +8053,7 @@ export namespace Prisma {
     priceCents?: true
     districtId?: true
     churchId?: true
+    responsibleUserId?: true
     photoUrl?: true
     gender?: true
     paymentMethod?: true
@@ -7531,6 +8163,7 @@ export namespace Prisma {
     priceCents: number
     districtId: string
     churchId: string
+    responsibleUserId: string | null
     photoUrl: string | null
     gender: string | null
     paymentMethod: string | null
@@ -7572,6 +8205,7 @@ export namespace Prisma {
     priceCents?: boolean
     districtId?: boolean
     churchId?: boolean
+    responsibleUserId?: boolean
     photoUrl?: boolean
     gender?: boolean
     paymentMethod?: boolean
@@ -7587,6 +8221,7 @@ export namespace Prisma {
     event?: boolean | EventDefaultArgs<ExtArgs>
     ministry?: boolean | Registration$ministryArgs<ExtArgs>
     order?: boolean | OrderDefaultArgs<ExtArgs>
+    responsibleUser?: boolean | Registration$responsibleUserArgs<ExtArgs>
     orderItems?: boolean | Registration$orderItemsArgs<ExtArgs>
     _count?: boolean | RegistrationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
@@ -7603,6 +8238,7 @@ export namespace Prisma {
     priceCents?: boolean
     districtId?: boolean
     churchId?: boolean
+    responsibleUserId?: boolean
     photoUrl?: boolean
     gender?: boolean
     paymentMethod?: boolean
@@ -7621,6 +8257,7 @@ export namespace Prisma {
     event?: boolean | EventDefaultArgs<ExtArgs>
     ministry?: boolean | Registration$ministryArgs<ExtArgs>
     order?: boolean | OrderDefaultArgs<ExtArgs>
+    responsibleUser?: boolean | Registration$responsibleUserArgs<ExtArgs>
     orderItems?: boolean | Registration$orderItemsArgs<ExtArgs>
     _count?: boolean | RegistrationCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -7634,6 +8271,7 @@ export namespace Prisma {
       event: Prisma.$EventPayload<ExtArgs>
       ministry: Prisma.$MinistryPayload<ExtArgs> | null
       order: Prisma.$OrderPayload<ExtArgs>
+      responsibleUser: Prisma.$UserPayload<ExtArgs> | null
       orderItems: Prisma.$OrderItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -7647,6 +8285,7 @@ export namespace Prisma {
       priceCents: number
       districtId: string
       churchId: string
+      responsibleUserId: string | null
       photoUrl: string | null
       gender: string | null
       paymentMethod: string | null
@@ -8002,6 +8641,7 @@ export namespace Prisma {
     event<T extends EventDefaultArgs<ExtArgs> = {}>(args?: Subset<T, EventDefaultArgs<ExtArgs>>): Prisma__EventClient<$Result.GetResult<Prisma.$EventPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     ministry<T extends Registration$ministryArgs<ExtArgs> = {}>(args?: Subset<T, Registration$ministryArgs<ExtArgs>>): Prisma__MinistryClient<$Result.GetResult<Prisma.$MinistryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     order<T extends OrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrderDefaultArgs<ExtArgs>>): Prisma__OrderClient<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    responsibleUser<T extends Registration$responsibleUserArgs<ExtArgs> = {}>(args?: Subset<T, Registration$responsibleUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     orderItems<T extends Registration$orderItemsArgs<ExtArgs> = {}>(args?: Subset<T, Registration$orderItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -8042,6 +8682,7 @@ export namespace Prisma {
     readonly priceCents: FieldRef<"Registration", 'Int'>
     readonly districtId: FieldRef<"Registration", 'String'>
     readonly churchId: FieldRef<"Registration", 'String'>
+    readonly responsibleUserId: FieldRef<"Registration", 'String'>
     readonly photoUrl: FieldRef<"Registration", 'String'>
     readonly gender: FieldRef<"Registration", 'String'>
     readonly paymentMethod: FieldRef<"Registration", 'String'>
@@ -8382,6 +9023,21 @@ export namespace Prisma {
      */
     include?: MinistryInclude<ExtArgs> | null
     where?: MinistryWhereInput
+  }
+
+  /**
+   * Registration.responsibleUser
+   */
+  export type Registration$responsibleUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -11228,6 +11884,12 @@ export namespace Prisma {
     photoUrl: string | null
     profileId: string | null
     status: $Enums.UserStatus | null
+    pixType: $Enums.PixType | null
+    pixKey: string | null
+    pixOwnerName: string | null
+    pixOwnerDocument: string | null
+    pixBankName: string | null
+    pixStatus: $Enums.PixStatus | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -11247,6 +11909,12 @@ export namespace Prisma {
     photoUrl: string | null
     profileId: string | null
     status: $Enums.UserStatus | null
+    pixType: $Enums.PixType | null
+    pixKey: string | null
+    pixOwnerName: string | null
+    pixOwnerDocument: string | null
+    pixBankName: string | null
+    pixStatus: $Enums.PixStatus | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -11266,6 +11934,12 @@ export namespace Prisma {
     photoUrl: number
     profileId: number
     status: number
+    pixType: number
+    pixKey: number
+    pixOwnerName: number
+    pixOwnerDocument: number
+    pixBankName: number
+    pixStatus: number
     _all: number
   }
 
@@ -11287,6 +11961,12 @@ export namespace Prisma {
     photoUrl?: true
     profileId?: true
     status?: true
+    pixType?: true
+    pixKey?: true
+    pixOwnerName?: true
+    pixOwnerDocument?: true
+    pixBankName?: true
+    pixStatus?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -11306,6 +11986,12 @@ export namespace Prisma {
     photoUrl?: true
     profileId?: true
     status?: true
+    pixType?: true
+    pixKey?: true
+    pixOwnerName?: true
+    pixOwnerDocument?: true
+    pixBankName?: true
+    pixStatus?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -11325,6 +12011,12 @@ export namespace Prisma {
     photoUrl?: true
     profileId?: true
     status?: true
+    pixType?: true
+    pixKey?: true
+    pixOwnerName?: true
+    pixOwnerDocument?: true
+    pixBankName?: true
+    pixStatus?: true
     _all?: true
   }
 
@@ -11417,6 +12109,12 @@ export namespace Prisma {
     photoUrl: string | null
     profileId: string | null
     status: $Enums.UserStatus
+    pixType: $Enums.PixType | null
+    pixKey: string | null
+    pixOwnerName: string | null
+    pixOwnerDocument: string | null
+    pixBankName: string | null
+    pixStatus: $Enums.PixStatus
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
@@ -11453,6 +12151,12 @@ export namespace Prisma {
     photoUrl?: boolean
     profileId?: boolean
     status?: boolean
+    pixType?: boolean
+    pixKey?: boolean
+    pixOwnerName?: boolean
+    pixOwnerDocument?: boolean
+    pixBankName?: boolean
+    pixStatus?: boolean
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     eventsCreated?: boolean | User$eventsCreatedArgs<ExtArgs>
     ministries?: boolean | User$ministriesArgs<ExtArgs>
@@ -11465,6 +12169,12 @@ export namespace Prisma {
     confirmedManualOrders?: boolean | User$confirmedManualOrdersArgs<ExtArgs>
     confirmedOrderItems?: boolean | User$confirmedOrderItemsArgs<ExtArgs>
     issuedServiceOrders?: boolean | User$issuedServiceOrdersArgs<ExtArgs>
+    districtOrders?: boolean | User$districtOrdersArgs<ExtArgs>
+    responsibleOrders?: boolean | User$responsibleOrdersArgs<ExtArgs>
+    responsibleRegistrations?: boolean | User$responsibleRegistrationsArgs<ExtArgs>
+    transfersCreated?: boolean | User$transfersCreatedArgs<ExtArgs>
+    districtTransfers?: boolean | User$districtTransfersArgs<ExtArgs>
+    responsibleTransfers?: boolean | User$responsibleTransfersArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -11486,6 +12196,12 @@ export namespace Prisma {
     photoUrl?: boolean
     profileId?: boolean
     status?: boolean
+    pixType?: boolean
+    pixKey?: boolean
+    pixOwnerName?: boolean
+    pixOwnerDocument?: boolean
+    pixBankName?: boolean
+    pixStatus?: boolean
   }
 
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11501,6 +12217,12 @@ export namespace Prisma {
     confirmedManualOrders?: boolean | User$confirmedManualOrdersArgs<ExtArgs>
     confirmedOrderItems?: boolean | User$confirmedOrderItemsArgs<ExtArgs>
     issuedServiceOrders?: boolean | User$issuedServiceOrdersArgs<ExtArgs>
+    districtOrders?: boolean | User$districtOrdersArgs<ExtArgs>
+    responsibleOrders?: boolean | User$responsibleOrdersArgs<ExtArgs>
+    responsibleRegistrations?: boolean | User$responsibleRegistrationsArgs<ExtArgs>
+    transfersCreated?: boolean | User$transfersCreatedArgs<ExtArgs>
+    districtTransfers?: boolean | User$districtTransfersArgs<ExtArgs>
+    responsibleTransfers?: boolean | User$responsibleTransfersArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
 
@@ -11519,6 +12241,12 @@ export namespace Prisma {
       confirmedManualOrders: Prisma.$OrderPayload<ExtArgs>[]
       confirmedOrderItems: Prisma.$OrderItemPayload<ExtArgs>[]
       issuedServiceOrders: Prisma.$ServiceOrderPayload<ExtArgs>[]
+      districtOrders: Prisma.$OrderPayload<ExtArgs>[]
+      responsibleOrders: Prisma.$OrderPayload<ExtArgs>[]
+      responsibleRegistrations: Prisma.$RegistrationPayload<ExtArgs>[]
+      transfersCreated: Prisma.$TransferPayload<ExtArgs>[]
+      districtTransfers: Prisma.$TransferPayload<ExtArgs>[]
+      responsibleTransfers: Prisma.$TransferPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -11537,6 +12265,12 @@ export namespace Prisma {
       photoUrl: string | null
       profileId: string | null
       status: $Enums.UserStatus
+      pixType: $Enums.PixType | null
+      pixKey: string | null
+      pixOwnerName: string | null
+      pixOwnerDocument: string | null
+      pixBankName: string | null
+      pixStatus: $Enums.PixStatus
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -11889,6 +12623,12 @@ export namespace Prisma {
     confirmedManualOrders<T extends User$confirmedManualOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$confirmedManualOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
     confirmedOrderItems<T extends User$confirmedOrderItemsArgs<ExtArgs> = {}>(args?: Subset<T, User$confirmedOrderItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderItemPayload<ExtArgs>, T, "findMany"> | Null>
     issuedServiceOrders<T extends User$issuedServiceOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$issuedServiceOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiceOrderPayload<ExtArgs>, T, "findMany"> | Null>
+    districtOrders<T extends User$districtOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$districtOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
+    responsibleOrders<T extends User$responsibleOrdersArgs<ExtArgs> = {}>(args?: Subset<T, User$responsibleOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
+    responsibleRegistrations<T extends User$responsibleRegistrationsArgs<ExtArgs> = {}>(args?: Subset<T, User$responsibleRegistrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany"> | Null>
+    transfersCreated<T extends User$transfersCreatedArgs<ExtArgs> = {}>(args?: Subset<T, User$transfersCreatedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findMany"> | Null>
+    districtTransfers<T extends User$districtTransfersArgs<ExtArgs> = {}>(args?: Subset<T, User$districtTransfersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findMany"> | Null>
+    responsibleTransfers<T extends User$responsibleTransfersArgs<ExtArgs> = {}>(args?: Subset<T, User$responsibleTransfersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11934,6 +12674,12 @@ export namespace Prisma {
     readonly photoUrl: FieldRef<"User", 'String'>
     readonly profileId: FieldRef<"User", 'String'>
     readonly status: FieldRef<"User", 'UserStatus'>
+    readonly pixType: FieldRef<"User", 'PixType'>
+    readonly pixKey: FieldRef<"User", 'String'>
+    readonly pixOwnerName: FieldRef<"User", 'String'>
+    readonly pixOwnerDocument: FieldRef<"User", 'String'>
+    readonly pixBankName: FieldRef<"User", 'String'>
+    readonly pixStatus: FieldRef<"User", 'PixStatus'>
   }
     
 
@@ -12450,6 +13196,126 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ServiceOrderScalarFieldEnum | ServiceOrderScalarFieldEnum[]
+  }
+
+  /**
+   * User.districtOrders
+   */
+  export type User$districtOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
+  }
+
+  /**
+   * User.responsibleOrders
+   */
+  export type User$responsibleOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
+  }
+
+  /**
+   * User.responsibleRegistrations
+   */
+  export type User$responsibleRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Registration
+     */
+    select?: RegistrationSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    where?: RegistrationWhereInput
+    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
+    cursor?: RegistrationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+  }
+
+  /**
+   * User.transfersCreated
+   */
+  export type User$transfersCreatedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    where?: TransferWhereInput
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    cursor?: TransferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
+  }
+
+  /**
+   * User.districtTransfers
+   */
+  export type User$districtTransfersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    where?: TransferWhereInput
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    cursor?: TransferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
+  }
+
+  /**
+   * User.responsibleTransfers
+   */
+  export type User$responsibleTransfersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    where?: TransferWhereInput
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    cursor?: TransferWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
   }
 
   /**
@@ -21969,6 +22835,2055 @@ export namespace Prisma {
 
 
   /**
+   * Model Transfer
+   */
+
+  export type AggregateTransfer = {
+    _count: TransferCountAggregateOutputType | null
+    _avg: TransferAvgAggregateOutputType | null
+    _sum: TransferSumAggregateOutputType | null
+    _min: TransferMinAggregateOutputType | null
+    _max: TransferMaxAggregateOutputType | null
+  }
+
+  export type TransferAvgAggregateOutputType = {
+    amount: number | null
+  }
+
+  export type TransferSumAggregateOutputType = {
+    amount: number | null
+  }
+
+  export type TransferMinAggregateOutputType = {
+    id: string | null
+    districtId: string | null
+    districtAdminId: string | null
+    responsibleUserId: string | null
+    amount: number | null
+    pixType: $Enums.PixType | null
+    pixKey: string | null
+    pixOwnerName: string | null
+    pixOwnerDocument: string | null
+    pixBankName: string | null
+    mpTransferId: string | null
+    status: $Enums.TransferStatus | null
+    errorMessage: string | null
+    createdById: string | null
+    createdAt: Date | null
+  }
+
+  export type TransferMaxAggregateOutputType = {
+    id: string | null
+    districtId: string | null
+    districtAdminId: string | null
+    responsibleUserId: string | null
+    amount: number | null
+    pixType: $Enums.PixType | null
+    pixKey: string | null
+    pixOwnerName: string | null
+    pixOwnerDocument: string | null
+    pixBankName: string | null
+    mpTransferId: string | null
+    status: $Enums.TransferStatus | null
+    errorMessage: string | null
+    createdById: string | null
+    createdAt: Date | null
+  }
+
+  export type TransferCountAggregateOutputType = {
+    id: number
+    districtId: number
+    districtAdminId: number
+    responsibleUserId: number
+    amount: number
+    pixType: number
+    pixKey: number
+    pixOwnerName: number
+    pixOwnerDocument: number
+    pixBankName: number
+    orderIds: number
+    mpTransferId: number
+    status: number
+    errorMessage: number
+    createdById: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type TransferAvgAggregateInputType = {
+    amount?: true
+  }
+
+  export type TransferSumAggregateInputType = {
+    amount?: true
+  }
+
+  export type TransferMinAggregateInputType = {
+    id?: true
+    districtId?: true
+    districtAdminId?: true
+    responsibleUserId?: true
+    amount?: true
+    pixType?: true
+    pixKey?: true
+    pixOwnerName?: true
+    pixOwnerDocument?: true
+    pixBankName?: true
+    mpTransferId?: true
+    status?: true
+    errorMessage?: true
+    createdById?: true
+    createdAt?: true
+  }
+
+  export type TransferMaxAggregateInputType = {
+    id?: true
+    districtId?: true
+    districtAdminId?: true
+    responsibleUserId?: true
+    amount?: true
+    pixType?: true
+    pixKey?: true
+    pixOwnerName?: true
+    pixOwnerDocument?: true
+    pixBankName?: true
+    mpTransferId?: true
+    status?: true
+    errorMessage?: true
+    createdById?: true
+    createdAt?: true
+  }
+
+  export type TransferCountAggregateInputType = {
+    id?: true
+    districtId?: true
+    districtAdminId?: true
+    responsibleUserId?: true
+    amount?: true
+    pixType?: true
+    pixKey?: true
+    pixOwnerName?: true
+    pixOwnerDocument?: true
+    pixBankName?: true
+    orderIds?: true
+    mpTransferId?: true
+    status?: true
+    errorMessage?: true
+    createdById?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type TransferAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Transfer to aggregate.
+     */
+    where?: TransferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Transfers to fetch.
+     */
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TransferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Transfers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Transfers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Transfers
+    **/
+    _count?: true | TransferCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TransferAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TransferSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TransferMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TransferMaxAggregateInputType
+  }
+
+  export type GetTransferAggregateType<T extends TransferAggregateArgs> = {
+        [P in keyof T & keyof AggregateTransfer]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTransfer[P]>
+      : GetScalarType<T[P], AggregateTransfer[P]>
+  }
+
+
+
+
+  export type TransferGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransferWhereInput
+    orderBy?: TransferOrderByWithAggregationInput | TransferOrderByWithAggregationInput[]
+    by: TransferScalarFieldEnum[] | TransferScalarFieldEnum
+    having?: TransferScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TransferCountAggregateInputType | true
+    _avg?: TransferAvgAggregateInputType
+    _sum?: TransferSumAggregateInputType
+    _min?: TransferMinAggregateInputType
+    _max?: TransferMaxAggregateInputType
+  }
+
+  export type TransferGroupByOutputType = {
+    id: string
+    districtId: string | null
+    districtAdminId: string | null
+    responsibleUserId: string | null
+    amount: number
+    pixType: $Enums.PixType | null
+    pixKey: string | null
+    pixOwnerName: string | null
+    pixOwnerDocument: string | null
+    pixBankName: string | null
+    orderIds: JsonValue
+    mpTransferId: string | null
+    status: $Enums.TransferStatus
+    errorMessage: string | null
+    createdById: string | null
+    createdAt: Date
+    _count: TransferCountAggregateOutputType | null
+    _avg: TransferAvgAggregateOutputType | null
+    _sum: TransferSumAggregateOutputType | null
+    _min: TransferMinAggregateOutputType | null
+    _max: TransferMaxAggregateOutputType | null
+  }
+
+  type GetTransferGroupByPayload<T extends TransferGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TransferGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TransferGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TransferGroupByOutputType[P]>
+            : GetScalarType<T[P], TransferGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TransferSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    districtId?: boolean
+    districtAdminId?: boolean
+    responsibleUserId?: boolean
+    amount?: boolean
+    pixType?: boolean
+    pixKey?: boolean
+    pixOwnerName?: boolean
+    pixOwnerDocument?: boolean
+    pixBankName?: boolean
+    orderIds?: boolean
+    mpTransferId?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    createdById?: boolean
+    createdAt?: boolean
+    district?: boolean | Transfer$districtArgs<ExtArgs>
+    districtAdmin?: boolean | Transfer$districtAdminArgs<ExtArgs>
+    responsibleUser?: boolean | Transfer$responsibleUserArgs<ExtArgs>
+    createdBy?: boolean | Transfer$createdByArgs<ExtArgs>
+    orders?: boolean | Transfer$ordersArgs<ExtArgs>
+    _count?: boolean | TransferCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["transfer"]>
+
+
+  export type TransferSelectScalar = {
+    id?: boolean
+    districtId?: boolean
+    districtAdminId?: boolean
+    responsibleUserId?: boolean
+    amount?: boolean
+    pixType?: boolean
+    pixKey?: boolean
+    pixOwnerName?: boolean
+    pixOwnerDocument?: boolean
+    pixBankName?: boolean
+    orderIds?: boolean
+    mpTransferId?: boolean
+    status?: boolean
+    errorMessage?: boolean
+    createdById?: boolean
+    createdAt?: boolean
+  }
+
+  export type TransferInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    district?: boolean | Transfer$districtArgs<ExtArgs>
+    districtAdmin?: boolean | Transfer$districtAdminArgs<ExtArgs>
+    responsibleUser?: boolean | Transfer$responsibleUserArgs<ExtArgs>
+    createdBy?: boolean | Transfer$createdByArgs<ExtArgs>
+    orders?: boolean | Transfer$ordersArgs<ExtArgs>
+    _count?: boolean | TransferCountOutputTypeDefaultArgs<ExtArgs>
+  }
+
+  export type $TransferPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Transfer"
+    objects: {
+      district: Prisma.$DistrictPayload<ExtArgs> | null
+      districtAdmin: Prisma.$UserPayload<ExtArgs> | null
+      responsibleUser: Prisma.$UserPayload<ExtArgs> | null
+      createdBy: Prisma.$UserPayload<ExtArgs> | null
+      orders: Prisma.$OrderPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      districtId: string | null
+      districtAdminId: string | null
+      responsibleUserId: string | null
+      amount: number
+      pixType: $Enums.PixType | null
+      pixKey: string | null
+      pixOwnerName: string | null
+      pixOwnerDocument: string | null
+      pixBankName: string | null
+      orderIds: Prisma.JsonValue
+      mpTransferId: string | null
+      status: $Enums.TransferStatus
+      errorMessage: string | null
+      createdById: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["transfer"]>
+    composites: {}
+  }
+
+  type TransferGetPayload<S extends boolean | null | undefined | TransferDefaultArgs> = $Result.GetResult<Prisma.$TransferPayload, S>
+
+  type TransferCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<TransferFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: TransferCountAggregateInputType | true
+    }
+
+  export interface TransferDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Transfer'], meta: { name: 'Transfer' } }
+    /**
+     * Find zero or one Transfer that matches the filter.
+     * @param {TransferFindUniqueArgs} args - Arguments to find a Transfer
+     * @example
+     * // Get one Transfer
+     * const transfer = await prisma.transfer.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TransferFindUniqueArgs>(args: SelectSubset<T, TransferFindUniqueArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Transfer that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {TransferFindUniqueOrThrowArgs} args - Arguments to find a Transfer
+     * @example
+     * // Get one Transfer
+     * const transfer = await prisma.transfer.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TransferFindUniqueOrThrowArgs>(args: SelectSubset<T, TransferFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Transfer that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferFindFirstArgs} args - Arguments to find a Transfer
+     * @example
+     * // Get one Transfer
+     * const transfer = await prisma.transfer.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TransferFindFirstArgs>(args?: SelectSubset<T, TransferFindFirstArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Transfer that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferFindFirstOrThrowArgs} args - Arguments to find a Transfer
+     * @example
+     * // Get one Transfer
+     * const transfer = await prisma.transfer.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TransferFindFirstOrThrowArgs>(args?: SelectSubset<T, TransferFindFirstOrThrowArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Transfers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Transfers
+     * const transfers = await prisma.transfer.findMany()
+     * 
+     * // Get first 10 Transfers
+     * const transfers = await prisma.transfer.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const transferWithIdOnly = await prisma.transfer.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TransferFindManyArgs>(args?: SelectSubset<T, TransferFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Transfer.
+     * @param {TransferCreateArgs} args - Arguments to create a Transfer.
+     * @example
+     * // Create one Transfer
+     * const Transfer = await prisma.transfer.create({
+     *   data: {
+     *     // ... data to create a Transfer
+     *   }
+     * })
+     * 
+     */
+    create<T extends TransferCreateArgs>(args: SelectSubset<T, TransferCreateArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Transfers.
+     * @param {TransferCreateManyArgs} args - Arguments to create many Transfers.
+     * @example
+     * // Create many Transfers
+     * const transfer = await prisma.transfer.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TransferCreateManyArgs>(args?: SelectSubset<T, TransferCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a Transfer.
+     * @param {TransferDeleteArgs} args - Arguments to delete one Transfer.
+     * @example
+     * // Delete one Transfer
+     * const Transfer = await prisma.transfer.delete({
+     *   where: {
+     *     // ... filter to delete one Transfer
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TransferDeleteArgs>(args: SelectSubset<T, TransferDeleteArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Transfer.
+     * @param {TransferUpdateArgs} args - Arguments to update one Transfer.
+     * @example
+     * // Update one Transfer
+     * const transfer = await prisma.transfer.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TransferUpdateArgs>(args: SelectSubset<T, TransferUpdateArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Transfers.
+     * @param {TransferDeleteManyArgs} args - Arguments to filter Transfers to delete.
+     * @example
+     * // Delete a few Transfers
+     * const { count } = await prisma.transfer.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TransferDeleteManyArgs>(args?: SelectSubset<T, TransferDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Transfers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Transfers
+     * const transfer = await prisma.transfer.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TransferUpdateManyArgs>(args: SelectSubset<T, TransferUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Transfer.
+     * @param {TransferUpsertArgs} args - Arguments to update or create a Transfer.
+     * @example
+     * // Update or create a Transfer
+     * const transfer = await prisma.transfer.upsert({
+     *   create: {
+     *     // ... data to create a Transfer
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Transfer we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TransferUpsertArgs>(args: SelectSubset<T, TransferUpsertArgs<ExtArgs>>): Prisma__TransferClient<$Result.GetResult<Prisma.$TransferPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Transfers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferCountArgs} args - Arguments to filter Transfers to count.
+     * @example
+     * // Count the number of Transfers
+     * const count = await prisma.transfer.count({
+     *   where: {
+     *     // ... the filter for the Transfers we want to count
+     *   }
+     * })
+    **/
+    count<T extends TransferCountArgs>(
+      args?: Subset<T, TransferCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TransferCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Transfer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TransferAggregateArgs>(args: Subset<T, TransferAggregateArgs>): Prisma.PrismaPromise<GetTransferAggregateType<T>>
+
+    /**
+     * Group by Transfer.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TransferGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TransferGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TransferGroupByArgs['orderBy'] }
+        : { orderBy?: TransferGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TransferGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTransferGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Transfer model
+   */
+  readonly fields: TransferFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Transfer.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TransferClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    district<T extends Transfer$districtArgs<ExtArgs> = {}>(args?: Subset<T, Transfer$districtArgs<ExtArgs>>): Prisma__DistrictClient<$Result.GetResult<Prisma.$DistrictPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    districtAdmin<T extends Transfer$districtAdminArgs<ExtArgs> = {}>(args?: Subset<T, Transfer$districtAdminArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    responsibleUser<T extends Transfer$responsibleUserArgs<ExtArgs> = {}>(args?: Subset<T, Transfer$responsibleUserArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    createdBy<T extends Transfer$createdByArgs<ExtArgs> = {}>(args?: Subset<T, Transfer$createdByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    orders<T extends Transfer$ordersArgs<ExtArgs> = {}>(args?: Subset<T, Transfer$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany"> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Transfer model
+   */ 
+  interface TransferFieldRefs {
+    readonly id: FieldRef<"Transfer", 'String'>
+    readonly districtId: FieldRef<"Transfer", 'String'>
+    readonly districtAdminId: FieldRef<"Transfer", 'String'>
+    readonly responsibleUserId: FieldRef<"Transfer", 'String'>
+    readonly amount: FieldRef<"Transfer", 'Int'>
+    readonly pixType: FieldRef<"Transfer", 'PixType'>
+    readonly pixKey: FieldRef<"Transfer", 'String'>
+    readonly pixOwnerName: FieldRef<"Transfer", 'String'>
+    readonly pixOwnerDocument: FieldRef<"Transfer", 'String'>
+    readonly pixBankName: FieldRef<"Transfer", 'String'>
+    readonly orderIds: FieldRef<"Transfer", 'Json'>
+    readonly mpTransferId: FieldRef<"Transfer", 'String'>
+    readonly status: FieldRef<"Transfer", 'TransferStatus'>
+    readonly errorMessage: FieldRef<"Transfer", 'String'>
+    readonly createdById: FieldRef<"Transfer", 'String'>
+    readonly createdAt: FieldRef<"Transfer", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Transfer findUnique
+   */
+  export type TransferFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * Filter, which Transfer to fetch.
+     */
+    where: TransferWhereUniqueInput
+  }
+
+  /**
+   * Transfer findUniqueOrThrow
+   */
+  export type TransferFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * Filter, which Transfer to fetch.
+     */
+    where: TransferWhereUniqueInput
+  }
+
+  /**
+   * Transfer findFirst
+   */
+  export type TransferFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * Filter, which Transfer to fetch.
+     */
+    where?: TransferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Transfers to fetch.
+     */
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Transfers.
+     */
+    cursor?: TransferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Transfers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Transfers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Transfers.
+     */
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
+  }
+
+  /**
+   * Transfer findFirstOrThrow
+   */
+  export type TransferFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * Filter, which Transfer to fetch.
+     */
+    where?: TransferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Transfers to fetch.
+     */
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Transfers.
+     */
+    cursor?: TransferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Transfers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Transfers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Transfers.
+     */
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
+  }
+
+  /**
+   * Transfer findMany
+   */
+  export type TransferFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * Filter, which Transfers to fetch.
+     */
+    where?: TransferWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Transfers to fetch.
+     */
+    orderBy?: TransferOrderByWithRelationInput | TransferOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Transfers.
+     */
+    cursor?: TransferWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Transfers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Transfers.
+     */
+    skip?: number
+    distinct?: TransferScalarFieldEnum | TransferScalarFieldEnum[]
+  }
+
+  /**
+   * Transfer create
+   */
+  export type TransferCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Transfer.
+     */
+    data: XOR<TransferCreateInput, TransferUncheckedCreateInput>
+  }
+
+  /**
+   * Transfer createMany
+   */
+  export type TransferCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Transfers.
+     */
+    data: TransferCreateManyInput | TransferCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Transfer update
+   */
+  export type TransferUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Transfer.
+     */
+    data: XOR<TransferUpdateInput, TransferUncheckedUpdateInput>
+    /**
+     * Choose, which Transfer to update.
+     */
+    where: TransferWhereUniqueInput
+  }
+
+  /**
+   * Transfer updateMany
+   */
+  export type TransferUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Transfers.
+     */
+    data: XOR<TransferUpdateManyMutationInput, TransferUncheckedUpdateManyInput>
+    /**
+     * Filter which Transfers to update
+     */
+    where?: TransferWhereInput
+  }
+
+  /**
+   * Transfer upsert
+   */
+  export type TransferUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Transfer to update in case it exists.
+     */
+    where: TransferWhereUniqueInput
+    /**
+     * In case the Transfer found by the `where` argument doesn't exist, create a new Transfer with this data.
+     */
+    create: XOR<TransferCreateInput, TransferUncheckedCreateInput>
+    /**
+     * In case the Transfer was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TransferUpdateInput, TransferUncheckedUpdateInput>
+  }
+
+  /**
+   * Transfer delete
+   */
+  export type TransferDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+    /**
+     * Filter which Transfer to delete.
+     */
+    where: TransferWhereUniqueInput
+  }
+
+  /**
+   * Transfer deleteMany
+   */
+  export type TransferDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Transfers to delete
+     */
+    where?: TransferWhereInput
+  }
+
+  /**
+   * Transfer.district
+   */
+  export type Transfer$districtArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the District
+     */
+    select?: DistrictSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DistrictInclude<ExtArgs> | null
+    where?: DistrictWhereInput
+  }
+
+  /**
+   * Transfer.districtAdmin
+   */
+  export type Transfer$districtAdminArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Transfer.responsibleUser
+   */
+  export type Transfer$responsibleUserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Transfer.createdBy
+   */
+  export type Transfer$createdByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Transfer.orders
+   */
+  export type Transfer$ordersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Order
+     */
+    select?: OrderSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrderInclude<ExtArgs> | null
+    where?: OrderWhereInput
+    orderBy?: OrderOrderByWithRelationInput | OrderOrderByWithRelationInput[]
+    cursor?: OrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrderScalarFieldEnum | OrderScalarFieldEnum[]
+  }
+
+  /**
+   * Transfer without action
+   */
+  export type TransferDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transfer
+     */
+    select?: TransferSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransferInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PixGatewayConfig
+   */
+
+  export type AggregatePixGatewayConfig = {
+    _count: PixGatewayConfigCountAggregateOutputType | null
+    _avg: PixGatewayConfigAvgAggregateOutputType | null
+    _sum: PixGatewayConfigSumAggregateOutputType | null
+    _min: PixGatewayConfigMinAggregateOutputType | null
+    _max: PixGatewayConfigMaxAggregateOutputType | null
+  }
+
+  export type PixGatewayConfigAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type PixGatewayConfigSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type PixGatewayConfigMinAggregateOutputType = {
+    id: number | null
+    provider: string | null
+    clientId: string | null
+    clientSecret: string | null
+    apiKey: string | null
+    webhookUrl: string | null
+    certificatePath: string | null
+    active: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PixGatewayConfigMaxAggregateOutputType = {
+    id: number | null
+    provider: string | null
+    clientId: string | null
+    clientSecret: string | null
+    apiKey: string | null
+    webhookUrl: string | null
+    certificatePath: string | null
+    active: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PixGatewayConfigCountAggregateOutputType = {
+    id: number
+    provider: number
+    clientId: number
+    clientSecret: number
+    apiKey: number
+    webhookUrl: number
+    certificatePath: number
+    active: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PixGatewayConfigAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type PixGatewayConfigSumAggregateInputType = {
+    id?: true
+  }
+
+  export type PixGatewayConfigMinAggregateInputType = {
+    id?: true
+    provider?: true
+    clientId?: true
+    clientSecret?: true
+    apiKey?: true
+    webhookUrl?: true
+    certificatePath?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PixGatewayConfigMaxAggregateInputType = {
+    id?: true
+    provider?: true
+    clientId?: true
+    clientSecret?: true
+    apiKey?: true
+    webhookUrl?: true
+    certificatePath?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PixGatewayConfigCountAggregateInputType = {
+    id?: true
+    provider?: true
+    clientId?: true
+    clientSecret?: true
+    apiKey?: true
+    webhookUrl?: true
+    certificatePath?: true
+    active?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PixGatewayConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PixGatewayConfig to aggregate.
+     */
+    where?: PixGatewayConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PixGatewayConfigs to fetch.
+     */
+    orderBy?: PixGatewayConfigOrderByWithRelationInput | PixGatewayConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PixGatewayConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PixGatewayConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PixGatewayConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PixGatewayConfigs
+    **/
+    _count?: true | PixGatewayConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PixGatewayConfigAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PixGatewayConfigSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PixGatewayConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PixGatewayConfigMaxAggregateInputType
+  }
+
+  export type GetPixGatewayConfigAggregateType<T extends PixGatewayConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregatePixGatewayConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePixGatewayConfig[P]>
+      : GetScalarType<T[P], AggregatePixGatewayConfig[P]>
+  }
+
+
+
+
+  export type PixGatewayConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PixGatewayConfigWhereInput
+    orderBy?: PixGatewayConfigOrderByWithAggregationInput | PixGatewayConfigOrderByWithAggregationInput[]
+    by: PixGatewayConfigScalarFieldEnum[] | PixGatewayConfigScalarFieldEnum
+    having?: PixGatewayConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PixGatewayConfigCountAggregateInputType | true
+    _avg?: PixGatewayConfigAvgAggregateInputType
+    _sum?: PixGatewayConfigSumAggregateInputType
+    _min?: PixGatewayConfigMinAggregateInputType
+    _max?: PixGatewayConfigMaxAggregateInputType
+  }
+
+  export type PixGatewayConfigGroupByOutputType = {
+    id: number
+    provider: string
+    clientId: string | null
+    clientSecret: string | null
+    apiKey: string | null
+    webhookUrl: string | null
+    certificatePath: string | null
+    active: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: PixGatewayConfigCountAggregateOutputType | null
+    _avg: PixGatewayConfigAvgAggregateOutputType | null
+    _sum: PixGatewayConfigSumAggregateOutputType | null
+    _min: PixGatewayConfigMinAggregateOutputType | null
+    _max: PixGatewayConfigMaxAggregateOutputType | null
+  }
+
+  type GetPixGatewayConfigGroupByPayload<T extends PixGatewayConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PixGatewayConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PixGatewayConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PixGatewayConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], PixGatewayConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PixGatewayConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    provider?: boolean
+    clientId?: boolean
+    clientSecret?: boolean
+    apiKey?: boolean
+    webhookUrl?: boolean
+    certificatePath?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["pixGatewayConfig"]>
+
+
+  export type PixGatewayConfigSelectScalar = {
+    id?: boolean
+    provider?: boolean
+    clientId?: boolean
+    clientSecret?: boolean
+    apiKey?: boolean
+    webhookUrl?: boolean
+    certificatePath?: boolean
+    active?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+
+  export type $PixGatewayConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PixGatewayConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      provider: string
+      clientId: string | null
+      clientSecret: string | null
+      apiKey: string | null
+      webhookUrl: string | null
+      certificatePath: string | null
+      active: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["pixGatewayConfig"]>
+    composites: {}
+  }
+
+  type PixGatewayConfigGetPayload<S extends boolean | null | undefined | PixGatewayConfigDefaultArgs> = $Result.GetResult<Prisma.$PixGatewayConfigPayload, S>
+
+  type PixGatewayConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<PixGatewayConfigFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: PixGatewayConfigCountAggregateInputType | true
+    }
+
+  export interface PixGatewayConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PixGatewayConfig'], meta: { name: 'PixGatewayConfig' } }
+    /**
+     * Find zero or one PixGatewayConfig that matches the filter.
+     * @param {PixGatewayConfigFindUniqueArgs} args - Arguments to find a PixGatewayConfig
+     * @example
+     * // Get one PixGatewayConfig
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PixGatewayConfigFindUniqueArgs>(args: SelectSubset<T, PixGatewayConfigFindUniqueArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one PixGatewayConfig that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {PixGatewayConfigFindUniqueOrThrowArgs} args - Arguments to find a PixGatewayConfig
+     * @example
+     * // Get one PixGatewayConfig
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PixGatewayConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, PixGatewayConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first PixGatewayConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigFindFirstArgs} args - Arguments to find a PixGatewayConfig
+     * @example
+     * // Get one PixGatewayConfig
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PixGatewayConfigFindFirstArgs>(args?: SelectSubset<T, PixGatewayConfigFindFirstArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first PixGatewayConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigFindFirstOrThrowArgs} args - Arguments to find a PixGatewayConfig
+     * @example
+     * // Get one PixGatewayConfig
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PixGatewayConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, PixGatewayConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more PixGatewayConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PixGatewayConfigs
+     * const pixGatewayConfigs = await prisma.pixGatewayConfig.findMany()
+     * 
+     * // Get first 10 PixGatewayConfigs
+     * const pixGatewayConfigs = await prisma.pixGatewayConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const pixGatewayConfigWithIdOnly = await prisma.pixGatewayConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PixGatewayConfigFindManyArgs>(args?: SelectSubset<T, PixGatewayConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a PixGatewayConfig.
+     * @param {PixGatewayConfigCreateArgs} args - Arguments to create a PixGatewayConfig.
+     * @example
+     * // Create one PixGatewayConfig
+     * const PixGatewayConfig = await prisma.pixGatewayConfig.create({
+     *   data: {
+     *     // ... data to create a PixGatewayConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends PixGatewayConfigCreateArgs>(args: SelectSubset<T, PixGatewayConfigCreateArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many PixGatewayConfigs.
+     * @param {PixGatewayConfigCreateManyArgs} args - Arguments to create many PixGatewayConfigs.
+     * @example
+     * // Create many PixGatewayConfigs
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PixGatewayConfigCreateManyArgs>(args?: SelectSubset<T, PixGatewayConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a PixGatewayConfig.
+     * @param {PixGatewayConfigDeleteArgs} args - Arguments to delete one PixGatewayConfig.
+     * @example
+     * // Delete one PixGatewayConfig
+     * const PixGatewayConfig = await prisma.pixGatewayConfig.delete({
+     *   where: {
+     *     // ... filter to delete one PixGatewayConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PixGatewayConfigDeleteArgs>(args: SelectSubset<T, PixGatewayConfigDeleteArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one PixGatewayConfig.
+     * @param {PixGatewayConfigUpdateArgs} args - Arguments to update one PixGatewayConfig.
+     * @example
+     * // Update one PixGatewayConfig
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PixGatewayConfigUpdateArgs>(args: SelectSubset<T, PixGatewayConfigUpdateArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more PixGatewayConfigs.
+     * @param {PixGatewayConfigDeleteManyArgs} args - Arguments to filter PixGatewayConfigs to delete.
+     * @example
+     * // Delete a few PixGatewayConfigs
+     * const { count } = await prisma.pixGatewayConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PixGatewayConfigDeleteManyArgs>(args?: SelectSubset<T, PixGatewayConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PixGatewayConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PixGatewayConfigs
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PixGatewayConfigUpdateManyArgs>(args: SelectSubset<T, PixGatewayConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PixGatewayConfig.
+     * @param {PixGatewayConfigUpsertArgs} args - Arguments to update or create a PixGatewayConfig.
+     * @example
+     * // Update or create a PixGatewayConfig
+     * const pixGatewayConfig = await prisma.pixGatewayConfig.upsert({
+     *   create: {
+     *     // ... data to create a PixGatewayConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PixGatewayConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PixGatewayConfigUpsertArgs>(args: SelectSubset<T, PixGatewayConfigUpsertArgs<ExtArgs>>): Prisma__PixGatewayConfigClient<$Result.GetResult<Prisma.$PixGatewayConfigPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of PixGatewayConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigCountArgs} args - Arguments to filter PixGatewayConfigs to count.
+     * @example
+     * // Count the number of PixGatewayConfigs
+     * const count = await prisma.pixGatewayConfig.count({
+     *   where: {
+     *     // ... the filter for the PixGatewayConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends PixGatewayConfigCountArgs>(
+      args?: Subset<T, PixGatewayConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PixGatewayConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PixGatewayConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PixGatewayConfigAggregateArgs>(args: Subset<T, PixGatewayConfigAggregateArgs>): Prisma.PrismaPromise<GetPixGatewayConfigAggregateType<T>>
+
+    /**
+     * Group by PixGatewayConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PixGatewayConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PixGatewayConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PixGatewayConfigGroupByArgs['orderBy'] }
+        : { orderBy?: PixGatewayConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PixGatewayConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPixGatewayConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PixGatewayConfig model
+   */
+  readonly fields: PixGatewayConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PixGatewayConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PixGatewayConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PixGatewayConfig model
+   */ 
+  interface PixGatewayConfigFieldRefs {
+    readonly id: FieldRef<"PixGatewayConfig", 'Int'>
+    readonly provider: FieldRef<"PixGatewayConfig", 'String'>
+    readonly clientId: FieldRef<"PixGatewayConfig", 'String'>
+    readonly clientSecret: FieldRef<"PixGatewayConfig", 'String'>
+    readonly apiKey: FieldRef<"PixGatewayConfig", 'String'>
+    readonly webhookUrl: FieldRef<"PixGatewayConfig", 'String'>
+    readonly certificatePath: FieldRef<"PixGatewayConfig", 'String'>
+    readonly active: FieldRef<"PixGatewayConfig", 'Boolean'>
+    readonly createdAt: FieldRef<"PixGatewayConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"PixGatewayConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PixGatewayConfig findUnique
+   */
+  export type PixGatewayConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PixGatewayConfig to fetch.
+     */
+    where: PixGatewayConfigWhereUniqueInput
+  }
+
+  /**
+   * PixGatewayConfig findUniqueOrThrow
+   */
+  export type PixGatewayConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PixGatewayConfig to fetch.
+     */
+    where: PixGatewayConfigWhereUniqueInput
+  }
+
+  /**
+   * PixGatewayConfig findFirst
+   */
+  export type PixGatewayConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PixGatewayConfig to fetch.
+     */
+    where?: PixGatewayConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PixGatewayConfigs to fetch.
+     */
+    orderBy?: PixGatewayConfigOrderByWithRelationInput | PixGatewayConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PixGatewayConfigs.
+     */
+    cursor?: PixGatewayConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PixGatewayConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PixGatewayConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PixGatewayConfigs.
+     */
+    distinct?: PixGatewayConfigScalarFieldEnum | PixGatewayConfigScalarFieldEnum[]
+  }
+
+  /**
+   * PixGatewayConfig findFirstOrThrow
+   */
+  export type PixGatewayConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PixGatewayConfig to fetch.
+     */
+    where?: PixGatewayConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PixGatewayConfigs to fetch.
+     */
+    orderBy?: PixGatewayConfigOrderByWithRelationInput | PixGatewayConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PixGatewayConfigs.
+     */
+    cursor?: PixGatewayConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PixGatewayConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PixGatewayConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PixGatewayConfigs.
+     */
+    distinct?: PixGatewayConfigScalarFieldEnum | PixGatewayConfigScalarFieldEnum[]
+  }
+
+  /**
+   * PixGatewayConfig findMany
+   */
+  export type PixGatewayConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * Filter, which PixGatewayConfigs to fetch.
+     */
+    where?: PixGatewayConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PixGatewayConfigs to fetch.
+     */
+    orderBy?: PixGatewayConfigOrderByWithRelationInput | PixGatewayConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PixGatewayConfigs.
+     */
+    cursor?: PixGatewayConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PixGatewayConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PixGatewayConfigs.
+     */
+    skip?: number
+    distinct?: PixGatewayConfigScalarFieldEnum | PixGatewayConfigScalarFieldEnum[]
+  }
+
+  /**
+   * PixGatewayConfig create
+   */
+  export type PixGatewayConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * The data needed to create a PixGatewayConfig.
+     */
+    data: XOR<PixGatewayConfigCreateInput, PixGatewayConfigUncheckedCreateInput>
+  }
+
+  /**
+   * PixGatewayConfig createMany
+   */
+  export type PixGatewayConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PixGatewayConfigs.
+     */
+    data: PixGatewayConfigCreateManyInput | PixGatewayConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PixGatewayConfig update
+   */
+  export type PixGatewayConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * The data needed to update a PixGatewayConfig.
+     */
+    data: XOR<PixGatewayConfigUpdateInput, PixGatewayConfigUncheckedUpdateInput>
+    /**
+     * Choose, which PixGatewayConfig to update.
+     */
+    where: PixGatewayConfigWhereUniqueInput
+  }
+
+  /**
+   * PixGatewayConfig updateMany
+   */
+  export type PixGatewayConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PixGatewayConfigs.
+     */
+    data: XOR<PixGatewayConfigUpdateManyMutationInput, PixGatewayConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which PixGatewayConfigs to update
+     */
+    where?: PixGatewayConfigWhereInput
+  }
+
+  /**
+   * PixGatewayConfig upsert
+   */
+  export type PixGatewayConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * The filter to search for the PixGatewayConfig to update in case it exists.
+     */
+    where: PixGatewayConfigWhereUniqueInput
+    /**
+     * In case the PixGatewayConfig found by the `where` argument doesn't exist, create a new PixGatewayConfig with this data.
+     */
+    create: XOR<PixGatewayConfigCreateInput, PixGatewayConfigUncheckedCreateInput>
+    /**
+     * In case the PixGatewayConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PixGatewayConfigUpdateInput, PixGatewayConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * PixGatewayConfig delete
+   */
+  export type PixGatewayConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+    /**
+     * Filter which PixGatewayConfig to delete.
+     */
+    where: PixGatewayConfigWhereUniqueInput
+  }
+
+  /**
+   * PixGatewayConfig deleteMany
+   */
+  export type PixGatewayConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PixGatewayConfigs to delete
+     */
+    where?: PixGatewayConfigWhereInput
+  }
+
+  /**
+   * PixGatewayConfig without action
+   */
+  export type PixGatewayConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PixGatewayConfig
+     */
+    select?: PixGatewayConfigSelect<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -22025,7 +24940,9 @@ export namespace Prisma {
     pendingPaymentValueRule: 'pendingPaymentValueRule',
     createdAt: 'createdAt',
     ministryId: 'ministryId',
-    createdById: 'createdById'
+    createdById: 'createdById',
+    districtId: 'districtId',
+    churchId: 'churchId'
   };
 
   export type EventScalarFieldEnum = (typeof EventScalarFieldEnum)[keyof typeof EventScalarFieldEnum]
@@ -22058,6 +24975,12 @@ export namespace Prisma {
     manualNotes: 'manualNotes',
     confirmedById: 'confirmedById',
     confirmedAt: 'confirmedAt',
+    districtId: 'districtId',
+    districtAdminId: 'districtAdminId',
+    responsibleUserId: 'responsibleUserId',
+    amountToTransfer: 'amountToTransfer',
+    transferStatus: 'transferStatus',
+    transferBatchId: 'transferBatchId',
     createdAt: 'createdAt'
   };
 
@@ -22075,6 +24998,7 @@ export namespace Prisma {
     priceCents: 'priceCents',
     districtId: 'districtId',
     churchId: 'churchId',
+    responsibleUserId: 'responsibleUserId',
     photoUrl: 'photoUrl',
     gender: 'gender',
     paymentMethod: 'paymentMethod',
@@ -22145,7 +25069,13 @@ export namespace Prisma {
     phone: 'phone',
     photoUrl: 'photoUrl',
     profileId: 'profileId',
-    status: 'status'
+    status: 'status',
+    pixType: 'pixType',
+    pixKey: 'pixKey',
+    pixOwnerName: 'pixOwnerName',
+    pixOwnerDocument: 'pixOwnerDocument',
+    pixBankName: 'pixBankName',
+    pixStatus: 'pixStatus'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -22293,6 +25223,44 @@ export namespace Prisma {
   export type ServiceOrderScalarFieldEnum = (typeof ServiceOrderScalarFieldEnum)[keyof typeof ServiceOrderScalarFieldEnum]
 
 
+  export const TransferScalarFieldEnum: {
+    id: 'id',
+    districtId: 'districtId',
+    districtAdminId: 'districtAdminId',
+    responsibleUserId: 'responsibleUserId',
+    amount: 'amount',
+    pixType: 'pixType',
+    pixKey: 'pixKey',
+    pixOwnerName: 'pixOwnerName',
+    pixOwnerDocument: 'pixOwnerDocument',
+    pixBankName: 'pixBankName',
+    orderIds: 'orderIds',
+    mpTransferId: 'mpTransferId',
+    status: 'status',
+    errorMessage: 'errorMessage',
+    createdById: 'createdById',
+    createdAt: 'createdAt'
+  };
+
+  export type TransferScalarFieldEnum = (typeof TransferScalarFieldEnum)[keyof typeof TransferScalarFieldEnum]
+
+
+  export const PixGatewayConfigScalarFieldEnum: {
+    id: 'id',
+    provider: 'provider',
+    clientId: 'clientId',
+    clientSecret: 'clientSecret',
+    apiKey: 'apiKey',
+    webhookUrl: 'webhookUrl',
+    certificatePath: 'certificatePath',
+    active: 'active',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PixGatewayConfigScalarFieldEnum = (typeof PixGatewayConfigScalarFieldEnum)[keyof typeof PixGatewayConfigScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -22374,9 +25342,30 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'OrderTransferStatus'
+   */
+  export type EnumOrderTransferStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderTransferStatus'>
+    
+
+
+  /**
    * Reference to a field of type 'UserStatus'
    */
   export type EnumUserStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PixType'
+   */
+  export type EnumPixTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PixType'>
+    
+
+
+  /**
+   * Reference to a field of type 'PixStatus'
+   */
+  export type EnumPixStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PixStatus'>
     
 
 
@@ -22391,6 +25380,13 @@ export namespace Prisma {
    * Reference to a field of type 'OrderItemStatus'
    */
   export type EnumOrderItemStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrderItemStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'TransferStatus'
+   */
+  export type EnumTransferStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TransferStatus'>
     
 
 
@@ -22413,8 +25409,11 @@ export namespace Prisma {
     pastorName?: StringNullableFilter<"District"> | string | null
     createdAt?: DateTimeFilter<"District"> | Date | string
     churches?: ChurchListRelationFilter
+    events?: EventListRelationFilter
     registrations?: RegistrationListRelationFilter
     users?: UserListRelationFilter
+    orders?: OrderListRelationFilter
+    transfers?: TransferListRelationFilter
   }
 
   export type DistrictOrderByWithRelationInput = {
@@ -22423,8 +25422,11 @@ export namespace Prisma {
     pastorName?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     churches?: ChurchOrderByRelationAggregateInput
+    events?: EventOrderByRelationAggregateInput
     registrations?: RegistrationOrderByRelationAggregateInput
     users?: UserOrderByRelationAggregateInput
+    orders?: OrderOrderByRelationAggregateInput
+    transfers?: TransferOrderByRelationAggregateInput
   }
 
   export type DistrictWhereUniqueInput = Prisma.AtLeast<{
@@ -22436,8 +25438,11 @@ export namespace Prisma {
     pastorName?: StringNullableFilter<"District"> | string | null
     createdAt?: DateTimeFilter<"District"> | Date | string
     churches?: ChurchListRelationFilter
+    events?: EventListRelationFilter
     registrations?: RegistrationListRelationFilter
     users?: UserListRelationFilter
+    orders?: OrderListRelationFilter
+    transfers?: TransferListRelationFilter
   }, "id" | "name">
 
   export type DistrictOrderByWithAggregationInput = {
@@ -22477,6 +25482,7 @@ export namespace Prisma {
     district?: XOR<DistrictRelationFilter, DistrictWhereInput>
     registrations?: RegistrationListRelationFilter
     users?: UserListRelationFilter
+    events?: EventListRelationFilter
   }
 
   export type ChurchOrderByWithRelationInput = {
@@ -22493,6 +25499,7 @@ export namespace Prisma {
     district?: DistrictOrderByWithRelationInput
     registrations?: RegistrationOrderByRelationAggregateInput
     users?: UserOrderByRelationAggregateInput
+    events?: EventOrderByRelationAggregateInput
   }
 
   export type ChurchWhereUniqueInput = Prisma.AtLeast<{
@@ -22513,6 +25520,7 @@ export namespace Prisma {
     district?: XOR<DistrictRelationFilter, DistrictWhereInput>
     registrations?: RegistrationListRelationFilter
     users?: UserListRelationFilter
+    events?: EventListRelationFilter
   }, "id" | "name_districtId">
 
   export type ChurchOrderByWithAggregationInput = {
@@ -22568,8 +25576,12 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Event"> | Date | string
     ministryId?: StringNullableFilter<"Event"> | string | null
     createdById?: StringNullableFilter<"Event"> | string | null
+    districtId?: StringFilter<"Event"> | string
+    churchId?: StringNullableFilter<"Event"> | string | null
     createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
+    district?: XOR<DistrictRelationFilter, DistrictWhereInput>
+    church?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
     lots?: EventLotListRelationFilter
     expenses?: ExpenseListRelationFilter
     orders?: OrderListRelationFilter
@@ -22594,8 +25606,12 @@ export namespace Prisma {
     createdAt?: SortOrder
     ministryId?: SortOrderInput | SortOrder
     createdById?: SortOrderInput | SortOrder
+    districtId?: SortOrder
+    churchId?: SortOrderInput | SortOrder
     createdBy?: UserOrderByWithRelationInput
     ministry?: MinistryOrderByWithRelationInput
+    district?: DistrictOrderByWithRelationInput
+    church?: ChurchOrderByWithRelationInput
     lots?: EventLotOrderByRelationAggregateInput
     expenses?: ExpenseOrderByRelationAggregateInput
     orders?: OrderOrderByRelationAggregateInput
@@ -22623,8 +25639,12 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Event"> | Date | string
     ministryId?: StringNullableFilter<"Event"> | string | null
     createdById?: StringNullableFilter<"Event"> | string | null
+    districtId?: StringFilter<"Event"> | string
+    churchId?: StringNullableFilter<"Event"> | string | null
     createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
+    district?: XOR<DistrictRelationFilter, DistrictWhereInput>
+    church?: XOR<ChurchNullableRelationFilter, ChurchWhereInput> | null
     lots?: EventLotListRelationFilter
     expenses?: ExpenseListRelationFilter
     orders?: OrderListRelationFilter
@@ -22649,6 +25669,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     ministryId?: SortOrderInput | SortOrder
     createdById?: SortOrderInput | SortOrder
+    districtId?: SortOrder
+    churchId?: SortOrderInput | SortOrder
     _count?: EventCountOrderByAggregateInput
     _avg?: EventAvgOrderByAggregateInput
     _max?: EventMaxOrderByAggregateInput
@@ -22677,6 +25699,8 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"Event"> | Date | string
     ministryId?: StringNullableWithAggregatesFilter<"Event"> | string | null
     createdById?: StringNullableWithAggregatesFilter<"Event"> | string | null
+    districtId?: StringWithAggregatesFilter<"Event"> | string
+    churchId?: StringNullableWithAggregatesFilter<"Event"> | string | null
   }
 
   export type OrderWhereInput = {
@@ -22709,6 +25733,12 @@ export namespace Prisma {
     manualNotes?: StringNullableFilter<"Order"> | string | null
     confirmedById?: StringNullableFilter<"Order"> | string | null
     confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    districtId?: StringNullableFilter<"Order"> | string | null
+    districtAdminId?: StringNullableFilter<"Order"> | string | null
+    responsibleUserId?: StringNullableFilter<"Order"> | string | null
+    amountToTransfer?: IntFilter<"Order"> | number
+    transferStatus?: EnumOrderTransferStatusNullableFilter<"Order"> | $Enums.OrderTransferStatus | null
+    transferBatchId?: StringNullableFilter<"Order"> | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
     event?: XOR<EventRelationFilter, EventWhereInput>
     pricingLot?: XOR<EventLotNullableRelationFilter, EventLotWhereInput> | null
@@ -22718,6 +25748,10 @@ export namespace Prisma {
     items?: OrderItemListRelationFilter
     serviceOrders?: ServiceOrderListRelationFilter
     confirmedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    district?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    districtAdmin?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    responsibleUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    transferBatch?: XOR<TransferNullableRelationFilter, TransferWhereInput> | null
   }
 
   export type OrderOrderByWithRelationInput = {
@@ -22747,6 +25781,12 @@ export namespace Prisma {
     manualNotes?: SortOrderInput | SortOrder
     confirmedById?: SortOrderInput | SortOrder
     confirmedAt?: SortOrderInput | SortOrder
+    districtId?: SortOrderInput | SortOrder
+    districtAdminId?: SortOrderInput | SortOrder
+    responsibleUserId?: SortOrderInput | SortOrder
+    amountToTransfer?: SortOrder
+    transferStatus?: SortOrderInput | SortOrder
+    transferBatchId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     event?: EventOrderByWithRelationInput
     pricingLot?: EventLotOrderByWithRelationInput
@@ -22756,6 +25796,10 @@ export namespace Prisma {
     items?: OrderItemOrderByRelationAggregateInput
     serviceOrders?: ServiceOrderOrderByRelationAggregateInput
     confirmedBy?: UserOrderByWithRelationInput
+    district?: DistrictOrderByWithRelationInput
+    districtAdmin?: UserOrderByWithRelationInput
+    responsibleUser?: UserOrderByWithRelationInput
+    transferBatch?: TransferOrderByWithRelationInput
   }
 
   export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -22788,6 +25832,12 @@ export namespace Prisma {
     manualNotes?: StringNullableFilter<"Order"> | string | null
     confirmedById?: StringNullableFilter<"Order"> | string | null
     confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    districtId?: StringNullableFilter<"Order"> | string | null
+    districtAdminId?: StringNullableFilter<"Order"> | string | null
+    responsibleUserId?: StringNullableFilter<"Order"> | string | null
+    amountToTransfer?: IntFilter<"Order"> | number
+    transferStatus?: EnumOrderTransferStatusNullableFilter<"Order"> | $Enums.OrderTransferStatus | null
+    transferBatchId?: StringNullableFilter<"Order"> | string | null
     createdAt?: DateTimeFilter<"Order"> | Date | string
     event?: XOR<EventRelationFilter, EventWhereInput>
     pricingLot?: XOR<EventLotNullableRelationFilter, EventLotWhereInput> | null
@@ -22797,6 +25847,10 @@ export namespace Prisma {
     items?: OrderItemListRelationFilter
     serviceOrders?: ServiceOrderListRelationFilter
     confirmedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    district?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    districtAdmin?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    responsibleUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    transferBatch?: XOR<TransferNullableRelationFilter, TransferWhereInput> | null
   }, "id" | "externalReference">
 
   export type OrderOrderByWithAggregationInput = {
@@ -22826,6 +25880,12 @@ export namespace Prisma {
     manualNotes?: SortOrderInput | SortOrder
     confirmedById?: SortOrderInput | SortOrder
     confirmedAt?: SortOrderInput | SortOrder
+    districtId?: SortOrderInput | SortOrder
+    districtAdminId?: SortOrderInput | SortOrder
+    responsibleUserId?: SortOrderInput | SortOrder
+    amountToTransfer?: SortOrder
+    transferStatus?: SortOrderInput | SortOrder
+    transferBatchId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: OrderCountOrderByAggregateInput
     _avg?: OrderAvgOrderByAggregateInput
@@ -22864,6 +25924,12 @@ export namespace Prisma {
     manualNotes?: StringNullableWithAggregatesFilter<"Order"> | string | null
     confirmedById?: StringNullableWithAggregatesFilter<"Order"> | string | null
     confirmedAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+    districtId?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    districtAdminId?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    responsibleUserId?: StringNullableWithAggregatesFilter<"Order"> | string | null
+    amountToTransfer?: IntWithAggregatesFilter<"Order"> | number
+    transferStatus?: EnumOrderTransferStatusNullableWithAggregatesFilter<"Order"> | $Enums.OrderTransferStatus | null
+    transferBatchId?: StringNullableWithAggregatesFilter<"Order"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
   }
 
@@ -22881,6 +25947,7 @@ export namespace Prisma {
     priceCents?: IntFilter<"Registration"> | number
     districtId?: StringFilter<"Registration"> | string
     churchId?: StringFilter<"Registration"> | string
+    responsibleUserId?: StringNullableFilter<"Registration"> | string | null
     photoUrl?: StringNullableFilter<"Registration"> | string | null
     gender?: StringNullableFilter<"Registration"> | string | null
     paymentMethod?: StringNullableFilter<"Registration"> | string | null
@@ -22896,6 +25963,7 @@ export namespace Prisma {
     event?: XOR<EventRelationFilter, EventWhereInput>
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     order?: XOR<OrderRelationFilter, OrderWhereInput>
+    responsibleUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     orderItems?: OrderItemListRelationFilter
   }
 
@@ -22910,6 +25978,7 @@ export namespace Prisma {
     priceCents?: SortOrder
     districtId?: SortOrder
     churchId?: SortOrder
+    responsibleUserId?: SortOrderInput | SortOrder
     photoUrl?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
     paymentMethod?: SortOrderInput | SortOrder
@@ -22925,6 +25994,7 @@ export namespace Prisma {
     event?: EventOrderByWithRelationInput
     ministry?: MinistryOrderByWithRelationInput
     order?: OrderOrderByWithRelationInput
+    responsibleUser?: UserOrderByWithRelationInput
     orderItems?: OrderItemOrderByRelationAggregateInput
   }
 
@@ -22943,6 +26013,7 @@ export namespace Prisma {
     priceCents?: IntFilter<"Registration"> | number
     districtId?: StringFilter<"Registration"> | string
     churchId?: StringFilter<"Registration"> | string
+    responsibleUserId?: StringNullableFilter<"Registration"> | string | null
     photoUrl?: StringNullableFilter<"Registration"> | string | null
     gender?: StringNullableFilter<"Registration"> | string | null
     paymentMethod?: StringNullableFilter<"Registration"> | string | null
@@ -22958,6 +26029,7 @@ export namespace Prisma {
     event?: XOR<EventRelationFilter, EventWhereInput>
     ministry?: XOR<MinistryNullableRelationFilter, MinistryWhereInput> | null
     order?: XOR<OrderRelationFilter, OrderWhereInput>
+    responsibleUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     orderItems?: OrderItemListRelationFilter
   }, "id" | "eventId_cpf">
 
@@ -22972,6 +26044,7 @@ export namespace Prisma {
     priceCents?: SortOrder
     districtId?: SortOrder
     churchId?: SortOrder
+    responsibleUserId?: SortOrderInput | SortOrder
     photoUrl?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
     paymentMethod?: SortOrderInput | SortOrder
@@ -23002,6 +26075,7 @@ export namespace Prisma {
     priceCents?: IntWithAggregatesFilter<"Registration"> | number
     districtId?: StringWithAggregatesFilter<"Registration"> | string
     churchId?: StringWithAggregatesFilter<"Registration"> | string
+    responsibleUserId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     photoUrl?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     gender?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     paymentMethod?: StringNullableWithAggregatesFilter<"Registration"> | string | null
@@ -23238,6 +26312,12 @@ export namespace Prisma {
     photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    pixType?: EnumPixTypeNullableFilter<"User"> | $Enums.PixType | null
+    pixKey?: StringNullableFilter<"User"> | string | null
+    pixOwnerName?: StringNullableFilter<"User"> | string | null
+    pixOwnerDocument?: StringNullableFilter<"User"> | string | null
+    pixBankName?: StringNullableFilter<"User"> | string | null
+    pixStatus?: EnumPixStatusFilter<"User"> | $Enums.PixStatus
     auditLogs?: AuditLogListRelationFilter
     eventsCreated?: EventListRelationFilter
     ministries?: MinistryUserListRelationFilter
@@ -23250,6 +26330,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderListRelationFilter
     confirmedOrderItems?: OrderItemListRelationFilter
     issuedServiceOrders?: ServiceOrderListRelationFilter
+    districtOrders?: OrderListRelationFilter
+    responsibleOrders?: OrderListRelationFilter
+    responsibleRegistrations?: RegistrationListRelationFilter
+    transfersCreated?: TransferListRelationFilter
+    districtTransfers?: TransferListRelationFilter
+    responsibleTransfers?: TransferListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -23269,6 +26355,12 @@ export namespace Prisma {
     photoUrl?: SortOrderInput | SortOrder
     profileId?: SortOrderInput | SortOrder
     status?: SortOrder
+    pixType?: SortOrderInput | SortOrder
+    pixKey?: SortOrderInput | SortOrder
+    pixOwnerName?: SortOrderInput | SortOrder
+    pixOwnerDocument?: SortOrderInput | SortOrder
+    pixBankName?: SortOrderInput | SortOrder
+    pixStatus?: SortOrder
     auditLogs?: AuditLogOrderByRelationAggregateInput
     eventsCreated?: EventOrderByRelationAggregateInput
     ministries?: MinistryUserOrderByRelationAggregateInput
@@ -23281,6 +26373,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderOrderByRelationAggregateInput
     confirmedOrderItems?: OrderItemOrderByRelationAggregateInput
     issuedServiceOrders?: ServiceOrderOrderByRelationAggregateInput
+    districtOrders?: OrderOrderByRelationAggregateInput
+    responsibleOrders?: OrderOrderByRelationAggregateInput
+    responsibleRegistrations?: RegistrationOrderByRelationAggregateInput
+    transfersCreated?: TransferOrderByRelationAggregateInput
+    districtTransfers?: TransferOrderByRelationAggregateInput
+    responsibleTransfers?: TransferOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -23303,6 +26401,12 @@ export namespace Prisma {
     photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    pixType?: EnumPixTypeNullableFilter<"User"> | $Enums.PixType | null
+    pixKey?: StringNullableFilter<"User"> | string | null
+    pixOwnerName?: StringNullableFilter<"User"> | string | null
+    pixOwnerDocument?: StringNullableFilter<"User"> | string | null
+    pixBankName?: StringNullableFilter<"User"> | string | null
+    pixStatus?: EnumPixStatusFilter<"User"> | $Enums.PixStatus
     auditLogs?: AuditLogListRelationFilter
     eventsCreated?: EventListRelationFilter
     ministries?: MinistryUserListRelationFilter
@@ -23315,6 +26419,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderListRelationFilter
     confirmedOrderItems?: OrderItemListRelationFilter
     issuedServiceOrders?: ServiceOrderListRelationFilter
+    districtOrders?: OrderListRelationFilter
+    responsibleOrders?: OrderListRelationFilter
+    responsibleRegistrations?: RegistrationListRelationFilter
+    transfersCreated?: TransferListRelationFilter
+    districtTransfers?: TransferListRelationFilter
+    responsibleTransfers?: TransferListRelationFilter
   }, "id" | "email" | "cpf">
 
   export type UserOrderByWithAggregationInput = {
@@ -23334,6 +26444,12 @@ export namespace Prisma {
     photoUrl?: SortOrderInput | SortOrder
     profileId?: SortOrderInput | SortOrder
     status?: SortOrder
+    pixType?: SortOrderInput | SortOrder
+    pixKey?: SortOrderInput | SortOrder
+    pixOwnerName?: SortOrderInput | SortOrder
+    pixOwnerDocument?: SortOrderInput | SortOrder
+    pixBankName?: SortOrderInput | SortOrder
+    pixStatus?: SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
@@ -23359,6 +26475,12 @@ export namespace Prisma {
     photoUrl?: StringNullableWithAggregatesFilter<"User"> | string | null
     profileId?: StringNullableWithAggregatesFilter<"User"> | string | null
     status?: EnumUserStatusWithAggregatesFilter<"User"> | $Enums.UserStatus
+    pixType?: EnumPixTypeNullableWithAggregatesFilter<"User"> | $Enums.PixType | null
+    pixKey?: StringNullableWithAggregatesFilter<"User"> | string | null
+    pixOwnerName?: StringNullableWithAggregatesFilter<"User"> | string | null
+    pixOwnerDocument?: StringNullableWithAggregatesFilter<"User"> | string | null
+    pixBankName?: StringNullableWithAggregatesFilter<"User"> | string | null
+    pixStatus?: EnumPixStatusWithAggregatesFilter<"User"> | $Enums.PixStatus
   }
 
   export type SystemConfigWhereInput = {
@@ -24112,14 +27234,220 @@ export namespace Prisma {
     issuedById?: StringNullableWithAggregatesFilter<"ServiceOrder"> | string | null
   }
 
+  export type TransferWhereInput = {
+    AND?: TransferWhereInput | TransferWhereInput[]
+    OR?: TransferWhereInput[]
+    NOT?: TransferWhereInput | TransferWhereInput[]
+    id?: StringFilter<"Transfer"> | string
+    districtId?: StringNullableFilter<"Transfer"> | string | null
+    districtAdminId?: StringNullableFilter<"Transfer"> | string | null
+    responsibleUserId?: StringNullableFilter<"Transfer"> | string | null
+    amount?: IntFilter<"Transfer"> | number
+    pixType?: EnumPixTypeNullableFilter<"Transfer"> | $Enums.PixType | null
+    pixKey?: StringNullableFilter<"Transfer"> | string | null
+    pixOwnerName?: StringNullableFilter<"Transfer"> | string | null
+    pixOwnerDocument?: StringNullableFilter<"Transfer"> | string | null
+    pixBankName?: StringNullableFilter<"Transfer"> | string | null
+    orderIds?: JsonFilter<"Transfer">
+    mpTransferId?: StringNullableFilter<"Transfer"> | string | null
+    status?: EnumTransferStatusFilter<"Transfer"> | $Enums.TransferStatus
+    errorMessage?: StringNullableFilter<"Transfer"> | string | null
+    createdById?: StringNullableFilter<"Transfer"> | string | null
+    createdAt?: DateTimeFilter<"Transfer"> | Date | string
+    district?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    districtAdmin?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    responsibleUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    orders?: OrderListRelationFilter
+  }
+
+  export type TransferOrderByWithRelationInput = {
+    id?: SortOrder
+    districtId?: SortOrderInput | SortOrder
+    districtAdminId?: SortOrderInput | SortOrder
+    responsibleUserId?: SortOrderInput | SortOrder
+    amount?: SortOrder
+    pixType?: SortOrderInput | SortOrder
+    pixKey?: SortOrderInput | SortOrder
+    pixOwnerName?: SortOrderInput | SortOrder
+    pixOwnerDocument?: SortOrderInput | SortOrder
+    pixBankName?: SortOrderInput | SortOrder
+    orderIds?: SortOrder
+    mpTransferId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    district?: DistrictOrderByWithRelationInput
+    districtAdmin?: UserOrderByWithRelationInput
+    responsibleUser?: UserOrderByWithRelationInput
+    createdBy?: UserOrderByWithRelationInput
+    orders?: OrderOrderByRelationAggregateInput
+  }
+
+  export type TransferWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TransferWhereInput | TransferWhereInput[]
+    OR?: TransferWhereInput[]
+    NOT?: TransferWhereInput | TransferWhereInput[]
+    districtId?: StringNullableFilter<"Transfer"> | string | null
+    districtAdminId?: StringNullableFilter<"Transfer"> | string | null
+    responsibleUserId?: StringNullableFilter<"Transfer"> | string | null
+    amount?: IntFilter<"Transfer"> | number
+    pixType?: EnumPixTypeNullableFilter<"Transfer"> | $Enums.PixType | null
+    pixKey?: StringNullableFilter<"Transfer"> | string | null
+    pixOwnerName?: StringNullableFilter<"Transfer"> | string | null
+    pixOwnerDocument?: StringNullableFilter<"Transfer"> | string | null
+    pixBankName?: StringNullableFilter<"Transfer"> | string | null
+    orderIds?: JsonFilter<"Transfer">
+    mpTransferId?: StringNullableFilter<"Transfer"> | string | null
+    status?: EnumTransferStatusFilter<"Transfer"> | $Enums.TransferStatus
+    errorMessage?: StringNullableFilter<"Transfer"> | string | null
+    createdById?: StringNullableFilter<"Transfer"> | string | null
+    createdAt?: DateTimeFilter<"Transfer"> | Date | string
+    district?: XOR<DistrictNullableRelationFilter, DistrictWhereInput> | null
+    districtAdmin?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    responsibleUser?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    createdBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
+    orders?: OrderListRelationFilter
+  }, "id">
+
+  export type TransferOrderByWithAggregationInput = {
+    id?: SortOrder
+    districtId?: SortOrderInput | SortOrder
+    districtAdminId?: SortOrderInput | SortOrder
+    responsibleUserId?: SortOrderInput | SortOrder
+    amount?: SortOrder
+    pixType?: SortOrderInput | SortOrder
+    pixKey?: SortOrderInput | SortOrder
+    pixOwnerName?: SortOrderInput | SortOrder
+    pixOwnerDocument?: SortOrderInput | SortOrder
+    pixBankName?: SortOrderInput | SortOrder
+    orderIds?: SortOrder
+    mpTransferId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: TransferCountOrderByAggregateInput
+    _avg?: TransferAvgOrderByAggregateInput
+    _max?: TransferMaxOrderByAggregateInput
+    _min?: TransferMinOrderByAggregateInput
+    _sum?: TransferSumOrderByAggregateInput
+  }
+
+  export type TransferScalarWhereWithAggregatesInput = {
+    AND?: TransferScalarWhereWithAggregatesInput | TransferScalarWhereWithAggregatesInput[]
+    OR?: TransferScalarWhereWithAggregatesInput[]
+    NOT?: TransferScalarWhereWithAggregatesInput | TransferScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Transfer"> | string
+    districtId?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    districtAdminId?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    responsibleUserId?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    amount?: IntWithAggregatesFilter<"Transfer"> | number
+    pixType?: EnumPixTypeNullableWithAggregatesFilter<"Transfer"> | $Enums.PixType | null
+    pixKey?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    pixOwnerName?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    pixOwnerDocument?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    pixBankName?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    orderIds?: JsonWithAggregatesFilter<"Transfer">
+    mpTransferId?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    status?: EnumTransferStatusWithAggregatesFilter<"Transfer"> | $Enums.TransferStatus
+    errorMessage?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    createdById?: StringNullableWithAggregatesFilter<"Transfer"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Transfer"> | Date | string
+  }
+
+  export type PixGatewayConfigWhereInput = {
+    AND?: PixGatewayConfigWhereInput | PixGatewayConfigWhereInput[]
+    OR?: PixGatewayConfigWhereInput[]
+    NOT?: PixGatewayConfigWhereInput | PixGatewayConfigWhereInput[]
+    id?: IntFilter<"PixGatewayConfig"> | number
+    provider?: StringFilter<"PixGatewayConfig"> | string
+    clientId?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    clientSecret?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    apiKey?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    webhookUrl?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    certificatePath?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    active?: BoolFilter<"PixGatewayConfig"> | boolean
+    createdAt?: DateTimeFilter<"PixGatewayConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"PixGatewayConfig"> | Date | string
+  }
+
+  export type PixGatewayConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    clientId?: SortOrderInput | SortOrder
+    clientSecret?: SortOrderInput | SortOrder
+    apiKey?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    certificatePath?: SortOrderInput | SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PixGatewayConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: PixGatewayConfigWhereInput | PixGatewayConfigWhereInput[]
+    OR?: PixGatewayConfigWhereInput[]
+    NOT?: PixGatewayConfigWhereInput | PixGatewayConfigWhereInput[]
+    provider?: StringFilter<"PixGatewayConfig"> | string
+    clientId?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    clientSecret?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    apiKey?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    webhookUrl?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    certificatePath?: StringNullableFilter<"PixGatewayConfig"> | string | null
+    active?: BoolFilter<"PixGatewayConfig"> | boolean
+    createdAt?: DateTimeFilter<"PixGatewayConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"PixGatewayConfig"> | Date | string
+  }, "id">
+
+  export type PixGatewayConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    clientId?: SortOrderInput | SortOrder
+    clientSecret?: SortOrderInput | SortOrder
+    apiKey?: SortOrderInput | SortOrder
+    webhookUrl?: SortOrderInput | SortOrder
+    certificatePath?: SortOrderInput | SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PixGatewayConfigCountOrderByAggregateInput
+    _avg?: PixGatewayConfigAvgOrderByAggregateInput
+    _max?: PixGatewayConfigMaxOrderByAggregateInput
+    _min?: PixGatewayConfigMinOrderByAggregateInput
+    _sum?: PixGatewayConfigSumOrderByAggregateInput
+  }
+
+  export type PixGatewayConfigScalarWhereWithAggregatesInput = {
+    AND?: PixGatewayConfigScalarWhereWithAggregatesInput | PixGatewayConfigScalarWhereWithAggregatesInput[]
+    OR?: PixGatewayConfigScalarWhereWithAggregatesInput[]
+    NOT?: PixGatewayConfigScalarWhereWithAggregatesInput | PixGatewayConfigScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"PixGatewayConfig"> | number
+    provider?: StringWithAggregatesFilter<"PixGatewayConfig"> | string
+    clientId?: StringNullableWithAggregatesFilter<"PixGatewayConfig"> | string | null
+    clientSecret?: StringNullableWithAggregatesFilter<"PixGatewayConfig"> | string | null
+    apiKey?: StringNullableWithAggregatesFilter<"PixGatewayConfig"> | string | null
+    webhookUrl?: StringNullableWithAggregatesFilter<"PixGatewayConfig"> | string | null
+    certificatePath?: StringNullableWithAggregatesFilter<"PixGatewayConfig"> | string | null
+    active?: BoolWithAggregatesFilter<"PixGatewayConfig"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"PixGatewayConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PixGatewayConfig"> | Date | string
+  }
+
   export type DistrictCreateInput = {
     id?: string
     name: string
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchCreateNestedManyWithoutDistrictInput
+    events?: EventCreateNestedManyWithoutDistrictInput
     registrations?: RegistrationCreateNestedManyWithoutDistrictInput
     users?: UserCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderCreateNestedManyWithoutDistrictInput
+    transfers?: TransferCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictUncheckedCreateInput = {
@@ -24128,8 +27456,11 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    events?: EventUncheckedCreateNestedManyWithoutDistrictInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
     users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderUncheckedCreateNestedManyWithoutDistrictInput
+    transfers?: TransferUncheckedCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictUpdateInput = {
@@ -24138,8 +27469,11 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    events?: EventUpdateManyWithoutDistrictNestedInput
     registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
     users?: UserUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUpdateManyWithoutDistrictNestedInput
   }
 
   export type DistrictUncheckedUpdateInput = {
@@ -24148,8 +27482,11 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    events?: EventUncheckedUpdateManyWithoutDistrictNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
     users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUncheckedUpdateManyWithoutDistrictNestedInput
   }
 
   export type DistrictCreateManyInput = {
@@ -24186,6 +27523,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutChurchesInput
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
     users?: UserCreateNestedManyWithoutChurchInput
+    events?: EventCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateInput = {
@@ -24201,6 +27539,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
     users?: UserUncheckedCreateNestedManyWithoutChurchInput
+    events?: EventUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUpdateInput = {
@@ -24216,6 +27555,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
     users?: UserUpdateManyWithoutChurchNestedInput
+    events?: EventUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateInput = {
@@ -24231,6 +27571,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
     users?: UserUncheckedUpdateManyWithoutChurchNestedInput
+    events?: EventUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchCreateManyInput = {
@@ -24289,6 +27630,8 @@ export namespace Prisma {
     createdAt?: Date | string
     createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
@@ -24313,6 +27656,8 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
@@ -24337,6 +27682,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
@@ -24361,6 +27708,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
@@ -24385,6 +27734,8 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
   }
 
   export type EventUpdateManyMutationInput = {
@@ -24423,6 +27774,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrderCreateInput = {
@@ -24449,6 +27802,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -24458,6 +27813,10 @@ export namespace Prisma {
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateInput = {
@@ -24487,6 +27846,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -24519,6 +27884,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -24528,6 +27895,10 @@ export namespace Prisma {
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateInput = {
@@ -24557,6 +27928,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -24592,6 +27969,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
   }
 
@@ -24619,6 +28002,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24649,6 +28034,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -24673,6 +28064,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -24687,6 +28079,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -24721,6 +28114,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -24735,6 +28129,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -24759,6 +28154,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -24798,6 +28194,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25035,6 +28432,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -25047,6 +28450,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -25066,6 +28475,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -25074,6 +28489,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUpdateInput = {
@@ -25089,6 +28510,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -25101,6 +28528,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -25120,6 +28553,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -25128,6 +28567,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -25147,6 +28592,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
   }
 
   export type UserUpdateManyMutationInput = {
@@ -25162,6 +28613,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -25181,6 +28638,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
   }
 
   export type SystemConfigCreateInput = {
@@ -25983,6 +29446,227 @@ export namespace Prisma {
     issuedById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type TransferCreateInput = {
+    id?: string
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    district?: DistrictCreateNestedOneWithoutTransfersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictTransfersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleTransfersInput
+    createdBy?: UserCreateNestedOneWithoutTransfersCreatedInput
+    orders?: OrderCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferUncheckedCreateInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    orders?: OrderUncheckedCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneWithoutTransfersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictTransfersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleTransfersNestedInput
+    createdBy?: UserUpdateOneWithoutTransfersCreatedNestedInput
+    orders?: OrderUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: OrderUncheckedUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferCreateManyInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+  }
+
+  export type TransferUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PixGatewayConfigCreateInput = {
+    provider: string
+    clientId?: string | null
+    clientSecret?: string | null
+    apiKey?: string | null
+    webhookUrl?: string | null
+    certificatePath?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PixGatewayConfigUncheckedCreateInput = {
+    id?: number
+    provider: string
+    clientId?: string | null
+    clientSecret?: string | null
+    apiKey?: string | null
+    webhookUrl?: string | null
+    certificatePath?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PixGatewayConfigUpdateInput = {
+    provider?: StringFieldUpdateOperationsInput | string
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    certificatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PixGatewayConfigUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    provider?: StringFieldUpdateOperationsInput | string
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    certificatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PixGatewayConfigCreateManyInput = {
+    id?: number
+    provider: string
+    clientId?: string | null
+    clientSecret?: string | null
+    apiKey?: string | null
+    webhookUrl?: string | null
+    certificatePath?: string | null
+    active?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PixGatewayConfigUpdateManyMutationInput = {
+    provider?: StringFieldUpdateOperationsInput | string
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    certificatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PixGatewayConfigUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    provider?: StringFieldUpdateOperationsInput | string
+    clientId?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSecret?: NullableStringFieldUpdateOperationsInput | string | null
+    apiKey?: NullableStringFieldUpdateOperationsInput | string | null
+    webhookUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    certificatePath?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -26028,6 +29712,12 @@ export namespace Prisma {
     none?: ChurchWhereInput
   }
 
+  export type EventListRelationFilter = {
+    every?: EventWhereInput
+    some?: EventWhereInput
+    none?: EventWhereInput
+  }
+
   export type RegistrationListRelationFilter = {
     every?: RegistrationWhereInput
     some?: RegistrationWhereInput
@@ -26040,6 +29730,18 @@ export namespace Prisma {
     none?: UserWhereInput
   }
 
+  export type OrderListRelationFilter = {
+    every?: OrderWhereInput
+    some?: OrderWhereInput
+    none?: OrderWhereInput
+  }
+
+  export type TransferListRelationFilter = {
+    every?: TransferWhereInput
+    some?: TransferWhereInput
+    none?: TransferWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -26049,11 +29751,23 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type EventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type RegistrationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type UserOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TransferOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26237,6 +29951,11 @@ export namespace Prisma {
     isNot?: MinistryWhereInput | null
   }
 
+  export type ChurchNullableRelationFilter = {
+    is?: ChurchWhereInput | null
+    isNot?: ChurchWhereInput | null
+  }
+
   export type EventLotListRelationFilter = {
     every?: EventLotWhereInput
     some?: EventLotWhereInput
@@ -26249,21 +29968,11 @@ export namespace Prisma {
     none?: ExpenseWhereInput
   }
 
-  export type OrderListRelationFilter = {
-    every?: OrderWhereInput
-    some?: OrderWhereInput
-    none?: OrderWhereInput
-  }
-
   export type EventLotOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type ExpenseOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type OrderOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26285,6 +29994,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     ministryId?: SortOrder
     createdById?: SortOrder
+    districtId?: SortOrder
+    churchId?: SortOrder
   }
 
   export type EventAvgOrderByAggregateInput = {
@@ -26310,6 +30021,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     ministryId?: SortOrder
     createdById?: SortOrder
+    districtId?: SortOrder
+    churchId?: SortOrder
   }
 
   export type EventMinOrderByAggregateInput = {
@@ -26330,6 +30043,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     ministryId?: SortOrder
     createdById?: SortOrder
+    districtId?: SortOrder
+    churchId?: SortOrder
   }
 
   export type EventSumOrderByAggregateInput = {
@@ -26384,6 +30099,13 @@ export namespace Prisma {
     not?: NestedEnumOrderOriginFilter<$PrismaModel> | $Enums.OrderOrigin
   }
 
+  export type EnumOrderTransferStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderTransferStatus | EnumOrderTransferStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OrderTransferStatus[] | null
+    notIn?: $Enums.OrderTransferStatus[] | null
+    not?: NestedEnumOrderTransferStatusNullableFilter<$PrismaModel> | $Enums.OrderTransferStatus | null
+  }
+
   export type EventRelationFilter = {
     is?: EventWhereInput
     isNot?: EventWhereInput
@@ -26416,6 +30138,16 @@ export namespace Prisma {
     every?: ServiceOrderWhereInput
     some?: ServiceOrderWhereInput
     none?: ServiceOrderWhereInput
+  }
+
+  export type DistrictNullableRelationFilter = {
+    is?: DistrictWhereInput | null
+    isNot?: DistrictWhereInput | null
+  }
+
+  export type TransferNullableRelationFilter = {
+    is?: TransferWhereInput | null
+    isNot?: TransferWhereInput | null
   }
 
   export type RefundOrderByRelationAggregateInput = {
@@ -26461,6 +30193,12 @@ export namespace Prisma {
     manualNotes?: SortOrder
     confirmedById?: SortOrder
     confirmedAt?: SortOrder
+    districtId?: SortOrder
+    districtAdminId?: SortOrder
+    responsibleUserId?: SortOrder
+    amountToTransfer?: SortOrder
+    transferStatus?: SortOrder
+    transferBatchId?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -26470,6 +30208,7 @@ export namespace Prisma {
     feeCents?: SortOrder
     netAmountCents?: SortOrder
     amountReceivedCents?: SortOrder
+    amountToTransfer?: SortOrder
   }
 
   export type OrderMaxOrderByAggregateInput = {
@@ -26499,6 +30238,12 @@ export namespace Prisma {
     manualNotes?: SortOrder
     confirmedById?: SortOrder
     confirmedAt?: SortOrder
+    districtId?: SortOrder
+    districtAdminId?: SortOrder
+    responsibleUserId?: SortOrder
+    amountToTransfer?: SortOrder
+    transferStatus?: SortOrder
+    transferBatchId?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -26529,6 +30274,12 @@ export namespace Prisma {
     manualNotes?: SortOrder
     confirmedById?: SortOrder
     confirmedAt?: SortOrder
+    districtId?: SortOrder
+    districtAdminId?: SortOrder
+    responsibleUserId?: SortOrder
+    amountToTransfer?: SortOrder
+    transferStatus?: SortOrder
+    transferBatchId?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -26538,6 +30289,7 @@ export namespace Prisma {
     feeCents?: SortOrder
     netAmountCents?: SortOrder
     amountReceivedCents?: SortOrder
+    amountToTransfer?: SortOrder
   }
 
   export type EnumOrderOriginWithAggregatesFilter<$PrismaModel = never> = {
@@ -26548,6 +30300,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumOrderOriginFilter<$PrismaModel>
     _max?: NestedEnumOrderOriginFilter<$PrismaModel>
+  }
+
+  export type EnumOrderTransferStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderTransferStatus | EnumOrderTransferStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OrderTransferStatus[] | null
+    notIn?: $Enums.OrderTransferStatus[] | null
+    not?: NestedEnumOrderTransferStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.OrderTransferStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumOrderTransferStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumOrderTransferStatusNullableFilter<$PrismaModel>
   }
 
   export type ChurchRelationFilter = {
@@ -26576,6 +30338,7 @@ export namespace Prisma {
     priceCents?: SortOrder
     districtId?: SortOrder
     churchId?: SortOrder
+    responsibleUserId?: SortOrder
     photoUrl?: SortOrder
     gender?: SortOrder
     paymentMethod?: SortOrder
@@ -26603,6 +30366,7 @@ export namespace Prisma {
     priceCents?: SortOrder
     districtId?: SortOrder
     churchId?: SortOrder
+    responsibleUserId?: SortOrder
     photoUrl?: SortOrder
     gender?: SortOrder
     paymentMethod?: SortOrder
@@ -26625,6 +30389,7 @@ export namespace Prisma {
     priceCents?: SortOrder
     districtId?: SortOrder
     churchId?: SortOrder
+    responsibleUserId?: SortOrder
     photoUrl?: SortOrder
     gender?: SortOrder
     paymentMethod?: SortOrder
@@ -26759,16 +30524,24 @@ export namespace Prisma {
     not?: NestedEnumUserStatusFilter<$PrismaModel> | $Enums.UserStatus
   }
 
+  export type EnumPixTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixType | EnumPixTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PixType[] | null
+    notIn?: $Enums.PixType[] | null
+    not?: NestedEnumPixTypeNullableFilter<$PrismaModel> | $Enums.PixType | null
+  }
+
+  export type EnumPixStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixStatus | EnumPixStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PixStatus[]
+    notIn?: $Enums.PixStatus[]
+    not?: NestedEnumPixStatusFilter<$PrismaModel> | $Enums.PixStatus
+  }
+
   export type AuditLogListRelationFilter = {
     every?: AuditLogWhereInput
     some?: AuditLogWhereInput
     none?: AuditLogWhereInput
-  }
-
-  export type EventListRelationFilter = {
-    every?: EventWhereInput
-    some?: EventWhereInput
-    none?: EventWhereInput
   }
 
   export type MinistryUserListRelationFilter = {
@@ -26783,16 +30556,6 @@ export namespace Prisma {
     none?: SystemConfigWhereInput
   }
 
-  export type ChurchNullableRelationFilter = {
-    is?: ChurchWhereInput | null
-    isNot?: ChurchWhereInput | null
-  }
-
-  export type DistrictNullableRelationFilter = {
-    is?: DistrictWhereInput | null
-    isNot?: DistrictWhereInput | null
-  }
-
   export type ProfileNullableRelationFilter = {
     is?: ProfileWhereInput | null
     isNot?: ProfileWhereInput | null
@@ -26805,10 +30568,6 @@ export namespace Prisma {
   }
 
   export type AuditLogOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type EventOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26841,6 +30600,12 @@ export namespace Prisma {
     photoUrl?: SortOrder
     profileId?: SortOrder
     status?: SortOrder
+    pixType?: SortOrder
+    pixKey?: SortOrder
+    pixOwnerName?: SortOrder
+    pixOwnerDocument?: SortOrder
+    pixBankName?: SortOrder
+    pixStatus?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
@@ -26860,6 +30625,12 @@ export namespace Prisma {
     photoUrl?: SortOrder
     profileId?: SortOrder
     status?: SortOrder
+    pixType?: SortOrder
+    pixKey?: SortOrder
+    pixOwnerName?: SortOrder
+    pixOwnerDocument?: SortOrder
+    pixBankName?: SortOrder
+    pixStatus?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -26879,6 +30650,12 @@ export namespace Prisma {
     photoUrl?: SortOrder
     profileId?: SortOrder
     status?: SortOrder
+    pixType?: SortOrder
+    pixKey?: SortOrder
+    pixOwnerName?: SortOrder
+    pixOwnerDocument?: SortOrder
+    pixBankName?: SortOrder
+    pixStatus?: SortOrder
   }
 
   export type EnumUserStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -26889,6 +30666,26 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumUserStatusFilter<$PrismaModel>
     _max?: NestedEnumUserStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPixTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixType | EnumPixTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PixType[] | null
+    notIn?: $Enums.PixType[] | null
+    not?: NestedEnumPixTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.PixType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPixTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumPixTypeNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPixStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixStatus | EnumPixStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PixStatus[]
+    notIn?: $Enums.PixStatus[]
+    not?: NestedEnumPixStatusWithAggregatesFilter<$PrismaModel> | $Enums.PixStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPixStatusFilter<$PrismaModel>
+    _max?: NestedEnumPixStatusFilter<$PrismaModel>
   }
   export type JsonFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -27423,11 +31220,145 @@ export namespace Prisma {
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
+  export type EnumTransferStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransferStatus | EnumTransferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransferStatus[]
+    notIn?: $Enums.TransferStatus[]
+    not?: NestedEnumTransferStatusFilter<$PrismaModel> | $Enums.TransferStatus
+  }
+
+  export type TransferCountOrderByAggregateInput = {
+    id?: SortOrder
+    districtId?: SortOrder
+    districtAdminId?: SortOrder
+    responsibleUserId?: SortOrder
+    amount?: SortOrder
+    pixType?: SortOrder
+    pixKey?: SortOrder
+    pixOwnerName?: SortOrder
+    pixOwnerDocument?: SortOrder
+    pixBankName?: SortOrder
+    orderIds?: SortOrder
+    mpTransferId?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    createdById?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type TransferAvgOrderByAggregateInput = {
+    amount?: SortOrder
+  }
+
+  export type TransferMaxOrderByAggregateInput = {
+    id?: SortOrder
+    districtId?: SortOrder
+    districtAdminId?: SortOrder
+    responsibleUserId?: SortOrder
+    amount?: SortOrder
+    pixType?: SortOrder
+    pixKey?: SortOrder
+    pixOwnerName?: SortOrder
+    pixOwnerDocument?: SortOrder
+    pixBankName?: SortOrder
+    mpTransferId?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    createdById?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type TransferMinOrderByAggregateInput = {
+    id?: SortOrder
+    districtId?: SortOrder
+    districtAdminId?: SortOrder
+    responsibleUserId?: SortOrder
+    amount?: SortOrder
+    pixType?: SortOrder
+    pixKey?: SortOrder
+    pixOwnerName?: SortOrder
+    pixOwnerDocument?: SortOrder
+    pixBankName?: SortOrder
+    mpTransferId?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    createdById?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type TransferSumOrderByAggregateInput = {
+    amount?: SortOrder
+  }
+
+  export type EnumTransferStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransferStatus | EnumTransferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransferStatus[]
+    notIn?: $Enums.TransferStatus[]
+    not?: NestedEnumTransferStatusWithAggregatesFilter<$PrismaModel> | $Enums.TransferStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTransferStatusFilter<$PrismaModel>
+    _max?: NestedEnumTransferStatusFilter<$PrismaModel>
+  }
+
+  export type PixGatewayConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    clientId?: SortOrder
+    clientSecret?: SortOrder
+    apiKey?: SortOrder
+    webhookUrl?: SortOrder
+    certificatePath?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PixGatewayConfigAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type PixGatewayConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    clientId?: SortOrder
+    clientSecret?: SortOrder
+    apiKey?: SortOrder
+    webhookUrl?: SortOrder
+    certificatePath?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PixGatewayConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    provider?: SortOrder
+    clientId?: SortOrder
+    clientSecret?: SortOrder
+    apiKey?: SortOrder
+    webhookUrl?: SortOrder
+    certificatePath?: SortOrder
+    active?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PixGatewayConfigSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
   export type ChurchCreateNestedManyWithoutDistrictInput = {
     create?: XOR<ChurchCreateWithoutDistrictInput, ChurchUncheckedCreateWithoutDistrictInput> | ChurchCreateWithoutDistrictInput[] | ChurchUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: ChurchCreateOrConnectWithoutDistrictInput | ChurchCreateOrConnectWithoutDistrictInput[]
     createMany?: ChurchCreateManyDistrictInputEnvelope
     connect?: ChurchWhereUniqueInput | ChurchWhereUniqueInput[]
+  }
+
+  export type EventCreateNestedManyWithoutDistrictInput = {
+    create?: XOR<EventCreateWithoutDistrictInput, EventUncheckedCreateWithoutDistrictInput> | EventCreateWithoutDistrictInput[] | EventUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutDistrictInput | EventCreateOrConnectWithoutDistrictInput[]
+    createMany?: EventCreateManyDistrictInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
   export type RegistrationCreateNestedManyWithoutDistrictInput = {
@@ -27444,11 +31375,32 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
+  export type OrderCreateNestedManyWithoutDistrictInput = {
+    create?: XOR<OrderCreateWithoutDistrictInput, OrderUncheckedCreateWithoutDistrictInput> | OrderCreateWithoutDistrictInput[] | OrderUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictInput | OrderCreateOrConnectWithoutDistrictInput[]
+    createMany?: OrderCreateManyDistrictInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type TransferCreateNestedManyWithoutDistrictInput = {
+    create?: XOR<TransferCreateWithoutDistrictInput, TransferUncheckedCreateWithoutDistrictInput> | TransferCreateWithoutDistrictInput[] | TransferUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictInput | TransferCreateOrConnectWithoutDistrictInput[]
+    createMany?: TransferCreateManyDistrictInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
   export type ChurchUncheckedCreateNestedManyWithoutDistrictInput = {
     create?: XOR<ChurchCreateWithoutDistrictInput, ChurchUncheckedCreateWithoutDistrictInput> | ChurchCreateWithoutDistrictInput[] | ChurchUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: ChurchCreateOrConnectWithoutDistrictInput | ChurchCreateOrConnectWithoutDistrictInput[]
     createMany?: ChurchCreateManyDistrictInputEnvelope
     connect?: ChurchWhereUniqueInput | ChurchWhereUniqueInput[]
+  }
+
+  export type EventUncheckedCreateNestedManyWithoutDistrictInput = {
+    create?: XOR<EventCreateWithoutDistrictInput, EventUncheckedCreateWithoutDistrictInput> | EventCreateWithoutDistrictInput[] | EventUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutDistrictInput | EventCreateOrConnectWithoutDistrictInput[]
+    createMany?: EventCreateManyDistrictInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
   export type RegistrationUncheckedCreateNestedManyWithoutDistrictInput = {
@@ -27463,6 +31415,20 @@ export namespace Prisma {
     connectOrCreate?: UserCreateOrConnectWithoutDistrictScopeInput | UserCreateOrConnectWithoutDistrictScopeInput[]
     createMany?: UserCreateManyDistrictScopeInputEnvelope
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutDistrictInput = {
+    create?: XOR<OrderCreateWithoutDistrictInput, OrderUncheckedCreateWithoutDistrictInput> | OrderCreateWithoutDistrictInput[] | OrderUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictInput | OrderCreateOrConnectWithoutDistrictInput[]
+    createMany?: OrderCreateManyDistrictInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type TransferUncheckedCreateNestedManyWithoutDistrictInput = {
+    create?: XOR<TransferCreateWithoutDistrictInput, TransferUncheckedCreateWithoutDistrictInput> | TransferCreateWithoutDistrictInput[] | TransferUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictInput | TransferCreateOrConnectWithoutDistrictInput[]
+    createMany?: TransferCreateManyDistrictInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -27489,6 +31455,20 @@ export namespace Prisma {
     update?: ChurchUpdateWithWhereUniqueWithoutDistrictInput | ChurchUpdateWithWhereUniqueWithoutDistrictInput[]
     updateMany?: ChurchUpdateManyWithWhereWithoutDistrictInput | ChurchUpdateManyWithWhereWithoutDistrictInput[]
     deleteMany?: ChurchScalarWhereInput | ChurchScalarWhereInput[]
+  }
+
+  export type EventUpdateManyWithoutDistrictNestedInput = {
+    create?: XOR<EventCreateWithoutDistrictInput, EventUncheckedCreateWithoutDistrictInput> | EventCreateWithoutDistrictInput[] | EventUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutDistrictInput | EventCreateOrConnectWithoutDistrictInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutDistrictInput | EventUpsertWithWhereUniqueWithoutDistrictInput[]
+    createMany?: EventCreateManyDistrictInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutDistrictInput | EventUpdateWithWhereUniqueWithoutDistrictInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutDistrictInput | EventUpdateManyWithWhereWithoutDistrictInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
   }
 
   export type RegistrationUpdateManyWithoutDistrictNestedInput = {
@@ -27519,6 +31499,34 @@ export namespace Prisma {
     deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
+  export type OrderUpdateManyWithoutDistrictNestedInput = {
+    create?: XOR<OrderCreateWithoutDistrictInput, OrderUncheckedCreateWithoutDistrictInput> | OrderCreateWithoutDistrictInput[] | OrderUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictInput | OrderCreateOrConnectWithoutDistrictInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutDistrictInput | OrderUpsertWithWhereUniqueWithoutDistrictInput[]
+    createMany?: OrderCreateManyDistrictInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutDistrictInput | OrderUpdateWithWhereUniqueWithoutDistrictInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutDistrictInput | OrderUpdateManyWithWhereWithoutDistrictInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type TransferUpdateManyWithoutDistrictNestedInput = {
+    create?: XOR<TransferCreateWithoutDistrictInput, TransferUncheckedCreateWithoutDistrictInput> | TransferCreateWithoutDistrictInput[] | TransferUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictInput | TransferCreateOrConnectWithoutDistrictInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutDistrictInput | TransferUpsertWithWhereUniqueWithoutDistrictInput[]
+    createMany?: TransferCreateManyDistrictInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutDistrictInput | TransferUpdateWithWhereUniqueWithoutDistrictInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutDistrictInput | TransferUpdateManyWithWhereWithoutDistrictInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
   export type ChurchUncheckedUpdateManyWithoutDistrictNestedInput = {
     create?: XOR<ChurchCreateWithoutDistrictInput, ChurchUncheckedCreateWithoutDistrictInput> | ChurchCreateWithoutDistrictInput[] | ChurchUncheckedCreateWithoutDistrictInput[]
     connectOrCreate?: ChurchCreateOrConnectWithoutDistrictInput | ChurchCreateOrConnectWithoutDistrictInput[]
@@ -27531,6 +31539,20 @@ export namespace Prisma {
     update?: ChurchUpdateWithWhereUniqueWithoutDistrictInput | ChurchUpdateWithWhereUniqueWithoutDistrictInput[]
     updateMany?: ChurchUpdateManyWithWhereWithoutDistrictInput | ChurchUpdateManyWithWhereWithoutDistrictInput[]
     deleteMany?: ChurchScalarWhereInput | ChurchScalarWhereInput[]
+  }
+
+  export type EventUncheckedUpdateManyWithoutDistrictNestedInput = {
+    create?: XOR<EventCreateWithoutDistrictInput, EventUncheckedCreateWithoutDistrictInput> | EventCreateWithoutDistrictInput[] | EventUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutDistrictInput | EventCreateOrConnectWithoutDistrictInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutDistrictInput | EventUpsertWithWhereUniqueWithoutDistrictInput[]
+    createMany?: EventCreateManyDistrictInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutDistrictInput | EventUpdateWithWhereUniqueWithoutDistrictInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutDistrictInput | EventUpdateManyWithWhereWithoutDistrictInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
   }
 
   export type RegistrationUncheckedUpdateManyWithoutDistrictNestedInput = {
@@ -27561,6 +31583,34 @@ export namespace Prisma {
     deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
+  export type OrderUncheckedUpdateManyWithoutDistrictNestedInput = {
+    create?: XOR<OrderCreateWithoutDistrictInput, OrderUncheckedCreateWithoutDistrictInput> | OrderCreateWithoutDistrictInput[] | OrderUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictInput | OrderCreateOrConnectWithoutDistrictInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutDistrictInput | OrderUpsertWithWhereUniqueWithoutDistrictInput[]
+    createMany?: OrderCreateManyDistrictInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutDistrictInput | OrderUpdateWithWhereUniqueWithoutDistrictInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutDistrictInput | OrderUpdateManyWithWhereWithoutDistrictInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type TransferUncheckedUpdateManyWithoutDistrictNestedInput = {
+    create?: XOR<TransferCreateWithoutDistrictInput, TransferUncheckedCreateWithoutDistrictInput> | TransferCreateWithoutDistrictInput[] | TransferUncheckedCreateWithoutDistrictInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictInput | TransferCreateOrConnectWithoutDistrictInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutDistrictInput | TransferUpsertWithWhereUniqueWithoutDistrictInput[]
+    createMany?: TransferCreateManyDistrictInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutDistrictInput | TransferUpdateWithWhereUniqueWithoutDistrictInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutDistrictInput | TransferUpdateManyWithWhereWithoutDistrictInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
   export type DistrictCreateNestedOneWithoutChurchesInput = {
     create?: XOR<DistrictCreateWithoutChurchesInput, DistrictUncheckedCreateWithoutChurchesInput>
     connectOrCreate?: DistrictCreateOrConnectWithoutChurchesInput
@@ -27581,6 +31631,13 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
   }
 
+  export type EventCreateNestedManyWithoutChurchInput = {
+    create?: XOR<EventCreateWithoutChurchInput, EventUncheckedCreateWithoutChurchInput> | EventCreateWithoutChurchInput[] | EventUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutChurchInput | EventCreateOrConnectWithoutChurchInput[]
+    createMany?: EventCreateManyChurchInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+  }
+
   export type RegistrationUncheckedCreateNestedManyWithoutChurchInput = {
     create?: XOR<RegistrationCreateWithoutChurchInput, RegistrationUncheckedCreateWithoutChurchInput> | RegistrationCreateWithoutChurchInput[] | RegistrationUncheckedCreateWithoutChurchInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutChurchInput | RegistrationCreateOrConnectWithoutChurchInput[]
@@ -27593,6 +31650,13 @@ export namespace Prisma {
     connectOrCreate?: UserCreateOrConnectWithoutChurchInput | UserCreateOrConnectWithoutChurchInput[]
     createMany?: UserCreateManyChurchInputEnvelope
     connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
+  export type EventUncheckedCreateNestedManyWithoutChurchInput = {
+    create?: XOR<EventCreateWithoutChurchInput, EventUncheckedCreateWithoutChurchInput> | EventCreateWithoutChurchInput[] | EventUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutChurchInput | EventCreateOrConnectWithoutChurchInput[]
+    createMany?: EventCreateManyChurchInputEnvelope
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
   }
 
   export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -27635,6 +31699,20 @@ export namespace Prisma {
     deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
+  export type EventUpdateManyWithoutChurchNestedInput = {
+    create?: XOR<EventCreateWithoutChurchInput, EventUncheckedCreateWithoutChurchInput> | EventCreateWithoutChurchInput[] | EventUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutChurchInput | EventCreateOrConnectWithoutChurchInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutChurchInput | EventUpsertWithWhereUniqueWithoutChurchInput[]
+    createMany?: EventCreateManyChurchInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutChurchInput | EventUpdateWithWhereUniqueWithoutChurchInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutChurchInput | EventUpdateManyWithWhereWithoutChurchInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
+  }
+
   export type RegistrationUncheckedUpdateManyWithoutChurchNestedInput = {
     create?: XOR<RegistrationCreateWithoutChurchInput, RegistrationUncheckedCreateWithoutChurchInput> | RegistrationCreateWithoutChurchInput[] | RegistrationUncheckedCreateWithoutChurchInput[]
     connectOrCreate?: RegistrationCreateOrConnectWithoutChurchInput | RegistrationCreateOrConnectWithoutChurchInput[]
@@ -27663,6 +31741,20 @@ export namespace Prisma {
     deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
   }
 
+  export type EventUncheckedUpdateManyWithoutChurchNestedInput = {
+    create?: XOR<EventCreateWithoutChurchInput, EventUncheckedCreateWithoutChurchInput> | EventCreateWithoutChurchInput[] | EventUncheckedCreateWithoutChurchInput[]
+    connectOrCreate?: EventCreateOrConnectWithoutChurchInput | EventCreateOrConnectWithoutChurchInput[]
+    upsert?: EventUpsertWithWhereUniqueWithoutChurchInput | EventUpsertWithWhereUniqueWithoutChurchInput[]
+    createMany?: EventCreateManyChurchInputEnvelope
+    set?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    disconnect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    delete?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    connect?: EventWhereUniqueInput | EventWhereUniqueInput[]
+    update?: EventUpdateWithWhereUniqueWithoutChurchInput | EventUpdateWithWhereUniqueWithoutChurchInput[]
+    updateMany?: EventUpdateManyWithWhereWithoutChurchInput | EventUpdateManyWithWhereWithoutChurchInput[]
+    deleteMany?: EventScalarWhereInput | EventScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutEventsCreatedInput = {
     create?: XOR<UserCreateWithoutEventsCreatedInput, UserUncheckedCreateWithoutEventsCreatedInput>
     connectOrCreate?: UserCreateOrConnectWithoutEventsCreatedInput
@@ -27673,6 +31765,18 @@ export namespace Prisma {
     create?: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
     connectOrCreate?: MinistryCreateOrConnectWithoutEventsInput
     connect?: MinistryWhereUniqueInput
+  }
+
+  export type DistrictCreateNestedOneWithoutEventsInput = {
+    create?: XOR<DistrictCreateWithoutEventsInput, DistrictUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutEventsInput
+    connect?: DistrictWhereUniqueInput
+  }
+
+  export type ChurchCreateNestedOneWithoutEventsInput = {
+    create?: XOR<ChurchCreateWithoutEventsInput, ChurchUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: ChurchCreateOrConnectWithoutEventsInput
+    connect?: ChurchWhereUniqueInput
   }
 
   export type EventLotCreateNestedManyWithoutEventInput = {
@@ -27769,6 +31873,24 @@ export namespace Prisma {
     delete?: MinistryWhereInput | boolean
     connect?: MinistryWhereUniqueInput
     update?: XOR<XOR<MinistryUpdateToOneWithWhereWithoutEventsInput, MinistryUpdateWithoutEventsInput>, MinistryUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type DistrictUpdateOneRequiredWithoutEventsNestedInput = {
+    create?: XOR<DistrictCreateWithoutEventsInput, DistrictUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutEventsInput
+    upsert?: DistrictUpsertWithoutEventsInput
+    connect?: DistrictWhereUniqueInput
+    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutEventsInput, DistrictUpdateWithoutEventsInput>, DistrictUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type ChurchUpdateOneWithoutEventsNestedInput = {
+    create?: XOR<ChurchCreateWithoutEventsInput, ChurchUncheckedCreateWithoutEventsInput>
+    connectOrCreate?: ChurchCreateOrConnectWithoutEventsInput
+    upsert?: ChurchUpsertWithoutEventsInput
+    disconnect?: ChurchWhereInput | boolean
+    delete?: ChurchWhereInput | boolean
+    connect?: ChurchWhereUniqueInput
+    update?: XOR<XOR<ChurchUpdateToOneWithWhereWithoutEventsInput, ChurchUpdateWithoutEventsInput>, ChurchUncheckedUpdateWithoutEventsInput>
   }
 
   export type EventLotUpdateManyWithoutEventNestedInput = {
@@ -27936,6 +32058,30 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type DistrictCreateNestedOneWithoutOrdersInput = {
+    create?: XOR<DistrictCreateWithoutOrdersInput, DistrictUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutOrdersInput
+    connect?: DistrictWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutDistrictOrdersInput = {
+    create?: XOR<UserCreateWithoutDistrictOrdersInput, UserUncheckedCreateWithoutDistrictOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictOrdersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutResponsibleOrdersInput = {
+    create?: XOR<UserCreateWithoutResponsibleOrdersInput, UserUncheckedCreateWithoutResponsibleOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutResponsibleOrdersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TransferCreateNestedOneWithoutOrdersInput = {
+    create?: XOR<TransferCreateWithoutOrdersInput, TransferUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: TransferCreateOrConnectWithoutOrdersInput
+    connect?: TransferWhereUniqueInput
+  }
+
   export type RefundUncheckedCreateNestedManyWithoutOrderInput = {
     create?: XOR<RefundCreateWithoutOrderInput, RefundUncheckedCreateWithoutOrderInput> | RefundCreateWithoutOrderInput[] | RefundUncheckedCreateWithoutOrderInput[]
     connectOrCreate?: RefundCreateOrConnectWithoutOrderInput | RefundCreateOrConnectWithoutOrderInput[]
@@ -27973,6 +32119,10 @@ export namespace Prisma {
 
   export type EnumOrderOriginFieldUpdateOperationsInput = {
     set?: $Enums.OrderOrigin
+  }
+
+  export type NullableEnumOrderTransferStatusFieldUpdateOperationsInput = {
+    set?: $Enums.OrderTransferStatus | null
   }
 
   export type EventUpdateOneRequiredWithoutOrdersNestedInput = {
@@ -28071,6 +32221,46 @@ export namespace Prisma {
     delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutConfirmedManualOrdersInput, UserUpdateWithoutConfirmedManualOrdersInput>, UserUncheckedUpdateWithoutConfirmedManualOrdersInput>
+  }
+
+  export type DistrictUpdateOneWithoutOrdersNestedInput = {
+    create?: XOR<DistrictCreateWithoutOrdersInput, DistrictUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutOrdersInput
+    upsert?: DistrictUpsertWithoutOrdersInput
+    disconnect?: DistrictWhereInput | boolean
+    delete?: DistrictWhereInput | boolean
+    connect?: DistrictWhereUniqueInput
+    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutOrdersInput, DistrictUpdateWithoutOrdersInput>, DistrictUncheckedUpdateWithoutOrdersInput>
+  }
+
+  export type UserUpdateOneWithoutDistrictOrdersNestedInput = {
+    create?: XOR<UserCreateWithoutDistrictOrdersInput, UserUncheckedCreateWithoutDistrictOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictOrdersInput
+    upsert?: UserUpsertWithoutDistrictOrdersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutDistrictOrdersInput, UserUpdateWithoutDistrictOrdersInput>, UserUncheckedUpdateWithoutDistrictOrdersInput>
+  }
+
+  export type UserUpdateOneWithoutResponsibleOrdersNestedInput = {
+    create?: XOR<UserCreateWithoutResponsibleOrdersInput, UserUncheckedCreateWithoutResponsibleOrdersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutResponsibleOrdersInput
+    upsert?: UserUpsertWithoutResponsibleOrdersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutResponsibleOrdersInput, UserUpdateWithoutResponsibleOrdersInput>, UserUncheckedUpdateWithoutResponsibleOrdersInput>
+  }
+
+  export type TransferUpdateOneWithoutOrdersNestedInput = {
+    create?: XOR<TransferCreateWithoutOrdersInput, TransferUncheckedCreateWithoutOrdersInput>
+    connectOrCreate?: TransferCreateOrConnectWithoutOrdersInput
+    upsert?: TransferUpsertWithoutOrdersInput
+    disconnect?: TransferWhereInput | boolean
+    delete?: TransferWhereInput | boolean
+    connect?: TransferWhereUniqueInput
+    update?: XOR<XOR<TransferUpdateToOneWithWhereWithoutOrdersInput, TransferUpdateWithoutOrdersInput>, TransferUncheckedUpdateWithoutOrdersInput>
   }
 
   export type RefundUncheckedUpdateManyWithoutOrderNestedInput = {
@@ -28180,6 +32370,12 @@ export namespace Prisma {
     connect?: OrderWhereUniqueInput
   }
 
+  export type UserCreateNestedOneWithoutResponsibleRegistrationsInput = {
+    create?: XOR<UserCreateWithoutResponsibleRegistrationsInput, UserUncheckedCreateWithoutResponsibleRegistrationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutResponsibleRegistrationsInput
+    connect?: UserWhereUniqueInput
+  }
+
   export type OrderItemCreateNestedManyWithoutRegistrationInput = {
     create?: XOR<OrderItemCreateWithoutRegistrationInput, OrderItemUncheckedCreateWithoutRegistrationInput> | OrderItemCreateWithoutRegistrationInput[] | OrderItemUncheckedCreateWithoutRegistrationInput[]
     connectOrCreate?: OrderItemCreateOrConnectWithoutRegistrationInput | OrderItemCreateOrConnectWithoutRegistrationInput[]
@@ -28255,6 +32451,16 @@ export namespace Prisma {
     upsert?: OrderUpsertWithoutRegistrationsInput
     connect?: OrderWhereUniqueInput
     update?: XOR<XOR<OrderUpdateToOneWithWhereWithoutRegistrationsInput, OrderUpdateWithoutRegistrationsInput>, OrderUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type UserUpdateOneWithoutResponsibleRegistrationsNestedInput = {
+    create?: XOR<UserCreateWithoutResponsibleRegistrationsInput, UserUncheckedCreateWithoutResponsibleRegistrationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutResponsibleRegistrationsInput
+    upsert?: UserUpsertWithoutResponsibleRegistrationsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutResponsibleRegistrationsInput, UserUpdateWithoutResponsibleRegistrationsInput>, UserUncheckedUpdateWithoutResponsibleRegistrationsInput>
   }
 
   export type OrderItemUpdateManyWithoutRegistrationNestedInput = {
@@ -28439,6 +32645,48 @@ export namespace Prisma {
     connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
   }
 
+  export type OrderCreateNestedManyWithoutDistrictAdminInput = {
+    create?: XOR<OrderCreateWithoutDistrictAdminInput, OrderUncheckedCreateWithoutDistrictAdminInput> | OrderCreateWithoutDistrictAdminInput[] | OrderUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictAdminInput | OrderCreateOrConnectWithoutDistrictAdminInput[]
+    createMany?: OrderCreateManyDistrictAdminInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type OrderCreateNestedManyWithoutResponsibleUserInput = {
+    create?: XOR<OrderCreateWithoutResponsibleUserInput, OrderUncheckedCreateWithoutResponsibleUserInput> | OrderCreateWithoutResponsibleUserInput[] | OrderUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutResponsibleUserInput | OrderCreateOrConnectWithoutResponsibleUserInput[]
+    createMany?: OrderCreateManyResponsibleUserInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type RegistrationCreateNestedManyWithoutResponsibleUserInput = {
+    create?: XOR<RegistrationCreateWithoutResponsibleUserInput, RegistrationUncheckedCreateWithoutResponsibleUserInput> | RegistrationCreateWithoutResponsibleUserInput[] | RegistrationUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutResponsibleUserInput | RegistrationCreateOrConnectWithoutResponsibleUserInput[]
+    createMany?: RegistrationCreateManyResponsibleUserInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type TransferCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<TransferCreateWithoutCreatedByInput, TransferUncheckedCreateWithoutCreatedByInput> | TransferCreateWithoutCreatedByInput[] | TransferUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutCreatedByInput | TransferCreateOrConnectWithoutCreatedByInput[]
+    createMany?: TransferCreateManyCreatedByInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
+  export type TransferCreateNestedManyWithoutDistrictAdminInput = {
+    create?: XOR<TransferCreateWithoutDistrictAdminInput, TransferUncheckedCreateWithoutDistrictAdminInput> | TransferCreateWithoutDistrictAdminInput[] | TransferUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictAdminInput | TransferCreateOrConnectWithoutDistrictAdminInput[]
+    createMany?: TransferCreateManyDistrictAdminInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
+  export type TransferCreateNestedManyWithoutResponsibleUserInput = {
+    create?: XOR<TransferCreateWithoutResponsibleUserInput, TransferUncheckedCreateWithoutResponsibleUserInput> | TransferCreateWithoutResponsibleUserInput[] | TransferUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutResponsibleUserInput | TransferCreateOrConnectWithoutResponsibleUserInput[]
+    createMany?: TransferCreateManyResponsibleUserInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
   export type AuditLogUncheckedCreateNestedManyWithoutActorInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
@@ -28495,8 +32743,58 @@ export namespace Prisma {
     connect?: ServiceOrderWhereUniqueInput | ServiceOrderWhereUniqueInput[]
   }
 
+  export type OrderUncheckedCreateNestedManyWithoutDistrictAdminInput = {
+    create?: XOR<OrderCreateWithoutDistrictAdminInput, OrderUncheckedCreateWithoutDistrictAdminInput> | OrderCreateWithoutDistrictAdminInput[] | OrderUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictAdminInput | OrderCreateOrConnectWithoutDistrictAdminInput[]
+    createMany?: OrderCreateManyDistrictAdminInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutResponsibleUserInput = {
+    create?: XOR<OrderCreateWithoutResponsibleUserInput, OrderUncheckedCreateWithoutResponsibleUserInput> | OrderCreateWithoutResponsibleUserInput[] | OrderUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutResponsibleUserInput | OrderCreateOrConnectWithoutResponsibleUserInput[]
+    createMany?: OrderCreateManyResponsibleUserInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput = {
+    create?: XOR<RegistrationCreateWithoutResponsibleUserInput, RegistrationUncheckedCreateWithoutResponsibleUserInput> | RegistrationCreateWithoutResponsibleUserInput[] | RegistrationUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutResponsibleUserInput | RegistrationCreateOrConnectWithoutResponsibleUserInput[]
+    createMany?: RegistrationCreateManyResponsibleUserInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type TransferUncheckedCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<TransferCreateWithoutCreatedByInput, TransferUncheckedCreateWithoutCreatedByInput> | TransferCreateWithoutCreatedByInput[] | TransferUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutCreatedByInput | TransferCreateOrConnectWithoutCreatedByInput[]
+    createMany?: TransferCreateManyCreatedByInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
+  export type TransferUncheckedCreateNestedManyWithoutDistrictAdminInput = {
+    create?: XOR<TransferCreateWithoutDistrictAdminInput, TransferUncheckedCreateWithoutDistrictAdminInput> | TransferCreateWithoutDistrictAdminInput[] | TransferUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictAdminInput | TransferCreateOrConnectWithoutDistrictAdminInput[]
+    createMany?: TransferCreateManyDistrictAdminInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
+  export type TransferUncheckedCreateNestedManyWithoutResponsibleUserInput = {
+    create?: XOR<TransferCreateWithoutResponsibleUserInput, TransferUncheckedCreateWithoutResponsibleUserInput> | TransferCreateWithoutResponsibleUserInput[] | TransferUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutResponsibleUserInput | TransferCreateOrConnectWithoutResponsibleUserInput[]
+    createMany?: TransferCreateManyResponsibleUserInputEnvelope
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+  }
+
   export type EnumUserStatusFieldUpdateOperationsInput = {
     set?: $Enums.UserStatus
+  }
+
+  export type NullableEnumPixTypeFieldUpdateOperationsInput = {
+    set?: $Enums.PixType | null
+  }
+
+  export type EnumPixStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PixStatus
   }
 
   export type AuditLogUpdateManyWithoutActorNestedInput = {
@@ -28651,6 +32949,90 @@ export namespace Prisma {
     deleteMany?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
   }
 
+  export type OrderUpdateManyWithoutDistrictAdminNestedInput = {
+    create?: XOR<OrderCreateWithoutDistrictAdminInput, OrderUncheckedCreateWithoutDistrictAdminInput> | OrderCreateWithoutDistrictAdminInput[] | OrderUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictAdminInput | OrderCreateOrConnectWithoutDistrictAdminInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutDistrictAdminInput | OrderUpsertWithWhereUniqueWithoutDistrictAdminInput[]
+    createMany?: OrderCreateManyDistrictAdminInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutDistrictAdminInput | OrderUpdateWithWhereUniqueWithoutDistrictAdminInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutDistrictAdminInput | OrderUpdateManyWithWhereWithoutDistrictAdminInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type OrderUpdateManyWithoutResponsibleUserNestedInput = {
+    create?: XOR<OrderCreateWithoutResponsibleUserInput, OrderUncheckedCreateWithoutResponsibleUserInput> | OrderCreateWithoutResponsibleUserInput[] | OrderUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutResponsibleUserInput | OrderCreateOrConnectWithoutResponsibleUserInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutResponsibleUserInput | OrderUpsertWithWhereUniqueWithoutResponsibleUserInput[]
+    createMany?: OrderCreateManyResponsibleUserInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutResponsibleUserInput | OrderUpdateWithWhereUniqueWithoutResponsibleUserInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutResponsibleUserInput | OrderUpdateManyWithWhereWithoutResponsibleUserInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type RegistrationUpdateManyWithoutResponsibleUserNestedInput = {
+    create?: XOR<RegistrationCreateWithoutResponsibleUserInput, RegistrationUncheckedCreateWithoutResponsibleUserInput> | RegistrationCreateWithoutResponsibleUserInput[] | RegistrationUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutResponsibleUserInput | RegistrationCreateOrConnectWithoutResponsibleUserInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutResponsibleUserInput | RegistrationUpsertWithWhereUniqueWithoutResponsibleUserInput[]
+    createMany?: RegistrationCreateManyResponsibleUserInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutResponsibleUserInput | RegistrationUpdateWithWhereUniqueWithoutResponsibleUserInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutResponsibleUserInput | RegistrationUpdateManyWithWhereWithoutResponsibleUserInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type TransferUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<TransferCreateWithoutCreatedByInput, TransferUncheckedCreateWithoutCreatedByInput> | TransferCreateWithoutCreatedByInput[] | TransferUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutCreatedByInput | TransferCreateOrConnectWithoutCreatedByInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutCreatedByInput | TransferUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: TransferCreateManyCreatedByInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutCreatedByInput | TransferUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutCreatedByInput | TransferUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
+  export type TransferUpdateManyWithoutDistrictAdminNestedInput = {
+    create?: XOR<TransferCreateWithoutDistrictAdminInput, TransferUncheckedCreateWithoutDistrictAdminInput> | TransferCreateWithoutDistrictAdminInput[] | TransferUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictAdminInput | TransferCreateOrConnectWithoutDistrictAdminInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutDistrictAdminInput | TransferUpsertWithWhereUniqueWithoutDistrictAdminInput[]
+    createMany?: TransferCreateManyDistrictAdminInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutDistrictAdminInput | TransferUpdateWithWhereUniqueWithoutDistrictAdminInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutDistrictAdminInput | TransferUpdateManyWithWhereWithoutDistrictAdminInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
+  export type TransferUpdateManyWithoutResponsibleUserNestedInput = {
+    create?: XOR<TransferCreateWithoutResponsibleUserInput, TransferUncheckedCreateWithoutResponsibleUserInput> | TransferCreateWithoutResponsibleUserInput[] | TransferUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutResponsibleUserInput | TransferCreateOrConnectWithoutResponsibleUserInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutResponsibleUserInput | TransferUpsertWithWhereUniqueWithoutResponsibleUserInput[]
+    createMany?: TransferCreateManyResponsibleUserInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutResponsibleUserInput | TransferUpdateWithWhereUniqueWithoutResponsibleUserInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutResponsibleUserInput | TransferUpdateManyWithWhereWithoutResponsibleUserInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
   export type AuditLogUncheckedUpdateManyWithoutActorNestedInput = {
     create?: XOR<AuditLogCreateWithoutActorInput, AuditLogUncheckedCreateWithoutActorInput> | AuditLogCreateWithoutActorInput[] | AuditLogUncheckedCreateWithoutActorInput[]
     connectOrCreate?: AuditLogCreateOrConnectWithoutActorInput | AuditLogCreateOrConnectWithoutActorInput[]
@@ -28761,6 +33143,90 @@ export namespace Prisma {
     update?: ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput | ServiceOrderUpdateWithWhereUniqueWithoutIssuedByInput[]
     updateMany?: ServiceOrderUpdateManyWithWhereWithoutIssuedByInput | ServiceOrderUpdateManyWithWhereWithoutIssuedByInput[]
     deleteMany?: ServiceOrderScalarWhereInput | ServiceOrderScalarWhereInput[]
+  }
+
+  export type OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput = {
+    create?: XOR<OrderCreateWithoutDistrictAdminInput, OrderUncheckedCreateWithoutDistrictAdminInput> | OrderCreateWithoutDistrictAdminInput[] | OrderUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutDistrictAdminInput | OrderCreateOrConnectWithoutDistrictAdminInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutDistrictAdminInput | OrderUpsertWithWhereUniqueWithoutDistrictAdminInput[]
+    createMany?: OrderCreateManyDistrictAdminInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutDistrictAdminInput | OrderUpdateWithWhereUniqueWithoutDistrictAdminInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutDistrictAdminInput | OrderUpdateManyWithWhereWithoutDistrictAdminInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput = {
+    create?: XOR<OrderCreateWithoutResponsibleUserInput, OrderUncheckedCreateWithoutResponsibleUserInput> | OrderCreateWithoutResponsibleUserInput[] | OrderUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutResponsibleUserInput | OrderCreateOrConnectWithoutResponsibleUserInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutResponsibleUserInput | OrderUpsertWithWhereUniqueWithoutResponsibleUserInput[]
+    createMany?: OrderCreateManyResponsibleUserInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutResponsibleUserInput | OrderUpdateWithWhereUniqueWithoutResponsibleUserInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutResponsibleUserInput | OrderUpdateManyWithWhereWithoutResponsibleUserInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput = {
+    create?: XOR<RegistrationCreateWithoutResponsibleUserInput, RegistrationUncheckedCreateWithoutResponsibleUserInput> | RegistrationCreateWithoutResponsibleUserInput[] | RegistrationUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutResponsibleUserInput | RegistrationCreateOrConnectWithoutResponsibleUserInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutResponsibleUserInput | RegistrationUpsertWithWhereUniqueWithoutResponsibleUserInput[]
+    createMany?: RegistrationCreateManyResponsibleUserInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutResponsibleUserInput | RegistrationUpdateWithWhereUniqueWithoutResponsibleUserInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutResponsibleUserInput | RegistrationUpdateManyWithWhereWithoutResponsibleUserInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type TransferUncheckedUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<TransferCreateWithoutCreatedByInput, TransferUncheckedCreateWithoutCreatedByInput> | TransferCreateWithoutCreatedByInput[] | TransferUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutCreatedByInput | TransferCreateOrConnectWithoutCreatedByInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutCreatedByInput | TransferUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: TransferCreateManyCreatedByInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutCreatedByInput | TransferUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutCreatedByInput | TransferUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
+  export type TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput = {
+    create?: XOR<TransferCreateWithoutDistrictAdminInput, TransferUncheckedCreateWithoutDistrictAdminInput> | TransferCreateWithoutDistrictAdminInput[] | TransferUncheckedCreateWithoutDistrictAdminInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutDistrictAdminInput | TransferCreateOrConnectWithoutDistrictAdminInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutDistrictAdminInput | TransferUpsertWithWhereUniqueWithoutDistrictAdminInput[]
+    createMany?: TransferCreateManyDistrictAdminInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutDistrictAdminInput | TransferUpdateWithWhereUniqueWithoutDistrictAdminInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutDistrictAdminInput | TransferUpdateManyWithWhereWithoutDistrictAdminInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
+  }
+
+  export type TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput = {
+    create?: XOR<TransferCreateWithoutResponsibleUserInput, TransferUncheckedCreateWithoutResponsibleUserInput> | TransferCreateWithoutResponsibleUserInput[] | TransferUncheckedCreateWithoutResponsibleUserInput[]
+    connectOrCreate?: TransferCreateOrConnectWithoutResponsibleUserInput | TransferCreateOrConnectWithoutResponsibleUserInput[]
+    upsert?: TransferUpsertWithWhereUniqueWithoutResponsibleUserInput | TransferUpsertWithWhereUniqueWithoutResponsibleUserInput[]
+    createMany?: TransferCreateManyResponsibleUserInputEnvelope
+    set?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    disconnect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    delete?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    connect?: TransferWhereUniqueInput | TransferWhereUniqueInput[]
+    update?: TransferUpdateWithWhereUniqueWithoutResponsibleUserInput | TransferUpdateWithWhereUniqueWithoutResponsibleUserInput[]
+    updateMany?: TransferUpdateManyWithWhereWithoutResponsibleUserInput | TransferUpdateManyWithWhereWithoutResponsibleUserInput[]
+    deleteMany?: TransferScalarWhereInput | TransferScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutSystemConfigsUpdatedInput = {
@@ -29235,6 +33701,116 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutIssuedServiceOrdersInput, UserUpdateWithoutIssuedServiceOrdersInput>, UserUncheckedUpdateWithoutIssuedServiceOrdersInput>
   }
 
+  export type DistrictCreateNestedOneWithoutTransfersInput = {
+    create?: XOR<DistrictCreateWithoutTransfersInput, DistrictUncheckedCreateWithoutTransfersInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutTransfersInput
+    connect?: DistrictWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutDistrictTransfersInput = {
+    create?: XOR<UserCreateWithoutDistrictTransfersInput, UserUncheckedCreateWithoutDistrictTransfersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictTransfersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutResponsibleTransfersInput = {
+    create?: XOR<UserCreateWithoutResponsibleTransfersInput, UserUncheckedCreateWithoutResponsibleTransfersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutResponsibleTransfersInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutTransfersCreatedInput = {
+    create?: XOR<UserCreateWithoutTransfersCreatedInput, UserUncheckedCreateWithoutTransfersCreatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTransfersCreatedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type OrderCreateNestedManyWithoutTransferBatchInput = {
+    create?: XOR<OrderCreateWithoutTransferBatchInput, OrderUncheckedCreateWithoutTransferBatchInput> | OrderCreateWithoutTransferBatchInput[] | OrderUncheckedCreateWithoutTransferBatchInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutTransferBatchInput | OrderCreateOrConnectWithoutTransferBatchInput[]
+    createMany?: OrderCreateManyTransferBatchInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type OrderUncheckedCreateNestedManyWithoutTransferBatchInput = {
+    create?: XOR<OrderCreateWithoutTransferBatchInput, OrderUncheckedCreateWithoutTransferBatchInput> | OrderCreateWithoutTransferBatchInput[] | OrderUncheckedCreateWithoutTransferBatchInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutTransferBatchInput | OrderCreateOrConnectWithoutTransferBatchInput[]
+    createMany?: OrderCreateManyTransferBatchInputEnvelope
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+  }
+
+  export type EnumTransferStatusFieldUpdateOperationsInput = {
+    set?: $Enums.TransferStatus
+  }
+
+  export type DistrictUpdateOneWithoutTransfersNestedInput = {
+    create?: XOR<DistrictCreateWithoutTransfersInput, DistrictUncheckedCreateWithoutTransfersInput>
+    connectOrCreate?: DistrictCreateOrConnectWithoutTransfersInput
+    upsert?: DistrictUpsertWithoutTransfersInput
+    disconnect?: DistrictWhereInput | boolean
+    delete?: DistrictWhereInput | boolean
+    connect?: DistrictWhereUniqueInput
+    update?: XOR<XOR<DistrictUpdateToOneWithWhereWithoutTransfersInput, DistrictUpdateWithoutTransfersInput>, DistrictUncheckedUpdateWithoutTransfersInput>
+  }
+
+  export type UserUpdateOneWithoutDistrictTransfersNestedInput = {
+    create?: XOR<UserCreateWithoutDistrictTransfersInput, UserUncheckedCreateWithoutDistrictTransfersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDistrictTransfersInput
+    upsert?: UserUpsertWithoutDistrictTransfersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutDistrictTransfersInput, UserUpdateWithoutDistrictTransfersInput>, UserUncheckedUpdateWithoutDistrictTransfersInput>
+  }
+
+  export type UserUpdateOneWithoutResponsibleTransfersNestedInput = {
+    create?: XOR<UserCreateWithoutResponsibleTransfersInput, UserUncheckedCreateWithoutResponsibleTransfersInput>
+    connectOrCreate?: UserCreateOrConnectWithoutResponsibleTransfersInput
+    upsert?: UserUpsertWithoutResponsibleTransfersInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutResponsibleTransfersInput, UserUpdateWithoutResponsibleTransfersInput>, UserUncheckedUpdateWithoutResponsibleTransfersInput>
+  }
+
+  export type UserUpdateOneWithoutTransfersCreatedNestedInput = {
+    create?: XOR<UserCreateWithoutTransfersCreatedInput, UserUncheckedCreateWithoutTransfersCreatedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTransfersCreatedInput
+    upsert?: UserUpsertWithoutTransfersCreatedInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTransfersCreatedInput, UserUpdateWithoutTransfersCreatedInput>, UserUncheckedUpdateWithoutTransfersCreatedInput>
+  }
+
+  export type OrderUpdateManyWithoutTransferBatchNestedInput = {
+    create?: XOR<OrderCreateWithoutTransferBatchInput, OrderUncheckedCreateWithoutTransferBatchInput> | OrderCreateWithoutTransferBatchInput[] | OrderUncheckedCreateWithoutTransferBatchInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutTransferBatchInput | OrderCreateOrConnectWithoutTransferBatchInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutTransferBatchInput | OrderUpsertWithWhereUniqueWithoutTransferBatchInput[]
+    createMany?: OrderCreateManyTransferBatchInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutTransferBatchInput | OrderUpdateWithWhereUniqueWithoutTransferBatchInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutTransferBatchInput | OrderUpdateManyWithWhereWithoutTransferBatchInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
+  export type OrderUncheckedUpdateManyWithoutTransferBatchNestedInput = {
+    create?: XOR<OrderCreateWithoutTransferBatchInput, OrderUncheckedCreateWithoutTransferBatchInput> | OrderCreateWithoutTransferBatchInput[] | OrderUncheckedCreateWithoutTransferBatchInput[]
+    connectOrCreate?: OrderCreateOrConnectWithoutTransferBatchInput | OrderCreateOrConnectWithoutTransferBatchInput[]
+    upsert?: OrderUpsertWithWhereUniqueWithoutTransferBatchInput | OrderUpsertWithWhereUniqueWithoutTransferBatchInput[]
+    createMany?: OrderCreateManyTransferBatchInputEnvelope
+    set?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    disconnect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    delete?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
+    update?: OrderUpdateWithWhereUniqueWithoutTransferBatchInput | OrderUpdateWithWhereUniqueWithoutTransferBatchInput[]
+    updateMany?: OrderUpdateManyWithWhereWithoutTransferBatchInput | OrderUpdateManyWithWhereWithoutTransferBatchInput[]
+    deleteMany?: OrderScalarWhereInput | OrderScalarWhereInput[]
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[]
@@ -29443,6 +34019,13 @@ export namespace Prisma {
     not?: NestedEnumOrderOriginFilter<$PrismaModel> | $Enums.OrderOrigin
   }
 
+  export type NestedEnumOrderTransferStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderTransferStatus | EnumOrderTransferStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OrderTransferStatus[] | null
+    notIn?: $Enums.OrderTransferStatus[] | null
+    not?: NestedEnumOrderTransferStatusNullableFilter<$PrismaModel> | $Enums.OrderTransferStatus | null
+  }
+
   export type NestedEnumOrderOriginWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.OrderOrigin | EnumOrderOriginFieldRefInput<$PrismaModel>
     in?: $Enums.OrderOrigin[]
@@ -29453,11 +34036,35 @@ export namespace Prisma {
     _max?: NestedEnumOrderOriginFilter<$PrismaModel>
   }
 
+  export type NestedEnumOrderTransferStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrderTransferStatus | EnumOrderTransferStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.OrderTransferStatus[] | null
+    notIn?: $Enums.OrderTransferStatus[] | null
+    not?: NestedEnumOrderTransferStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.OrderTransferStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumOrderTransferStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumOrderTransferStatusNullableFilter<$PrismaModel>
+  }
+
   export type NestedEnumUserStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.UserStatus | EnumUserStatusFieldRefInput<$PrismaModel>
     in?: $Enums.UserStatus[]
     notIn?: $Enums.UserStatus[]
     not?: NestedEnumUserStatusFilter<$PrismaModel> | $Enums.UserStatus
+  }
+
+  export type NestedEnumPixTypeNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixType | EnumPixTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PixType[] | null
+    notIn?: $Enums.PixType[] | null
+    not?: NestedEnumPixTypeNullableFilter<$PrismaModel> | $Enums.PixType | null
+  }
+
+  export type NestedEnumPixStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixStatus | EnumPixStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PixStatus[]
+    notIn?: $Enums.PixStatus[]
+    not?: NestedEnumPixStatusFilter<$PrismaModel> | $Enums.PixStatus
   }
 
   export type NestedEnumUserStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -29468,6 +34075,26 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumUserStatusFilter<$PrismaModel>
     _max?: NestedEnumUserStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPixTypeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixType | EnumPixTypeFieldRefInput<$PrismaModel> | null
+    in?: $Enums.PixType[] | null
+    notIn?: $Enums.PixType[] | null
+    not?: NestedEnumPixTypeNullableWithAggregatesFilter<$PrismaModel> | $Enums.PixType | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumPixTypeNullableFilter<$PrismaModel>
+    _max?: NestedEnumPixTypeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPixStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PixStatus | EnumPixStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PixStatus[]
+    notIn?: $Enums.PixStatus[]
+    not?: NestedEnumPixStatusWithAggregatesFilter<$PrismaModel> | $Enums.PixStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPixStatusFilter<$PrismaModel>
+    _max?: NestedEnumPixStatusFilter<$PrismaModel>
   }
   export type NestedJsonFilter<$PrismaModel = never> = 
     | PatchUndefined<
@@ -29531,6 +34158,23 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedEnumTransferStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransferStatus | EnumTransferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransferStatus[]
+    notIn?: $Enums.TransferStatus[]
+    not?: NestedEnumTransferStatusFilter<$PrismaModel> | $Enums.TransferStatus
+  }
+
+  export type NestedEnumTransferStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TransferStatus | EnumTransferStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TransferStatus[]
+    notIn?: $Enums.TransferStatus[]
+    not?: NestedEnumTransferStatusWithAggregatesFilter<$PrismaModel> | $Enums.TransferStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTransferStatusFilter<$PrismaModel>
+    _max?: NestedEnumTransferStatusFilter<$PrismaModel>
+  }
+
   export type ChurchCreateWithoutDistrictInput = {
     id?: string
     name: string
@@ -29543,6 +34187,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
     users?: UserCreateNestedManyWithoutChurchInput
+    events?: EventCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateWithoutDistrictInput = {
@@ -29557,6 +34202,7 @@ export namespace Prisma {
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
     users?: UserUncheckedCreateNestedManyWithoutChurchInput
+    events?: EventUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchCreateOrConnectWithoutDistrictInput = {
@@ -29566,6 +34212,66 @@ export namespace Prisma {
 
   export type ChurchCreateManyDistrictInputEnvelope = {
     data: ChurchCreateManyDistrictInput | ChurchCreateManyDistrictInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EventCreateWithoutDistrictInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
+    lots?: EventLotCreateNestedManyWithoutEventInput
+    expenses?: ExpenseCreateNestedManyWithoutEventInput
+    orders?: OrderCreateNestedManyWithoutEventInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
+  }
+
+  export type EventUncheckedCreateWithoutDistrictInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    createdById?: string | null
+    churchId?: string | null
+    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
+  }
+
+  export type EventCreateOrConnectWithoutDistrictInput = {
+    where: EventWhereUniqueInput
+    create: XOR<EventCreateWithoutDistrictInput, EventUncheckedCreateWithoutDistrictInput>
+  }
+
+  export type EventCreateManyDistrictInputEnvelope = {
+    data: EventCreateManyDistrictInput | EventCreateManyDistrictInput[]
     skipDuplicates?: boolean
   }
 
@@ -29589,6 +34295,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -29602,6 +34309,7 @@ export namespace Prisma {
     ageYears: number
     priceCents?: number
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -29638,6 +34346,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -29649,6 +34363,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutDistrictScopeInput = {
@@ -29667,6 +34387,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -29675,6 +34401,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutDistrictScopeInput = {
@@ -29684,6 +34416,144 @@ export namespace Prisma {
 
   export type UserCreateManyDistrictScopeInputEnvelope = {
     data: UserCreateManyDistrictScopeInput | UserCreateManyDistrictScopeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrderCreateWithoutDistrictInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
+  }
+
+  export type OrderUncheckedCreateWithoutDistrictInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutDistrictInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutDistrictInput, OrderUncheckedCreateWithoutDistrictInput>
+  }
+
+  export type OrderCreateManyDistrictInputEnvelope = {
+    data: OrderCreateManyDistrictInput | OrderCreateManyDistrictInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TransferCreateWithoutDistrictInput = {
+    id?: string
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    districtAdmin?: UserCreateNestedOneWithoutDistrictTransfersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleTransfersInput
+    createdBy?: UserCreateNestedOneWithoutTransfersCreatedInput
+    orders?: OrderCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferUncheckedCreateWithoutDistrictInput = {
+    id?: string
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    orders?: OrderUncheckedCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferCreateOrConnectWithoutDistrictInput = {
+    where: TransferWhereUniqueInput
+    create: XOR<TransferCreateWithoutDistrictInput, TransferUncheckedCreateWithoutDistrictInput>
+  }
+
+  export type TransferCreateManyDistrictInputEnvelope = {
+    data: TransferCreateManyDistrictInput | TransferCreateManyDistrictInput[]
     skipDuplicates?: boolean
   }
 
@@ -29719,6 +34589,47 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Church"> | Date | string
   }
 
+  export type EventUpsertWithWhereUniqueWithoutDistrictInput = {
+    where: EventWhereUniqueInput
+    update: XOR<EventUpdateWithoutDistrictInput, EventUncheckedUpdateWithoutDistrictInput>
+    create: XOR<EventCreateWithoutDistrictInput, EventUncheckedCreateWithoutDistrictInput>
+  }
+
+  export type EventUpdateWithWhereUniqueWithoutDistrictInput = {
+    where: EventWhereUniqueInput
+    data: XOR<EventUpdateWithoutDistrictInput, EventUncheckedUpdateWithoutDistrictInput>
+  }
+
+  export type EventUpdateManyWithWhereWithoutDistrictInput = {
+    where: EventScalarWhereInput
+    data: XOR<EventUpdateManyMutationInput, EventUncheckedUpdateManyWithoutDistrictInput>
+  }
+
+  export type EventScalarWhereInput = {
+    AND?: EventScalarWhereInput | EventScalarWhereInput[]
+    OR?: EventScalarWhereInput[]
+    NOT?: EventScalarWhereInput | EventScalarWhereInput[]
+    id?: StringFilter<"Event"> | string
+    title?: StringFilter<"Event"> | string
+    description?: StringFilter<"Event"> | string
+    startDate?: DateTimeFilter<"Event"> | Date | string
+    endDate?: DateTimeFilter<"Event"> | Date | string
+    location?: StringFilter<"Event"> | string
+    bannerUrl?: StringNullableFilter<"Event"> | string | null
+    priceCents?: IntFilter<"Event"> | number
+    minAgeYears?: IntNullableFilter<"Event"> | number | null
+    isFree?: BoolFilter<"Event"> | boolean
+    isActive?: BoolFilter<"Event"> | boolean
+    slug?: StringFilter<"Event"> | string
+    paymentMethods?: StringFilter<"Event"> | string
+    pendingPaymentValueRule?: StringFilter<"Event"> | string
+    createdAt?: DateTimeFilter<"Event"> | Date | string
+    ministryId?: StringNullableFilter<"Event"> | string | null
+    createdById?: StringNullableFilter<"Event"> | string | null
+    districtId?: StringFilter<"Event"> | string
+    churchId?: StringNullableFilter<"Event"> | string | null
+  }
+
   export type RegistrationUpsertWithWhereUniqueWithoutDistrictInput = {
     where: RegistrationWhereUniqueInput
     update: XOR<RegistrationUpdateWithoutDistrictInput, RegistrationUncheckedUpdateWithoutDistrictInput>
@@ -29749,6 +34660,7 @@ export namespace Prisma {
     priceCents?: IntFilter<"Registration"> | number
     districtId?: StringFilter<"Registration"> | string
     churchId?: StringFilter<"Registration"> | string
+    responsibleUserId?: StringNullableFilter<"Registration"> | string | null
     photoUrl?: StringNullableFilter<"Registration"> | string | null
     gender?: StringNullableFilter<"Registration"> | string | null
     paymentMethod?: StringNullableFilter<"Registration"> | string | null
@@ -29796,6 +34708,105 @@ export namespace Prisma {
     photoUrl?: StringNullableFilter<"User"> | string | null
     profileId?: StringNullableFilter<"User"> | string | null
     status?: EnumUserStatusFilter<"User"> | $Enums.UserStatus
+    pixType?: EnumPixTypeNullableFilter<"User"> | $Enums.PixType | null
+    pixKey?: StringNullableFilter<"User"> | string | null
+    pixOwnerName?: StringNullableFilter<"User"> | string | null
+    pixOwnerDocument?: StringNullableFilter<"User"> | string | null
+    pixBankName?: StringNullableFilter<"User"> | string | null
+    pixStatus?: EnumPixStatusFilter<"User"> | $Enums.PixStatus
+  }
+
+  export type OrderUpsertWithWhereUniqueWithoutDistrictInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutDistrictInput, OrderUncheckedUpdateWithoutDistrictInput>
+    create: XOR<OrderCreateWithoutDistrictInput, OrderUncheckedCreateWithoutDistrictInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutDistrictInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutDistrictInput, OrderUncheckedUpdateWithoutDistrictInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutDistrictInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutDistrictInput>
+  }
+
+  export type OrderScalarWhereInput = {
+    AND?: OrderScalarWhereInput | OrderScalarWhereInput[]
+    OR?: OrderScalarWhereInput[]
+    NOT?: OrderScalarWhereInput | OrderScalarWhereInput[]
+    id?: StringFilter<"Order"> | string
+    eventId?: StringFilter<"Order"> | string
+    buyerCpf?: StringFilter<"Order"> | string
+    totalCents?: IntFilter<"Order"> | number
+    status?: StringFilter<"Order"> | string
+    paymentMethod?: StringFilter<"Order"> | string
+    mpPaymentId?: StringNullableFilter<"Order"> | string | null
+    mpPreferenceId?: StringNullableFilter<"Order"> | string | null
+    preferenceVersion?: IntFilter<"Order"> | number
+    pricingLotId?: StringNullableFilter<"Order"> | string | null
+    externalReference?: StringFilter<"Order"> | string
+    expiresAt?: DateTimeFilter<"Order"> | Date | string
+    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    manualPaymentReference?: StringNullableFilter<"Order"> | string | null
+    manualPaymentProofUrl?: StringNullableFilter<"Order"> | string | null
+    feeCents?: IntFilter<"Order"> | number
+    netAmountCents?: IntFilter<"Order"> | number
+    origin?: EnumOrderOriginFilter<"Order"> | $Enums.OrderOrigin
+    responsibleName?: StringNullableFilter<"Order"> | string | null
+    responsibleDocument?: StringNullableFilter<"Order"> | string | null
+    responsibleEmail?: StringNullableFilter<"Order"> | string | null
+    responsiblePhone?: StringNullableFilter<"Order"> | string | null
+    amountReceivedCents?: IntNullableFilter<"Order"> | number | null
+    manualNotes?: StringNullableFilter<"Order"> | string | null
+    confirmedById?: StringNullableFilter<"Order"> | string | null
+    confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    districtId?: StringNullableFilter<"Order"> | string | null
+    districtAdminId?: StringNullableFilter<"Order"> | string | null
+    responsibleUserId?: StringNullableFilter<"Order"> | string | null
+    amountToTransfer?: IntFilter<"Order"> | number
+    transferStatus?: EnumOrderTransferStatusNullableFilter<"Order"> | $Enums.OrderTransferStatus | null
+    transferBatchId?: StringNullableFilter<"Order"> | string | null
+    createdAt?: DateTimeFilter<"Order"> | Date | string
+  }
+
+  export type TransferUpsertWithWhereUniqueWithoutDistrictInput = {
+    where: TransferWhereUniqueInput
+    update: XOR<TransferUpdateWithoutDistrictInput, TransferUncheckedUpdateWithoutDistrictInput>
+    create: XOR<TransferCreateWithoutDistrictInput, TransferUncheckedCreateWithoutDistrictInput>
+  }
+
+  export type TransferUpdateWithWhereUniqueWithoutDistrictInput = {
+    where: TransferWhereUniqueInput
+    data: XOR<TransferUpdateWithoutDistrictInput, TransferUncheckedUpdateWithoutDistrictInput>
+  }
+
+  export type TransferUpdateManyWithWhereWithoutDistrictInput = {
+    where: TransferScalarWhereInput
+    data: XOR<TransferUpdateManyMutationInput, TransferUncheckedUpdateManyWithoutDistrictInput>
+  }
+
+  export type TransferScalarWhereInput = {
+    AND?: TransferScalarWhereInput | TransferScalarWhereInput[]
+    OR?: TransferScalarWhereInput[]
+    NOT?: TransferScalarWhereInput | TransferScalarWhereInput[]
+    id?: StringFilter<"Transfer"> | string
+    districtId?: StringNullableFilter<"Transfer"> | string | null
+    districtAdminId?: StringNullableFilter<"Transfer"> | string | null
+    responsibleUserId?: StringNullableFilter<"Transfer"> | string | null
+    amount?: IntFilter<"Transfer"> | number
+    pixType?: EnumPixTypeNullableFilter<"Transfer"> | $Enums.PixType | null
+    pixKey?: StringNullableFilter<"Transfer"> | string | null
+    pixOwnerName?: StringNullableFilter<"Transfer"> | string | null
+    pixOwnerDocument?: StringNullableFilter<"Transfer"> | string | null
+    pixBankName?: StringNullableFilter<"Transfer"> | string | null
+    orderIds?: JsonFilter<"Transfer">
+    mpTransferId?: StringNullableFilter<"Transfer"> | string | null
+    status?: EnumTransferStatusFilter<"Transfer"> | $Enums.TransferStatus
+    errorMessage?: StringNullableFilter<"Transfer"> | string | null
+    createdById?: StringNullableFilter<"Transfer"> | string | null
+    createdAt?: DateTimeFilter<"Transfer"> | Date | string
   }
 
   export type DistrictCreateWithoutChurchesInput = {
@@ -29803,8 +34814,11 @@ export namespace Prisma {
     name: string
     pastorName?: string | null
     createdAt?: Date | string
+    events?: EventCreateNestedManyWithoutDistrictInput
     registrations?: RegistrationCreateNestedManyWithoutDistrictInput
     users?: UserCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderCreateNestedManyWithoutDistrictInput
+    transfers?: TransferCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictUncheckedCreateWithoutChurchesInput = {
@@ -29812,8 +34826,11 @@ export namespace Prisma {
     name: string
     pastorName?: string | null
     createdAt?: Date | string
+    events?: EventUncheckedCreateNestedManyWithoutDistrictInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
     users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderUncheckedCreateNestedManyWithoutDistrictInput
+    transfers?: TransferUncheckedCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictCreateOrConnectWithoutChurchesInput = {
@@ -29841,6 +34858,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -29854,6 +34872,7 @@ export namespace Prisma {
     ageYears: number
     priceCents?: number
     districtId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -29890,6 +34909,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -29901,6 +34926,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutChurchInput = {
@@ -29919,6 +34950,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -29927,6 +34964,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutChurchInput = {
@@ -29936,6 +34979,66 @@ export namespace Prisma {
 
   export type UserCreateManyChurchInputEnvelope = {
     data: UserCreateManyChurchInput | UserCreateManyChurchInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EventCreateWithoutChurchInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    lots?: EventLotCreateNestedManyWithoutEventInput
+    expenses?: ExpenseCreateNestedManyWithoutEventInput
+    orders?: OrderCreateNestedManyWithoutEventInput
+    registrations?: RegistrationCreateNestedManyWithoutEventInput
+  }
+
+  export type EventUncheckedCreateWithoutChurchInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    createdById?: string | null
+    districtId: string
+    lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
+    expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
+    orders?: OrderUncheckedCreateNestedManyWithoutEventInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
+  }
+
+  export type EventCreateOrConnectWithoutChurchInput = {
+    where: EventWhereUniqueInput
+    create: XOR<EventCreateWithoutChurchInput, EventUncheckedCreateWithoutChurchInput>
+  }
+
+  export type EventCreateManyChurchInputEnvelope = {
+    data: EventCreateManyChurchInput | EventCreateManyChurchInput[]
     skipDuplicates?: boolean
   }
 
@@ -29955,8 +35058,11 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    events?: EventUpdateManyWithoutDistrictNestedInput
     registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
     users?: UserUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUpdateManyWithoutDistrictNestedInput
   }
 
   export type DistrictUncheckedUpdateWithoutChurchesInput = {
@@ -29964,8 +35070,11 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    events?: EventUncheckedUpdateManyWithoutDistrictNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
     users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUncheckedUpdateManyWithoutDistrictNestedInput
   }
 
   export type RegistrationUpsertWithWhereUniqueWithoutChurchInput = {
@@ -30000,6 +35109,22 @@ export namespace Prisma {
     data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutChurchInput>
   }
 
+  export type EventUpsertWithWhereUniqueWithoutChurchInput = {
+    where: EventWhereUniqueInput
+    update: XOR<EventUpdateWithoutChurchInput, EventUncheckedUpdateWithoutChurchInput>
+    create: XOR<EventCreateWithoutChurchInput, EventUncheckedCreateWithoutChurchInput>
+  }
+
+  export type EventUpdateWithWhereUniqueWithoutChurchInput = {
+    where: EventWhereUniqueInput
+    data: XOR<EventUpdateWithoutChurchInput, EventUncheckedUpdateWithoutChurchInput>
+  }
+
+  export type EventUpdateManyWithWhereWithoutChurchInput = {
+    where: EventScalarWhereInput
+    data: XOR<EventUpdateManyMutationInput, EventUncheckedUpdateManyWithoutChurchInput>
+  }
+
   export type UserCreateWithoutEventsCreatedInput = {
     id?: string
     name: string
@@ -30013,6 +35138,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
@@ -30024,6 +35155,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutEventsCreatedInput = {
@@ -30043,6 +35180,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
@@ -30050,6 +35193,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutEventsCreatedInput = {
@@ -30084,6 +35233,70 @@ export namespace Prisma {
   export type MinistryCreateOrConnectWithoutEventsInput = {
     where: MinistryWhereUniqueInput
     create: XOR<MinistryCreateWithoutEventsInput, MinistryUncheckedCreateWithoutEventsInput>
+  }
+
+  export type DistrictCreateWithoutEventsInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationCreateNestedManyWithoutDistrictInput
+    users?: UserCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderCreateNestedManyWithoutDistrictInput
+    transfers?: TransferCreateNestedManyWithoutDistrictInput
+  }
+
+  export type DistrictUncheckedCreateWithoutEventsInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
+    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderUncheckedCreateNestedManyWithoutDistrictInput
+    transfers?: TransferUncheckedCreateNestedManyWithoutDistrictInput
+  }
+
+  export type DistrictCreateOrConnectWithoutEventsInput = {
+    where: DistrictWhereUniqueInput
+    create: XOR<DistrictCreateWithoutEventsInput, DistrictUncheckedCreateWithoutEventsInput>
+  }
+
+  export type ChurchCreateWithoutEventsInput = {
+    id?: string
+    name: string
+    directorName?: string | null
+    directorCpf?: string | null
+    directorBirthDate?: Date | string | null
+    directorEmail?: string | null
+    directorWhatsapp?: string | null
+    directorPhotoUrl?: string | null
+    createdAt?: Date | string
+    district: DistrictCreateNestedOneWithoutChurchesInput
+    registrations?: RegistrationCreateNestedManyWithoutChurchInput
+    users?: UserCreateNestedManyWithoutChurchInput
+  }
+
+  export type ChurchUncheckedCreateWithoutEventsInput = {
+    id?: string
+    name: string
+    districtId: string
+    directorName?: string | null
+    directorCpf?: string | null
+    directorBirthDate?: Date | string | null
+    directorEmail?: string | null
+    directorWhatsapp?: string | null
+    directorPhotoUrl?: string | null
+    createdAt?: Date | string
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
+    users?: UserUncheckedCreateNestedManyWithoutChurchInput
+  }
+
+  export type ChurchCreateOrConnectWithoutEventsInput = {
+    where: ChurchWhereUniqueInput
+    create: XOR<ChurchCreateWithoutEventsInput, ChurchUncheckedCreateWithoutEventsInput>
   }
 
   export type EventLotCreateWithoutEventInput = {
@@ -30174,6 +35387,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
@@ -30182,6 +35397,10 @@ export namespace Prisma {
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutEventInput = {
@@ -30210,6 +35429,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -30248,6 +35473,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -30261,6 +35487,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -30308,6 +35535,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
@@ -30319,6 +35552,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEventsCreatedInput = {
@@ -30338,6 +35577,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
@@ -30345,6 +35590,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type MinistryUpsertWithoutEventsInput = {
@@ -30380,6 +35631,82 @@ export namespace Prisma {
     users?: MinistryUserUncheckedUpdateManyWithoutMinistryNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutMinistryNestedInput
     primaryUsers?: UserUncheckedUpdateManyWithoutPrimaryMinistryNestedInput
+  }
+
+  export type DistrictUpsertWithoutEventsInput = {
+    update: XOR<DistrictUpdateWithoutEventsInput, DistrictUncheckedUpdateWithoutEventsInput>
+    create: XOR<DistrictCreateWithoutEventsInput, DistrictUncheckedCreateWithoutEventsInput>
+    where?: DistrictWhereInput
+  }
+
+  export type DistrictUpdateToOneWithWhereWithoutEventsInput = {
+    where?: DistrictWhereInput
+    data: XOR<DistrictUpdateWithoutEventsInput, DistrictUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type DistrictUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+    users?: UserUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type DistrictUncheckedUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
+    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUncheckedUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type ChurchUpsertWithoutEventsInput = {
+    update: XOR<ChurchUpdateWithoutEventsInput, ChurchUncheckedUpdateWithoutEventsInput>
+    create: XOR<ChurchCreateWithoutEventsInput, ChurchUncheckedCreateWithoutEventsInput>
+    where?: ChurchWhereInput
+  }
+
+  export type ChurchUpdateToOneWithWhereWithoutEventsInput = {
+    where?: ChurchWhereInput
+    data: XOR<ChurchUpdateWithoutEventsInput, ChurchUncheckedUpdateWithoutEventsInput>
+  }
+
+  export type ChurchUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
+    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
+    registrations?: RegistrationUpdateManyWithoutChurchNestedInput
+    users?: UserUpdateManyWithoutChurchNestedInput
+  }
+
+  export type ChurchUncheckedUpdateWithoutEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    districtId?: StringFieldUpdateOperationsInput | string
+    directorName?: NullableStringFieldUpdateOperationsInput | string | null
+    directorCpf?: NullableStringFieldUpdateOperationsInput | string | null
+    directorBirthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    directorEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
+    directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
+    users?: UserUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type EventLotUpsertWithWhereUniqueWithoutEventInput = {
@@ -30459,39 +35786,6 @@ export namespace Prisma {
     data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutEventInput>
   }
 
-  export type OrderScalarWhereInput = {
-    AND?: OrderScalarWhereInput | OrderScalarWhereInput[]
-    OR?: OrderScalarWhereInput[]
-    NOT?: OrderScalarWhereInput | OrderScalarWhereInput[]
-    id?: StringFilter<"Order"> | string
-    eventId?: StringFilter<"Order"> | string
-    buyerCpf?: StringFilter<"Order"> | string
-    totalCents?: IntFilter<"Order"> | number
-    status?: StringFilter<"Order"> | string
-    paymentMethod?: StringFilter<"Order"> | string
-    mpPaymentId?: StringNullableFilter<"Order"> | string | null
-    mpPreferenceId?: StringNullableFilter<"Order"> | string | null
-    preferenceVersion?: IntFilter<"Order"> | number
-    pricingLotId?: StringNullableFilter<"Order"> | string | null
-    externalReference?: StringFilter<"Order"> | string
-    expiresAt?: DateTimeFilter<"Order"> | Date | string
-    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
-    manualPaymentReference?: StringNullableFilter<"Order"> | string | null
-    manualPaymentProofUrl?: StringNullableFilter<"Order"> | string | null
-    feeCents?: IntFilter<"Order"> | number
-    netAmountCents?: IntFilter<"Order"> | number
-    origin?: EnumOrderOriginFilter<"Order"> | $Enums.OrderOrigin
-    responsibleName?: StringNullableFilter<"Order"> | string | null
-    responsibleDocument?: StringNullableFilter<"Order"> | string | null
-    responsibleEmail?: StringNullableFilter<"Order"> | string | null
-    responsiblePhone?: StringNullableFilter<"Order"> | string | null
-    amountReceivedCents?: IntNullableFilter<"Order"> | number | null
-    manualNotes?: StringNullableFilter<"Order"> | string | null
-    confirmedById?: StringNullableFilter<"Order"> | string | null
-    confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
-    createdAt?: DateTimeFilter<"Order"> | Date | string
-  }
-
   export type RegistrationUpsertWithWhereUniqueWithoutEventInput = {
     where: RegistrationWhereUniqueInput
     update: XOR<RegistrationUpdateWithoutEventInput, RegistrationUncheckedUpdateWithoutEventInput>
@@ -30526,6 +35820,8 @@ export namespace Prisma {
     createdAt?: Date | string
     createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     registrations?: RegistrationCreateNestedManyWithoutEventInput
@@ -30549,6 +35845,8 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
@@ -30632,6 +35930,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -30645,6 +35944,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -30777,6 +36077,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -30788,6 +36094,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutConfirmedManualOrdersInput = {
@@ -30807,6 +36119,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -30814,11 +36132,251 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutConfirmedManualOrdersInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutConfirmedManualOrdersInput, UserUncheckedCreateWithoutConfirmedManualOrdersInput>
+  }
+
+  export type DistrictCreateWithoutOrdersInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchCreateNestedManyWithoutDistrictInput
+    events?: EventCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationCreateNestedManyWithoutDistrictInput
+    users?: UserCreateNestedManyWithoutDistrictScopeInput
+    transfers?: TransferCreateNestedManyWithoutDistrictInput
+  }
+
+  export type DistrictUncheckedCreateWithoutOrdersInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    events?: EventUncheckedCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
+    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+    transfers?: TransferUncheckedCreateNestedManyWithoutDistrictInput
+  }
+
+  export type DistrictCreateOrConnectWithoutOrdersInput = {
+    where: DistrictWhereUniqueInput
+    create: XOR<DistrictCreateWithoutOrdersInput, DistrictUncheckedCreateWithoutOrdersInput>
+  }
+
+  export type UserCreateWithoutDistrictOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserUncheckedCreateWithoutDistrictOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserCreateOrConnectWithoutDistrictOrdersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutDistrictOrdersInput, UserUncheckedCreateWithoutDistrictOrdersInput>
+  }
+
+  export type UserCreateWithoutResponsibleOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserUncheckedCreateWithoutResponsibleOrdersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserCreateOrConnectWithoutResponsibleOrdersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutResponsibleOrdersInput, UserUncheckedCreateWithoutResponsibleOrdersInput>
+  }
+
+  export type TransferCreateWithoutOrdersInput = {
+    id?: string
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    district?: DistrictCreateNestedOneWithoutTransfersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictTransfersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleTransfersInput
+    createdBy?: UserCreateNestedOneWithoutTransfersCreatedInput
+  }
+
+  export type TransferUncheckedCreateWithoutOrdersInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+  }
+
+  export type TransferCreateOrConnectWithoutOrdersInput = {
+    where: TransferWhereUniqueInput
+    create: XOR<TransferCreateWithoutOrdersInput, TransferUncheckedCreateWithoutOrdersInput>
   }
 
   export type EventUpsertWithoutOrdersInput = {
@@ -30850,6 +36408,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
@@ -30873,6 +36433,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
@@ -31071,6 +36633,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -31082,6 +36650,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutConfirmedManualOrdersInput = {
@@ -31101,6 +36675,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -31108,6 +36688,270 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type DistrictUpsertWithoutOrdersInput = {
+    update: XOR<DistrictUpdateWithoutOrdersInput, DistrictUncheckedUpdateWithoutOrdersInput>
+    create: XOR<DistrictCreateWithoutOrdersInput, DistrictUncheckedCreateWithoutOrdersInput>
+    where?: DistrictWhereInput
+  }
+
+  export type DistrictUpdateToOneWithWhereWithoutOrdersInput = {
+    where?: DistrictWhereInput
+    data: XOR<DistrictUpdateWithoutOrdersInput, DistrictUncheckedUpdateWithoutOrdersInput>
+  }
+
+  export type DistrictUpdateWithoutOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    events?: EventUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+    users?: UserUpdateManyWithoutDistrictScopeNestedInput
+    transfers?: TransferUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type DistrictUncheckedUpdateWithoutOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    events?: EventUncheckedUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
+    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+    transfers?: TransferUncheckedUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type UserUpsertWithoutDistrictOrdersInput = {
+    update: XOR<UserUpdateWithoutDistrictOrdersInput, UserUncheckedUpdateWithoutDistrictOrdersInput>
+    create: XOR<UserCreateWithoutDistrictOrdersInput, UserUncheckedCreateWithoutDistrictOrdersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutDistrictOrdersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutDistrictOrdersInput, UserUncheckedUpdateWithoutDistrictOrdersInput>
+  }
+
+  export type UserUpdateWithoutDistrictOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutDistrictOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUpsertWithoutResponsibleOrdersInput = {
+    update: XOR<UserUpdateWithoutResponsibleOrdersInput, UserUncheckedUpdateWithoutResponsibleOrdersInput>
+    create: XOR<UserCreateWithoutResponsibleOrdersInput, UserUncheckedCreateWithoutResponsibleOrdersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutResponsibleOrdersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutResponsibleOrdersInput, UserUncheckedUpdateWithoutResponsibleOrdersInput>
+  }
+
+  export type UserUpdateWithoutResponsibleOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutResponsibleOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type TransferUpsertWithoutOrdersInput = {
+    update: XOR<TransferUpdateWithoutOrdersInput, TransferUncheckedUpdateWithoutOrdersInput>
+    create: XOR<TransferCreateWithoutOrdersInput, TransferUncheckedCreateWithoutOrdersInput>
+    where?: TransferWhereInput
+  }
+
+  export type TransferUpdateToOneWithWhereWithoutOrdersInput = {
+    where?: TransferWhereInput
+    data: XOR<TransferUpdateWithoutOrdersInput, TransferUncheckedUpdateWithoutOrdersInput>
+  }
+
+  export type TransferUpdateWithoutOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneWithoutTransfersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictTransfersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleTransfersNestedInput
+    createdBy?: UserUpdateOneWithoutTransfersCreatedNestedInput
+  }
+
+  export type TransferUncheckedUpdateWithoutOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RefundCreateWithoutRegistrationInput = {
@@ -31150,6 +36994,7 @@ export namespace Prisma {
     createdAt?: Date | string
     district: DistrictCreateNestedOneWithoutChurchesInput
     users?: UserCreateNestedManyWithoutChurchInput
+    events?: EventCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateWithoutRegistrationsInput = {
@@ -31164,6 +37009,7 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     users?: UserUncheckedCreateNestedManyWithoutChurchInput
+    events?: EventUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchCreateOrConnectWithoutRegistrationsInput = {
@@ -31177,7 +37023,10 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchCreateNestedManyWithoutDistrictInput
+    events?: EventCreateNestedManyWithoutDistrictInput
     users?: UserCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderCreateNestedManyWithoutDistrictInput
+    transfers?: TransferCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictUncheckedCreateWithoutRegistrationsInput = {
@@ -31186,7 +37035,10 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    events?: EventUncheckedCreateNestedManyWithoutDistrictInput
     users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderUncheckedCreateNestedManyWithoutDistrictInput
+    transfers?: TransferUncheckedCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictCreateOrConnectWithoutRegistrationsInput = {
@@ -31212,6 +37064,8 @@ export namespace Prisma {
     createdAt?: Date | string
     createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
@@ -31235,6 +37089,8 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
@@ -31298,6 +37154,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -31306,6 +37164,10 @@ export namespace Prisma {
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutRegistrationsInput = {
@@ -31335,6 +37197,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
@@ -31345,6 +37213,87 @@ export namespace Prisma {
   export type OrderCreateOrConnectWithoutRegistrationsInput = {
     where: OrderWhereUniqueInput
     create: XOR<OrderCreateWithoutRegistrationsInput, OrderUncheckedCreateWithoutRegistrationsInput>
+  }
+
+  export type UserCreateWithoutResponsibleRegistrationsInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserUncheckedCreateWithoutResponsibleRegistrationsInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserCreateOrConnectWithoutResponsibleRegistrationsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutResponsibleRegistrationsInput, UserUncheckedCreateWithoutResponsibleRegistrationsInput>
   }
 
   export type OrderItemCreateWithoutRegistrationInput = {
@@ -31418,6 +37367,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
     users?: UserUpdateManyWithoutChurchNestedInput
+    events?: EventUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateWithoutRegistrationsInput = {
@@ -31432,6 +37382,7 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     users?: UserUncheckedUpdateManyWithoutChurchNestedInput
+    events?: EventUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type DistrictUpsertWithoutRegistrationsInput = {
@@ -31451,7 +37402,10 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    events?: EventUpdateManyWithoutDistrictNestedInput
     users?: UserUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUpdateManyWithoutDistrictNestedInput
   }
 
   export type DistrictUncheckedUpdateWithoutRegistrationsInput = {
@@ -31460,7 +37414,10 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    events?: EventUncheckedUpdateManyWithoutDistrictNestedInput
     users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUncheckedUpdateManyWithoutDistrictNestedInput
   }
 
   export type EventUpsertWithoutRegistrationsInput = {
@@ -31492,6 +37449,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
@@ -31515,6 +37474,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
@@ -31590,6 +37551,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -31598,6 +37561,10 @@ export namespace Prisma {
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutRegistrationsInput = {
@@ -31627,11 +37594,104 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type UserUpsertWithoutResponsibleRegistrationsInput = {
+    update: XOR<UserUpdateWithoutResponsibleRegistrationsInput, UserUncheckedUpdateWithoutResponsibleRegistrationsInput>
+    create: XOR<UserCreateWithoutResponsibleRegistrationsInput, UserUncheckedCreateWithoutResponsibleRegistrationsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutResponsibleRegistrationsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutResponsibleRegistrationsInput, UserUncheckedUpdateWithoutResponsibleRegistrationsInput>
+  }
+
+  export type UserUpdateWithoutResponsibleRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutResponsibleRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type OrderItemUpsertWithWhereUniqueWithoutRegistrationInput = {
@@ -31674,6 +37734,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -31682,6 +37744,10 @@ export namespace Prisma {
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutRefundsInput = {
@@ -31711,6 +37777,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
     webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
@@ -31743,6 +37815,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -31757,6 +37830,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -31809,6 +37883,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -31817,6 +37893,10 @@ export namespace Prisma {
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutRefundsInput = {
@@ -31846,6 +37926,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
     webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
@@ -31884,6 +37970,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -31898,6 +37985,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -31934,6 +38022,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -31942,6 +38032,10 @@ export namespace Prisma {
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutWebhookEventsInput = {
@@ -31971,6 +38065,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -32018,6 +38118,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -32026,6 +38128,10 @@ export namespace Prisma {
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutWebhookEventsInput = {
@@ -32055,6 +38161,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -32075,6 +38187,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
@@ -32086,6 +38204,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -32105,6 +38229,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
@@ -32112,6 +38242,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -32143,6 +38279,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
@@ -32154,6 +38296,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -32173,6 +38321,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
@@ -32180,6 +38334,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type AuditLogCreateWithoutActorInput = {
@@ -32227,6 +38387,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
@@ -32250,6 +38412,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    districtId: string
+    churchId?: string | null
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
@@ -32322,6 +38486,7 @@ export namespace Prisma {
     createdAt?: Date | string
     district: DistrictCreateNestedOneWithoutChurchesInput
     registrations?: RegistrationCreateNestedManyWithoutChurchInput
+    events?: EventCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchUncheckedCreateWithoutUsersInput = {
@@ -32336,6 +38501,7 @@ export namespace Prisma {
     directorPhotoUrl?: string | null
     createdAt?: Date | string
     registrations?: RegistrationUncheckedCreateNestedManyWithoutChurchInput
+    events?: EventUncheckedCreateNestedManyWithoutChurchInput
   }
 
   export type ChurchCreateOrConnectWithoutUsersInput = {
@@ -32349,7 +38515,10 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchCreateNestedManyWithoutDistrictInput
+    events?: EventCreateNestedManyWithoutDistrictInput
     registrations?: RegistrationCreateNestedManyWithoutDistrictInput
+    orders?: OrderCreateNestedManyWithoutDistrictInput
+    transfers?: TransferCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictUncheckedCreateWithoutUsersInput = {
@@ -32358,7 +38527,10 @@ export namespace Prisma {
     pastorName?: string | null
     createdAt?: Date | string
     churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    events?: EventUncheckedCreateNestedManyWithoutDistrictInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
+    orders?: OrderUncheckedCreateNestedManyWithoutDistrictInput
+    transfers?: TransferUncheckedCreateNestedManyWithoutDistrictInput
   }
 
   export type DistrictCreateOrConnectWithoutUsersInput = {
@@ -32484,6 +38656,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -32492,6 +38666,10 @@ export namespace Prisma {
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutConfirmedByInput = {
@@ -32520,6 +38698,12 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -32604,6 +38788,388 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type OrderCreateWithoutDistrictAdminInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
+  }
+
+  export type OrderUncheckedCreateWithoutDistrictAdminInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutDistrictAdminInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutDistrictAdminInput, OrderUncheckedCreateWithoutDistrictAdminInput>
+  }
+
+  export type OrderCreateManyDistrictAdminInputEnvelope = {
+    data: OrderCreateManyDistrictAdminInput | OrderCreateManyDistrictAdminInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrderCreateWithoutResponsibleUserInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
+  }
+
+  export type OrderUncheckedCreateWithoutResponsibleUserInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutResponsibleUserInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutResponsibleUserInput, OrderUncheckedCreateWithoutResponsibleUserInput>
+  }
+
+  export type OrderCreateManyResponsibleUserInputEnvelope = {
+    data: OrderCreateManyResponsibleUserInput | OrderCreateManyResponsibleUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RegistrationCreateWithoutResponsibleUserInput = {
+    id?: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    refunds?: RefundCreateNestedManyWithoutRegistrationInput
+    church: ChurchCreateNestedOneWithoutRegistrationsInput
+    district: DistrictCreateNestedOneWithoutRegistrationsInput
+    event: EventCreateNestedOneWithoutRegistrationsInput
+    ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
+    order: OrderCreateNestedOneWithoutRegistrationsInput
+    orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
+  }
+
+  export type RegistrationUncheckedCreateWithoutResponsibleUserInput = {
+    id?: string
+    orderId: string
+    eventId: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    districtId: string
+    churchId: string
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    ministryId?: string | null
+    refunds?: RefundUncheckedCreateNestedManyWithoutRegistrationInput
+    orderItems?: OrderItemUncheckedCreateNestedManyWithoutRegistrationInput
+  }
+
+  export type RegistrationCreateOrConnectWithoutResponsibleUserInput = {
+    where: RegistrationWhereUniqueInput
+    create: XOR<RegistrationCreateWithoutResponsibleUserInput, RegistrationUncheckedCreateWithoutResponsibleUserInput>
+  }
+
+  export type RegistrationCreateManyResponsibleUserInputEnvelope = {
+    data: RegistrationCreateManyResponsibleUserInput | RegistrationCreateManyResponsibleUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TransferCreateWithoutCreatedByInput = {
+    id?: string
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    district?: DistrictCreateNestedOneWithoutTransfersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictTransfersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleTransfersInput
+    orders?: OrderCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferUncheckedCreateWithoutCreatedByInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    orders?: OrderUncheckedCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferCreateOrConnectWithoutCreatedByInput = {
+    where: TransferWhereUniqueInput
+    create: XOR<TransferCreateWithoutCreatedByInput, TransferUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type TransferCreateManyCreatedByInputEnvelope = {
+    data: TransferCreateManyCreatedByInput | TransferCreateManyCreatedByInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TransferCreateWithoutDistrictAdminInput = {
+    id?: string
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    district?: DistrictCreateNestedOneWithoutTransfersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleTransfersInput
+    createdBy?: UserCreateNestedOneWithoutTransfersCreatedInput
+    orders?: OrderCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferUncheckedCreateWithoutDistrictAdminInput = {
+    id?: string
+    districtId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    orders?: OrderUncheckedCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferCreateOrConnectWithoutDistrictAdminInput = {
+    where: TransferWhereUniqueInput
+    create: XOR<TransferCreateWithoutDistrictAdminInput, TransferUncheckedCreateWithoutDistrictAdminInput>
+  }
+
+  export type TransferCreateManyDistrictAdminInputEnvelope = {
+    data: TransferCreateManyDistrictAdminInput | TransferCreateManyDistrictAdminInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TransferCreateWithoutResponsibleUserInput = {
+    id?: string
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+    district?: DistrictCreateNestedOneWithoutTransfersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictTransfersInput
+    createdBy?: UserCreateNestedOneWithoutTransfersCreatedInput
+    orders?: OrderCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferUncheckedCreateWithoutResponsibleUserInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    orders?: OrderUncheckedCreateNestedManyWithoutTransferBatchInput
+  }
+
+  export type TransferCreateOrConnectWithoutResponsibleUserInput = {
+    where: TransferWhereUniqueInput
+    create: XOR<TransferCreateWithoutResponsibleUserInput, TransferUncheckedCreateWithoutResponsibleUserInput>
+  }
+
+  export type TransferCreateManyResponsibleUserInputEnvelope = {
+    data: TransferCreateManyResponsibleUserInput | TransferCreateManyResponsibleUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AuditLogUpsertWithWhereUniqueWithoutActorInput = {
     where: AuditLogWhereUniqueInput
     update: XOR<AuditLogUpdateWithoutActorInput, AuditLogUncheckedUpdateWithoutActorInput>
@@ -32647,29 +39213,6 @@ export namespace Prisma {
   export type EventUpdateManyWithWhereWithoutCreatedByInput = {
     where: EventScalarWhereInput
     data: XOR<EventUpdateManyMutationInput, EventUncheckedUpdateManyWithoutCreatedByInput>
-  }
-
-  export type EventScalarWhereInput = {
-    AND?: EventScalarWhereInput | EventScalarWhereInput[]
-    OR?: EventScalarWhereInput[]
-    NOT?: EventScalarWhereInput | EventScalarWhereInput[]
-    id?: StringFilter<"Event"> | string
-    title?: StringFilter<"Event"> | string
-    description?: StringFilter<"Event"> | string
-    startDate?: DateTimeFilter<"Event"> | Date | string
-    endDate?: DateTimeFilter<"Event"> | Date | string
-    location?: StringFilter<"Event"> | string
-    bannerUrl?: StringNullableFilter<"Event"> | string | null
-    priceCents?: IntFilter<"Event"> | number
-    minAgeYears?: IntNullableFilter<"Event"> | number | null
-    isFree?: BoolFilter<"Event"> | boolean
-    isActive?: BoolFilter<"Event"> | boolean
-    slug?: StringFilter<"Event"> | string
-    paymentMethods?: StringFilter<"Event"> | string
-    pendingPaymentValueRule?: StringFilter<"Event"> | string
-    createdAt?: DateTimeFilter<"Event"> | Date | string
-    ministryId?: StringNullableFilter<"Event"> | string | null
-    createdById?: StringNullableFilter<"Event"> | string | null
   }
 
   export type MinistryUserUpsertWithWhereUniqueWithoutUserInput = {
@@ -32747,6 +39290,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     district?: DistrictUpdateOneRequiredWithoutChurchesNestedInput
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
+    events?: EventUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateWithoutUsersInput = {
@@ -32761,6 +39305,7 @@ export namespace Prisma {
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
+    events?: EventUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type DistrictUpsertWithoutUsersInput = {
@@ -32780,7 +39325,10 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    events?: EventUpdateManyWithoutDistrictNestedInput
     registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+    orders?: OrderUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUpdateManyWithoutDistrictNestedInput
   }
 
   export type DistrictUncheckedUpdateWithoutUsersInput = {
@@ -32789,7 +39337,10 @@ export namespace Prisma {
     pastorName?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    events?: EventUncheckedUpdateManyWithoutDistrictNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutDistrictNestedInput
+    transfers?: TransferUncheckedUpdateManyWithoutDistrictNestedInput
   }
 
   export type MinistryUpsertWithoutPrimaryUsersInput = {
@@ -32941,6 +39492,102 @@ export namespace Prisma {
     data: XOR<ServiceOrderUpdateManyMutationInput, ServiceOrderUncheckedUpdateManyWithoutIssuedByInput>
   }
 
+  export type OrderUpsertWithWhereUniqueWithoutDistrictAdminInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutDistrictAdminInput, OrderUncheckedUpdateWithoutDistrictAdminInput>
+    create: XOR<OrderCreateWithoutDistrictAdminInput, OrderUncheckedCreateWithoutDistrictAdminInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutDistrictAdminInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutDistrictAdminInput, OrderUncheckedUpdateWithoutDistrictAdminInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutDistrictAdminInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutDistrictAdminInput>
+  }
+
+  export type OrderUpsertWithWhereUniqueWithoutResponsibleUserInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutResponsibleUserInput, OrderUncheckedUpdateWithoutResponsibleUserInput>
+    create: XOR<OrderCreateWithoutResponsibleUserInput, OrderUncheckedCreateWithoutResponsibleUserInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutResponsibleUserInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutResponsibleUserInput, OrderUncheckedUpdateWithoutResponsibleUserInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutResponsibleUserInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutResponsibleUserInput>
+  }
+
+  export type RegistrationUpsertWithWhereUniqueWithoutResponsibleUserInput = {
+    where: RegistrationWhereUniqueInput
+    update: XOR<RegistrationUpdateWithoutResponsibleUserInput, RegistrationUncheckedUpdateWithoutResponsibleUserInput>
+    create: XOR<RegistrationCreateWithoutResponsibleUserInput, RegistrationUncheckedCreateWithoutResponsibleUserInput>
+  }
+
+  export type RegistrationUpdateWithWhereUniqueWithoutResponsibleUserInput = {
+    where: RegistrationWhereUniqueInput
+    data: XOR<RegistrationUpdateWithoutResponsibleUserInput, RegistrationUncheckedUpdateWithoutResponsibleUserInput>
+  }
+
+  export type RegistrationUpdateManyWithWhereWithoutResponsibleUserInput = {
+    where: RegistrationScalarWhereInput
+    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutResponsibleUserInput>
+  }
+
+  export type TransferUpsertWithWhereUniqueWithoutCreatedByInput = {
+    where: TransferWhereUniqueInput
+    update: XOR<TransferUpdateWithoutCreatedByInput, TransferUncheckedUpdateWithoutCreatedByInput>
+    create: XOR<TransferCreateWithoutCreatedByInput, TransferUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type TransferUpdateWithWhereUniqueWithoutCreatedByInput = {
+    where: TransferWhereUniqueInput
+    data: XOR<TransferUpdateWithoutCreatedByInput, TransferUncheckedUpdateWithoutCreatedByInput>
+  }
+
+  export type TransferUpdateManyWithWhereWithoutCreatedByInput = {
+    where: TransferScalarWhereInput
+    data: XOR<TransferUpdateManyMutationInput, TransferUncheckedUpdateManyWithoutCreatedByInput>
+  }
+
+  export type TransferUpsertWithWhereUniqueWithoutDistrictAdminInput = {
+    where: TransferWhereUniqueInput
+    update: XOR<TransferUpdateWithoutDistrictAdminInput, TransferUncheckedUpdateWithoutDistrictAdminInput>
+    create: XOR<TransferCreateWithoutDistrictAdminInput, TransferUncheckedCreateWithoutDistrictAdminInput>
+  }
+
+  export type TransferUpdateWithWhereUniqueWithoutDistrictAdminInput = {
+    where: TransferWhereUniqueInput
+    data: XOR<TransferUpdateWithoutDistrictAdminInput, TransferUncheckedUpdateWithoutDistrictAdminInput>
+  }
+
+  export type TransferUpdateManyWithWhereWithoutDistrictAdminInput = {
+    where: TransferScalarWhereInput
+    data: XOR<TransferUpdateManyMutationInput, TransferUncheckedUpdateManyWithoutDistrictAdminInput>
+  }
+
+  export type TransferUpsertWithWhereUniqueWithoutResponsibleUserInput = {
+    where: TransferWhereUniqueInput
+    update: XOR<TransferUpdateWithoutResponsibleUserInput, TransferUncheckedUpdateWithoutResponsibleUserInput>
+    create: XOR<TransferCreateWithoutResponsibleUserInput, TransferUncheckedCreateWithoutResponsibleUserInput>
+  }
+
+  export type TransferUpdateWithWhereUniqueWithoutResponsibleUserInput = {
+    where: TransferWhereUniqueInput
+    data: XOR<TransferUpdateWithoutResponsibleUserInput, TransferUncheckedUpdateWithoutResponsibleUserInput>
+  }
+
+  export type TransferUpdateManyWithWhereWithoutResponsibleUserInput = {
+    where: TransferScalarWhereInput
+    data: XOR<TransferUpdateManyMutationInput, TransferUncheckedUpdateManyWithoutResponsibleUserInput>
+  }
+
   export type UserCreateWithoutSystemConfigsUpdatedInput = {
     id?: string
     name: string
@@ -32954,6 +39601,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -32965,6 +39618,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutSystemConfigsUpdatedInput = {
@@ -32984,6 +39643,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -32991,6 +39656,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutSystemConfigsUpdatedInput = {
@@ -33022,6 +39693,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -33033,6 +39710,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSystemConfigsUpdatedInput = {
@@ -33052,6 +39735,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -33059,6 +39748,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type EventCreateWithoutLotsInput = {
@@ -33079,6 +39774,8 @@ export namespace Prisma {
     createdAt?: Date | string
     createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
     registrations?: RegistrationCreateNestedManyWithoutEventInput
@@ -33102,6 +39799,8 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
@@ -33136,6 +39835,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     refunds?: RefundCreateNestedManyWithoutOrderInput
@@ -33144,6 +39845,10 @@ export namespace Prisma {
     items?: OrderItemCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutPricingLotInput = {
@@ -33172,6 +39877,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -33219,6 +39930,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
@@ -33242,6 +39955,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
@@ -33281,6 +39996,8 @@ export namespace Prisma {
     createdAt?: Date | string
     createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
     ministry?: MinistryCreateNestedOneWithoutEventsInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
     registrations?: RegistrationCreateNestedManyWithoutEventInput
@@ -33304,6 +40021,8 @@ export namespace Prisma {
     createdAt?: Date | string
     ministryId?: string | null
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutEventInput
@@ -33343,6 +40062,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUpdateManyWithoutEventNestedInput
@@ -33366,6 +40087,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
@@ -33388,6 +40111,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     createdBy?: UserCreateNestedOneWithoutEventsCreatedInput
+    district: DistrictCreateNestedOneWithoutEventsInput
+    church?: ChurchCreateNestedOneWithoutEventsInput
     lots?: EventLotCreateNestedManyWithoutEventInput
     expenses?: ExpenseCreateNestedManyWithoutEventInput
     orders?: OrderCreateNestedManyWithoutEventInput
@@ -33411,6 +40136,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
     lots?: EventLotUncheckedCreateNestedManyWithoutEventInput
     expenses?: ExpenseUncheckedCreateNestedManyWithoutEventInput
     orders?: OrderUncheckedCreateNestedManyWithoutEventInput
@@ -33467,6 +40194,7 @@ export namespace Prisma {
     district: DistrictCreateNestedOneWithoutRegistrationsInput
     event: EventCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
     orderItems?: OrderItemCreateNestedManyWithoutRegistrationInput
   }
 
@@ -33481,6 +40209,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -33516,6 +40245,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -33527,6 +40262,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutPrimaryMinistryInput = {
@@ -33545,6 +40286,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -33553,6 +40300,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutPrimaryMinistryInput = {
@@ -33671,6 +40424,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
@@ -33682,6 +40441,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutMinistriesInput = {
@@ -33701,6 +40466,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
@@ -33708,6 +40479,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutMinistriesInput = {
@@ -33774,6 +40551,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
@@ -33785,6 +40568,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMinistriesInput = {
@@ -33804,6 +40593,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
@@ -33811,6 +40606,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type ProfilePermissionCreateWithoutProfileInput = {
@@ -33866,6 +40667,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -33877,6 +40684,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutProfileInput = {
@@ -33895,6 +40708,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -33903,6 +40722,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutProfileInput = {
@@ -34035,6 +40860,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -34046,6 +40877,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutPermissionsOverrideInput = {
@@ -34065,6 +40902,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -34072,6 +40915,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutPermissionsOverrideInput = {
@@ -34103,6 +40952,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -34114,6 +40969,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPermissionsOverrideInput = {
@@ -34133,6 +40994,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -34140,6 +41007,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type OrderCreateWithoutItemsInput = {
@@ -34166,6 +41039,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -34174,6 +41049,10 @@ export namespace Prisma {
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
     serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutItemsInput = {
@@ -34203,6 +41082,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -34236,6 +41121,7 @@ export namespace Prisma {
     event: EventCreateNestedOneWithoutRegistrationsInput
     ministry?: MinistryCreateNestedOneWithoutRegistrationsInput
     order: OrderCreateNestedOneWithoutRegistrationsInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleRegistrationsInput
   }
 
   export type RegistrationUncheckedCreateWithoutOrderItemsInput = {
@@ -34249,6 +41135,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -34279,6 +41166,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -34290,6 +41183,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutConfirmedOrderItemsInput = {
@@ -34309,6 +41208,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -34316,6 +41221,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutConfirmedOrderItemsInput = {
@@ -34358,6 +41269,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -34366,6 +41279,10 @@ export namespace Prisma {
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutItemsInput = {
@@ -34395,6 +41312,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -34434,6 +41357,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutOrderItemsInput = {
@@ -34447,6 +41371,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -34483,6 +41408,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -34494,6 +41425,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutConfirmedOrderItemsInput = {
@@ -34513,6 +41450,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -34520,6 +41463,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type OrderCreateWithoutServiceOrdersInput = {
@@ -34546,6 +41495,8 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
     createdAt?: Date | string
     event: EventCreateNestedOneWithoutOrdersInput
     pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
@@ -34554,6 +41505,10 @@ export namespace Prisma {
     webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
     items?: OrderItemCreateNestedManyWithoutOrderInput
     confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+    transferBatch?: TransferCreateNestedOneWithoutOrdersInput
   }
 
   export type OrderUncheckedCreateWithoutServiceOrdersInput = {
@@ -34583,6 +41538,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
     refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
     registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
@@ -34608,6 +41569,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogCreateNestedManyWithoutActorInput
     eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserCreateNestedManyWithoutUserInput
@@ -34619,6 +41586,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
     confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserUncheckedCreateWithoutIssuedServiceOrdersInput = {
@@ -34638,6 +41611,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
     eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
     ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
@@ -34645,6 +41624,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
     confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
     confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
   }
 
   export type UserCreateOrConnectWithoutIssuedServiceOrdersInput = {
@@ -34687,6 +41672,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -34695,6 +41682,10 @@ export namespace Prisma {
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutServiceOrdersInput = {
@@ -34724,6 +41715,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -34755,6 +41752,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -34766,6 +41769,12 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutIssuedServiceOrdersInput = {
@@ -34785,6 +41794,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -34792,6 +41807,686 @@ export namespace Prisma {
     permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type DistrictCreateWithoutTransfersInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchCreateNestedManyWithoutDistrictInput
+    events?: EventCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationCreateNestedManyWithoutDistrictInput
+    users?: UserCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderCreateNestedManyWithoutDistrictInput
+  }
+
+  export type DistrictUncheckedCreateWithoutTransfersInput = {
+    id?: string
+    name: string
+    pastorName?: string | null
+    createdAt?: Date | string
+    churches?: ChurchUncheckedCreateNestedManyWithoutDistrictInput
+    events?: EventUncheckedCreateNestedManyWithoutDistrictInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutDistrictInput
+    users?: UserUncheckedCreateNestedManyWithoutDistrictScopeInput
+    orders?: OrderUncheckedCreateNestedManyWithoutDistrictInput
+  }
+
+  export type DistrictCreateOrConnectWithoutTransfersInput = {
+    where: DistrictWhereUniqueInput
+    create: XOR<DistrictCreateWithoutTransfersInput, DistrictUncheckedCreateWithoutTransfersInput>
+  }
+
+  export type UserCreateWithoutDistrictTransfersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserUncheckedCreateWithoutDistrictTransfersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserCreateOrConnectWithoutDistrictTransfersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutDistrictTransfersInput, UserUncheckedCreateWithoutDistrictTransfersInput>
+  }
+
+  export type UserCreateWithoutResponsibleTransfersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+  }
+
+  export type UserUncheckedCreateWithoutResponsibleTransfersInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    transfersCreated?: TransferUncheckedCreateNestedManyWithoutCreatedByInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+  }
+
+  export type UserCreateOrConnectWithoutResponsibleTransfersInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutResponsibleTransfersInput, UserUncheckedCreateWithoutResponsibleTransfersInput>
+  }
+
+  export type UserCreateWithoutTransfersCreatedInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogCreateNestedManyWithoutActorInput
+    eventsCreated?: EventCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigCreateNestedManyWithoutUpdatedByInput
+    church?: ChurchCreateNestedOneWithoutUsersInput
+    districtScope?: DistrictCreateNestedOneWithoutUsersInput
+    primaryMinistry?: MinistryCreateNestedOneWithoutPrimaryUsersInput
+    profile?: ProfileCreateNestedOneWithoutUsersInput
+    permissionsOverride?: UserPermissionCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationCreateNestedManyWithoutResponsibleUserInput
+    districtTransfers?: TransferCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTransfersCreatedInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash: string
+    role: string
+    districtScopeId?: string | null
+    churchId?: string | null
+    ministryId?: string | null
+    createdAt?: Date | string
+    cpf?: string | null
+    isTemporaryPassword?: boolean
+    passwordUpdatedAt?: Date | string | null
+    phone?: string | null
+    photoUrl?: string | null
+    profileId?: string | null
+    status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutActorInput
+    eventsCreated?: EventUncheckedCreateNestedManyWithoutCreatedByInput
+    ministries?: MinistryUserUncheckedCreateNestedManyWithoutUserInput
+    systemConfigsUpdated?: SystemConfigUncheckedCreateNestedManyWithoutUpdatedByInput
+    permissionsOverride?: UserPermissionUncheckedCreateNestedManyWithoutUserInput
+    confirmedManualOrders?: OrderUncheckedCreateNestedManyWithoutConfirmedByInput
+    confirmedOrderItems?: OrderItemUncheckedCreateNestedManyWithoutConfirmedByInput
+    issuedServiceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutIssuedByInput
+    districtOrders?: OrderUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleOrders?: OrderUncheckedCreateNestedManyWithoutResponsibleUserInput
+    responsibleRegistrations?: RegistrationUncheckedCreateNestedManyWithoutResponsibleUserInput
+    districtTransfers?: TransferUncheckedCreateNestedManyWithoutDistrictAdminInput
+    responsibleTransfers?: TransferUncheckedCreateNestedManyWithoutResponsibleUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTransfersCreatedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTransfersCreatedInput, UserUncheckedCreateWithoutTransfersCreatedInput>
+  }
+
+  export type OrderCreateWithoutTransferBatchInput = {
+    id?: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedAt?: Date | string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    createdAt?: Date | string
+    event: EventCreateNestedOneWithoutOrdersInput
+    pricingLot?: EventLotCreateNestedOneWithoutOrdersInput
+    refunds?: RefundCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventCreateNestedManyWithoutOrderInput
+    items?: OrderItemCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderCreateNestedManyWithoutOrderInput
+    confirmedBy?: UserCreateNestedOneWithoutConfirmedManualOrdersInput
+    district?: DistrictCreateNestedOneWithoutOrdersInput
+    districtAdmin?: UserCreateNestedOneWithoutDistrictOrdersInput
+    responsibleUser?: UserCreateNestedOneWithoutResponsibleOrdersInput
+  }
+
+  export type OrderUncheckedCreateWithoutTransferBatchInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    createdAt?: Date | string
+    refunds?: RefundUncheckedCreateNestedManyWithoutOrderInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutOrderInput
+    webhookEvents?: WebhookEventUncheckedCreateNestedManyWithoutOrderInput
+    items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
+    serviceOrders?: ServiceOrderUncheckedCreateNestedManyWithoutOrderInput
+  }
+
+  export type OrderCreateOrConnectWithoutTransferBatchInput = {
+    where: OrderWhereUniqueInput
+    create: XOR<OrderCreateWithoutTransferBatchInput, OrderUncheckedCreateWithoutTransferBatchInput>
+  }
+
+  export type OrderCreateManyTransferBatchInputEnvelope = {
+    data: OrderCreateManyTransferBatchInput | OrderCreateManyTransferBatchInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type DistrictUpsertWithoutTransfersInput = {
+    update: XOR<DistrictUpdateWithoutTransfersInput, DistrictUncheckedUpdateWithoutTransfersInput>
+    create: XOR<DistrictCreateWithoutTransfersInput, DistrictUncheckedCreateWithoutTransfersInput>
+    where?: DistrictWhereInput
+  }
+
+  export type DistrictUpdateToOneWithWhereWithoutTransfersInput = {
+    where?: DistrictWhereInput
+    data: XOR<DistrictUpdateWithoutTransfersInput, DistrictUncheckedUpdateWithoutTransfersInput>
+  }
+
+  export type DistrictUpdateWithoutTransfersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUpdateManyWithoutDistrictNestedInput
+    events?: EventUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUpdateManyWithoutDistrictNestedInput
+    users?: UserUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type DistrictUncheckedUpdateWithoutTransfersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    pastorName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    churches?: ChurchUncheckedUpdateManyWithoutDistrictNestedInput
+    events?: EventUncheckedUpdateManyWithoutDistrictNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutDistrictNestedInput
+    users?: UserUncheckedUpdateManyWithoutDistrictScopeNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutDistrictNestedInput
+  }
+
+  export type UserUpsertWithoutDistrictTransfersInput = {
+    update: XOR<UserUpdateWithoutDistrictTransfersInput, UserUncheckedUpdateWithoutDistrictTransfersInput>
+    create: XOR<UserCreateWithoutDistrictTransfersInput, UserUncheckedCreateWithoutDistrictTransfersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutDistrictTransfersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutDistrictTransfersInput, UserUncheckedUpdateWithoutDistrictTransfersInput>
+  }
+
+  export type UserUpdateWithoutDistrictTransfersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutDistrictTransfersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUpsertWithoutResponsibleTransfersInput = {
+    update: XOR<UserUpdateWithoutResponsibleTransfersInput, UserUncheckedUpdateWithoutResponsibleTransfersInput>
+    create: XOR<UserCreateWithoutResponsibleTransfersInput, UserUncheckedCreateWithoutResponsibleTransfersInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutResponsibleTransfersInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutResponsibleTransfersInput, UserUncheckedUpdateWithoutResponsibleTransfersInput>
+  }
+
+  export type UserUpdateWithoutResponsibleTransfersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutResponsibleTransfersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+  }
+
+  export type UserUpsertWithoutTransfersCreatedInput = {
+    update: XOR<UserUpdateWithoutTransfersCreatedInput, UserUncheckedUpdateWithoutTransfersCreatedInput>
+    create: XOR<UserCreateWithoutTransfersCreatedInput, UserUncheckedCreateWithoutTransfersCreatedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTransfersCreatedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTransfersCreatedInput, UserUncheckedUpdateWithoutTransfersCreatedInput>
+  }
+
+  export type UserUpdateWithoutTransfersCreatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUpdateManyWithoutUpdatedByNestedInput
+    church?: ChurchUpdateOneWithoutUsersNestedInput
+    districtScope?: DistrictUpdateOneWithoutUsersNestedInput
+    primaryMinistry?: MinistryUpdateOneWithoutPrimaryUsersNestedInput
+    profile?: ProfileUpdateOneWithoutUsersNestedInput
+    permissionsOverride?: UserPermissionUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTransfersCreatedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    districtScopeId?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    isTemporaryPassword?: BoolFieldUpdateOperationsInput | boolean
+    passwordUpdatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    profileId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
+    eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
+    ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
+    systemConfigsUpdated?: SystemConfigUncheckedUpdateManyWithoutUpdatedByNestedInput
+    permissionsOverride?: UserPermissionUncheckedUpdateManyWithoutUserNestedInput
+    confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
+    confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
+    issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
+  }
+
+  export type OrderUpsertWithWhereUniqueWithoutTransferBatchInput = {
+    where: OrderWhereUniqueInput
+    update: XOR<OrderUpdateWithoutTransferBatchInput, OrderUncheckedUpdateWithoutTransferBatchInput>
+    create: XOR<OrderCreateWithoutTransferBatchInput, OrderUncheckedCreateWithoutTransferBatchInput>
+  }
+
+  export type OrderUpdateWithWhereUniqueWithoutTransferBatchInput = {
+    where: OrderWhereUniqueInput
+    data: XOR<OrderUpdateWithoutTransferBatchInput, OrderUncheckedUpdateWithoutTransferBatchInput>
+  }
+
+  export type OrderUpdateManyWithWhereWithoutTransferBatchInput = {
+    where: OrderScalarWhereInput
+    data: XOR<OrderUpdateManyMutationInput, OrderUncheckedUpdateManyWithoutTransferBatchInput>
   }
 
   export type ChurchCreateManyDistrictInput = {
@@ -34806,6 +42501,27 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type EventCreateManyDistrictInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    createdById?: string | null
+    churchId?: string | null
+  }
+
   export type RegistrationCreateManyDistrictInput = {
     id?: string
     orderId: string
@@ -34816,6 +42532,7 @@ export namespace Prisma {
     ageYears: number
     priceCents?: number
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -34843,6 +42560,65 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+  }
+
+  export type OrderCreateManyDistrictInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type TransferCreateManyDistrictInput = {
+    id?: string
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
   }
 
   export type ChurchUpdateWithoutDistrictInput = {
@@ -34857,6 +42633,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUpdateManyWithoutChurchNestedInput
     users?: UserUpdateManyWithoutChurchNestedInput
+    events?: EventUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateWithoutDistrictInput = {
@@ -34871,6 +42648,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     registrations?: RegistrationUncheckedUpdateManyWithoutChurchNestedInput
     users?: UserUncheckedUpdateManyWithoutChurchNestedInput
+    events?: EventUncheckedUpdateManyWithoutChurchNestedInput
   }
 
   export type ChurchUncheckedUpdateManyWithoutDistrictInput = {
@@ -34883,6 +42661,77 @@ export namespace Prisma {
     directorWhatsapp?: NullableStringFieldUpdateOperationsInput | string | null
     directorPhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventUpdateWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
+    lots?: EventLotUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUpdateManyWithoutEventNestedInput
+    orders?: OrderUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
+    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateManyWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RegistrationUpdateWithoutDistrictInput = {
@@ -34905,6 +42754,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -34918,6 +42768,7 @@ export namespace Prisma {
     ageYears?: IntFieldUpdateOperationsInput | number
     priceCents?: IntFieldUpdateOperationsInput | number
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -34941,6 +42792,7 @@ export namespace Prisma {
     ageYears?: IntFieldUpdateOperationsInput | number
     priceCents?: IntFieldUpdateOperationsInput | number
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -34965,6 +42817,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -34976,6 +42834,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutDistrictScopeInput = {
@@ -34994,6 +42858,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -35002,6 +42872,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutDistrictScopeInput = {
@@ -35020,6 +42896,183 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+  }
+
+  export type OrderUpdateWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferUpdateWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    districtAdmin?: UserUpdateOneWithoutDistrictTransfersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleTransfersNestedInput
+    createdBy?: UserUpdateOneWithoutTransfersCreatedNestedInput
+    orders?: OrderUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: OrderUncheckedUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateManyWithoutDistrictInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RegistrationCreateManyChurchInput = {
@@ -35032,6 +43085,7 @@ export namespace Prisma {
     ageYears: number
     priceCents?: number
     districtId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -35059,6 +43113,33 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
+  }
+
+  export type EventCreateManyChurchInput = {
+    id?: string
+    title: string
+    description: string
+    startDate: Date | string
+    endDate: Date | string
+    location: string
+    bannerUrl?: string | null
+    priceCents?: number
+    minAgeYears?: number | null
+    isFree?: boolean
+    isActive?: boolean
+    slug: string
+    paymentMethods?: string
+    pendingPaymentValueRule?: string
+    createdAt?: Date | string
+    ministryId?: string | null
+    createdById?: string | null
+    districtId: string
   }
 
   export type RegistrationUpdateWithoutChurchInput = {
@@ -35081,6 +43162,7 @@ export namespace Prisma {
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -35094,6 +43176,7 @@ export namespace Prisma {
     ageYears?: IntFieldUpdateOperationsInput | number
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35117,6 +43200,7 @@ export namespace Prisma {
     ageYears?: IntFieldUpdateOperationsInput | number
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35141,6 +43225,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -35152,6 +43242,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutChurchInput = {
@@ -35170,6 +43266,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -35178,6 +43280,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutChurchInput = {
@@ -35196,6 +43304,83 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+  }
+
+  export type EventUpdateWithoutChurchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    lots?: EventLotUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUpdateManyWithoutEventNestedInput
+    orders?: OrderUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateWithoutChurchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
+    expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
+    orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutEventNestedInput
+  }
+
+  export type EventUncheckedUpdateManyWithoutChurchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    location?: StringFieldUpdateOperationsInput | string
+    bannerUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    priceCents?: IntFieldUpdateOperationsInput | number
+    minAgeYears?: NullableIntFieldUpdateOperationsInput | number | null
+    isFree?: BoolFieldUpdateOperationsInput | boolean
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    slug?: StringFieldUpdateOperationsInput | string
+    paymentMethods?: StringFieldUpdateOperationsInput | string
+    pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
   }
 
   export type EventLotCreateManyEventInput = {
@@ -35245,6 +43430,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
   }
 
@@ -35258,6 +43449,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -35358,6 +43550,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
@@ -35366,6 +43560,10 @@ export namespace Prisma {
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutEventInput = {
@@ -35394,6 +43592,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -35428,6 +43632,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -35451,6 +43661,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -35464,6 +43675,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35487,6 +43699,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35517,6 +43730,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -35608,6 +43822,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -35621,6 +43836,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35644,6 +43860,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -35860,6 +44077,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     ministryId?: string | null
+    districtId: string
+    churchId?: string | null
   }
 
   export type MinistryUserCreateManyUserInput = {
@@ -35915,6 +44134,12 @@ export namespace Prisma {
     amountReceivedCents?: number | null
     manualNotes?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
   }
 
@@ -35939,6 +44164,152 @@ export namespace Prisma {
     notes?: string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
     issuedAt?: Date | string
+  }
+
+  export type OrderCreateManyDistrictAdminInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type OrderCreateManyResponsibleUserInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type RegistrationCreateManyResponsibleUserInput = {
+    id?: string
+    orderId: string
+    eventId: string
+    fullName: string
+    cpf: string
+    birthDate: Date | string
+    ageYears: number
+    priceCents?: number
+    districtId: string
+    churchId: string
+    photoUrl?: string | null
+    gender?: string | null
+    paymentMethod?: string | null
+    status?: string
+    receiptPdfUrl?: string | null
+    checkinAt?: Date | string | null
+    paidAt?: Date | string | null
+    createdAt?: Date | string
+    ministryId?: string | null
+  }
+
+  export type TransferCreateManyCreatedByInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type TransferCreateManyDistrictAdminInput = {
+    id?: string
+    districtId?: string | null
+    responsibleUserId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+  }
+
+  export type TransferCreateManyResponsibleUserInput = {
+    id?: string
+    districtId?: string | null
+    districtAdminId?: string | null
+    amount: number
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    orderIds: JsonNullValueInput | InputJsonValue
+    mpTransferId?: string | null
+    status?: $Enums.TransferStatus
+    errorMessage?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
   }
 
   export type AuditLogUpdateWithoutActorInput = {
@@ -35985,6 +44356,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministry?: MinistryUpdateOneWithoutEventsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
@@ -36008,6 +44381,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
@@ -36031,6 +44406,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MinistryUserUpdateWithoutUserInput = {
@@ -36138,6 +44515,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
@@ -36146,6 +44525,10 @@ export namespace Prisma {
     webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutConfirmedByInput = {
@@ -36174,6 +44557,12 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -36208,6 +44597,12 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -36280,6 +44675,474 @@ export namespace Prisma {
     issuedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type OrderUpdateWithoutDistrictAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutDistrictAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutDistrictAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrderUpdateWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistrationUpdateWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUpdateManyWithoutRegistrationNestedInput
+    church?: ChurchUpdateOneRequiredWithoutRegistrationsNestedInput
+    district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
+    event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
+    ministry?: MinistryUpdateOneWithoutRegistrationsNestedInput
+    order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+    refunds?: RefundUncheckedUpdateManyWithoutRegistrationNestedInput
+    orderItems?: OrderItemUncheckedUpdateManyWithoutRegistrationNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    fullName?: StringFieldUpdateOperationsInput | string
+    cpf?: StringFieldUpdateOperationsInput | string
+    birthDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    ageYears?: IntFieldUpdateOperationsInput | number
+    priceCents?: IntFieldUpdateOperationsInput | number
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: StringFieldUpdateOperationsInput | string
+    photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    receiptPdfUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    checkinAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ministryId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type TransferUpdateWithoutCreatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneWithoutTransfersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictTransfersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleTransfersNestedInput
+    orders?: OrderUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateWithoutCreatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: OrderUncheckedUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateManyWithoutCreatedByInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferUpdateWithoutDistrictAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneWithoutTransfersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleTransfersNestedInput
+    createdBy?: UserUpdateOneWithoutTransfersCreatedNestedInput
+    orders?: OrderUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateWithoutDistrictAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: OrderUncheckedUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateManyWithoutDistrictAdminInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TransferUpdateWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    district?: DistrictUpdateOneWithoutTransfersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictTransfersNestedInput
+    createdBy?: UserUpdateOneWithoutTransfersCreatedNestedInput
+    orders?: OrderUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: OrderUncheckedUpdateManyWithoutTransferBatchNestedInput
+  }
+
+  export type TransferUncheckedUpdateManyWithoutResponsibleUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    amount?: IntFieldUpdateOperationsInput | number
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    orderIds?: JsonNullValueInput | InputJsonValue
+    mpTransferId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumTransferStatusFieldUpdateOperationsInput | $Enums.TransferStatus
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrderCreateManyPricingLotInput = {
     id?: string
     eventId: string
@@ -36306,6 +45169,12 @@ export namespace Prisma {
     manualNotes?: string | null
     confirmedById?: string | null
     confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    transferBatchId?: string | null
     createdAt?: Date | string
   }
 
@@ -36333,6 +45202,8 @@ export namespace Prisma {
     amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     event?: EventUpdateOneRequiredWithoutOrdersNestedInput
     refunds?: RefundUpdateManyWithoutOrderNestedInput
@@ -36341,6 +45212,10 @@ export namespace Prisma {
     items?: OrderItemUpdateManyWithoutOrderNestedInput
     serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
     confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+    transferBatch?: TransferUpdateOneWithoutOrdersNestedInput
   }
 
   export type OrderUncheckedUpdateWithoutPricingLotInput = {
@@ -36369,6 +45244,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
     registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
@@ -36403,6 +45284,12 @@ export namespace Prisma {
     manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    transferBatchId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -36423,6 +45310,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: string
     createdAt?: Date | string
     createdById?: string | null
+    districtId: string
+    churchId?: string | null
   }
 
   export type MinistryUserCreateManyMinistryInput = {
@@ -36441,6 +45330,7 @@ export namespace Prisma {
     priceCents?: number
     districtId: string
     churchId: string
+    responsibleUserId?: string | null
     photoUrl?: string | null
     gender?: string | null
     paymentMethod?: string | null
@@ -36467,6 +45357,12 @@ export namespace Prisma {
     photoUrl?: string | null
     profileId?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
   }
 
   export type EventUpdateWithoutMinistryInput = {
@@ -36486,6 +45382,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdBy?: UserUpdateOneWithoutEventsCreatedNestedInput
+    district?: DistrictUpdateOneRequiredWithoutEventsNestedInput
+    church?: ChurchUpdateOneWithoutEventsNestedInput
     lots?: EventLotUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUpdateManyWithoutEventNestedInput
     orders?: OrderUpdateManyWithoutEventNestedInput
@@ -36509,6 +45407,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
     lots?: EventLotUncheckedUpdateManyWithoutEventNestedInput
     expenses?: ExpenseUncheckedUpdateManyWithoutEventNestedInput
     orders?: OrderUncheckedUpdateManyWithoutEventNestedInput
@@ -36532,6 +45432,8 @@ export namespace Prisma {
     pendingPaymentValueRule?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    districtId?: StringFieldUpdateOperationsInput | string
+    churchId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MinistryUserUpdateWithoutMinistryInput = {
@@ -36569,6 +45471,7 @@ export namespace Prisma {
     district?: DistrictUpdateOneRequiredWithoutRegistrationsNestedInput
     event?: EventUpdateOneRequiredWithoutRegistrationsNestedInput
     order?: OrderUpdateOneRequiredWithoutRegistrationsNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleRegistrationsNestedInput
     orderItems?: OrderItemUpdateManyWithoutRegistrationNestedInput
   }
 
@@ -36583,6 +45486,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36606,6 +45510,7 @@ export namespace Prisma {
     priceCents?: IntFieldUpdateOperationsInput | number
     districtId?: StringFieldUpdateOperationsInput | string
     churchId?: StringFieldUpdateOperationsInput | string
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
     paymentMethod?: NullableStringFieldUpdateOperationsInput | string | null
@@ -36629,6 +45534,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -36640,6 +45551,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutPrimaryMinistryInput = {
@@ -36658,6 +45575,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -36666,6 +45589,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutPrimaryMinistryInput = {
@@ -36684,6 +45613,12 @@ export namespace Prisma {
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     profileId?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
   }
 
   export type ProfilePermissionCreateManyProfileInput = {
@@ -36717,6 +45652,12 @@ export namespace Prisma {
     phone?: string | null
     photoUrl?: string | null
     status?: $Enums.UserStatus
+    pixType?: $Enums.PixType | null
+    pixKey?: string | null
+    pixOwnerName?: string | null
+    pixOwnerDocument?: string | null
+    pixBankName?: string | null
+    pixStatus?: $Enums.PixStatus
   }
 
   export type ProfilePermissionUpdateWithoutProfileInput = {
@@ -36777,6 +45718,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUpdateManyWithoutUserNestedInput
@@ -36788,6 +45735,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProfileInput = {
@@ -36806,6 +45759,12 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
     auditLogs?: AuditLogUncheckedUpdateManyWithoutActorNestedInput
     eventsCreated?: EventUncheckedUpdateManyWithoutCreatedByNestedInput
     ministries?: MinistryUserUncheckedUpdateManyWithoutUserNestedInput
@@ -36814,6 +45773,12 @@ export namespace Prisma {
     confirmedManualOrders?: OrderUncheckedUpdateManyWithoutConfirmedByNestedInput
     confirmedOrderItems?: OrderItemUncheckedUpdateManyWithoutConfirmedByNestedInput
     issuedServiceOrders?: ServiceOrderUncheckedUpdateManyWithoutIssuedByNestedInput
+    districtOrders?: OrderUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleOrders?: OrderUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    responsibleRegistrations?: RegistrationUncheckedUpdateManyWithoutResponsibleUserNestedInput
+    transfersCreated?: TransferUncheckedUpdateManyWithoutCreatedByNestedInput
+    districtTransfers?: TransferUncheckedUpdateManyWithoutDistrictAdminNestedInput
+    responsibleTransfers?: TransferUncheckedUpdateManyWithoutResponsibleUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutProfileInput = {
@@ -36832,6 +45797,162 @@ export namespace Prisma {
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     photoUrl?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumUserStatusFieldUpdateOperationsInput | $Enums.UserStatus
+    pixType?: NullableEnumPixTypeFieldUpdateOperationsInput | $Enums.PixType | null
+    pixKey?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixOwnerDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    pixBankName?: NullableStringFieldUpdateOperationsInput | string | null
+    pixStatus?: EnumPixStatusFieldUpdateOperationsInput | $Enums.PixStatus
+  }
+
+  export type OrderCreateManyTransferBatchInput = {
+    id?: string
+    eventId: string
+    buyerCpf: string
+    totalCents: number
+    status?: string
+    paymentMethod?: string
+    mpPaymentId?: string | null
+    mpPreferenceId?: string | null
+    preferenceVersion?: number
+    pricingLotId?: string | null
+    externalReference: string
+    expiresAt: Date | string
+    paidAt?: Date | string | null
+    manualPaymentReference?: string | null
+    manualPaymentProofUrl?: string | null
+    feeCents?: number
+    netAmountCents?: number
+    origin?: $Enums.OrderOrigin
+    responsibleName?: string | null
+    responsibleDocument?: string | null
+    responsibleEmail?: string | null
+    responsiblePhone?: string | null
+    amountReceivedCents?: number | null
+    manualNotes?: string | null
+    confirmedById?: string | null
+    confirmedAt?: Date | string | null
+    districtId?: string | null
+    districtAdminId?: string | null
+    responsibleUserId?: string | null
+    amountToTransfer?: number
+    transferStatus?: $Enums.OrderTransferStatus | null
+    createdAt?: Date | string
+  }
+
+  export type OrderUpdateWithoutTransferBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    event?: EventUpdateOneRequiredWithoutOrdersNestedInput
+    pricingLot?: EventLotUpdateOneWithoutOrdersNestedInput
+    refunds?: RefundUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUpdateManyWithoutOrderNestedInput
+    confirmedBy?: UserUpdateOneWithoutConfirmedManualOrdersNestedInput
+    district?: DistrictUpdateOneWithoutOrdersNestedInput
+    districtAdmin?: UserUpdateOneWithoutDistrictOrdersNestedInput
+    responsibleUser?: UserUpdateOneWithoutResponsibleOrdersNestedInput
+  }
+
+  export type OrderUncheckedUpdateWithoutTransferBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    refunds?: RefundUncheckedUpdateManyWithoutOrderNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutOrderNestedInput
+    webhookEvents?: WebhookEventUncheckedUpdateManyWithoutOrderNestedInput
+    items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
+    serviceOrders?: ServiceOrderUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type OrderUncheckedUpdateManyWithoutTransferBatchInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventId?: StringFieldUpdateOperationsInput | string
+    buyerCpf?: StringFieldUpdateOperationsInput | string
+    totalCents?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    paymentMethod?: StringFieldUpdateOperationsInput | string
+    mpPaymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    mpPreferenceId?: NullableStringFieldUpdateOperationsInput | string | null
+    preferenceVersion?: IntFieldUpdateOperationsInput | number
+    pricingLotId?: NullableStringFieldUpdateOperationsInput | string | null
+    externalReference?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    manualPaymentReference?: NullableStringFieldUpdateOperationsInput | string | null
+    manualPaymentProofUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    feeCents?: IntFieldUpdateOperationsInput | number
+    netAmountCents?: IntFieldUpdateOperationsInput | number
+    origin?: EnumOrderOriginFieldUpdateOperationsInput | $Enums.OrderOrigin
+    responsibleName?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleDocument?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleEmail?: NullableStringFieldUpdateOperationsInput | string | null
+    responsiblePhone?: NullableStringFieldUpdateOperationsInput | string | null
+    amountReceivedCents?: NullableIntFieldUpdateOperationsInput | number | null
+    manualNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedById?: NullableStringFieldUpdateOperationsInput | string | null
+    confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    districtId?: NullableStringFieldUpdateOperationsInput | string | null
+    districtAdminId?: NullableStringFieldUpdateOperationsInput | string | null
+    responsibleUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    amountToTransfer?: IntFieldUpdateOperationsInput | number
+    transferStatus?: NullableEnumOrderTransferStatusFieldUpdateOperationsInput | $Enums.OrderTransferStatus | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 
@@ -36875,6 +45996,10 @@ export namespace Prisma {
      * @deprecated Use ProfileCountOutputTypeDefaultArgs instead
      */
     export type ProfileCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ProfileCountOutputTypeDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use TransferCountOutputTypeDefaultArgs instead
+     */
+    export type TransferCountOutputTypeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TransferCountOutputTypeDefaultArgs<ExtArgs>
     /**
      * @deprecated Use DistrictDefaultArgs instead
      */
@@ -36951,6 +46076,14 @@ export namespace Prisma {
      * @deprecated Use ServiceOrderDefaultArgs instead
      */
     export type ServiceOrderArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = ServiceOrderDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use TransferDefaultArgs instead
+     */
+    export type TransferArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TransferDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use PixGatewayConfigDefaultArgs instead
+     */
+    export type PixGatewayConfigArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = PixGatewayConfigDefaultArgs<ExtArgs>
 
   /**
    * Batch Payload for updateMany & deleteMany & createMany

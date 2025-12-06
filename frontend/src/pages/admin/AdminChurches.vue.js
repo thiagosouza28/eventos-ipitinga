@@ -1,5 +1,5 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import DateField from "../../components/forms/DateField.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -20,6 +20,8 @@ const uploadsBaseUrl = `${normalizedApiOrigin}/uploads`;
 const editingChurchId = ref(null);
 const showChurchModal = ref(false);
 const selectedDistrictId = ref("");
+const districtDropdownOpen = ref(false);
+const districtDropdownRef = ref(null);
 const churchForm = reactive({
     name: "",
     districtId: "",
@@ -33,6 +35,14 @@ const churchForm = reactive({
 const churchError = ref("");
 const directorPhotoInput = ref(null);
 const directorPhotoUploading = ref(false);
+const districtOptions = computed(() => [
+    { id: "", name: "Todos os distritos" },
+    ...catalog.districts.map((district) => ({ id: district.id, name: district.name }))
+]);
+const selectedDistrictLabel = computed(() => {
+    const match = districtOptions.value.find((option) => option.id === selectedDistrictId.value);
+    return match ? match.name : "Todos os distritos";
+});
 const buildUploadUrl = (value) => {
     const sanitized = value.replace(/^\/+/, "");
     if (!sanitized)
@@ -95,6 +105,23 @@ const resolvePhoto = (url) => {
         return `${normalizedApiOrigin}/${sanitized}`;
     }
     return `${uploadsBaseUrl}/${sanitized}`;
+};
+const toggleDistrictDropdown = () => {
+    districtDropdownOpen.value = !districtDropdownOpen.value;
+};
+const selectDistrict = (districtId) => {
+    selectedDistrictId.value = districtId;
+    districtDropdownOpen.value = false;
+};
+const handleDistrictDropdownClickOutside = (event) => {
+    if (!districtDropdownOpen.value || !districtDropdownRef.value)
+        return;
+    const target = event.target;
+    if (!(target instanceof Node))
+        return;
+    if (!districtDropdownRef.value.contains(target)) {
+        districtDropdownOpen.value = false;
+    }
 };
 const openNewChurchForm = () => {
     editingChurchId.value = null;
@@ -237,6 +264,9 @@ watch(selectedDistrictId, () => {
     }
 });
 onMounted(async () => {
+    if (typeof window !== "undefined") {
+        document.addEventListener("click", handleDistrictDropdownClickOutside);
+    }
     try {
         await Promise.all([catalog.loadDistricts(), catalog.loadChurches()]);
         if (catalog.districts.length) {
@@ -246,6 +276,11 @@ onMounted(async () => {
     }
     catch (error) {
         showError("Falha ao carregar distritos ou igrejas", error);
+    }
+});
+onBeforeUnmount(() => {
+    if (typeof window !== "undefined") {
+        document.removeEventListener("click", handleDistrictDropdownClickOutside);
     }
 });
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
@@ -603,20 +638,96 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
     ...{ class: "text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-    value: (__VLS_ctx.selectedDistrictId),
-    ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ref: "districtDropdownRef",
+    ...{ class: "relative w-full" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-    value: "",
+/** @type {typeof __VLS_ctx.districtDropdownRef} */ ;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    ...{ onClick: (__VLS_ctx.toggleDistrictDropdown) },
+    type: "button",
+    ...{ class: "flex w-full items-center justify-between rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-left text-sm text-neutral-900 shadow-inner transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus-visible:ring-primary-900/40" },
+    'aria-expanded': (__VLS_ctx.districtDropdownOpen),
 });
-for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        key: (district.id),
-        value: (district.id),
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "truncate" },
+});
+(__VLS_ctx.selectedDistrictLabel);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+    ...{ class: "ml-3 h-4 w-4 text-neutral-500 transition-transform duration-200" },
+    ...{ class: ({ 'rotate-180': __VLS_ctx.districtDropdownOpen }) },
+    fill: "none",
+    stroke: "currentColor",
+    'stroke-width': "2",
+    viewBox: "0 0 24 24",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+    'stroke-linecap': "round",
+    'stroke-linejoin': "round",
+    d: "m6 9 6 6 6-6",
+});
+const __VLS_35 = {}.transition;
+/** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
+// @ts-ignore
+const __VLS_36 = __VLS_asFunctionalComponent(__VLS_35, new __VLS_35({
+    enterActiveClass: "transition duration-150 ease-out",
+    enterFromClass: "opacity-0 -translate-y-1",
+    enterToClass: "opacity-100 translate-y-0",
+    leaveActiveClass: "transition duration-150 ease-in",
+    leaveFromClass: "opacity-100 translate-y-0",
+    leaveToClass: "opacity-0 -translate-y-1",
+}));
+const __VLS_37 = __VLS_36({
+    enterActiveClass: "transition duration-150 ease-out",
+    enterFromClass: "opacity-0 -translate-y-1",
+    enterToClass: "opacity-100 translate-y-0",
+    leaveActiveClass: "transition duration-150 ease-in",
+    leaveFromClass: "opacity-100 translate-y-0",
+    leaveToClass: "opacity-0 -translate-y-1",
+}, ...__VLS_functionalComponentArgsRest(__VLS_36));
+__VLS_38.slots.default;
+if (__VLS_ctx.districtDropdownOpen) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "absolute left-0 right-0 z-30 mt-2 rounded-2xl border border-neutral-200/80 bg-white/95 p-2 text-sm shadow-2xl shadow-neutral-200/60 ring-1 ring-black/5 dark:border-white/10 dark:bg-neutral-900/95 dark:text-neutral-100 dark:shadow-black/50" },
     });
-    (district.name);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "custom-scroll max-h-60 overflow-y-auto pr-1" },
+    });
+    for (const [option] of __VLS_getVForSourceType((__VLS_ctx.districtOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!(__VLS_ctx.districtDropdownOpen))
+                        return;
+                    __VLS_ctx.selectDistrict(option.id);
+                } },
+            key: (option.id || 'all-districts'),
+            type: "button",
+            ...{ class: "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-neutral-700 transition hover:bg-primary-50 hover:text-primary-700 dark:text-neutral-100 dark:hover:bg-primary-500/10" },
+            ...{ class: ({
+                    'bg-primary-600/10 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100': __VLS_ctx.selectedDistrictId === option.id
+                }) },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "truncate" },
+        });
+        (option.name);
+        if (__VLS_ctx.selectedDistrictId === option.id) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                ...{ class: "ml-2 h-4 w-4 text-primary-600 dark:text-primary-200" },
+                fill: "none",
+                stroke: "currentColor",
+                'stroke-width': "2",
+                viewBox: "0 0 24 24",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                'stroke-linecap': "round",
+                'stroke-linejoin': "round",
+                d: "m5 13 4 4L19 7",
+            });
+        }
+    }
 }
+var __VLS_38;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
     ...{ class: "text-xs text-neutral-500 dark:text-neutral-400 sm:max-w-sm" },
 });
@@ -1227,26 +1338,80 @@ var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:border-primary-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus-visible:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus-visible:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus-visible:ring-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:focus:border-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:focus:ring-primary-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus-visible:ring-primary-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['truncate']} */ ;
+/** @type {__VLS_StyleScopedClasses['ml-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition-transform']} */ ;
+/** @type {__VLS_StyleScopedClasses['duration-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['left-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-30']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/95']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-neutral-200/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['ring-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['ring-black/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/95']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/50']} */ ;
+/** @type {__VLS_StyleScopedClasses['custom-scroll']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-h-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-y-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['pr-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['truncate']} */ ;
+/** @type {__VLS_StyleScopedClasses['ml-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
@@ -1513,16 +1678,22 @@ const __VLS_self = (await import('vue')).defineComponent({
             editingChurchId: editingChurchId,
             showChurchModal: showChurchModal,
             selectedDistrictId: selectedDistrictId,
+            districtDropdownOpen: districtDropdownOpen,
+            districtDropdownRef: districtDropdownRef,
             churchForm: churchForm,
             churchError: churchError,
             directorPhotoInput: directorPhotoInput,
             directorPhotoUploading: directorPhotoUploading,
+            districtOptions: districtOptions,
+            selectedDistrictLabel: selectedDistrictLabel,
             errorDialog: errorDialog,
             confirmDelete: confirmDelete,
             filteredChurches: filteredChurches,
             findDistrictName: findDistrictName,
             findDistrictPastorName: findDistrictPastorName,
             resolvePhoto: resolvePhoto,
+            toggleDistrictDropdown: toggleDistrictDropdown,
+            selectDistrict: selectDistrict,
             openNewChurchForm: openNewChurchForm,
             resetChurchForm: resetChurchForm,
             selectDirectorPhoto: selectDirectorPhoto,

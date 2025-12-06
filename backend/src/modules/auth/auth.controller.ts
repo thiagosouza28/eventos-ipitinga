@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { z } from "zod";
 
 import { authService } from "./auth.service";
+import { UnauthorizedError } from "../../utils/errors";
 
 const loginSchema = z.object({
   identifier: z.string().min(3),
@@ -36,4 +37,12 @@ export const recoverPasswordHandler = async (request: Request, response: Respons
   const { identifier } = recoverPasswordSchema.parse(request.body);
   await authService.requestPasswordReset(identifier);
   return response.status(204).send();
+};
+
+export const getProfileHandler = async (request: Request, response: Response) => {
+  if (!request.user) {
+    throw new UnauthorizedError("Usuario nao autenticado");
+  }
+  const session = await authService.getSession(request.user.id);
+  return response.json(session);
 };

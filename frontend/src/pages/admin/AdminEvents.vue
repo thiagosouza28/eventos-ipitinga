@@ -63,13 +63,14 @@
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead class="bg-white/50 text-[11px] uppercase tracking-wide text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
-              <th class="px-4 py-3">Título</th>
-              <th class="px-4 py-3">Período</th>
+              <th class="px-4 py-3">T?tulo</th>
+              <th class="px-4 py-3">Distrito / Igreja</th>
+              <th class="px-4 py-3">Per?odo</th>
               <th class="px-4 py-3">Valor vigente</th>
               <th class="px-4 py-3">Regra de valor pendente</th>
               <th class="px-4 py-3">Lote atual</th>
               <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3 text-right">Ações</th>
+              <th class="px-4 py-3 text-right">A??es</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -79,6 +80,14 @@
                   {{ event.title }}
                 </div>
                 <div class="text-xs text-neutral-500">Slug: {{ event.slug }}</div>
+              </td>
+              <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
+                <div class="font-semibold text-neutral-900 dark:text-neutral-100">
+                  {{ event.district?.name ?? "N??o informado" }}
+                </div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  {{ event.church?.name ?? "Igreja n??o vinculada" }}
+                </div>
               </td>
               <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
                 {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
@@ -140,7 +149,7 @@
               </td>
             </tr>
             <tr v-if="!admin.events.length">
-              <td class="px-4 py-6 text-sm text-neutral-500" colspan="7">
+              <td class="px-4 py-6 text-sm text-neutral-500" colspan="8">
                 Nenhum evento cadastrado ate o momento.
               </td>
             </tr>
@@ -186,6 +195,14 @@
             <div>
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">Lote atual</p>
               <p>{{ event.currentLot?.name ?? "--" }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Distrito</p>
+              <p>{{ event.district?.name ?? "Nao informado" }}</p>
+            </div>
+            <div>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Igreja</p>
+              <p>{{ event.church?.name ?? "Nao vinculada" }}</p>
             </div>
             <div class="col-span-2">
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">Regra de valor pendente</p>
@@ -376,6 +393,52 @@
             min="0"
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Distrito do evento
+          </label>
+          <select
+            v-model="createForm.districtId"
+            required
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">Selecione...</option>
+            <option
+              v-for="district in districtOptions"
+              :key="district.id"
+              :value="district.id"
+            >
+              {{ district.name }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Todo evento precisa de um distrito para gerar relatórios e repasses.
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Igreja
+          </label>
+          <select
+            v-model="createForm.churchId"
+            :disabled="createChurchLocked || !createForm.districtId || churchesLoading.create"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">
+              {{ createChurchLocked ? "Usando sua igreja vinculada" : "Selecione..." }}
+            </option>
+            <option
+              v-for="church in createChurchOptions"
+              :key="church.id"
+              :value="church.id"
+            >
+              {{ church.name }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Se o distrito for o seu, usamos automaticamente a igreja vinculada ao seu perfil.
+          </p>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
@@ -604,6 +667,52 @@
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
         </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Distrito do evento
+          </label>
+          <select
+            v-model="editForm.districtId"
+            required
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">Selecione...</option>
+            <option
+              v-for="district in districtOptions"
+              :key="district.id"
+              :value="district.id"
+            >
+              {{ district.name }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            Mantemos o distrito obrigatório para garantir repasses corretos.
+          </p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+            Igreja
+          </label>
+          <select
+            v-model="editForm.churchId"
+            :disabled="editChurchLocked || !editForm.districtId || churchesLoading.edit"
+            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
+          >
+            <option value="">
+              {{ editChurchLocked ? "Usando sua igreja vinculada" : "Selecione..." }}
+            </option>
+            <option
+              v-for="church in editChurchOptions"
+              :key="church.id"
+              :value="church.id"
+            >
+              {{ church.name }}
+            </option>
+          </select>
+          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+            No distrito do proprio usuario, a igreja e preenchida automaticamente.
+          </p>
+        </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Formas de pagamento disponiveis
@@ -736,7 +845,7 @@
 
           <dl class="mt-6 grid gap-4 text-sm text-white/80 sm:grid-cols-2">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Período</dt>
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Periodo</dt>
               <dd class="mt-1 font-semibold text-white">
                 {{ formatDate(details.event?.startDate ?? '') }} - {{ formatDate(details.event?.endDate ?? '') }}
               </dd>
@@ -747,7 +856,15 @@
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Ministerio</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? 'Não vinculado' }}</dd>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? 'Nao vinculado' }}</dd>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Distrito</dt>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.district?.name ?? 'Nao informado' }}</dd>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Igreja</dt>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.church?.name ?? 'Nao vinculada' }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Valor atual</dt>
@@ -770,7 +887,7 @@
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Idade minima</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? 'Não informada' }}</dd>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? 'Nao informada' }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Descricao</dt>
@@ -989,9 +1106,17 @@ import Modal from "../../components/ui/Modal.vue";
 import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
+import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
-import type { Event as ApiEvent, EventLot, PaymentMethod, Ministry } from "../../types/api";
+import type {
+  District,
+  Event as ApiEvent,
+  EventLot,
+  PaymentMethod,
+  Ministry,
+  Church
+} from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
@@ -1005,7 +1130,11 @@ import {
 } from "../../config/pendingPaymentValueRules";
 
 const admin = useAdminStore();
+const auth = useAuthStore();
 const catalog = useCatalogStore();
+const currentUser = computed(() => auth.user);
+const userDistrictId = computed(() => currentUser.value?.districtScopeId ?? "");
+const userChurchId = computed(() => currentUser.value?.churchId ?? "");
 const eventPermissions = useModulePermissions("events");
 const { api } = useApi();
 const paymentMethodOptions = PAYMENT_METHODS;
@@ -1021,6 +1150,12 @@ const activeMinistries = computed<Ministry[]>(() =>
 );
 const allMinistryOptions = computed<Ministry[]>(() => catalog.ministries);
 const pickDefaultMinistryId = () => activeMinistries.value[0]?.id ?? "";
+const districtOptions = computed<District[]>(() => catalog.districts);
+const churchesCache = reactive<Record<string, Church[]>>({});
+const churchesLoading = reactive<Record<FormMode, boolean>>({
+  create: false,
+  edit: false
+});
 
 const toPriceCents = (input: unknown) => {
   if (input === null || input === undefined) return 0;
@@ -1038,6 +1173,63 @@ const formatPriceDisplay = (valueInCents: number) =>
     maximumFractionDigits: 2
   });
 
+const churchOptionsForDistrict = (districtId: string) => churchesCache[districtId] ?? [];
+const createChurchOptions = computed<Church[]>(() =>
+  createForm.districtId ? churchOptionsForDistrict(createForm.districtId) : []
+);
+const editChurchOptions = computed<Church[]>(() =>
+  editForm.districtId ? churchOptionsForDistrict(editForm.districtId) : []
+);
+const isOwnDistrictSelected = (districtId: string) =>
+  Boolean(districtId && districtId === userDistrictId.value);
+
+const applyChurchLock = (mode: FormMode, districtId?: string) => {
+  const lockRef = mode === "create" ? createChurchLocked : editChurchLocked;
+  const form = mode === "create" ? createForm : editForm;
+  const locked = isOwnDistrictSelected(districtId ?? "");
+  lockRef.value = locked;
+  if (locked) {
+    form.churchId = userChurchId.value || "";
+  } else if (!districtId) {
+    form.churchId = "";
+  }
+};
+
+const loadChurchesForDistrict = async (districtId: string, mode: FormMode) => {
+  if (!districtId) {
+    return;
+  }
+  churchesLoading[mode] = true;
+  try {
+    await catalog.loadChurches(districtId);
+    churchesCache[districtId] = [...catalog.churches];
+  } catch (error) {
+    showError("Falha ao carregar igrejas do distrito", error);
+  } finally {
+    churchesLoading[mode] = false;
+  }
+};
+
+const handleDistrictChange = async (
+  mode: FormMode,
+  districtId: string,
+  previousDistrictId?: string
+) => {
+  const form = mode === "create" ? createForm : editForm;
+  if (previousDistrictId && previousDistrictId !== districtId) {
+    form.churchId = "";
+  }
+  applyChurchLock(mode, districtId);
+  if (!districtId) {
+    return;
+  }
+  await loadChurchesForDistrict(districtId, mode);
+  const locked = mode === "create" ? createChurchLocked.value : editChurchLocked.value;
+  if (locked && userChurchId.value) {
+    form.churchId = userChurchId.value;
+  }
+};
+
 type FormMode = "create" | "edit";
 
 type EventForm = {
@@ -1053,6 +1245,8 @@ type EventForm = {
   paymentMethods: PaymentMethod[];
   pendingPaymentValueRule: PendingPaymentValueRule;
   ministryId: string;
+  districtId: string;
+  churchId: string;
 };
 
 const slugifyValue = (value: string) =>
@@ -1095,7 +1289,9 @@ const createForm = reactive<EventForm>({
   minAgeYears: "",
   paymentMethods: defaultPaymentMethodValues(),
   pendingPaymentValueRule: defaultPendingPaymentValueRule,
-  ministryId: ""
+  ministryId: "",
+  districtId: "",
+  churchId: ""
 });
 
 const editForm = reactive<EventForm>({
@@ -1110,7 +1306,9 @@ const editForm = reactive<EventForm>({
   minAgeYears: "",
   paymentMethods: defaultPaymentMethodValues(),
   pendingPaymentValueRule: defaultPendingPaymentValueRule,
-  ministryId: ""
+  ministryId: "",
+  districtId: "",
+  churchId: ""
 });
 
 const editingEventId = ref<string | null>(null);
@@ -1119,6 +1317,8 @@ const savingCreate = ref(false);
 const savingEdit = ref(false);
 const createModalOpen = ref(false);
 const editModalOpen = ref(false);
+const createChurchLocked = ref(false);
+const editChurchLocked = ref(false);
 
 const confirmDelete = reactive({
   open: false,
@@ -1172,6 +1372,48 @@ watch(
     }
   },
   { deep: true }
+);
+
+watch(
+  () => createForm.districtId,
+  (next, prev) => {
+    handleDistrictChange("create", next, prev);
+  }
+);
+
+watch(
+  () => editForm.districtId,
+  (next, prev) => {
+    handleDistrictChange("edit", next, prev);
+  }
+);
+
+watch(
+  () => userDistrictId.value,
+  async (next) => {
+    if (next && !createForm.districtId) {
+      createForm.districtId = next;
+      applyChurchLock("create", next);
+      await loadChurchesForDistrict(next, "create");
+    } else if (next && createForm.districtId === next) {
+      applyChurchLock("create", next);
+    }
+    if (next && editForm.districtId === next) {
+      applyChurchLock("edit", next);
+    }
+  }
+);
+
+watch(
+  () => userChurchId.value,
+  (next) => {
+    if (createChurchLocked.value) {
+      createForm.churchId = next || "";
+    }
+    if (editChurchLocked.value) {
+      editForm.churchId = next || "";
+    }
+  }
 );
 
 const formatDateTimeBr = (value: string) => {
@@ -1410,6 +1652,14 @@ const resetCreateForm = () => {
   createForm.paymentMethods = defaultPaymentMethodValues();
   createForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
   createForm.ministryId = pickDefaultMinistryId();
+  createForm.districtId = userDistrictId.value || "";
+  createForm.churchId = userDistrictId.value ? userChurchId.value || "" : "";
+  applyChurchLock("create", createForm.districtId);
+  if (createForm.districtId) {
+    loadChurchesForDistrict(createForm.districtId, "create");
+  } else {
+    createChurchLocked.value = false;
+  }
 };
 
 const resetEditForm = () => {
@@ -1425,6 +1675,9 @@ const resetEditForm = () => {
   editForm.paymentMethods = defaultPaymentMethodValues();
   editForm.pendingPaymentValueRule = defaultPendingPaymentValueRule;
   editForm.ministryId = pickDefaultMinistryId();
+  editForm.districtId = "";
+  editForm.churchId = "";
+  editChurchLocked.value = false;
 };
 
 const openCreateModal = () => {
@@ -1563,6 +1816,19 @@ const submitCreate = async () => {
     showError("Falha ao criar evento", { message: "Selecione o ministerio responsavel pelo evento." });
     return;
   }
+  if (!createForm.districtId) {
+    showError("Falha ao criar evento", { message: "Selecione o distrito do evento." });
+    return;
+  }
+  if (createChurchLocked.value && !userChurchId.value) {
+    showError("Falha ao criar evento", {
+      message:
+        "Cadastre sua igreja no perfil para vincular eventos do proprio distrito automaticamente."
+    });
+    return;
+  }
+  const selectedChurchId =
+    (createChurchLocked.value ? userChurchId.value : createForm.churchId) || undefined;
   const normalizedSlug = sanitizeSlugInput(createForm.slug);
   savingCreate.value = true;
   try {
@@ -1580,7 +1846,9 @@ const submitCreate = async () => {
       pendingPaymentValueRule: createForm.pendingPaymentValueRule,
       minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
       isActive: true,
-      ministryId: createForm.ministryId
+      ministryId: createForm.ministryId,
+      districtId: createForm.districtId,
+      churchId: selectedChurchId
     } as Partial<ApiEvent>);
     resetCreateForm();
     createModalOpen.value = false;
@@ -1604,6 +1872,19 @@ const submitEdit = async () => {
     showError("Falha ao atualizar evento", { message: "Selecione o ministerio responsavel pelo evento." });
     return;
   }
+  if (!editForm.districtId) {
+    showError("Falha ao atualizar evento", { message: "Selecione o distrito do evento." });
+    return;
+  }
+  if (editChurchLocked.value && !userChurchId.value) {
+    showError("Falha ao atualizar evento", {
+      message:
+        "Cadastre sua igreja no perfil para vincular eventos do proprio distrito automaticamente."
+    });
+    return;
+  }
+  const selectedChurchId =
+    (editChurchLocked.value ? userChurchId.value : editForm.churchId) || undefined;
   const normalizedSlug = sanitizeSlugInput(editForm.slug);
   savingEdit.value = true;
   try {
@@ -1621,7 +1902,9 @@ const submitEdit = async () => {
       priceCents: 0,
       paymentMethods: [...editForm.paymentMethods],
       pendingPaymentValueRule: editForm.pendingPaymentValueRule,
-      ministryId: editForm.ministryId
+      ministryId: editForm.ministryId,
+      districtId: editForm.districtId,
+      churchId: selectedChurchId
     } as Partial<ApiEvent>);
     cancelEdit();
   } catch (error) {
@@ -1652,6 +1935,12 @@ const startEdit = (event: ApiEvent) => {
   editForm.pendingPaymentValueRule =
     event.pendingPaymentValueRule ?? defaultPendingPaymentValueRule;
   editForm.ministryId = event.ministryId ?? "";
+  editForm.districtId = event.districtId ?? "";
+  editForm.churchId = event.churchId ?? "";
+  applyChurchLock("edit", editForm.districtId);
+  if (editForm.districtId) {
+    handleDistrictChange("edit", editForm.districtId);
+  }
   editModalOpen.value = true;
 };
 
@@ -1740,15 +2029,27 @@ onMounted(async () => {
     return;
   }
   try {
-    await Promise.all([admin.loadEvents(), catalog.loadMinistries()]);
+    const loaders = [
+      admin.loadEvents(),
+      catalog.loadMinistries(),
+      catalog.loadDistricts()
+    ];
+    if (userDistrictId.value) {
+      loaders.push(loadChurchesForDistrict(userDistrictId.value, "create"));
+    }
+    await Promise.all(loaders);
     if (!createForm.ministryId) {
       createForm.ministryId = pickDefaultMinistryId();
+    }
+    if (!createForm.districtId && userDistrictId.value) {
+      createForm.districtId = userDistrictId.value;
+      applyChurchLock("create", createForm.districtId);
     }
     if (!admin.events.length && eventPermissions.canCreate.value) {
       createModalOpen.value = true;
     }
   } catch (error) {
-    showError("Falha ao carregar eventos ou ministérios", error);
+    showError("Falha ao carregar eventos ou catalogos", error);
   } finally {
     loadingEvents.value = false;
   }

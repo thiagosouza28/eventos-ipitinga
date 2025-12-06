@@ -51,24 +51,22 @@
         </div>
         <div class="space-y-2">
           <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-            Nome do Diretor Jovem <span class="text-red-500">*</span>
+            Nome do Diretor Jovem
           </label>
           <input
             v-model="churchForm.directorName"
             type="text"
-            required
             class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
           />
         </div>
         <div class="grid gap-5 md:grid-cols-2">
           <div class="space-y-2">
             <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-              CPF do Diretor <span class="text-red-500">*</span>
+              CPF do Diretor
             </label>
             <input
               v-model="churchForm.directorCpf"
               type="text"
-              required
               maxlength="14"
               class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
               v-maska="{ mask: '###.###.###-##' }"
@@ -76,11 +74,10 @@
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-              Data de nascimento <span class="text-red-500">*</span>
+              Data de nascimento
             </label>
             <DateField
               v-model="churchForm.directorBirthDate"
-              required
               class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
@@ -88,23 +85,21 @@
         <div class="grid gap-5 md:grid-cols-2">
           <div class="space-y-2">
             <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-              E-mail <span class="text-red-500">*</span>
+              E-mail
             </label>
             <input
               v-model="churchForm.directorEmail"
               type="email"
-              required
               class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
           <div class="space-y-2">
             <label class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-              WhatsApp <span class="text-red-500">*</span>
+              WhatsApp
             </label>
             <input
               v-model="churchForm.directorWhatsapp"
               type="text"
-              required
               class="w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
             />
           </div>
@@ -654,37 +649,42 @@ const removeDirectorPhoto = () => {
 
 const submitChurch = async () => {
   const name = churchForm.name.trim();
+  const districtId = (churchForm.districtId || "").trim();
   const directorName = churchForm.directorName.trim();
   const directorCpf = churchForm.directorCpf.trim();
   const directorBirthDate = churchForm.directorBirthDate;
   const directorEmail = churchForm.directorEmail.trim();
   const directorWhatsapp = churchForm.directorWhatsapp.trim();
 
-  if (!churchForm.districtId) {
-    churchError.value = "Selecione um distrito.";
+  if (!name) {
+    churchError.value = "Nome da igreja � obrigat�rio.";
     return;
   }
-  if (!name || !directorName || !directorCpf || !directorBirthDate || !directorEmail || !directorWhatsapp) {
-    churchError.value = "Preencha todos os campos obrigatórios.";
+  if (!districtId) {
+    churchError.value = "Distrito � obrigat�rio.";
     return;
   }
-  if (!validateCPF(directorCpf)) {
-    churchError.value = "CPF inválido.";
+  if (directorCpf && !validateCPF(directorCpf)) {
+    churchError.value = "CPF inv�lido.";
     return;
   }
   churchError.value = "";
 
   try {
-    const payload = {
+    const payload: Record<string, unknown> = {
       name: String(name),
-      districtId: String(churchForm.districtId),
-      directorName: String(directorName),
-      directorCpf: normalizeCPF(directorCpf),
-      directorBirthDate: new Date(directorBirthDate + "T00:00:00").toISOString(),
-      directorEmail: directorEmail,
-      directorWhatsapp: directorWhatsapp,
-      directorPhotoUrl: churchForm.directorPhotoUrl ? String(churchForm.directorPhotoUrl) : undefined
+      districtId: String(districtId)
     };
+    if (directorName) payload.directorName = directorName;
+    if (directorCpf) payload.directorCpf = normalizeCPF(directorCpf);
+    if (directorBirthDate) {
+      payload.directorBirthDate = new Date(directorBirthDate + "T00:00:00").toISOString();
+    }
+    if (directorEmail) payload.directorEmail = directorEmail;
+    if (directorWhatsapp) payload.directorWhatsapp = directorWhatsapp;
+    if (churchForm.directorPhotoUrl) {
+      payload.directorPhotoUrl = String(churchForm.directorPhotoUrl);
+    }
     if (editingChurchId.value) {
       await catalog.updateChurch(editingChurchId.value, payload);
     } else {
@@ -699,7 +699,6 @@ const submitChurch = async () => {
     );
   }
 };
-
 const startChurchEdit = (church: Church) => {
   editingChurchId.value = church.id;
   churchForm.name = church.name;

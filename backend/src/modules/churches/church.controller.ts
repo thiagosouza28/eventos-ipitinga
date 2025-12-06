@@ -4,7 +4,7 @@ import { z } from "zod";
 import { churchService } from "./church.service";
 
 const createSchema = z.object({
-  name: z.string().min(3),
+  name: z.string().min(1),
   districtId: z.string().min(1),
   directorName: z.string().min(1).optional(),
   directorCpf: z.string().optional(),
@@ -80,6 +80,16 @@ export const createChurchHandler = async (request: Request, response: Response) 
     }
   }
   
+  const nameValue = typeof cleanBody.name === "string" ? cleanBody.name.trim() : "";
+  const districtValue = typeof cleanBody.districtId === "string" ? cleanBody.districtId.trim() : "";
+  if (!nameValue || !districtValue) {
+    return response
+      .status(400)
+      .json({ error: "Nome da igreja e distrito são obrigatórios." });
+  }
+  cleanBody.name = nameValue;
+  cleanBody.districtId = districtValue;
+
   const payload = createSchema.parse(cleanBody);
   const church = await churchService.create(payload, request.user?.id);
   return response.status(201).json(church);

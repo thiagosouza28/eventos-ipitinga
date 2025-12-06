@@ -6,7 +6,7 @@ import { useLoaderStore } from "../stores/loader";
 const EventLanding = () => import("../pages/public/EventLanding.vue");
 const EventFlow = () => import("../pages/public/EventFlow.vue");
 const PaymentPage = () => import("../pages/public/PaymentPage.vue");
-const PendingOrders = () => import("../pages/public/PendingOrders.vue");
+const AdminPendingOrders = () => import("../pages/public/PendingOrders.vue");
 const ReceiptLookup = () => import("../pages/public/ReceiptLookup.vue");
 const CheckinValidate = () => import("../pages/public/CheckinValidate.vue");
 
@@ -23,12 +23,14 @@ const AdminDistricts = () => import("../pages/admin/AdminDistricts.vue");
 const AdminChurches = () => import("../pages/admin/AdminChurches.vue");
 const AdminMinistries = () => import("../pages/admin/AdminMinistries.vue");
 const AdminFinancial = () => import("../pages/admin/AdminFinancial.vue");
+const AdminDistrictFinance = () => import("../pages/admin/AdminDistrictFinance.vue");
 const AdminReports = () => import("../pages/admin/AdminReports.vue");
 const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
 const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
 const AdminAccessDenied = () => import("../pages/admin/AdminAccessDenied.vue");
 const AdminSystemConfig = () => import("../pages/admin/AdminSystemConfig.vue");
+const AdminPixConfig = () => import("../pages/admin/AdminPixConfig.vue");
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -36,13 +38,11 @@ export const router = createRouter({
     { path: "/", name: "home", component: EventLanding },
     { path: "/evento/:slug", name: "event", component: EventFlow, props: true },
     { path: "/evento/:slug/pagamento/:orderId", name: "payment", component: PaymentPage, props: true },
-    { 
-      path: "/pendencias/:cpf?",
-      name: "pending-orders",
-      component: PendingOrders,
-      props: (route) => ({
-        cpf: route.params.cpf || route.query.cpf
-      })
+    {
+      path: "/admin/pendencias",
+      name: "admin-pending-orders",
+      component: AdminPendingOrders,
+      meta: { requiresAuth: true, requiresPermission: { module: "orders", action: "view" } }
     },
     { path: "/comprovante", name: "receipt", component: ReceiptLookup },
     { path: "/checkin/validate", name: "checkin-validate", component: CheckinValidate },
@@ -128,6 +128,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresPermission: { module: "financial", action: "view" } }
     },
     {
+      path: "/admin/finance/districts",
+      name: "admin-district-finance",
+      component: AdminDistrictFinance,
+      meta: { requiresAuth: true, requiresPermission: { module: "financial", action: "view" } }
+    },
+    {
       path: "/admin/events/:eventId/financial",
       name: "admin-event-financial",
       component: AdminEventFinancial,
@@ -145,6 +151,12 @@ export const router = createRouter({
       path: "/admin/system-config",
       name: "admin-system-config",
       component: AdminSystemConfig,
+      meta: { requiresAuth: true, requiresRole: "AdminGeral" }
+    },
+    {
+      path: "/admin/payments/pix",
+      name: "admin-pix-config",
+      component: AdminPixConfig,
       meta: { requiresAuth: true, requiresRole: "AdminGeral" }
     },
     {

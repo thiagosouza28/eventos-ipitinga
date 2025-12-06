@@ -3,7 +3,7 @@
   "info": {
     "title": "CATRE Ipitinga API",
     "version": "1.0.0",
-    "description": "API para gestÃ£o de inscriÃ§Ãµes CATRE Ipitinga com pagamentos Mercado Pago, recibos e check-in."
+    "description": "API para gestão de inscrições CATRE Ipitinga com pagamentos Mercado Pago, recibos e check-in."
   },
   "servers": [
     { "url": "http://localhost:3001/api", "description": "Desenvolvimento" }
@@ -45,8 +45,8 @@
   "paths": {
     "/events": {
       "get": {
-        "tags": ["PÃºblico"],
-        "summary": "Lista eventos pÃºblicos ativos",
+        "tags": ["Público"],
+        "summary": "Lista eventos públicos ativos",
         "responses": {
           "200": {
             "description": "Lista de eventos",
@@ -64,21 +64,21 @@
     },
     "/events/{slug}": {
       "get": {
-        "tags": ["PÃºblico"],
-        "summary": "Detalhes pÃºblicos do evento",
+        "tags": ["Público"],
+        "summary": "Detalhes públicos do evento",
         "parameters": [
           { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
         ],
         "responses": {
           "200": { "description": "Evento retornado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } } },
-          "404": { "description": "Evento nÃ£o encontrado" }
+          "404": { "description": "Evento não encontrado" }
         }
       }
     },
     "/inscriptions/start": {
       "post": {
-        "tags": ["PÃºblico"],
-        "summary": "Verifica pendÃªncia de pedido",
+        "tags": ["Público"],
+        "summary": "Inicia inscrição pública (sem listar pendências anteriores)",
         "requestBody": {
           "required": true,
           "content": {
@@ -95,14 +95,14 @@
           }
         },
         "responses": {
-          "200": { "description": "Pedido pendente ou null" }
+          "200": { "description": "Sempre retorna pendingOrders vazio para o fluxo público" }
         }
       }
     },
     "/inscriptions/batch": {
       "post": {
-        "tags": ["PÃºblico"],
-        "summary": "Cria pedido e inscriÃ§Ãµes em lote",
+        "tags": ["Público"],
+        "summary": "Cria pedido e inscrições em lote",
         "requestBody": {
           "required": true,
           "content": {
@@ -314,7 +314,7 @@
     "/admin/login": {
       "post": {
         "tags": ["Admin"],
-        "summary": "AutenticaÃ§Ã£o de usuÃ¡rio administrador",
+        "summary": "Autenticação de usuário administrador",
         "requestBody": {
           "required": true,
           "content": {
@@ -521,16 +521,16 @@
       "patch": {
         "tags": ["Admin"],
         "security": [{ "bearerAuth": [] }],
-        "summary": "Atualiza dados de uma inscriÃ§Ã£o",
+        "summary": "Atualiza dados de uma inscrição",
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "InscriÃ§Ã£o atualizada" } }
+        "responses": { "200": { "description": "Inscrição atualizada" } }
       }
     },
     "/admin/registrations/{id}/cancel": {
       "post": {
         "tags": ["Admin"],
         "security": [{ "bearerAuth": [] }],
-        "summary": "Cancela inscriÃ§Ã£o",
+        "summary": "Cancela inscrição",
         "responses": { "200": { "description": "Cancelada" } }
       }
     },
@@ -557,11 +557,10 @@
       "post": {
         "tags": ["Check-in"],
         "security": [{ "bearerAuth": [] }],
-        "summary": "Marca presenÃ§a por QR ou busca manual",
+        "summary": "Marca presença por QR ou busca manual",
         "responses": { "200": { "description": "Check-in registrado" } }
       }
     }
   }
 }
-
 
