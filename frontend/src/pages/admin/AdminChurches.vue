@@ -671,7 +671,16 @@ const submitChurch = async () => {
   churchError.value = "";
 
   try {
-    const payload: Record<string, unknown> = {
+    const payload: {
+      name: string;
+      districtId: string;
+      directorName?: string;
+      directorCpf?: string;
+      directorBirthDate?: string;
+      directorEmail?: string;
+      directorWhatsapp?: string;
+      directorPhotoUrl?: string;
+    } = {
       name: String(name),
       districtId: String(districtId)
     };

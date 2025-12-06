@@ -1,4 +1,4 @@
-﻿/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import DateField from "../../components/forms/DateField.vue";
@@ -54,7 +54,7 @@ const priceInfo = computed(() => {
     if (eventStore.event?.currentLot) {
         const lot = eventStore.event.currentLot;
         return {
-            title: "Valor por inscriÃ§Ã£o",
+            title: "Valor por inscrição",
             value: formatCurrency(lot.priceCents ?? ticketPriceCents.value),
             helper: lot.name ? `Lote vigente: ${lot.name}` : null,
             pending: false
@@ -62,15 +62,15 @@ const priceInfo = computed(() => {
     }
     if (nextLot.value) {
         return {
-            title: "PrÃ³ximo lote",
+            title: "Próximo lote",
             value: formatCurrency(nextLot.value.priceCents),
             helper: `Inicia em ${formatDateTimeBr(nextLot.value.startsAt)}`,
             pending: true
         };
     }
     return {
-        title: "Valor por inscriÃ§Ã£o",
-        value: "Aguardando liberaÃ§Ã£o do lote",
+        title: "Valor por inscrição",
+        value: "Aguardando liberação do lote",
         helper: null,
         pending: true
     };
@@ -192,7 +192,7 @@ const loadPersistedState = () => {
             currentStep.value = saved.currentStep;
     }
     catch (error) {
-        console.warn("NÃ£o foi possÃ­vel carregar o estado salvo do formulÃ¡rio", error);
+        console.warn("Não foi possível carregar o estado salvo do formulário", error);
     }
 };
 const persistState = () => {
@@ -214,7 +214,7 @@ const persistState = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     }
     catch (error) {
-        console.warn("NÃ£o foi possÃ­vel salvar o estado local do formulÃ¡rio", error);
+        console.warn("Não foi possível salvar o estado local do formulário", error);
     }
 };
 const clearPersistedState = () => {
@@ -253,10 +253,10 @@ const errorMessage = ref("");
 const inscricaoFormRef = ref(null);
 const cpfAvailabilityCache = new Map();
 const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
-const REGISTERED_ERROR = "CPF jÃ¡ possui inscricÃ£o confirmada para este evento";
+const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento";
 const DUPLICATE_GLOBAL_ERROR = "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
-const REGISTERED_GLOBAL_ERROR = "Um ou mais CPFs jÃ¡ possuem inscricÃ£o confirmada neste evento.";
-const REMOTE_ERROR_MESSAGE = "NÃ£o foi possÃ­vel verificar CPF agora. Tente novamente.";
+const REGISTERED_GLOBAL_ERROR = "Um ou mais CPFs já possuem inscricão confirmada neste evento.";
+const REMOTE_ERROR_MESSAGE = "Não foi possível verificar CPF agora. Tente novamente.";
 const CPF_GLOBAL_MESSAGES = [
     DUPLICATE_GLOBAL_ERROR,
     REGISTERED_GLOBAL_ERROR,
@@ -269,10 +269,10 @@ const generalErrors = reactive({
 });
 const steps = computed(() => {
     const base = [
-        { title: "CPF", description: "Verifique pedidos pendentes" },
+        { title: "CPF", description: "Informe o CPF do responsável" },
         { title: "Unidade", description: "Escolha distrito e igreja" },
         { title: "Participantes", description: "Dados individuais" },
-        { title: "RevisÃ£o", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
+        { title: "Revisão", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
     ];
     if (!isFreeEvent.value) {
         base.push({ title: "Pagamento", description: "Pix com QR Code" });
@@ -288,12 +288,12 @@ const paymentOptions = computed(() => {
     const allowed = eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    // Filtrar mï¿½fÂ©todos exclusivos de admin se nï¿½fÂ£o for admin
+    // Filtrar m�f©todos exclusivos de admin se n�f£o for admin
     const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
     return PAYMENT_METHODS.filter((option) => {
         if (!allowed.includes(option.value))
             return false;
-        // Se for mï¿½fÂ©todo exclusivo de admin e usuï¿½fÂ¡rio nï¿½fÂ£o for admin, nï¿½fÂ£o mostrar
+        // Se for m�f©todo exclusivo de admin e usu�f¡rio n�f£o for admin, n�f£o mostrar
         if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
             return false;
         }
@@ -316,8 +316,8 @@ const churchesByDistrict = computed(() => {
     return map;
 });
 const getPersonChurchOptions = (districtId) => churchesByDistrict.value.get(districtId) ?? [];
-const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "NÃ£o informado";
-const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "NÃ£o informado";
+const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "Não informado";
+const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
 const getGenderLabel = (value) => genderOptions.find((option) => option.value === value)?.label ?? value;
 const formatBirthDateLabel = (birthDate) => {
     if (!birthDate)
@@ -413,7 +413,7 @@ const applyProfileToPerson = (index, profile) => {
 };
 const applyCpfCheckResult = (index, result) => {
     if (result.existsInEvent) {
-        // Se jÃ¡ existe inscriÃ§Ã£o, exibir o nome do cadastro quando disponÃ­vel
+        // Se já existe inscrição, exibir o nome do cadastro quando disponível
         if (result.profile?.fullName) {
             participantCpfErrors[index] = `${REGISTERED_ERROR} (${result.profile.fullName})`;
         }
@@ -434,7 +434,7 @@ const getCpfError = (value) => {
     const digits = normalizeCPF(value);
     if (!digits.length)
         return "";
-    return validateCPF(value) ? "" : "CPF invÃ¡lido";
+    return validateCPF(value) ? "" : "CPF inválido";
 };
 const updateParticipantGlobalError = () => {
     if (currentStep.value !== 2)
@@ -609,13 +609,13 @@ const ensureParticipantCpfsValid = async () => {
     participantCpfRefs.value[firstInvalidIndex]?.focus();
     return false;
 };
-// Bloqueia ediÃ§Ã£o dos campos atÃ© CPF estar vÃ¡lido e disponÃ­vel
+// Bloqueia edição dos campos até CPF estar válido e disponível
 const isPersonLocked = (index) => {
     const cpf = people[index]?.cpf ?? "";
     const digits = normalizeCPF(cpf);
     if (digits.length < 11)
         return true;
-    // Se houver erro (invÃ¡lido/duplicado/registrado/erro remoto), mantÃ©m bloqueado
+    // Se houver erro (inválido/duplicado/registrado/erro remoto), mantém bloqueado
     return Boolean(participantCpfErrors[index]);
 };
 onMounted(async () => {
@@ -691,13 +691,13 @@ const handleCpfSubmit = async (cpfDigits) => {
     checkingCpf.value = true;
     errorMessage.value = "";
     if (!cpfDigits || !validateCPF(cpfDigits)) {
-        errorMessage.value = "CPF invÃ¡lido";
+        errorMessage.value = "CPF inválido";
         checkingCpf.value = false;
         return;
     }
     try {
         const response = await eventStore.checkPendingOrder(cpfDigits);
-        pendingOrders.value = response?.pendingOrders ?? [];
+        pendingOrders.value = [];
         const suggestion = response?.suggestedChurch;
         if (suggestion) {
             if (!catalog.districts.some((district) => district.id === suggestion.districtId)) {
@@ -714,7 +714,7 @@ const handleCpfSubmit = async (cpfDigits) => {
         currentStep.value = 1;
     }
     catch (error) {
-        errorMessage.value = error.response?.data?.message ?? "NÃ£o foi possÃ­vel verificar.";
+        errorMessage.value = error.response?.data?.message ?? "Não foi possível verificar.";
     }
     finally {
         checkingCpf.value = false;
@@ -770,7 +770,7 @@ const goToReview = async () => {
         !person.districtId ||
         !person.churchId);
     if (hasMissing) {
-        errorMessage.value = "Preencha todos os dados obrigatÃ³rios dos participantes.";
+        errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
         return;
     }
     currentStep.value = 3;
@@ -808,14 +808,14 @@ const submitBatch = async () => {
             !person.districtId ||
             !person.churchId);
         if (hasMissing) {
-            errorMessage.value = "Preencha todos os dados obrigatÃ³rios dos participantes.";
+            errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
             currentStep.value = 2;
             return;
         }
     }
     catch (error) {
-        if (error?.response?.data?.message?.includes("CPF jÃ¡ registrado")) {
-            errorMessage.value = "CPF jÃ¡ possui inscriÃ§Ã£o confirmada para este evento";
+        if (error?.response?.data?.message?.includes("CPF já registrado")) {
+            errorMessage.value = "CPF já possui inscrição confirmada para este evento";
             currentStep.value = 2;
             return;
         }
@@ -834,9 +834,9 @@ const submitBatch = async () => {
         }));
         const response = await eventStore.createBatchOrder(normalizeCPF(buyerCpf.value), selectedPaymentMethod.value, payload);
         disableStatePersistence();
-        // Se for mï¿½fÂ©todo gratuito, nï¿½fÂ£o redirecionar para pï¿½fÂ¡gina de pagamento
+        // Se for m�f©todo gratuito, n�f£o redirecionar para p�f¡gina de pagamento
         if (isFreePaymentSelected.value && response.payment?.isFree) {
-            // Redirecionar para pï¿½fÂ¡gina de evento com mensagem de sucesso
+            // Redirecionar para p�f¡gina de evento com mensagem de sucesso
             router.push({
                 name: "event",
                 params: { slug: props.slug },
@@ -851,7 +851,7 @@ const submitBatch = async () => {
         }
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Erro ao criar inscriÃ§Ãµes.";
+        const message = error.response?.data?.message ?? "Erro ao criar inscrições.";
         errorMessage.value = message;
         if (error.response?.status === 409) {
             await handleConflictError(message);
@@ -869,17 +869,17 @@ const inlineIsPaid = computed(() => inlinePayment.value?.status === "PAID");
 const inlineIsManual = computed(() => Boolean(inlinePayment.value?.isManual));
 const inlineStatusTitle = computed(() => {
     if (inlineIsManual.value)
-        return inlinePayment.value?.status === "PAID" ? "Pagamento registrado" : "Pagamento pendente de confirmaÃ§Ã£o";
+        return inlinePayment.value?.status === "PAID" ? "Pagamento registrado" : "Pagamento pendente de confirmação";
     if (inlineIsPaid.value)
         return "Pagamento aprovado";
     if (inlinePayment.value?.status === "CANCELED")
         return "Pagamento cancelado";
-    return "Aguardando confirmaÃ§Ã£o";
+    return "Aguardando confirmação";
 });
 const inlineStatusMessage = computed(() => {
     if (inlineIsManual.value) {
         return inlinePayment.value?.status === "PAID"
-            ? "Pagamento registrado pela tesouraria. As inscriÃ§Ãµes estÃ£o confirmadas."
+            ? "Pagamento registrado pela tesouraria. As inscrições estão confirmadas."
             : "Apresente este comprovante na tesouraria para concluir o pagamento.";
     }
     if (inlineIsPaid.value)
@@ -936,7 +936,7 @@ const copyInlinePixCode = async () => {
     if (!code)
         return;
     await navigator.clipboard.writeText(code);
-    alert("CÃ³digo Pix copiado!");
+    alert("Código Pix copiado!");
 };
 const handleInlineOpenCheckout = () => {
     const link = inlinePayment.value?.initPoint;
@@ -1167,7 +1167,7 @@ else {
             const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
             const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
             __VLS_27.slots.default;
-            if (__VLS_ctx.pendingOrders.length > 0) {
+            if (false) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
                 });
@@ -1388,12 +1388,12 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
             });
-            (__VLS_ctx.selectedDistrict?.name ?? "NÃ£o selecionado");
+            (__VLS_ctx.selectedDistrict?.name ?? "Não selecionado");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
             });
-            (__VLS_ctx.selectedChurch?.name ?? "NÃ£o selecionada");
+            (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
@@ -1661,17 +1661,17 @@ else {
                 ...{ class: "text-sm text-neutral-500" },
             });
             (__VLS_ctx.isFreeEvent
-                ? "Confira as informaÃ§Ãµes antes de confirmar as inscriÃ§Ãµes."
-                : "Confira as informaÃ§Ãµes antes de prosseguir com o pagamento.");
+                ? "Confira as informações antes de confirmar as inscrições."
+                : "Confira as informações antes de prosseguir com o pagamento.");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             (__VLS_ctx.buyerCpf);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            (__VLS_ctx.selectedDistrict?.name ?? "NÃ£o selecionado");
+            (__VLS_ctx.selectedDistrict?.name ?? "Não selecionado");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            (__VLS_ctx.selectedChurch?.name ?? "NÃ£o selecionada");
+            (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
             if (!__VLS_ctx.isFreeEvent) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60" },
@@ -1828,7 +1828,7 @@ else {
             }
             else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                (__VLS_ctx.isFreeEvent ? "Confirmar inscriÃ§Ãµes" : "Gerar pagamento");
+                (__VLS_ctx.isFreeEvent ? "Confirmar inscrições" : "Gerar pagamento");
             }
             if (__VLS_ctx.errorMessage) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({

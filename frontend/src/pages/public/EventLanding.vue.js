@@ -1,4 +1,4 @@
-﻿/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { onMounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -81,19 +81,6 @@ const __VLS_5 = __VLS_4({
 }, ...__VLS_functionalComponentArgsRest(__VLS_4));
 __VLS_6.slots.default;
 var __VLS_6;
-const __VLS_7 = {}.RouterLink;
-/** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-// @ts-ignore
-const __VLS_8 = __VLS_asFunctionalComponent(__VLS_7, new __VLS_7({
-    to: "/comprovante",
-    ...{ class: "inline-flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800 sm:w-auto sm:justify-start" },
-}));
-const __VLS_9 = __VLS_8({
-    to: "/comprovante",
-    ...{ class: "inline-flex w-full items-center justify-center gap-2 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800 sm:w-auto sm:justify-start" },
-}, ...__VLS_functionalComponentArgsRest(__VLS_8));
-__VLS_10.slots.default;
-var __VLS_10;
 var __VLS_2;
 if (__VLS_ctx.loading) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -101,8 +88,8 @@ if (__VLS_ctx.loading) {
     });
     /** @type {[typeof LoadingSpinner, ]} */ ;
     // @ts-ignore
-    const __VLS_11 = __VLS_asFunctionalComponent(LoadingSpinner, new LoadingSpinner({}));
-    const __VLS_12 = __VLS_11({}, ...__VLS_functionalComponentArgsRest(__VLS_11));
+    const __VLS_7 = __VLS_asFunctionalComponent(LoadingSpinner, new LoadingSpinner({}));
+    const __VLS_8 = __VLS_7({}, ...__VLS_functionalComponentArgsRest(__VLS_7));
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -111,13 +98,13 @@ else {
     for (const [event] of __VLS_getVForSourceType((__VLS_ctx.events))) {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_14 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        const __VLS_10 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
             key: (event.id),
         }));
-        const __VLS_15 = __VLS_14({
+        const __VLS_11 = __VLS_10({
             key: (event.id),
-        }, ...__VLS_functionalComponentArgsRest(__VLS_14));
-        __VLS_16.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_10));
+        __VLS_12.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex h-full flex-col gap-4 md:flex-row" },
         });
@@ -178,20 +165,20 @@ else {
                 ...{ class: "text-xs uppercase tracking-wide text-amber-600 dark:text-amber-300" },
             });
         }
-        const __VLS_17 = {}.RouterLink;
+        const __VLS_13 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_18 = __VLS_asFunctionalComponent(__VLS_17, new __VLS_17({
+        const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
             to: (`/evento/${event.slug}`),
             ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
         }));
-        const __VLS_19 = __VLS_18({
+        const __VLS_15 = __VLS_14({
             to: (`/evento/${event.slug}`),
             ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_18));
-        __VLS_20.slots.default;
-        var __VLS_20;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_14));
+        __VLS_16.slots.default;
         var __VLS_16;
+        var __VLS_12;
     }
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
@@ -211,26 +198,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:justify-start']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
@@ -329,4 +296,3 @@ export default (await import('vue')).defineComponent({
 });
 ; /* PartiallyEnd: #4569/main.vue */
 //# sourceMappingURL=EventLanding.vue.js.map
-

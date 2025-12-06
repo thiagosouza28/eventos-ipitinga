@@ -212,6 +212,27 @@ watch(() => createForm.districtId, (next, prev) => {
 watch(() => editForm.districtId, (next, prev) => {
     handleDistrictChange("edit", next, prev);
 });
+watch(() => userDistrictId.value, async (next) => {
+    if (next && !createForm.districtId) {
+        createForm.districtId = next;
+        applyChurchLock("create", next);
+        await loadChurchesForDistrict(next, "create");
+    }
+    else if (next && createForm.districtId === next) {
+        applyChurchLock("create", next);
+    }
+    if (next && editForm.districtId === next) {
+        applyChurchLock("edit", next);
+    }
+});
+watch(() => userChurchId.value, (next) => {
+    if (createChurchLocked.value) {
+        createForm.churchId = next || "";
+    }
+    if (editChurchLocked.value) {
+        editForm.churchId = next || "";
+    }
+});
 const formatDateTimeBr = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {

@@ -1,4 +1,4 @@
-﻿/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
+/// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { ref, computed, onMounted, watch, onUnmounted, nextTick } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useApi } from "../../composables/useApi";
@@ -16,14 +16,14 @@ const processing = ref(false);
 const pendingOrders = ref([]);
 const selectedOrders = ref([]);
 const pollHandle = ref(null);
-// Estado do formulÃ¡rio de CPF
+// Estado do formulário de CPF
 const cpfInput = ref("");
 const cpfInputRef = ref(null);
 const cpfError = ref("");
 const showCpfForm = ref(false);
 const isCpfInputValid = computed(() => {
     const digits = normalizeCPF(cpfInput.value);
-    // Habilita o botÃ£o quando tem 11 dÃ­gitos (validaÃ§Ã£o completa serÃ¡ feita no submit)
+    // Habilita o botão quando tem 11 dígitos (validação completa será feita no submit)
     return digits.length === 11;
 });
 const selectedTotal = computed(() => {
@@ -40,38 +40,38 @@ const toggleOrder = (orderId) => {
         selectedOrders.value.splice(index, 1);
     }
 };
-// FunÃ§Ã£o para pagamento individual - processa APENAS o pedido especÃ­fico
-// Nï¿½fO usa selectedOrders, processa diretamente o orderId passado
+// Função para pagamento individual - processa APENAS o pedido específico
+// N�fO usa selectedOrders, processa diretamente o orderId passado
 const handleIndividualPayment = async (orderId, eventSlug, domEvent) => {
-    // Prevenir qualquer propagaÃ§Ã£o de evento que possa interferir
+    // Prevenir qualquer propagação de evento que possa interferir
     if (domEvent) {
         domEvent.stopPropagation();
         domEvent.preventDefault();
     }
-    // IMPORTANTE: Limpar TODA seleÃ§Ã£o ANTES de fazer qualquer coisa
+    // IMPORTANTE: Limpar TODA seleção ANTES de fazer qualquer coisa
     // Isso garante que nenhum outro pedido seja processado
     selectedOrders.value = [];
-    // Usar apenas o orderId passado como parÃ¢metro
-    // Nï¿½fO usar selectedOrders.value de forma alguma
+    // Usar apenas o orderId passado como parâmetro
+    // N�fO usar selectedOrders.value de forma alguma
     const singleOrderId = String(orderId); // Garantir que usamos apenas este ID como string
     // Aguardar nextTick para garantir que a limpeza de selectedOrders seja processada
     // antes de redirecionar
     await nextTick();
     // Redirecionar usando APENAS o orderId passado, ignorando completamente selectedOrders
     if (!eventSlug) {
-        error.value = "O evento nÃ£o estÃ¡ disponÃ­vel no momento.";
+        error.value = "O evento não está disponível no momento.";
         return;
     }
     router.push({
         name: "payment",
         params: {
             slug: eventSlug,
-            orderId: singleOrderId // Apenas este pedido especÃ­fico, NUNCA selectedOrders
+            orderId: singleOrderId // Apenas este pedido específico, NUNCA selectedOrders
         }
     });
 };
-// FunÃ§Ã£o para pagamento em lote - processa apenas os pedidos selecionados
-// Esta funÃ§Ã£o Ã© chamada APENAS pelo botÃ£o "Pagar selecionados" na parte inferior
+// Função para pagamento em lote - processa apenas os pedidos selecionados
+// Esta função é chamada APENAS pelo botão "Pagar selecionados" na parte inferior
 const handlePayment = async () => {
     if (selectedOrders.value.length === 0)
         return;
@@ -79,43 +79,43 @@ const handlePayment = async () => {
     error.value = "";
     try {
         // Se houver apenas um pedido selecionado, redirecionar para pagamento individual
-        // Mas limpar a seleÃ§Ã£o ANTES para garantir que nÃ£o haja conflito
+        // Mas limpar a seleção ANTES para garantir que não haja conflito
         if (selectedOrders.value.length === 1) {
             const orderIdToProcess = selectedOrders.value[0]; // Pegar o ID antes de limpar
             const order = pendingOrders.value.find(o => o.orderId === orderIdToProcess);
-            // LIMPAR seleÃ§Ã£o ANTES de processar
+            // LIMPAR seleção ANTES de processar
             selectedOrders.value = [];
             if (order && order.event?.slug) {
                 router.push({
                     name: "payment",
                     params: {
                         slug: order.event.slug,
-                        orderId: orderIdToProcess // Usar o ID jÃ¡ capturado, nÃ£o selectedOrders
+                        orderId: orderIdToProcess // Usar o ID já capturado, não selectedOrders
                     }
                 });
                 return;
             }
             else if (order && !order.event?.slug) {
-                error.value = "NÃ£o foi possÃ­vel carregar as informaÃ§Ãµes do evento. Tente novamente.";
+                error.value = "Não foi possível carregar as informações do evento. Tente novamente.";
                 return;
             }
         }
-        // Para mÃºltiplos pedidos, criar pagamento em lote
-        // Capturar os IDs ANTES de limpar a seleÃ§Ã£o
-        const orderIdsToProcess = [...selectedOrders.value]; // Criar cÃ³pia para garantir
-        // LIMPAR seleÃ§Ã£o ANTES de processar para evitar conflitos
+        // Para múltiplos pedidos, criar pagamento em lote
+        // Capturar os IDs ANTES de limpar a seleção
+        const orderIdsToProcess = [...selectedOrders.value]; // Criar cópia para garantir
+        // LIMPAR seleção ANTES de processar para evitar conflitos
         selectedOrders.value = [];
         const response = await api.post("/orders/bulk-payment", {
             orderIds: orderIdsToProcess, // Usar apenas os IDs capturados antes de limpar
             paymentMethod: "MERCADO_PAGO"
         });
-        // SeleÃ§Ã£o jÃ¡ foi limpa acima, nÃ£o precisa limpar novamente
+        // Seleção já foi limpa acima, não precisa limpar novamente
         // Redirecionar diretamente para o Mercado Pago se houver initPoint
         if (response.data.initPoint) {
             window.location.href = response.data.initPoint;
         }
         else if (response.data.pixQrData?.qr_code) {
-            // Se houver QR code PIX, mostrar na mesma pÃ¡gina
+            // Se houver QR code PIX, mostrar na mesma página
             // Por enquanto, redirecionar para initPoint mesmo que seja sandbox
             if (response.data.sandboxInitPoint) {
                 window.location.href = response.data.sandboxInitPoint;
@@ -130,8 +130,8 @@ const handlePayment = async () => {
     }
     catch (err) {
         const errorMessage = err.response?.data?.message;
-        error.value = errorMessage ?? "NÃ£o foi possÃ­vel processar o pagamento. Tente novamente.";
-        showCpfForm.value = false; // Manter a lista visÃ­vel para o usuÃ¡rio tentar novamente
+        error.value = errorMessage ?? "Não foi possível processar o pagamento. Tente novamente.";
+        showCpfForm.value = false; // Manter a lista visível para o usuário tentar novamente
     }
     finally {
         processing.value = false;
@@ -142,12 +142,12 @@ const loadPendingOrders = async (cpf) => {
     error.value = "";
     cpfError.value = "";
     try {
-        const response = await api.get("/orders/pending", {
+        const response = await api.get("/admin/orders/pending", {
             params: { cpf: cpf.trim() }
         });
         // Mapear os dados retornados para o formato esperado
         const orders = response.data.orders ?? [];
-        // Buscar todos os eventos pÃºblicos para mapear IDs para slugs
+        // Buscar todos os eventos públicos para mapear IDs para slugs
         let eventsMap = {};
         try {
             const eventsResponse = await api.get("/events");
@@ -182,13 +182,13 @@ const loadPendingOrders = async (cpf) => {
                 paidAt: order.payment.paidAt || null
             } : null
         }));
-        // Esconder o formulÃ¡rio quando os dados sÃ£o carregados com sucesso
-        // para mostrar a lista de pendÃªncias
+        // Esconder o formulário quando os dados são carregados com sucesso
+        // para mostrar a lista de pendências
         showCpfForm.value = false;
         // Iniciar polling para detectar pagamentos automaticamente
-        // Usando o mesmo mÃ©todo da PaymentPage (inicia polling se nÃ£o estÃ¡ pago)
+        // Usando o mesmo método da PaymentPage (inicia polling se não está pago)
         if (pendingOrders.value.length > 0) {
-            // Verificar se algum pedido jÃ¡ estÃ¡ pago antes de iniciar polling
+            // Verificar se algum pedido já está pago antes de iniciar polling
             const hasUnpaidOrders = pendingOrders.value.some(order => order.payment?.status !== "PAID");
             if (hasUnpaidOrders) {
                 startPolling();
@@ -197,13 +197,13 @@ const loadPendingOrders = async (cpf) => {
     }
     catch (err) {
         const errorMessage = err.response?.data?.message;
-        if (errorMessage && errorMessage.includes("Dados invÃ¡lidos")) {
-            error.value = "CPF invÃ¡lido. Por favor, verifique o CPF informado.";
-            showCpfForm.value = true; // Mostrar formulÃ¡rio em caso de erro
+        if (errorMessage && errorMessage.includes("Dados inválidos")) {
+            error.value = "CPF inválido. Por favor, verifique o CPF informado.";
+            showCpfForm.value = true; // Mostrar formulário em caso de erro
         }
         else {
-            error.value = errorMessage ?? "NÃ£o foi possÃ­vel carregar as pendÃªncias. Tente novamente.";
-            showCpfForm.value = true; // Mostrar formulÃ¡rio em caso de erro
+            error.value = errorMessage ?? "Não foi possível carregar as pendências. Tente novamente.";
+            showCpfForm.value = true; // Mostrar formulário em caso de erro
         }
     }
     finally {
@@ -223,29 +223,29 @@ const handleCpfSubmit = async () => {
     error.value = "";
     const digits = normalizeCPF(cpfInput.value);
     if (digits.length !== 11 || !validateCPF(digits)) {
-        cpfError.value = "CPF invÃ¡lido. Por favor, informe um CPF vÃ¡lido.";
+        cpfError.value = "CPF inválido. Por favor, informe um CPF válido.";
         return;
     }
-    // Carregar as pendÃªncias diretamente
+    // Carregar as pendências diretamente
     await loadPendingOrders(digits);
 };
-// Carregar pendÃªncias ao montar o componente se CPF foi fornecido
+// Carregar pendências ao montar o componente se CPF foi fornecido
 onMounted(async () => {
     const providedCpf = props.cpf?.trim();
     if (providedCpf && providedCpf.length > 0) {
-        // Sempre prÃ©-preencher o campo de CPF formatado quando vier da primeira tela
+        // Sempre pré-preencher o campo de CPF formatado quando vier da primeira tela
         const normalizedCpf = normalizeCPF(providedCpf);
         if (normalizedCpf.length === 11) {
             // CPF completo - formatar, mostrar no campo e carregar dados
             cpfInput.value = formatCPF(normalizedCpf);
-            showCpfForm.value = true; // Mostrar o formulÃ¡rio para o usuÃ¡rio ver o CPF prÃ©-preenchido
+            showCpfForm.value = true; // Mostrar o formulário para o usuário ver o CPF pré-preenchido
             await loadPendingOrders(providedCpf);
-            // Se voltou do Mercado Pago (hÃ¡ query params como status, payment_id, etc), 
-            // verificar pagamentos imediatamente usando o mesmo mÃ©todo da PaymentPage
+            // Se voltou do Mercado Pago (há query params como status, payment_id, etc), 
+            // verificar pagamentos imediatamente usando o mesmo método da PaymentPage
             if (route.query.status || route.query.payment_id || route.query.preference_id) {
-                // Aguardar 2 segundos para o webhook processar (igual Ã  PaymentPage)
+                // Aguardar 2 segundos para o webhook processar (igual à PaymentPage)
                 setTimeout(async () => {
-                    // Verificar todos os pedidos usando o mesmo mÃ©todo da PaymentPage
+                    // Verificar todos os pedidos usando o mesmo método da PaymentPage
                     const ordersToRemove = [];
                     for (const order of pendingOrders.value) {
                         const paymentData = await checkOrderPayment(order.orderId);
@@ -257,17 +257,17 @@ onMounted(async () => {
                     if (ordersToRemove.length > 0) {
                         pendingOrders.value = pendingOrders.value.filter(order => !ordersToRemove.includes(order.orderId));
                         selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
-                        // Se ainda hÃ¡ pedidos pendentes, recarregar a lista completa
+                        // Se ainda há pedidos pendentes, recarregar a lista completa
                         if (pendingOrders.value.length > 0) {
                             await loadPendingOrders(providedCpf);
                         }
                     }
                     else {
-                        // Se nÃ£o encontrou pagamentos, recarregar a lista para garantir
+                        // Se não encontrou pagamentos, recarregar a lista para garantir
                         await loadPendingOrders(providedCpf);
                     }
-                }, 2000); // Aguardar 2 segundos (igual Ã  PaymentPage)
-                // Verificar novamente apÃ³s mais tempo (igual Ã  PaymentPage com query.fresh)
+                }, 2000); // Aguardar 2 segundos (igual à PaymentPage)
+                // Verificar novamente após mais tempo (igual à PaymentPage com query.fresh)
                 setTimeout(async () => {
                     const ordersToRemove = [];
                     for (const order of pendingOrders.value) {
@@ -287,13 +287,13 @@ onMounted(async () => {
             }
         }
         else if (normalizedCpf.length > 0) {
-            // CPF parcial - apenas formatar e mostrar formulÃ¡rio
+            // CPF parcial - apenas formatar e mostrar formulário
             cpfInput.value = formatCPF(providedCpf);
             showCpfForm.value = true;
             loading.value = false;
         }
         else {
-            // CPF vazio ou invÃ¡lido
+            // CPF vazio ou inválido
             loading.value = false;
             showCpfForm.value = true;
         }
@@ -303,9 +303,9 @@ onMounted(async () => {
         showCpfForm.value = true;
     }
 });
-// Observar mudanÃ§as na prop cpf (quando navega com CPF)
+// Observar mudanças na prop cpf (quando navega com CPF)
 watch(() => props.cpf, async (newCpf, oldCpf) => {
-    // SÃ³ atualizar se o CPF realmente mudou
+    // Só atualizar se o CPF realmente mudou
     if (newCpf && typeof newCpf === "string" && newCpf.trim().length > 0 && newCpf !== oldCpf) {
         // Atualizar o campo de input quando o CPF mudar
         const normalizedCpf = normalizeCPF(newCpf);
@@ -321,10 +321,10 @@ watch(() => props.cpf, async (newCpf, oldCpf) => {
         }
     }
 }, { immediate: false });
-// FunÃ§Ã£o para verificar pagamento de um pedido - usando EXATAMENTE o mesmo mÃ©todo da PaymentPage
+// Função para verificar pagamento de um pedido - usando EXATAMENTE o mesmo método da PaymentPage
 const checkOrderPayment = async (orderId) => {
     try {
-        // Usar exatamente o mesmo endpoint e mÃ©todo da PaymentPage
+        // Usar exatamente o mesmo endpoint e método da PaymentPage
         const response = await api.get(`/payments/order/${orderId}`);
         return response.data;
     }
@@ -333,19 +333,19 @@ const checkOrderPayment = async (orderId) => {
         return null;
     }
 };
-// Polling para detectar pagamentos automaticamente - usando EXATAMENTE o mesmo mÃ©todo da PaymentPage
+// Polling para detectar pagamentos automaticamente - usando EXATAMENTE o mesmo método da PaymentPage
 const startPolling = () => {
     stopPolling();
-    // SÃ³ fazer polling se houver pedidos pendentes
+    // Só fazer polling se houver pedidos pendentes
     if (pendingOrders.value.length === 0) {
         return;
     }
     pollHandle.value = window.setInterval(async () => {
-        // Verificar cada pedido individualmente usando o mesmo mÃ©todo da PaymentPage
+        // Verificar cada pedido individualmente usando o mesmo método da PaymentPage
         const ordersToRemove = [];
         // Verificar todos os pedidos pendentes
         for (const order of pendingOrders.value) {
-            // Usar exatamente o mesmo mÃ©todo da PaymentPage (loadPayment)
+            // Usar exatamente o mesmo método da PaymentPage (loadPayment)
             const paymentData = await checkOrderPayment(order.orderId);
             if (paymentData) {
                 // Se o pagamento foi aprovado, marcar para remover da lista
@@ -369,14 +369,14 @@ const startPolling = () => {
         // Remover pedidos pagos da lista (dar baixa simultaneamente para pagamentos em lote)
         if (ordersToRemove.length > 0) {
             pendingOrders.value = pendingOrders.value.filter(order => !ordersToRemove.includes(order.orderId));
-            // Limpar seleÃ§Ã£o de pedidos removidos
+            // Limpar seleção de pedidos removidos
             selectedOrders.value = selectedOrders.value.filter(orderId => !ordersToRemove.includes(orderId));
-            // Se nÃ£o hÃ¡ mais pedidos pendentes, parar o polling
+            // Se não há mais pedidos pendentes, parar o polling
             if (pendingOrders.value.length === 0) {
                 stopPolling();
             }
         }
-    }, 5000); // Verificar a cada 5 segundos (igual Ã  PaymentPage)
+    }, 5000); // Verificar a cada 5 segundos (igual à PaymentPage)
 };
 const stopPolling = () => {
     if (pollHandle.value) {
@@ -384,14 +384,14 @@ const stopPolling = () => {
         pollHandle.value = null;
     }
 };
-// Observar mudanÃ§as na lista de pedidos para iniciar/parar polling
+// Observar mudanças na lista de pedidos para iniciar/parar polling
 watch(() => pendingOrders.value.length, (newLength, oldLength) => {
     if (newLength > 0 && oldLength === 0) {
         // Pedidos foram carregados, iniciar polling
         startPolling();
     }
     else if (newLength === 0 && oldLength > 0) {
-        // NÃ£o hÃ¡ mais pedidos, parar polling
+        // Não há mais pedidos, parar polling
         stopPolling();
     }
 });

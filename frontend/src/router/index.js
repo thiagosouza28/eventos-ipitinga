@@ -1,4 +1,4 @@
-﻿import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import { useLoaderStore } from "../stores/loader";
 const EventLanding = () => import("../pages/public/EventLanding.vue");
@@ -35,7 +35,7 @@ export const router = createRouter({
         { path: "/evento/:slug", name: "event", component: EventFlow, props: true },
         { path: "/evento/:slug/pagamento/:orderId", name: "payment", component: PaymentPage, props: true },
         {
-            path: "/admin/pendencias/:cpf?",
+            path: "/admin/pendencias",
             name: "admin-pending-orders",
             component: AdminPendingOrders,
             meta: { requiresAuth: true, requiresPermission: { module: "orders", action: "view" } }
@@ -236,5 +236,3 @@ router.onError(() => {
     loader.hide();
 });
 //# sourceMappingURL=index.js.map
-
-

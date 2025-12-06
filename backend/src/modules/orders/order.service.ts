@@ -1,14 +1,15 @@
 import { randomUUID } from "crypto";
+import type { Prisma } from "@/prisma/generated/client";
 
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
 import { prisma } from "../../lib/prisma";
-import { AppError, NotFoundError } from "../../utils/errors";
+import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { paymentService, extractPreferenceVersion, resolveCurrentLotPriceCents } from "../../services/payment.service";
 import { registrationService } from "../registrations/registration.service";
 import { eventService } from "../events/event.service";
 import { storageService } from "../../storage/storage.service";
-import { sanitizeCpf } from "../../utils/mask";
+import { maskCpf, sanitizeCpf } from "../../utils/mask";
 import { logger } from "../../utils/logger";
 import { OrderTransferStatus } from "../../config/transfer-status";
 import {
@@ -194,7 +195,10 @@ export class OrderService {
     );
   }
 
-  private async resolveDistrictAdminId(districtId: string | null, tx: typeof prisma = prisma) {
+  private async resolveDistrictAdminId(
+    districtId: string | null,
+    tx: Prisma.TransactionClient | typeof prisma = prisma
+  ) {
     if (!districtId) return null;
     const admin = await tx.user.findFirst({
       where: {
@@ -243,12 +247,12 @@ export class OrderService {
     let resolvedMethod =
       requestedMethod && (allowedMethods.includes(requestedMethod) || ((actorRole === "AdminGeral" || actorRole === "AdminDistrital") && AdminOnlyPaymentMethods.includes(requestedMethod as any))) ? requestedMethod : fallbackMethod;
 
-    // Verificar se método é exclusivo de admin
+    // Verificar se m�todo � exclusivo de admin
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
       if (!actorId || !actorRole) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
       }
-      // Verificar se o usuário é admin (AdminGeral ou AdminDistrital)
+      // Verificar se o usu�rio � admin (AdminGeral ou AdminDistrital)
       const isAdmin = actorRole === "AdminGeral" || actorRole === "AdminDistrital";
       if (!isAdmin) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
@@ -258,9 +262,9 @@ export class OrderService {
     const isFreeEvent = Boolean((event as any).isFree);
     const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
     
-    // Se for método gratuito, não usar PIX_MP mesmo para eventos gratuitos
+    // Se for m�todo gratuito, n�o usar PIX_MP mesmo para eventos gratuitos
     if (isFreePaymentMethod) {
-      // Método gratuito já está definido
+      // M�todo gratuito j� est� definido
     } else if (isFreeEvent) {
       resolvedMethod = PaymentMethod.PIX_MP;
     }
@@ -273,7 +277,7 @@ export class OrderService {
       throw new AppError("Nenhum lote disponivel para inscricao no momento", 400);
     }
 
-    // Se for método de pagamento gratuito, o valor é sempre 0
+    // Se for m�todo de pagamento gratuito, o valor � sempre 0
     const unitPriceCents = (isFreeEvent || isFreePaymentMethod)
       ? 0
       : Math.max(activeLot?.priceCents ?? 0, 0);
@@ -310,7 +314,7 @@ export class OrderService {
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
     const registrations = await prisma.$transaction(async (tx) => {
-      // Limpar inscrições e pedidos anteriores (pendentes/cancelados/expirados) para os CPFs informados
+      // Limpar inscri��es e pedidos anteriores (pendentes/cancelados/expirados) para os CPFs informados
       for (const person of peoplePrepared) {
         const existing = await tx.registration.findFirst({
           where: {
@@ -331,11 +335,16 @@ export class OrderService {
           throw new ConflictError(`CPF ${maskCpf(existing.cpf)} ja possui inscricao paga para este evento.`);
         }
 
-        // Apagar inscrição anterior
+        // Apagar inscri��o anterior
         await tx.registration.delete({ where: { id: existing.id } });
 
         // Se o pedido antigo estava pendente/cancelado/expirado, ajustar ou remover
-        if (order && [OrderStatus.PENDING, OrderStatus.CANCELED, OrderStatus.EXPIRED].includes(order.status as OrderStatus)) {
+        const cancelableStatuses: OrderStatus[] = [
+          OrderStatus.PENDING,
+          OrderStatus.CANCELED,
+          OrderStatus.EXPIRED
+        ];
+        if (order && cancelableStatuses.includes(order.status as OrderStatus)) {
           const remaining = order.registrations.filter((r) => r.id !== existing.id);
           if (remaining.length === 0) {
             await tx.order.delete({ where: { id: order.id } });
@@ -388,11 +397,11 @@ export class OrderService {
 
         // Garantir que a data de nascimento seja salva como UTC midnight do dia correto
         // Quando recebemos "1998-11-05", queremos salvar como "1998-11-05T00:00:00.000Z"
-        // Isso garante que ao formatar usando UTC, a data será exibida corretamente
+        // Isso garante que ao formatar usando UTC, a data ser� exibida corretamente
         const birthDateParts = person.birthDate.split('-');
         const birthDateUTC = new Date(Date.UTC(
           parseInt(birthDateParts[0], 10), // ano
-          parseInt(birthDateParts[1], 10) - 1, // mês (0-indexed)
+          parseInt(birthDateParts[1], 10) - 1, // m�s (0-indexed)
           parseInt(birthDateParts[2], 10) // dia
         ));
 
@@ -714,7 +723,7 @@ export class OrderService {
     // Tentar obter/garantir dados de PIX (qr_code e base64)
     let pixQrData = forcedNewPayment ? undefined : (payment as any)?.pixQrData;
 
-    // Se j� houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
+    // Se j? houver um pagamento no MP (mesmo pendente), tentar extrair o QR dele
     if (latestPayment?.id && !pixQrData && !forcedNewPayment) {
       try {
         const details = await paymentService.fetchPayment(String(latestPayment.id));
@@ -762,7 +771,7 @@ export class OrderService {
     const hasFeeCents = columnNames.includes("feeCents");
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
-    // Usar select para evitar problemas com colunas que podem não existir
+    // Usar select para evitar problemas com colunas que podem n�o existir
     const registrationFilter: Record<string, string> = {};
     if (filters.churchId) registrationFilter.churchId = filters.churchId;
     if (filters.districtId) registrationFilter.districtId = filters.districtId;
@@ -830,9 +839,9 @@ export class OrderService {
     });
   }
 
-  // Gera um pagamento exclusivo para uma inscrição específica.
-  // Se a inscrição pertencer a um pedido com outras inscrições, move-a para um novo pedido (split)
-  // e invalida a preferência antiga do pedido original. Se já estiver sozinha, apenas gera nova preferência.
+  // Gera um pagamento exclusivo para uma inscri��o espec�fica.
+  // Se a inscri��o pertencer a um pedido com outras inscri��es, move-a para um novo pedido (split)
+  // e invalida a prefer�ncia antiga do pedido original. Se j� estiver sozinha, apenas gera nova prefer�ncia.
   async createIndividualPaymentForRegistration(registrationId: string) {
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
@@ -1135,9 +1144,9 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId, paymentId, error },
-          "Falha ao calcular taxas do Mercado Pago. Usando valores padrão."
+          "Falha ao calcular taxas do Mercado Pago. Usando valores padr�o."
         );
-        // Em caso de erro, não aplicar taxas (assumir 0)
+        // Em caso de erro, n�o aplicar taxas (assumir 0)
       }
     }
 
@@ -1372,6 +1381,7 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
+
 
 
 

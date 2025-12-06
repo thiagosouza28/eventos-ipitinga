@@ -182,35 +182,44 @@ const removeDirectorPhoto = () => {
 };
 const submitChurch = async () => {
     const name = churchForm.name.trim();
+    const districtId = (churchForm.districtId || "").trim();
     const directorName = churchForm.directorName.trim();
     const directorCpf = churchForm.directorCpf.trim();
     const directorBirthDate = churchForm.directorBirthDate;
     const directorEmail = churchForm.directorEmail.trim();
     const directorWhatsapp = churchForm.directorWhatsapp.trim();
-    if (!churchForm.districtId) {
-        churchError.value = "Selecione um distrito.";
+    if (!name) {
+        churchError.value = "Nome da igreja � obrigat�rio.";
         return;
     }
-    if (!name || !directorName || !directorCpf || !directorBirthDate || !directorEmail || !directorWhatsapp) {
-        churchError.value = "Preencha todos os campos obrigatórios.";
+    if (!districtId) {
+        churchError.value = "Distrito � obrigat�rio.";
         return;
     }
-    if (!validateCPF(directorCpf)) {
-        churchError.value = "CPF inválido.";
+    if (directorCpf && !validateCPF(directorCpf)) {
+        churchError.value = "CPF inv�lido.";
         return;
     }
     churchError.value = "";
     try {
         const payload = {
             name: String(name),
-            districtId: String(churchForm.districtId),
-            directorName: String(directorName),
-            directorCpf: normalizeCPF(directorCpf),
-            directorBirthDate: new Date(directorBirthDate + "T00:00:00").toISOString(),
-            directorEmail: directorEmail,
-            directorWhatsapp: directorWhatsapp,
-            directorPhotoUrl: churchForm.directorPhotoUrl ? String(churchForm.directorPhotoUrl) : undefined
+            districtId: String(districtId)
         };
+        if (directorName)
+            payload.directorName = directorName;
+        if (directorCpf)
+            payload.directorCpf = normalizeCPF(directorCpf);
+        if (directorBirthDate) {
+            payload.directorBirthDate = new Date(directorBirthDate + "T00:00:00").toISOString();
+        }
+        if (directorEmail)
+            payload.directorEmail = directorEmail;
+        if (directorWhatsapp)
+            payload.directorWhatsapp = directorWhatsapp;
+        if (churchForm.directorPhotoUrl) {
+            payload.directorPhotoUrl = String(churchForm.directorPhotoUrl);
+        }
         if (editingChurchId.value) {
             await catalog.updateChurch(editingChurchId.value, payload);
         }
@@ -419,13 +428,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-red-500" },
-});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     value: (__VLS_ctx.churchForm.directorName),
     type: "text",
-    required: true,
     ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -437,13 +442,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-red-500" },
-});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     value: (__VLS_ctx.churchForm.directorCpf),
     type: "text",
-    required: true,
     maxlength: "14",
     ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
 });
@@ -454,19 +455,14 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-red-500" },
-});
 /** @type {[typeof DateField, ]} */ ;
 // @ts-ignore
 const __VLS_22 = __VLS_asFunctionalComponent(DateField, new DateField({
     modelValue: (__VLS_ctx.churchForm.directorBirthDate),
-    required: true,
     ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
 }));
 const __VLS_23 = __VLS_22({
     modelValue: (__VLS_ctx.churchForm.directorBirthDate),
-    required: true,
     ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_22));
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -478,12 +474,8 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-red-500" },
-});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     type: "email",
-    required: true,
     ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
 });
 (__VLS_ctx.churchForm.directorEmail);
@@ -493,13 +485,9 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
     ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
 });
-__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-    ...{ class: "text-red-500" },
-});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
     value: (__VLS_ctx.churchForm.directorWhatsapp),
     type: "text",
-    required: true,
     ...{ class: "w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -994,7 +982,6 @@ var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
@@ -1025,7 +1012,6 @@ var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
@@ -1053,7 +1039,6 @@ var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
@@ -1082,7 +1067,6 @@ var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
@@ -1110,7 +1094,6 @@ var __VLS_34;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;

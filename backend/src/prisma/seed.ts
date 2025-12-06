@@ -38,14 +38,14 @@ const ensureMinistry = async (name: string, description?: string | null) => {
   });
 };
 
-const ensureEvent = async (ministryId: string) => {
+const ensureEvent = async (ministryId: string, districtId: string) => {
   const slug = "retiro-espiritual-2025";
   const existing = await prisma.event.findUnique({ where: { slug } });
   if (existing) {
-    if (!existing.ministryId) {
+    if (!existing.ministryId || !existing.districtId) {
       return prisma.event.update({
         where: { id: existing.id },
-        data: { ministryId }
+        data: { ministryId, districtId }
       });
     }
     return existing;
@@ -60,7 +60,8 @@ const ensureEvent = async (ministryId: string) => {
       priceCents: 25000,
       minAgeYears: 12,
       slug,
-      ministryId
+      ministryId,
+      districtId
     }
   });
 };
@@ -177,7 +178,7 @@ const run = async () => {
   const youthMinistry = await ensureMinistry("Ministério Jovem", "Coordenação geral das atividades jovens.");
   const musicMinistry = await ensureMinistry("Ministério de Música", "Equipe de louvor e adoração.");
 
-  const event = await ensureEvent(youthMinistry.id);
+  const event = await ensureEvent(youthMinistry.id, north.id);
   await ensureSystemConfig();
 
   const adminGeneralProfile = await ensureProfile(

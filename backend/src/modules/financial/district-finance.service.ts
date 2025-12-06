@@ -144,6 +144,7 @@ export class DistrictFinanceService {
     });
 
     const transfersByDistrict = transfers.reduce<Record<string, typeof transfers>>((acc, transfer) => {
+      if (!transfer.districtId) return acc;
       const list = acc[transfer.districtId] ?? [];
       list.push(transfer);
       acc[transfer.districtId] = list;

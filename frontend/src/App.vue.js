@@ -38,7 +38,7 @@ const baseAdminMenu = [
     { label: "Inscricoes", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
     { label: "Relatorios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
     { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
-    { label: "Financeiro Distrital", to: { name: "admin-district-finance" }, icon: BanknotesIcon, module: "financial" },
+    { label: "Financeiro (responsáveis)", to: { name: "admin-district-finance" }, icon: BanknotesIcon, module: "financial" },
     { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
     { label: "PIX / Pagamentos", to: { name: "admin-pix-config" }, icon: Cog6ToothIcon, requiresRole: "AdminGeral" },
     { label: "Configuracoes", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
@@ -121,7 +121,7 @@ const greetingMessage = computed(() => {
     if (!displayName)
         return "";
     const hour = currentTime.value.getHours();
-    let greeting = "Ol�";
+    let greeting = "Olá";
     if (hour >= 5 && hour < 12) {
         greeting = "Bom dia";
     }

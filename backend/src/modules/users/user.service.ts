@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { UserStatus } from "@/prisma/generated/client";
+import { UserStatus, PixType } from "@/prisma/generated/client";
 
 import { prisma } from "../../lib/prisma";
 import { ConflictError, NotFoundError, AppError } from "../../utils/errors";
@@ -179,7 +179,7 @@ export class UserService {
         passwordHash,
         isTemporaryPassword: true,
         passwordUpdatedAt: null,
-        pixType: payload.pixType ?? null,
+        pixType: payload.pixType ? (payload.pixType as PixType) : null,
         pixKey: payload.pixKey?.trim() ?? null,
         pixOwnerName: payload.pixOwnerName?.trim() ?? null,
         pixOwnerDocument: normalizeDocument(payload.pixOwnerDocument),
@@ -270,7 +270,7 @@ export class UserService {
         photoUrl: photoUrlUpdate,
         profileId: profileIdUpdate,
         status: payload.status ?? undefined,
-        pixType: payload.pixType ?? undefined,
+        pixType: payload.pixType ? (payload.pixType as PixType) : undefined,
         pixKey: payload.pixKey !== undefined ? payload.pixKey?.trim() ?? null : undefined,
         pixOwnerName: payload.pixOwnerName !== undefined ? payload.pixOwnerName?.trim() ?? null : undefined,
         pixOwnerDocument:

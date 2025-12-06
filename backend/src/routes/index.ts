@@ -320,7 +320,8 @@ router.post(
 );
 
 router.post(
-  "/admin/registrations/:id/payment-link",\n  authorizePermission("registrations", "financial"),
+  "/admin/registrations/:id/payment-link",
+  authorizePermission("registrations", "financial"),
   regenerateRegistrationPaymentLinkHandler
 );
 
@@ -420,7 +421,6 @@ router.post(
 );
 
 export default router;
-
 
 
 
