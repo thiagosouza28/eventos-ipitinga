@@ -173,7 +173,7 @@ const confirmDeleteDescription = computed(() => {
     if (!confirmDelete.target) {
         return "Confirme a exclusão do evento selecionado.";
     }
-    return `Tem certeza que deseja excluir o evento "${confirmDelete.target.title}"? Esta acao não pode ser desfeita.`;
+    return `Tem certeza que deseja excluir o evento "${confirmDelete.target.title}"? Esta ação não pode ser desfeita.`;
 });
 const details = reactive({
     open: false,
@@ -279,7 +279,7 @@ const lotBadgeClass = (lot) => {
 };
 const isCurrentLot = (lot) => details.event?.currentLot?.id === lot.id;
 const currentPriceDisplay = computed(() => details.event?.isFree
-    ? "Gratuito"
+    ? "Gratuíto"
     : formatCurrency(details.event?.currentPriceCents ?? details.event?.priceCents ?? 0));
 const basePriceDisplay = computed(() => details.event?.isFree ? "Gratuito" : formatCurrency(details.event?.priceCents ?? 0));
 const errorDialog = reactive({
@@ -421,7 +421,7 @@ const cancelLotEdit = () => {
     lotModalOpen.value = false;
 };
 const openLotCreateModal = () => {
-    if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes.")) {
+    if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes")) {
         return;
     }
     resetLotForm();
@@ -508,20 +508,20 @@ const submitLot = async () => {
         return;
     }
     if (!lotForm.startsAt) {
-        showError("Falha ao salvar lote", { message: "Informe a data de inicio do lote." });
+        showError("Falha ao salvar lote", { message: "Informe a data de início do lote." });
         return;
     }
     const priceCents = toPriceCents(lotForm.price);
     const startDate = new Date(lotForm.startsAt);
     if (Number.isNaN(startDate.getTime())) {
-        showError("Falha ao salvar lote", { message: "Data inicial invalida." });
+        showError("Falha ao salvar lote", { message: "Data inicial inválida." });
         return;
     }
     let endsAtIso = null;
     if (lotForm.endsAt) {
         const endDate = new Date(lotForm.endsAt);
         if (Number.isNaN(endDate.getTime())) {
-            showError("Falha ao salvar lote", { message: "Data final invalida." });
+            showError("Falha ao salvar lote", { message: "Data final inválida." });
             return;
         }
         if (endDate <= startDate) {
@@ -614,7 +614,6 @@ const submitCreate = async () => {
         });
         return;
     }
-    const selectedChurchId = (createChurchLocked.value ? userChurchId.value : createForm.churchId) || undefined;
     const normalizedSlug = sanitizeSlugInput(createForm.slug);
     savingCreate.value = true;
     try {
@@ -633,8 +632,7 @@ const submitCreate = async () => {
             minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
             isActive: true,
             ministryId: createForm.ministryId,
-            districtId: createForm.districtId,
-            churchId: selectedChurchId
+            districtId: createForm.districtId
         });
         resetCreateForm();
         createModalOpen.value = false;
@@ -670,7 +668,6 @@ const submitEdit = async () => {
         });
         return;
     }
-    const selectedChurchId = (editChurchLocked.value ? userChurchId.value : editForm.churchId) || undefined;
     const normalizedSlug = sanitizeSlugInput(editForm.slug);
     savingEdit.value = true;
     try {
@@ -689,8 +686,7 @@ const submitEdit = async () => {
             paymentMethods: [...editForm.paymentMethods],
             pendingPaymentValueRule: editForm.pendingPaymentValueRule,
             ministryId: editForm.ministryId,
-            districtId: editForm.districtId,
-            churchId: selectedChurchId
+            districtId: editForm.districtId
         });
         cancelEdit();
     }
@@ -750,7 +746,7 @@ const toggleActive = async (event) => {
     }
 };
 const openDelete = (event) => {
-    if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
+    if (!assertPermission(eventPermissions.canDelete.value, "VocÃª não possui permissão para excluir eventos.")) {
         return;
     }
     confirmDelete.target = event;
@@ -763,7 +759,7 @@ const closeDeleteDialog = () => {
 const handleDelete = async () => {
     if (!confirmDelete.target)
         return;
-    if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
+    if (!assertPermission(eventPermissions.canDelete.value, "VocÃª não possui permissão para excluir eventos.")) {
         closeDeleteDialog();
         return;
     }
@@ -772,7 +768,7 @@ const handleDelete = async () => {
         closeDeleteDialog();
     }
     catch (error) {
-        showError("Não foi possível excluir o evento", error);
+        showError("NÃ£o foi possÃ­vel excluir o evento", error);
     }
 };
 const openDetails = async (event) => {
@@ -830,7 +826,7 @@ onMounted(async () => {
         }
     }
     catch (error) {
-        showError("Falha ao carregar eventos ou catalogos", error);
+        showError("Falha ao carregar eventos ou catálogos", error);
     }
     finally {
         loadingEvents.value = false;
@@ -969,10 +965,10 @@ if (__VLS_ctx.eventPermissions.canList) {
         /** @type {[typeof TableSkeleton, ]} */ ;
         // @ts-ignore
         const __VLS_25 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
-            helperText: "🔄 Carregando eventos...",
+            helperText: "ðŸ”„ Carregando eventos...",
         }));
         const __VLS_26 = __VLS_25({
-            helperText: "🔄 Carregando eventos...",
+            helperText: "ðŸ”„ Carregando eventos...",
         }, ...__VLS_functionalComponentArgsRest(__VLS_25));
     }
     else {
@@ -1034,11 +1030,7 @@ if (__VLS_ctx.eventPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "font-semibold text-neutral-900 dark:text-neutral-100" },
             });
-            (event.district?.name ?? "N??o informado");
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-            });
-            (event.church?.name ?? "Igreja n??o vinculada");
+            (event.district?.name ?? "Nao informado");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                 ...{ class: "px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300" },
             });
@@ -1203,12 +1195,6 @@ if (__VLS_ctx.eventPermissions.canList) {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
             (event.district?.name ?? "Nao informado");
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
-            });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            (event.church?.name ?? "Nao vinculada");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "col-span-2" },
             });
@@ -1515,29 +1501,6 @@ if (__VLS_ctx.eventPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.createForm.churchId),
-        disabled: (__VLS_ctx.createChurchLocked || !__VLS_ctx.createForm.districtId || __VLS_ctx.churchesLoading.create),
-        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "",
-    });
-    (__VLS_ctx.createChurchLocked ? "Usando sua igreja vinculada" : "Selecione...");
-    for (const [church] of __VLS_getVForSourceType((__VLS_ctx.createChurchOptions))) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (church.id),
-            value: (church.id),
-        });
-        (church.name);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
-    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -1829,29 +1792,6 @@ if (__VLS_ctx.eventPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.editForm.churchId),
-        disabled: (__VLS_ctx.editChurchLocked || !__VLS_ctx.editForm.districtId || __VLS_ctx.churchesLoading.edit),
-        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "",
-    });
-    (__VLS_ctx.editChurchLocked ? "Usando sua igreja vinculada" : "Selecione...");
-    for (const [church] of __VLS_getVForSourceType((__VLS_ctx.editChurchOptions))) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (church.id),
-            value: (church.id),
-        });
-        (church.name);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
-    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -2048,16 +1988,6 @@ if (__VLS_ctx.eventPermissions.canList) {
             ...{ class: "mt-1 font-semibold text-white" },
         });
         (__VLS_ctx.details.event?.district?.name ?? 'Nao informado');
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "rounded-2xl border border-white/10 bg-white/5 p-4" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.dt, __VLS_intrinsicElements.dt)({
-            ...{ class: "text-xs uppercase tracking-[0.3em] text-white/60" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.dd, __VLS_intrinsicElements.dd)({
-            ...{ class: "mt-1 font-semibold text-white" },
-        });
-        (__VLS_ctx.details.event?.church?.name ?? 'Nao vinculada');
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "rounded-2xl border border-white/10 bg-white/5 p-4" },
         });
@@ -2400,7 +2330,7 @@ if (__VLS_ctx.eventPermissions.canList) {
         ...{ class: "rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70" },
         disabled: (__VLS_ctx.lotSaving),
     });
-    (__VLS_ctx.lotSaving ? 'Salvando...' : __VLS_ctx.editingLotId ? 'Salvar alterações' : 'Adicionar lote');
+    (__VLS_ctx.lotSaving ? 'Salvando...' : __VLS_ctx.editingLotId ? 'Salvar alteraÃ§Ãµes' : 'Adicionar lote');
     var __VLS_69;
 }
 else {
@@ -2576,9 +2506,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -2714,9 +2641,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
@@ -2995,26 +2919,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -3312,26 +3216,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -3529,18 +3413,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white/5']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
@@ -3932,9 +3804,6 @@ const __VLS_self = (await import('vue')).defineComponent({
             pendingPaymentValueRuleOptions: pendingPaymentValueRuleOptions,
             allMinistryOptions: allMinistryOptions,
             districtOptions: districtOptions,
-            churchesLoading: churchesLoading,
-            createChurchOptions: createChurchOptions,
-            editChurchOptions: editChurchOptions,
             applySlugSuggestion: applySlugSuggestion,
             createForm: createForm,
             editForm: editForm,
@@ -3943,8 +3812,6 @@ const __VLS_self = (await import('vue')).defineComponent({
             savingEdit: savingEdit,
             createModalOpen: createModalOpen,
             editModalOpen: editModalOpen,
-            createChurchLocked: createChurchLocked,
-            editChurchLocked: editChurchLocked,
             confirmDelete: confirmDelete,
             confirmDeleteDescription: confirmDeleteDescription,
             details: details,

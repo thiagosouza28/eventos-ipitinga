@@ -63,20 +63,15 @@ const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
 const formatDateBr = (date: Date | null | undefined) =>
   date ? brDateFormatter.format(date) : "Não informado";
 
-// Formatação de data de nascimento usando componentes UTC diretamente
-// Isso garante que a data exibida seja exatamente a data UTC salva no banco,
-// sem conversão de timezone que pode causar mudança de dia
+// Formatação de data de nascimento usando o fuso de São Paulo (evita queda de 1 dia)
 const formatBirthDateBr = (date: Date | null | undefined) => {
   if (!date) return "Não informado";
-  
-  // Extrair componentes UTC diretamente da data
-  // Quando a data é salva como "1998-11-05T00:00:00.000Z", queremos exibir "05/11/1998"
-  // Usando UTC garantimos que não haverá mudança de dia por causa do fuso horário
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const year = date.getUTCFullYear();
-  
-  return `${day}/${month}/${year}`;
+  const iso = date instanceof Date ? date.toISOString().slice(0, 10) : String(date).slice(0, 10);
+  const [year, month, day] = iso.split("-");
+  if (year && month && day) {
+    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+  }
+  return brDateFormatterNoTimezone.format(date);
 };
 
 const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => {
@@ -1082,19 +1077,3 @@ export class RegistrationService {
 }
 
 export const registrationService = new RegistrationService();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

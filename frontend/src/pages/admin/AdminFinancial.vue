@@ -29,7 +29,7 @@
         </RouterLink>
       </div>
     </BaseCard>
-    <TableSkeleton v-if="loading" :rows="3" helperText="📡 Carregando dados financeiros..." />
+    <TableSkeleton v-if="loading" :rows="3" helperText="Carregando dados financeiros..." />
 
     <!-- Resumo Geral -->
     <BaseCard
@@ -39,10 +39,10 @@
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">Resumo geral</p>
-      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">Visão consolidada</h2>
+      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">Vis├úo consolidada</h2>
     </div>
     <p class="text-xs text-neutral-500 dark:text-neutral-400">
-      Atualizado automaticamente conforme as movimentações dos eventos.
+      Atualizado automaticamente conforme as movimenta├º├Áes dos eventos.
     </p>
   </div>
   <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -53,13 +53,14 @@
       </p>
     </div>
     <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas MP (processamento)</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Taxas MP (0,94%)</p>
       <p class="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
         -{{ formatCurrency(generalMpFees) }}
       </p>
+      <p class="text-xs text-neutral-500 dark:text-neutral-400">Taxa automática de 0,94% sobre o total bruto.</p>
     </div>
     <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita líquida</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Receita l├¡quida</p>
       <p class="mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300">
         {{ formatCurrency(generalSummary.totals.netCents) }}
       </p>
@@ -77,7 +78,7 @@
       </p>
     </div>
     <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">PIX líquido</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">PIX l├¡quido</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.pix?.netCents || 0) }}
       </p>
@@ -95,7 +96,7 @@
       </p>
     </div>
     <div class="rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5">
-      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Total geral (líquido)</p>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Total geral (l├¡quido)</p>
       <p class="mt-2 text-2xl font-bold text-neutral-900 dark:text-white">
         {{ formatCurrency(generalSummary.totals.generalNetCents || generalSummary.totals.netCents) }}
       </p>
@@ -171,11 +172,12 @@
           <strong>{{ formatCurrency(eventSummary.totals.grossCents) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Taxas MP (processamento)</p>
+          <p>Taxas MP (0,94%)</p>
           <strong class="text-red-600 dark:text-red-400">-{{ formatCurrency(eventMpFees) }}</strong>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">Taxa automática de 0,94% sobre o total bruto.</p>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Receita líquida</p>
+          <p>Receita l├¡quida</p>
           <strong class="text-primary-600 dark:text-primary-300">
             {{ formatCurrency(eventSummary.totals.netCents) }}
           </strong>
@@ -189,7 +191,7 @@
           <strong>{{ formatCurrency(eventSummary.totals.cashCents || 0) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>PIX líquido</p>
+          <p>PIX l├¡quido</p>
           <strong>{{ formatCurrency(eventSummary.totals.pix?.netCents || 0) }}</strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
@@ -199,12 +201,12 @@
           </strong>
         </div>
         <div class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5">
-          <p>Total geral (líquido)</p>
+          <p>Total geral (l├¡quido)</p>
           <strong>{{ formatCurrency(eventSummary.totals.generalNetCents || eventSummary.totals.netCents) }}</strong>
         </div>
       </div>
       <div class="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-        <p>{{ eventSummary.paidRegistrationsCount }} inscrições pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
+        <p>{{ eventSummary.paidRegistrationsCount }} inscri├º├Áes pagas em {{ eventSummary.paidOrdersCount }} pedidos</p>
       </div>
     </BaseCard>
 
@@ -218,11 +220,11 @@
           <thead class="bg-white/60 text-[11px] uppercase tracking-[0.3em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
               <th class="pb-2">Data</th>
-              <th class="pb-2">Descrição</th>
-              <th class="pb-2">Responsável</th>
+              <th class="pb-2">Descri├º├úo</th>
+              <th class="pb-2">Respons├ível</th>
               <th class="pb-2">Itens</th>
               <th class="pb-2 text-right">Valor</th>
-              <th class="pb-2 text-right">Ações</th>
+              <th class="pb-2 text-right">A├º├Áes</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 dark:divide-white/5">
@@ -237,7 +239,7 @@
                 {{ expense.madeBy }}
               </td>
               <td class="py-2 text-sm text-neutral-600 dark:text-neutral-400">
-                {{ expense.items || "—" }}
+                {{ expense.items || "ÔÇö" }}
               </td>
               <td class="py-2 text-right font-medium text-red-600 dark:text-red-400">
                 -{{ formatCurrency(expense.amountCents) }}
@@ -272,7 +274,7 @@
       </div>
     </BaseCard>
 
-    <!-- Formulário de Despesa -->
+    <!-- Formul├írio de Despesa -->
     <BaseCard v-if="!loading && showExpenseForm && selectedEventId" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
       <h2 class="mb-4 text-lg font-semibold text-neutral-700 dark:text-neutral-100">
         {{ editingExpense ? "Editar Despesa" : "Nova Despesa" }}
@@ -281,7 +283,7 @@
         <div class="grid gap-4 md:grid-cols-2">
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Descrição *
+              Descri├º├úo *
             </label>
             <input
               v-model="expenseForm.description"
@@ -298,7 +300,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Responsável *
+              Respons├ível *
             </label>
             <input
               v-model="expenseForm.madeBy"
@@ -324,7 +326,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Itens (lista de produtos/serviços)
+            Itens (lista de produtos/servi├ºos)
           </label>
           <textarea
             v-model="expenseForm.items"
@@ -377,10 +379,10 @@
       @cancel="confirmDelete.open = false"
     />
 
-    <!-- Mensagem de erro se não conseguir carregar -->
+    <!-- Mensagem de erro se n├úo conseguir carregar -->
     <BaseCard v-if="!loading && !generalSummary && !errorDialog.open">
       <p class="text-center text-neutral-500">
-        Não foi possível carregar os dados do dashboard financeiro. Verifique sua conexão e tente novamente.
+        N├úo foi poss├¡vel carregar os dados do dashboard financeiro. Verifique sua conex├úo e tente novamente.
       </p>
     </BaseCard>
   </div>
@@ -491,7 +493,7 @@ const loadEventSummary = async () => {
 };
 
 const loadEventDetails = () => {
-  // TODO: Implementar página de detalhes do evento
+  // TODO: Implementar p├ígina de detalhes do evento
   console.log("Carregar detalhes do evento", selectedEventId.value);
 };
 
@@ -511,7 +513,7 @@ const downloadEventReport = async () => {
     link.remove();
     URL.revokeObjectURL(url);
   } catch (error: any) {
-    showError("Erro ao gerar relatório financeiro", error);
+    showError("Erro ao gerar relat├│rio financeiro", error);
   } finally {
     downloadingReport.value = false;
   }
@@ -635,6 +637,7 @@ onMounted(async () => {
   }
 });
 </script>
+
 
 
 

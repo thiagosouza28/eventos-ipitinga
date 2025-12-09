@@ -549,6 +549,27 @@ const eventReport = reactive({
 const eventParticipants = ref<Registration[]>([]);
 const selectedEvent = computed<Event | null>(() => accessibleEvents.value.find((event) => event.id === eventReport.eventId) ?? null);
 
+const normalizeRegistrationStatus = (status?: string | null) => {
+  if (!status) return "PENDING_PAYMENT";
+  const map: Record<string, string> = {
+    PENDING: "PENDING_PAYMENT",
+    PENDING_PAYMENT: "PENDING_PAYMENT",
+    PAID: "PAID",
+    CHECKED_IN: "CHECKED_IN",
+    CANCELED: "CANCELED",
+    CANCELLED: "CANCELED",
+    REFUNDED: "REFUNDED",
+    DRAFT: "DRAFT"
+  };
+  return (map[status] ?? status) as Registration["status"];
+};
+
+const normalizeParticipants = (list: Registration[]) =>
+  list.map((participant) => ({
+    ...participant,
+    status: normalizeRegistrationStatus(participant.status)
+  })) as Registration[];
+
 const fetchParticipantsForEvent = async (eventId: string) => {
   const params: Record<string, string> = { eventId };
   if (!isGeneralAdmin.value && scopedDistrictId.value) {
@@ -565,8 +586,9 @@ const loadEventParticipants = async () => {
   eventReport.loading = true;
   try {
     const data = await fetchParticipantsForEvent(eventReport.eventId);
-    eventParticipants.value = data;
-    setCachedParticipants(eventReport.eventId, data);
+    const normalized = normalizeParticipants(data);
+    eventParticipants.value = normalized;
+    setCachedParticipants(eventReport.eventId, normalized);
     eventReport.generatedAt = new Date();
   } catch (error) {
     showError("Erro ao carregar participantes do evento", error);
@@ -630,7 +652,7 @@ const loadChurchParticipants = async () => {
     params.districtId = churchReport.districtId;
     if (churchReport.churchId) params.churchId = churchReport.churchId;
     const response = await api.get<Registration[]>("/admin/registrations", { params });
-    churchParticipants.value = response.data;
+    churchParticipants.value = normalizeParticipants(response.data);
   } catch (error) {
     showError("Erro ao carregar participantes da igreja", error);
   } finally {

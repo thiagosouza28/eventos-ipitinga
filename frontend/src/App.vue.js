@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
-import { ArrowRightOnRectangleIcon, Bars3Icon, BanknotesIcon, BuildingOffice2Icon, CalendarDaysIcon, ClipboardDocumentListIcon, Cog6ToothIcon, MapPinIcon, MoonIcon, PresentationChartBarIcon, QrCodeIcon, ShieldCheckIcon, Squares2X2Icon, SunIcon, UserPlusIcon, UsersIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import { ArrowRightOnRectangleIcon, Bars3Icon, BanknotesIcon, BuildingOffice2Icon, CalendarDaysIcon, ClipboardDocumentListIcon, Cog6ToothIcon, MapPinIcon, MoonIcon, PresentationChartBarIcon, QrCodeIcon, ShieldCheckIcon, Squares2X2Icon, SunIcon, UserCircleIcon, UserPlusIcon, UsersIcon, XMarkIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
 import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./stores/auth";
 import { useSystemConfigStore } from "./stores/system-config";
@@ -17,8 +17,11 @@ const { config: systemConfig } = storeToRefs(systemConfigStore);
 const mobileMenuOpen = ref(false);
 const currentTime = ref(new Date());
 const isSidebarOpen = ref(true);
+const profileMenuOpen = ref(false);
+const apiOffline = ref(false);
 const mobileViewportBreakpoint = 768;
 let timer;
+const profileMenuRef = ref(null);
 const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < mobileViewportBreakpoint;
 const lockBodyScroll = (locked) => {
     if (typeof document === "undefined") {
@@ -31,17 +34,17 @@ const baseAdminMenu = [
     { label: "Eventos", to: { name: "admin-events" }, icon: CalendarDaysIcon, module: "events" },
     { label: "Distritos", to: { name: "admin-districts" }, icon: MapPinIcon, module: "districts" },
     { label: "Igrejas", to: { name: "admin-churches" }, icon: BuildingOffice2Icon, module: "churches" },
-    { label: "Ministerios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
-    { label: "Usuarios", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
-    { label: "Permissoes", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
+    { label: "Ministérios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
+    { label: "Usuários", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
+    { label: "Permissões", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
     { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon, module: "orders" },
-    { label: "Inscricoes", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
-    { label: "Relatorios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
+    { label: "Inscrições", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
+    { label: "Relatórios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
     { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
     { label: "Financeiro (responsáveis)", to: { name: "admin-district-finance" }, icon: BanknotesIcon, module: "financial" },
     { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
     { label: "PIX / Pagamentos", to: { name: "admin-pix-config" }, icon: Cog6ToothIcon, requiresRole: "AdminGeral" },
-    { label: "Configuracoes", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
+    { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
 ];
 const adminMenuItems = computed(() => baseAdminMenu.filter((item) => {
     if (item.requiresRole && auth.user?.role !== item.requiresRole) {
@@ -75,6 +78,24 @@ const handleViewportResize = () => {
 };
 const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value;
+};
+const handleApiOffline = () => {
+    apiOffline.value = true;
+};
+const handleApiOnline = () => {
+    apiOffline.value = false;
+};
+const toggleProfileMenu = () => {
+    profileMenuOpen.value = !profileMenuOpen.value;
+};
+const closeProfileMenu = () => {
+    profileMenuOpen.value = false;
+};
+const handleOutsideClick = (event) => {
+    const target = event.target;
+    if (profileMenuOpen.value && profileMenuRef.value && target && !profileMenuRef.value.contains(target)) {
+        closeProfileMenu();
+    }
 };
 watch(() => route.fullPath, () => {
     if (!isAdminLayout.value) {
@@ -139,6 +160,9 @@ onMounted(() => {
             isSidebarOpen.value = false;
         }
         window.addEventListener("resize", handleViewportResize);
+        window.addEventListener("api-offline", handleApiOffline);
+        window.addEventListener("api-online", handleApiOnline);
+        window.addEventListener("click", handleOutsideClick);
     }
     if (typeof window !== "undefined") {
         timer = window.setInterval(() => {
@@ -152,6 +176,9 @@ onBeforeUnmount(() => {
     }
     if (typeof window !== "undefined") {
         window.removeEventListener("resize", handleViewportResize);
+        window.removeEventListener("api-offline", handleApiOffline);
+        window.removeEventListener("api-online", handleApiOnline);
+        window.removeEventListener("click", handleOutsideClick);
     }
     lockBodyScroll(false);
 });
@@ -173,6 +200,7 @@ const userInitials = computed(() => {
         .join("");
     return letters || "CI";
 });
+const userAvatar = computed(() => auth.user?.photoUrl?.trim() ?? "");
 const toggleMobileMenu = () => {
     mobileMenuOpen.value = !mobileMenuOpen.value;
 };
@@ -192,6 +220,22 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 // @ts-ignore
 const __VLS_0 = __VLS_asFunctionalComponent(LoadingOverlay, new LoadingOverlay({}));
 const __VLS_1 = __VLS_0({}, ...__VLS_functionalComponentArgsRest(__VLS_0));
+const __VLS_3 = {}.transition;
+/** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
+// @ts-ignore
+const __VLS_4 = __VLS_asFunctionalComponent(__VLS_3, new __VLS_3({
+    name: "offline-banner",
+}));
+const __VLS_5 = __VLS_4({
+    name: "offline-banner",
+}, ...__VLS_functionalComponentArgsRest(__VLS_4));
+__VLS_6.slots.default;
+if (__VLS_ctx.apiOffline) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "sticky top-0 z-[60] w-full bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg" },
+    });
+}
+var __VLS_6;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "min-h-screen bg-[color:var(--background)] text-[color:var(--text)] transition-colors" },
 });
@@ -201,23 +245,23 @@ if (__VLS_ctx.isAdminLayout) {
     });
     /** @type {[typeof AdminSidebar, ]} */ ;
     // @ts-ignore
-    const __VLS_3 = __VLS_asFunctionalComponent(AdminSidebar, new AdminSidebar({
+    const __VLS_7 = __VLS_asFunctionalComponent(AdminSidebar, new AdminSidebar({
         ...{ 'onToggle': {} },
         isOpen: (__VLS_ctx.isSidebarOpen),
         menuItems: (__VLS_ctx.adminMenuItems),
     }));
-    const __VLS_4 = __VLS_3({
+    const __VLS_8 = __VLS_7({
         ...{ 'onToggle': {} },
         isOpen: (__VLS_ctx.isSidebarOpen),
         menuItems: (__VLS_ctx.adminMenuItems),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_3));
-    let __VLS_6;
-    let __VLS_7;
-    let __VLS_8;
-    const __VLS_9 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_7));
+    let __VLS_10;
+    let __VLS_11;
+    let __VLS_12;
+    const __VLS_13 = {
         onToggle: (__VLS_ctx.toggleSidebar)
     };
-    var __VLS_5;
+    var __VLS_9;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex min-h-screen flex-1 flex-col bg-[#F3F6FB] dark:bg-[#050816]" },
     });
@@ -230,18 +274,18 @@ if (__VLS_ctx.isAdminLayout) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex min-w-0 flex-1 items-center gap-3" },
     });
-    const __VLS_10 = {}.RouterLink;
+    const __VLS_14 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_11 = __VLS_asFunctionalComponent(__VLS_10, new __VLS_10({
+    const __VLS_15 = __VLS_asFunctionalComponent(__VLS_14, new __VLS_14({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white" },
     }));
-    const __VLS_12 = __VLS_11({
+    const __VLS_16 = __VLS_15({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_11));
-    __VLS_13.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_15));
+    __VLS_17.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-[rgba(255,255,255,0.1)] dark:from-[#1b2140] dark:to-[#11152A]" },
     });
@@ -260,7 +304,7 @@ if (__VLS_ctx.isAdminLayout) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "text-base font-semibold sm:text-lg" },
     });
-    var __VLS_13;
+    var __VLS_17;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-1 items-center justify-end gap-2 sm:gap-3" },
     });
@@ -283,21 +327,8 @@ if (__VLS_ctx.isAdminLayout) {
         'aria-pressed': (__VLS_ctx.isDark),
     });
     if (__VLS_ctx.isDark) {
-        const __VLS_14 = {}.SunIcon;
+        const __VLS_18 = {}.SunIcon;
         /** @type {[typeof __VLS_components.SunIcon, ]} */ ;
-        // @ts-ignore
-        const __VLS_15 = __VLS_asFunctionalComponent(__VLS_14, new __VLS_14({
-            ...{ class: "h-5 w-5" },
-            'aria-hidden': "true",
-        }));
-        const __VLS_16 = __VLS_15({
-            ...{ class: "h-5 w-5" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_15));
-    }
-    else {
-        const __VLS_18 = {}.MoonIcon;
-        /** @type {[typeof __VLS_components.MoonIcon, ]} */ ;
         // @ts-ignore
         const __VLS_19 = __VLS_asFunctionalComponent(__VLS_18, new __VLS_18({
             ...{ class: "h-5 w-5" },
@@ -308,74 +339,256 @@ if (__VLS_ctx.isAdminLayout) {
             'aria-hidden': "true",
         }, ...__VLS_functionalComponentArgsRest(__VLS_19));
     }
+    else {
+        const __VLS_22 = {}.MoonIcon;
+        /** @type {[typeof __VLS_components.MoonIcon, ]} */ ;
+        // @ts-ignore
+        const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({
+            ...{ class: "h-5 w-5" },
+            'aria-hidden': "true",
+        }));
+        const __VLS_24 = __VLS_23({
+            ...{ class: "h-5 w-5" },
+            'aria-hidden': "true",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_23));
+    }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "sr-only" },
     });
-    const __VLS_22 = {}.RouterLink;
+    const __VLS_26 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({
-        to: (__VLS_ctx.adminLink),
-        ...{ class: "btn-outline hidden sm:inline-flex" },
-    }));
-    const __VLS_24 = __VLS_23({
-        to: (__VLS_ctx.adminLink),
-        ...{ class: "btn-outline hidden sm:inline-flex" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_23));
-    __VLS_25.slots.default;
-    const __VLS_26 = {}.ShieldCheckIcon;
-    /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
-    // @ts-ignore
     const __VLS_27 = __VLS_asFunctionalComponent(__VLS_26, new __VLS_26({
-        ...{ class: "h-5 w-5" },
-        'aria-hidden': "true",
+        to: (__VLS_ctx.adminLink),
+        ...{ class: "btn-outline hidden sm:inline-flex" },
     }));
     const __VLS_28 = __VLS_27({
+        to: (__VLS_ctx.adminLink),
+        ...{ class: "btn-outline hidden sm:inline-flex" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_27));
+    __VLS_29.slots.default;
+    const __VLS_30 = {}.ShieldCheckIcon;
+    /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
+    // @ts-ignore
+    const __VLS_31 = __VLS_asFunctionalComponent(__VLS_30, new __VLS_30({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_27));
+    }));
+    const __VLS_32 = __VLS_31({
+        ...{ class: "h-5 w-5" },
+        'aria-hidden': "true",
+    }, ...__VLS_functionalComponentArgsRest(__VLS_31));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.adminLinkLabel);
-    var __VLS_25;
+    var __VLS_29;
     if (__VLS_ctx.auth.isAuthenticated && __VLS_ctx.auth.user?.role === 'AdminGeral') {
-        const __VLS_30 = {}.RouterLink;
+        const __VLS_34 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_31 = __VLS_asFunctionalComponent(__VLS_30, new __VLS_30({
+        const __VLS_35 = __VLS_asFunctionalComponent(__VLS_34, new __VLS_34({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
         }));
-        const __VLS_32 = __VLS_31({
+        const __VLS_36 = __VLS_35({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_31));
-        __VLS_33.slots.default;
-        var __VLS_33;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_35));
+        __VLS_37.slots.default;
+        var __VLS_37;
     }
     if (__VLS_ctx.auth.isAuthenticated) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "hidden h-10 w-10 items-center justify-center rounded-full bg-[#1f4fff] text-sm font-semibold text-white shadow-md lg:flex" },
+            ...{ class: "relative hidden lg:flex" },
+            ref: "profileMenuRef",
         });
-        (__VLS_ctx.userInitials);
-    }
-    if (__VLS_ctx.auth.isAuthenticated) {
+        /** @type {typeof __VLS_ctx.profileMenuRef} */ ;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.handleSignOut) },
+            ...{ onClick: (__VLS_ctx.toggleProfileMenu) },
             type: "button",
-            ...{ class: "btn-muted hidden text-[#475569] dark:text-white sm:inline-flex" },
+            ...{ class: "inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30" },
         });
-        const __VLS_34 = {}.ArrowRightOnRectangleIcon;
-        /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#1f4fff] text-white" },
+        });
+        if (__VLS_ctx.userAvatar) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                src: (__VLS_ctx.userAvatar),
+                alt: "Foto de perfil",
+                ...{ class: "h-full w-full object-cover" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.userInitials);
+        }
+        const __VLS_38 = {}.ChevronDownIcon;
+        /** @type {[typeof __VLS_components.ChevronDownIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_35 = __VLS_asFunctionalComponent(__VLS_34, new __VLS_34({
-            ...{ class: "h-5 w-5" },
-            'aria-hidden': "true",
+        const __VLS_39 = __VLS_asFunctionalComponent(__VLS_38, new __VLS_38({
+            ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
         }));
-        const __VLS_36 = __VLS_35({
-            ...{ class: "h-5 w-5" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_35));
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        const __VLS_40 = __VLS_39({
+            ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_39));
+        const __VLS_42 = {}.transition;
+        /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
+        // @ts-ignore
+        const __VLS_43 = __VLS_asFunctionalComponent(__VLS_42, new __VLS_42({
+            name: "fade",
+        }));
+        const __VLS_44 = __VLS_43({
+            name: "fade",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_43));
+        __VLS_45.slots.default;
+        if (__VLS_ctx.profileMenuOpen) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center gap-3 rounded-xl bg-white/5 p-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "h-12 w-12 overflow-hidden rounded-full bg-[#1f4fff] text-center text-white" },
+            });
+            if (__VLS_ctx.userAvatar) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                    src: (__VLS_ctx.userAvatar),
+                    alt: "Foto de perfil",
+                    ...{ class: "h-full w-full object-cover" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "leading-[3rem]" },
+                });
+                (__VLS_ctx.userInitials);
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex flex-col text-sm text-[color:var(--text)]" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "font-semibold" },
+            });
+            (__VLS_ctx.auth.user?.name);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-xs text-[color:var(--text-muted)]" },
+            });
+            (__VLS_ctx.auth.user?.email);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-3 space-y-1 text-sm" },
+            });
+            const __VLS_46 = {}.RouterLink;
+            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+            // @ts-ignore
+            const __VLS_47 = __VLS_asFunctionalComponent(__VLS_46, new __VLS_46({
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }));
+            const __VLS_48 = __VLS_47({
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_47));
+            let __VLS_50;
+            let __VLS_51;
+            let __VLS_52;
+            const __VLS_53 = {
+                onClick: (__VLS_ctx.closeProfileMenu)
+            };
+            __VLS_49.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_54 = {}.ShieldCheckIcon;
+            /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_55 = __VLS_asFunctionalComponent(__VLS_54, new __VLS_54({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_56 = __VLS_55({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_55));
+            var __VLS_49;
+            const __VLS_58 = {}.RouterLink;
+            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+            // @ts-ignore
+            const __VLS_59 = __VLS_asFunctionalComponent(__VLS_58, new __VLS_58({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }));
+            const __VLS_60 = __VLS_59({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_59));
+            let __VLS_62;
+            let __VLS_63;
+            let __VLS_64;
+            const __VLS_65 = {
+                onClick: (__VLS_ctx.closeProfileMenu)
+            };
+            __VLS_61.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_66 = {}.UserCircleIcon;
+            /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_68 = __VLS_67({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_67));
+            var __VLS_61;
+            if (__VLS_ctx.auth.user?.role === 'AdminGeral') {
+                const __VLS_70 = {}.RouterLink;
+                /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+                // @ts-ignore
+                const __VLS_71 = __VLS_asFunctionalComponent(__VLS_70, new __VLS_70({
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }));
+                const __VLS_72 = __VLS_71({
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_71));
+                let __VLS_74;
+                let __VLS_75;
+                let __VLS_76;
+                const __VLS_77 = {
+                    onClick: (__VLS_ctx.closeProfileMenu)
+                };
+                __VLS_73.slots.default;
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_78 = {}.Cog6ToothIcon;
+                /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_79 = __VLS_asFunctionalComponent(__VLS_78, new __VLS_78({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_80 = __VLS_79({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_79));
+                var __VLS_73;
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (() => { __VLS_ctx.closeProfileMenu(); __VLS_ctx.handleSignOut(); }) },
+                type: "button",
+                ...{ class: "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_82 = {}.ArrowRightOnRectangleIcon;
+            /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_83 = __VLS_asFunctionalComponent(__VLS_82, new __VLS_82({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_84 = __VLS_83({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_83));
+        }
+        var __VLS_45;
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.toggleSidebar) },
@@ -384,30 +597,30 @@ if (__VLS_ctx.isAdminLayout) {
         'aria-pressed': (__VLS_ctx.isSidebarOpen),
     });
     if (!__VLS_ctx.isSidebarOpen) {
-        const __VLS_38 = {}.Bars3Icon;
+        const __VLS_86 = {}.Bars3Icon;
         /** @type {[typeof __VLS_components.Bars3Icon, ]} */ ;
         // @ts-ignore
-        const __VLS_39 = __VLS_asFunctionalComponent(__VLS_38, new __VLS_38({
+        const __VLS_87 = __VLS_asFunctionalComponent(__VLS_86, new __VLS_86({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
         }));
-        const __VLS_40 = __VLS_39({
+        const __VLS_88 = __VLS_87({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_39));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_87));
     }
     else {
-        const __VLS_42 = {}.XMarkIcon;
+        const __VLS_90 = {}.XMarkIcon;
         /** @type {[typeof __VLS_components.XMarkIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_43 = __VLS_asFunctionalComponent(__VLS_42, new __VLS_42({
+        const __VLS_91 = __VLS_asFunctionalComponent(__VLS_90, new __VLS_90({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
         }));
-        const __VLS_44 = __VLS_43({
+        const __VLS_92 = __VLS_91({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_43));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_91));
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "sr-only" },
@@ -418,11 +631,11 @@ if (__VLS_ctx.isAdminLayout) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mx-auto w-full max-w-[1900px] space-y-6" },
     });
-    const __VLS_46 = {}.RouterView;
+    const __VLS_94 = {}.RouterView;
     /** @type {[typeof __VLS_components.RouterView, ]} */ ;
     // @ts-ignore
-    const __VLS_47 = __VLS_asFunctionalComponent(__VLS_46, new __VLS_46({}));
-    const __VLS_48 = __VLS_47({}, ...__VLS_functionalComponentArgsRest(__VLS_47));
+    const __VLS_95 = __VLS_asFunctionalComponent(__VLS_94, new __VLS_94({}));
+    const __VLS_96 = __VLS_95({}, ...__VLS_functionalComponentArgsRest(__VLS_95));
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.header, __VLS_intrinsicElements.header)({
@@ -437,18 +650,18 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex items-center gap-4" },
     });
-    const __VLS_50 = {}.RouterLink;
+    const __VLS_98 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_51 = __VLS_asFunctionalComponent(__VLS_50, new __VLS_50({
+    const __VLS_99 = __VLS_asFunctionalComponent(__VLS_98, new __VLS_98({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[color:var(--text)]" },
     }));
-    const __VLS_52 = __VLS_51({
+    const __VLS_100 = __VLS_99({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[color:var(--text)]" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_51));
-    __VLS_53.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_99));
+    __VLS_101.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)]" },
     });
@@ -467,7 +680,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "text-base font-semibold sm:text-lg" },
     });
-    var __VLS_53;
+    var __VLS_101;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-1 items-center justify-end gap-2 sm:gap-3" },
     });
@@ -490,99 +703,268 @@ else {
         'aria-pressed': (__VLS_ctx.isDark),
     });
     if (__VLS_ctx.isDark) {
-        const __VLS_54 = {}.SunIcon;
+        const __VLS_102 = {}.SunIcon;
         /** @type {[typeof __VLS_components.SunIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_55 = __VLS_asFunctionalComponent(__VLS_54, new __VLS_54({
+        const __VLS_103 = __VLS_asFunctionalComponent(__VLS_102, new __VLS_102({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
         }));
-        const __VLS_56 = __VLS_55({
+        const __VLS_104 = __VLS_103({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_55));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_103));
     }
     else {
-        const __VLS_58 = {}.MoonIcon;
+        const __VLS_106 = {}.MoonIcon;
         /** @type {[typeof __VLS_components.MoonIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_59 = __VLS_asFunctionalComponent(__VLS_58, new __VLS_58({
+        const __VLS_107 = __VLS_asFunctionalComponent(__VLS_106, new __VLS_106({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
         }));
-        const __VLS_60 = __VLS_59({
+        const __VLS_108 = __VLS_107({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_59));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_107));
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "sr-only" },
     });
-    const __VLS_62 = {}.RouterLink;
+    const __VLS_110 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_63 = __VLS_asFunctionalComponent(__VLS_62, new __VLS_62({
+    const __VLS_111 = __VLS_asFunctionalComponent(__VLS_110, new __VLS_110({
         to: (__VLS_ctx.adminLink),
         ...{ class: "btn-outline hidden sm:inline-flex" },
     }));
-    const __VLS_64 = __VLS_63({
+    const __VLS_112 = __VLS_111({
         to: (__VLS_ctx.adminLink),
         ...{ class: "btn-outline hidden sm:inline-flex" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_63));
-    __VLS_65.slots.default;
-    const __VLS_66 = {}.ShieldCheckIcon;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_111));
+    __VLS_113.slots.default;
+    const __VLS_114 = {}.ShieldCheckIcon;
     /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
     // @ts-ignore
-    const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
+    const __VLS_115 = __VLS_asFunctionalComponent(__VLS_114, new __VLS_114({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
     }));
-    const __VLS_68 = __VLS_67({
+    const __VLS_116 = __VLS_115({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_67));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_115));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.adminLinkLabel);
-    var __VLS_65;
+    var __VLS_113;
     if (__VLS_ctx.auth.isAuthenticated && __VLS_ctx.auth.user?.role === 'AdminGeral') {
-        const __VLS_70 = {}.RouterLink;
+        const __VLS_118 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_71 = __VLS_asFunctionalComponent(__VLS_70, new __VLS_70({
+        const __VLS_119 = __VLS_asFunctionalComponent(__VLS_118, new __VLS_118({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
         }));
-        const __VLS_72 = __VLS_71({
+        const __VLS_120 = __VLS_119({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_71));
-        __VLS_73.slots.default;
-        var __VLS_73;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_119));
+        __VLS_121.slots.default;
+        var __VLS_121;
     }
     if (__VLS_ctx.auth.isAuthenticated) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "hidden h-10 w-10 items-center justify-center rounded-full bg-[#1f4fff] text-sm font-semibold text-white shadow-md lg:flex" },
+            ...{ class: "relative hidden lg:flex" },
+            ref: "profileMenuRef",
         });
-        (__VLS_ctx.userInitials);
-    }
-    if (__VLS_ctx.auth.isAuthenticated) {
+        /** @type {typeof __VLS_ctx.profileMenuRef} */ ;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.handleSignOut) },
+            ...{ onClick: (__VLS_ctx.toggleProfileMenu) },
             type: "button",
-            ...{ class: "btn-muted hidden text-[#475569] dark:text-[color:var(--text)] sm:inline-flex" },
+            ...{ class: "inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30" },
         });
-        const __VLS_74 = {}.ArrowRightOnRectangleIcon;
-        /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#1f4fff] text-white" },
+        });
+        if (__VLS_ctx.userAvatar) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                src: (__VLS_ctx.userAvatar),
+                alt: "Foto de perfil",
+                ...{ class: "h-full w-full object-cover" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.userInitials);
+        }
+        const __VLS_122 = {}.ChevronDownIcon;
+        /** @type {[typeof __VLS_components.ChevronDownIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_75 = __VLS_asFunctionalComponent(__VLS_74, new __VLS_74({
-            ...{ class: "h-5 w-5" },
-            'aria-hidden': "true",
+        const __VLS_123 = __VLS_asFunctionalComponent(__VLS_122, new __VLS_122({
+            ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
         }));
-        const __VLS_76 = __VLS_75({
-            ...{ class: "h-5 w-5" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_75));
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        const __VLS_124 = __VLS_123({
+            ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_123));
+        const __VLS_126 = {}.transition;
+        /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
+        // @ts-ignore
+        const __VLS_127 = __VLS_asFunctionalComponent(__VLS_126, new __VLS_126({
+            name: "fade",
+        }));
+        const __VLS_128 = __VLS_127({
+            name: "fade",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_127));
+        __VLS_129.slots.default;
+        if (__VLS_ctx.profileMenuOpen) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center gap-3 rounded-xl bg-white/5 p-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "h-12 w-12 overflow-hidden rounded-full bg-[#1f4fff] text-center text-white" },
+            });
+            if (__VLS_ctx.userAvatar) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                    src: (__VLS_ctx.userAvatar),
+                    alt: "Foto de perfil",
+                    ...{ class: "h-full w-full object-cover" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "leading-[3rem]" },
+                });
+                (__VLS_ctx.userInitials);
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex flex-col text-sm text-[color:var(--text)]" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "font-semibold" },
+            });
+            (__VLS_ctx.auth.user?.name);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-xs text-[color:var(--text-muted)]" },
+            });
+            (__VLS_ctx.auth.user?.email);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-3 space-y-1 text-sm" },
+            });
+            const __VLS_130 = {}.RouterLink;
+            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+            // @ts-ignore
+            const __VLS_131 = __VLS_asFunctionalComponent(__VLS_130, new __VLS_130({
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }));
+            const __VLS_132 = __VLS_131({
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_131));
+            let __VLS_134;
+            let __VLS_135;
+            let __VLS_136;
+            const __VLS_137 = {
+                onClick: (__VLS_ctx.closeProfileMenu)
+            };
+            __VLS_133.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_138 = {}.ShieldCheckIcon;
+            /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_139 = __VLS_asFunctionalComponent(__VLS_138, new __VLS_138({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_140 = __VLS_139({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_139));
+            var __VLS_133;
+            const __VLS_142 = {}.RouterLink;
+            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+            // @ts-ignore
+            const __VLS_143 = __VLS_asFunctionalComponent(__VLS_142, new __VLS_142({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }));
+            const __VLS_144 = __VLS_143({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_143));
+            let __VLS_146;
+            let __VLS_147;
+            let __VLS_148;
+            const __VLS_149 = {
+                onClick: (__VLS_ctx.closeProfileMenu)
+            };
+            __VLS_145.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_150 = {}.UserCircleIcon;
+            /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_151 = __VLS_asFunctionalComponent(__VLS_150, new __VLS_150({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_152 = __VLS_151({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_151));
+            var __VLS_145;
+            if (__VLS_ctx.auth.user?.role === 'AdminGeral') {
+                const __VLS_154 = {}.RouterLink;
+                /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+                // @ts-ignore
+                const __VLS_155 = __VLS_asFunctionalComponent(__VLS_154, new __VLS_154({
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }));
+                const __VLS_156 = __VLS_155({
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_155));
+                let __VLS_158;
+                let __VLS_159;
+                let __VLS_160;
+                const __VLS_161 = {
+                    onClick: (__VLS_ctx.closeProfileMenu)
+                };
+                __VLS_157.slots.default;
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_162 = {}.Cog6ToothIcon;
+                /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_163 = __VLS_asFunctionalComponent(__VLS_162, new __VLS_162({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_164 = __VLS_163({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_163));
+                var __VLS_157;
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (() => { __VLS_ctx.closeProfileMenu(); __VLS_ctx.handleSignOut(); }) },
+                type: "button",
+                ...{ class: "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_166 = {}.ArrowRightOnRectangleIcon;
+            /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_167 = __VLS_asFunctionalComponent(__VLS_166, new __VLS_166({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_168 = __VLS_167({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_167));
+        }
+        var __VLS_129;
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.toggleMobileMenu) },
@@ -590,44 +972,44 @@ else {
         ...{ class: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-neutral-700 shadow-sm transition hover:bg-[#f7f8ff] dark:border-[color:var(--border-card)] dark:bg-[color:var(--surface-card-alt)] dark:text-[color:var(--text)] sm:hidden" },
     });
     if (!__VLS_ctx.mobileMenuOpen) {
-        const __VLS_78 = {}.Bars3Icon;
+        const __VLS_170 = {}.Bars3Icon;
         /** @type {[typeof __VLS_components.Bars3Icon, ]} */ ;
         // @ts-ignore
-        const __VLS_79 = __VLS_asFunctionalComponent(__VLS_78, new __VLS_78({
+        const __VLS_171 = __VLS_asFunctionalComponent(__VLS_170, new __VLS_170({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
         }));
-        const __VLS_80 = __VLS_79({
+        const __VLS_172 = __VLS_171({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_79));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_171));
     }
     else {
-        const __VLS_82 = {}.XMarkIcon;
+        const __VLS_174 = {}.XMarkIcon;
         /** @type {[typeof __VLS_components.XMarkIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_83 = __VLS_asFunctionalComponent(__VLS_82, new __VLS_82({
+        const __VLS_175 = __VLS_asFunctionalComponent(__VLS_174, new __VLS_174({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
         }));
-        const __VLS_84 = __VLS_83({
+        const __VLS_176 = __VLS_175({
             ...{ class: "h-6 w-6" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_83));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_175));
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "sr-only" },
     });
-    const __VLS_86 = {}.transition;
+    const __VLS_178 = {}.transition;
     /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
     // @ts-ignore
-    const __VLS_87 = __VLS_asFunctionalComponent(__VLS_86, new __VLS_86({
+    const __VLS_179 = __VLS_asFunctionalComponent(__VLS_178, new __VLS_178({
         name: "fade",
     }));
-    const __VLS_88 = __VLS_87({
+    const __VLS_180 = __VLS_179({
         name: "fade",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_87));
-    __VLS_89.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_179));
+    __VLS_181.slots.default;
     if (__VLS_ctx.mobileMenuOpen) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mx-auto mt-2 flex w-full max-w-[95%] flex-col gap-2 rounded-2xl border border-[color:var(--app-shell-border)] bg-[color:var(--surface-card)] px-4 py-4 text-sm shadow-[0_25px_80px_rgba(15,23,42,0.2)] backdrop-blur sm:hidden dark:shadow-[0_25px_80px_rgba(0,0,0,0.55)]" },
@@ -638,96 +1020,276 @@ else {
             });
             (__VLS_ctx.greetingMessage);
         }
-        const __VLS_90 = {}.RouterLink;
+        const __VLS_182 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_91 = __VLS_asFunctionalComponent(__VLS_90, new __VLS_90({
+        const __VLS_183 = __VLS_asFunctionalComponent(__VLS_182, new __VLS_182({
             ...{ 'onClick': {} },
             to: (__VLS_ctx.adminLink),
             ...{ class: "btn-outline w-full justify-center border-[color:var(--border-card)]" },
         }));
-        const __VLS_92 = __VLS_91({
+        const __VLS_184 = __VLS_183({
             ...{ 'onClick': {} },
             to: (__VLS_ctx.adminLink),
             ...{ class: "btn-outline w-full justify-center border-[color:var(--border-card)]" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_91));
-        let __VLS_94;
-        let __VLS_95;
-        let __VLS_96;
-        const __VLS_97 = {
+        }, ...__VLS_functionalComponentArgsRest(__VLS_183));
+        let __VLS_186;
+        let __VLS_187;
+        let __VLS_188;
+        const __VLS_189 = {
             onClick: (__VLS_ctx.closeMobileMenu)
         };
-        __VLS_93.slots.default;
-        const __VLS_98 = {}.ShieldCheckIcon;
+        __VLS_185.slots.default;
+        const __VLS_190 = {}.ShieldCheckIcon;
         /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_99 = __VLS_asFunctionalComponent(__VLS_98, new __VLS_98({
+        const __VLS_191 = __VLS_asFunctionalComponent(__VLS_190, new __VLS_190({
             ...{ class: "h-5 w-5" },
         }));
-        const __VLS_100 = __VLS_99({
+        const __VLS_192 = __VLS_191({
             ...{ class: "h-5 w-5" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_99));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_191));
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         (__VLS_ctx.adminLinkLabel);
-        var __VLS_93;
+        var __VLS_185;
         if (__VLS_ctx.auth.isAuthenticated && __VLS_ctx.auth.user?.role === 'AdminGeral') {
-            const __VLS_102 = {}.RouterLink;
+            const __VLS_194 = {}.RouterLink;
             /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
             // @ts-ignore
-            const __VLS_103 = __VLS_asFunctionalComponent(__VLS_102, new __VLS_102({
-                ...{ 'onClick': {} },
+            const __VLS_195 = __VLS_asFunctionalComponent(__VLS_194, new __VLS_194({
                 to: "/admin/system-config",
-                ...{ class: "btn-muted w-full justify-center" },
+                ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
             }));
-            const __VLS_104 = __VLS_103({
-                ...{ 'onClick': {} },
+            const __VLS_196 = __VLS_195({
                 to: "/admin/system-config",
-                ...{ class: "btn-muted w-full justify-center" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_103));
-            let __VLS_106;
-            let __VLS_107;
-            let __VLS_108;
-            const __VLS_109 = {
-                onClick: (__VLS_ctx.closeMobileMenu)
-            };
-            __VLS_105.slots.default;
-            var __VLS_105;
+                ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_195));
+            __VLS_197.slots.default;
+            var __VLS_197;
         }
         if (__VLS_ctx.auth.isAuthenticated) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                ...{ onClick: (__VLS_ctx.handleSignOut) },
-                type: "button",
-                ...{ class: "btn-muted w-full justify-center" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative hidden lg:flex" },
+                ref: "profileMenuRef",
             });
-            const __VLS_110 = {}.ArrowRightOnRectangleIcon;
-            /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
+            /** @type {typeof __VLS_ctx.profileMenuRef} */ ;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.toggleProfileMenu) },
+                type: "button",
+                ...{ class: "inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#1f4fff] text-white" },
+            });
+            if (__VLS_ctx.userAvatar) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                    src: (__VLS_ctx.userAvatar),
+                    alt: "Foto de perfil",
+                    ...{ class: "h-full w-full object-cover" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (__VLS_ctx.userInitials);
+            }
+            const __VLS_198 = {}.ChevronDownIcon;
+            /** @type {[typeof __VLS_components.ChevronDownIcon, ]} */ ;
             // @ts-ignore
-            const __VLS_111 = __VLS_asFunctionalComponent(__VLS_110, new __VLS_110({
-                ...{ class: "h-5 w-5" },
+            const __VLS_199 = __VLS_asFunctionalComponent(__VLS_198, new __VLS_198({
+                ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
             }));
-            const __VLS_112 = __VLS_111({
-                ...{ class: "h-5 w-5" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_111));
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_200 = __VLS_199({
+                ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_199));
+            const __VLS_202 = {}.transition;
+            /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
+            // @ts-ignore
+            const __VLS_203 = __VLS_asFunctionalComponent(__VLS_202, new __VLS_202({
+                name: "fade",
+            }));
+            const __VLS_204 = __VLS_203({
+                name: "fade",
+            }, ...__VLS_functionalComponentArgsRest(__VLS_203));
+            __VLS_205.slots.default;
+            if (__VLS_ctx.profileMenuOpen) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex items-center gap-3 rounded-xl bg-white/5 p-2" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "h-12 w-12 overflow-hidden rounded-full bg-[#1f4fff] text-center text-white" },
+                });
+                if (__VLS_ctx.userAvatar) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                        src: (__VLS_ctx.userAvatar),
+                        alt: "Foto de perfil",
+                        ...{ class: "h-full w-full object-cover" },
+                    });
+                }
+                else {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "leading-[3rem]" },
+                    });
+                    (__VLS_ctx.userInitials);
+                }
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex flex-col text-sm text-[color:var(--text)]" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "font-semibold" },
+                });
+                (__VLS_ctx.auth.user?.name);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "text-xs text-[color:var(--text-muted)]" },
+                });
+                (__VLS_ctx.auth.user?.email);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "mt-3 space-y-1 text-sm" },
+                });
+                const __VLS_206 = {}.RouterLink;
+                /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+                // @ts-ignore
+                const __VLS_207 = __VLS_asFunctionalComponent(__VLS_206, new __VLS_206({
+                    ...{ 'onClick': {} },
+                    to: (__VLS_ctx.adminLink),
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }));
+                const __VLS_208 = __VLS_207({
+                    ...{ 'onClick': {} },
+                    to: (__VLS_ctx.adminLink),
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_207));
+                let __VLS_210;
+                let __VLS_211;
+                let __VLS_212;
+                const __VLS_213 = {
+                    onClick: (__VLS_ctx.closeProfileMenu)
+                };
+                __VLS_209.slots.default;
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_214 = {}.ShieldCheckIcon;
+                /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_215 = __VLS_asFunctionalComponent(__VLS_214, new __VLS_214({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_216 = __VLS_215({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_215));
+                var __VLS_209;
+                const __VLS_218 = {}.RouterLink;
+                /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+                // @ts-ignore
+                const __VLS_219 = __VLS_asFunctionalComponent(__VLS_218, new __VLS_218({
+                    ...{ 'onClick': {} },
+                    to: ({ name: 'admin-profile' }),
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }));
+                const __VLS_220 = __VLS_219({
+                    ...{ 'onClick': {} },
+                    to: ({ name: 'admin-profile' }),
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_219));
+                let __VLS_222;
+                let __VLS_223;
+                let __VLS_224;
+                const __VLS_225 = {
+                    onClick: (__VLS_ctx.closeProfileMenu)
+                };
+                __VLS_221.slots.default;
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_226 = {}.UserCircleIcon;
+                /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_227 = __VLS_asFunctionalComponent(__VLS_226, new __VLS_226({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_228 = __VLS_227({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_227));
+                var __VLS_221;
+                if (__VLS_ctx.auth.user?.role === 'AdminGeral') {
+                    const __VLS_230 = {}.RouterLink;
+                    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+                    // @ts-ignore
+                    const __VLS_231 = __VLS_asFunctionalComponent(__VLS_230, new __VLS_230({
+                        ...{ 'onClick': {} },
+                        to: "/admin/system-config",
+                        ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                    }));
+                    const __VLS_232 = __VLS_231({
+                        ...{ 'onClick': {} },
+                        to: "/admin/system-config",
+                        ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_231));
+                    let __VLS_234;
+                    let __VLS_235;
+                    let __VLS_236;
+                    const __VLS_237 = {
+                        onClick: (__VLS_ctx.closeProfileMenu)
+                    };
+                    __VLS_233.slots.default;
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    const __VLS_238 = {}.Cog6ToothIcon;
+                    /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
+                    // @ts-ignore
+                    const __VLS_239 = __VLS_asFunctionalComponent(__VLS_238, new __VLS_238({
+                        ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                    }));
+                    const __VLS_240 = __VLS_239({
+                        ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_239));
+                    var __VLS_233;
+                }
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (() => { __VLS_ctx.closeProfileMenu(); __VLS_ctx.handleSignOut(); }) },
+                    type: "button",
+                    ...{ class: "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_242 = {}.ArrowRightOnRectangleIcon;
+                /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_243 = __VLS_asFunctionalComponent(__VLS_242, new __VLS_242({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_244 = __VLS_243({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_243));
+            }
+            var __VLS_205;
         }
     }
-    var __VLS_89;
+    var __VLS_181;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[98%] flex-col rounded-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)]/95 px-4 py-10 shadow-[0_45px_120px_-60px_rgba(15,23,42,0.45)] backdrop-blur 2xl:max-w-[1900px] sm:px-6" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
         ...{ class: "flex-1 pb-10" },
     });
-    const __VLS_114 = {}.RouterView;
+    const __VLS_246 = {}.RouterView;
     /** @type {[typeof __VLS_components.RouterView, ]} */ ;
     // @ts-ignore
-    const __VLS_115 = __VLS_asFunctionalComponent(__VLS_114, new __VLS_114({}));
-    const __VLS_116 = __VLS_115({}, ...__VLS_functionalComponentArgsRest(__VLS_115));
+    const __VLS_247 = __VLS_asFunctionalComponent(__VLS_246, new __VLS_246({}));
+    const __VLS_248 = __VLS_247({}, ...__VLS_functionalComponentArgsRest(__VLS_247));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.footer, __VLS_intrinsicElements.footer)({
         ...{ class: "mt-auto border-t border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)] py-6 text-center text-sm text-[color:var(--text-muted)]" },
     });
     (new Date().getFullYear());
 }
+/** @type {__VLS_StyleScopedClasses['sticky']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-[60]']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['min-h-screen']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-[color:var(--background)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
@@ -850,25 +1412,135 @@ else {
 /** @type {__VLS_StyleScopedClasses['hidden']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
 /** @type {__VLS_StyleScopedClasses['hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#0b1220]']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-black/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/15']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-md']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-muted']} */ ;
-/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[#475569]']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-64']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[color:var(--surface-card)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['backdrop-blur']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-[3rem]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-11']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-11']} */ ;
@@ -1006,25 +1678,135 @@ else {
 /** @type {__VLS_StyleScopedClasses['hidden']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
 /** @type {__VLS_StyleScopedClasses['hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#0b1220]']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-black/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/15']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-md']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-muted']} */ ;
-/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[#475569]']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-[color:var(--text)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-64']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[color:var(--surface-card)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['backdrop-blur']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-[3rem]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-11']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-11']} */ ;
@@ -1081,13 +1863,138 @@ else {
 /** @type {__VLS_StyleScopedClasses['h-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-muted']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#0b1220]']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-black/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/15']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-muted']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#475569]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-64']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[color:var(--surface-card)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['backdrop-blur']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#1f4fff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-[3rem]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['mx-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['min-h-[calc(100vh-72px)]']} */ ;
@@ -1122,10 +2029,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             RouterView: RouterView,
             ArrowRightOnRectangleIcon: ArrowRightOnRectangleIcon,
             Bars3Icon: Bars3Icon,
+            Cog6ToothIcon: Cog6ToothIcon,
             MoonIcon: MoonIcon,
             ShieldCheckIcon: ShieldCheckIcon,
             SunIcon: SunIcon,
+            UserCircleIcon: UserCircleIcon,
             XMarkIcon: XMarkIcon,
+            ChevronDownIcon: ChevronDownIcon,
             LoadingOverlay: LoadingOverlay,
             AdminSidebar: AdminSidebar,
             isDark: isDark,
@@ -1133,15 +2043,21 @@ const __VLS_self = (await import('vue')).defineComponent({
             auth: auth,
             mobileMenuOpen: mobileMenuOpen,
             isSidebarOpen: isSidebarOpen,
+            profileMenuOpen: profileMenuOpen,
+            apiOffline: apiOffline,
+            profileMenuRef: profileMenuRef,
             adminMenuItems: adminMenuItems,
             isAdminLayout: isAdminLayout,
             toggleSidebar: toggleSidebar,
+            toggleProfileMenu: toggleProfileMenu,
+            closeProfileMenu: closeProfileMenu,
             activeBrandLogo: activeBrandLogo,
             adminLink: adminLink,
             adminLinkLabel: adminLinkLabel,
             greetingMessage: greetingMessage,
             handleSignOut: handleSignOut,
             userInitials: userInitials,
+            userAvatar: userAvatar,
             toggleMobileMenu: toggleMobileMenu,
             closeMobileMenu: closeMobileMenu,
         };

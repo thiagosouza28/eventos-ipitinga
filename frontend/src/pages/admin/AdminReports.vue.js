@@ -107,6 +107,25 @@ const eventReport = reactive({
 });
 const eventParticipants = ref([]);
 const selectedEvent = computed(() => accessibleEvents.value.find((event) => event.id === eventReport.eventId) ?? null);
+const normalizeRegistrationStatus = (status) => {
+    if (!status)
+        return "PENDING_PAYMENT";
+    const map = {
+        PENDING: "PENDING_PAYMENT",
+        PENDING_PAYMENT: "PENDING_PAYMENT",
+        PAID: "PAID",
+        CHECKED_IN: "CHECKED_IN",
+        CANCELED: "CANCELED",
+        CANCELLED: "CANCELED",
+        REFUNDED: "REFUNDED",
+        DRAFT: "DRAFT"
+    };
+    return (map[status] ?? status);
+};
+const normalizeParticipants = (list) => list.map((participant) => ({
+    ...participant,
+    status: normalizeRegistrationStatus(participant.status)
+}));
 const fetchParticipantsForEvent = async (eventId) => {
     const params = { eventId };
     if (!isGeneralAdmin.value && scopedDistrictId.value) {
@@ -124,8 +143,9 @@ const loadEventParticipants = async () => {
     eventReport.loading = true;
     try {
         const data = await fetchParticipantsForEvent(eventReport.eventId);
-        eventParticipants.value = data;
-        setCachedParticipants(eventReport.eventId, data);
+        const normalized = normalizeParticipants(data);
+        eventParticipants.value = normalized;
+        setCachedParticipants(eventReport.eventId, normalized);
         eventReport.generatedAt = new Date();
     }
     catch (error) {
@@ -191,7 +211,7 @@ const loadChurchParticipants = async () => {
         if (churchReport.churchId)
             params.churchId = churchReport.churchId;
         const response = await api.get("/admin/registrations", { params });
-        churchParticipants.value = response.data;
+        churchParticipants.value = normalizeParticipants(response.data);
     }
     catch (error) {
         showError("Erro ao carregar participantes da igreja", error);

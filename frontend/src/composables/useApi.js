@@ -32,10 +32,20 @@ const attachLoaderInterceptors = (client) => {
     client.interceptors.response.use((response) => {
         const loader = useLoaderStore();
         loader.stop();
+        if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("api-online"));
+        }
         return response;
     }, (error) => {
         const loader = useLoaderStore();
         loader.stop();
+        if (!error.response && typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("api-offline", {
+                detail: {
+                    message: "Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente."
+                }
+            }));
+        }
         if (error.response?.status === 401) {
             const auth = useAuthStore();
             auth.signOut();

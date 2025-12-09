@@ -1,6 +1,14 @@
 ﻿<template>
   <div :class="{ dark: isDark }">
     <LoadingOverlay />
+    <transition name="offline-banner">
+      <div
+        v-if="apiOffline"
+        class="sticky top-0 z-[60] w-full bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
+      >
+        Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente.
+      </div>
+    </transition>
     <div class="min-h-screen bg-[color:var(--background)] text-[color:var(--text)] transition-colors">
       <template v-if="isAdminLayout">
         <div class="flex min-h-screen flex-col md:flex-row">
@@ -40,28 +48,77 @@
                     <ShieldCheckIcon class="h-5 w-5" aria-hidden="true" />
                     <span>{{ adminLinkLabel }}</span>
                   </RouterLink>
-                  <RouterLink
-                    v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
+                                    <RouterLink
+                v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
                     to="/admin/system-config"
                     class="btn-muted hidden font-medium sm:inline-flex"
                   >
                     Configurações
                   </RouterLink>
-                  <div
-                    v-if="auth.isAuthenticated"
-                    class="hidden h-10 w-10 items-center justify-center rounded-full bg-[#1f4fff] text-sm font-semibold text-white shadow-md lg:flex"
-                  >
-                    {{ userInitials }}
+                  <div v-if="auth.isAuthenticated" class="relative hidden lg:flex" ref="profileMenuRef">
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30"
+                      @click.stop="toggleProfileMenu"
+                    >
+                      <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#1f4fff] text-white">
+                        <img v-if="userAvatar" :src="userAvatar" alt="Foto de perfil" class="h-full w-full object-cover" />
+                        <span v-else>{{ userInitials }}</span>
+                      </div>
+                      <ChevronDownIcon class="h-4 w-4 text-[#475569] dark:text-white" />
+                    </button>
+                    <transition name="fade">
+                      <div
+                        v-if="profileMenuOpen"
+                        class="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur"
+                      >
+                        <div class="flex items-center gap-3 rounded-xl bg-white/5 p-2">
+                          <div class="h-12 w-12 overflow-hidden rounded-full bg-[#1f4fff] text-center text-white">
+                            <img v-if="userAvatar" :src="userAvatar" alt="Foto de perfil" class="h-full w-full object-cover" />
+                            <span v-else class="leading-[3rem]">{{ userInitials }}</span>
+                          </div>
+                          <div class="flex flex-col text-sm text-[color:var(--text)]">
+                            <span class="font-semibold">{{ auth.user?.name }}</span>
+                            <span class="text-xs text-[color:var(--text-muted)]">{{ auth.user?.email }}</span>
+                          </div>
+                        </div>
+                        <div class="mt-3 space-y-1 text-sm">
+                          <RouterLink
+                            :to="adminLink"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Painel admin</span>
+                            <ShieldCheckIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink>
+                                                    <RouterLink
+                            :to="{ name: 'admin-profile' }"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Meus dados</span>
+                            <UserCircleIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink><RouterLink
+                            v-if="auth.user?.role === 'AdminGeral'"
+                            to="/admin/system-config"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Configurações</span>
+                            <Cog6ToothIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink>
+                          <button
+                            type="button"
+                            class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="() => { closeProfileMenu(); handleSignOut(); }"
+                          >
+                            <span>Sair</span>
+                            <ArrowRightOnRectangleIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </button>
+                        </div>
+                      </div>
+                    </transition>
                   </div>
-                  <button
-                    v-if="auth.isAuthenticated"
-                    type="button"
-                    class="btn-muted hidden text-[#475569] dark:text-white sm:inline-flex"
-                    @click="handleSignOut"
-                  >
-                    <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
-                    <span>Sair</span>
-                  </button>
                   <button
                     type="button"
                     class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white md:hidden dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25"
@@ -115,28 +172,77 @@
                   <ShieldCheckIcon class="h-5 w-5" aria-hidden="true" />
                   <span>{{ adminLinkLabel }}</span>
                 </RouterLink>
-                <RouterLink
-                  v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
-                  to="/admin/system-config"
-                  class="btn-muted hidden font-medium sm:inline-flex"
-                >
-                  Configurações
-                </RouterLink>
-                <div
-                  v-if="auth.isAuthenticated"
-                  class="hidden h-10 w-10 items-center justify-center rounded-full bg-[#1f4fff] text-sm font-semibold text-white shadow-md lg:flex"
-                >
-                  {{ userInitials }}
-                </div>
-                <button
-                  v-if="auth.isAuthenticated"
-                  type="button"
-                  class="btn-muted hidden text-[#475569] dark:text-[color:var(--text)] sm:inline-flex"
-                  @click="handleSignOut"
-                >
-                  <ArrowRightOnRectangleIcon class="h-5 w-5" aria-hidden="true" />
-                  <span>Sair</span>
-                </button>
+                                  <RouterLink
+                    v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
+                    to="/admin/system-config"
+                    class="btn-muted hidden font-medium sm:inline-flex"
+                  >
+                    Configurações
+                  </RouterLink>
+                  <div v-if="auth.isAuthenticated" class="relative hidden lg:flex" ref="profileMenuRef">
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30"
+                      @click.stop="toggleProfileMenu"
+                    >
+                      <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#1f4fff] text-white">
+                        <img v-if="userAvatar" :src="userAvatar" alt="Foto de perfil" class="h-full w-full object-cover" />
+                        <span v-else>{{ userInitials }}</span>
+                      </div>
+                      <ChevronDownIcon class="h-4 w-4 text-[#475569] dark:text-white" />
+                    </button>
+                    <transition name="fade">
+                      <div
+                        v-if="profileMenuOpen"
+                        class="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur"
+                      >
+                        <div class="flex items-center gap-3 rounded-xl bg-white/5 p-2">
+                          <div class="h-12 w-12 overflow-hidden rounded-full bg-[#1f4fff] text-center text-white">
+                            <img v-if="userAvatar" :src="userAvatar" alt="Foto de perfil" class="h-full w-full object-cover" />
+                            <span v-else class="leading-[3rem]">{{ userInitials }}</span>
+                          </div>
+                          <div class="flex flex-col text-sm text-[color:var(--text)]">
+                            <span class="font-semibold">{{ auth.user?.name }}</span>
+                            <span class="text-xs text-[color:var(--text-muted)]">{{ auth.user?.email }}</span>
+                          </div>
+                        </div>
+                        <div class="mt-3 space-y-1 text-sm">
+                          <RouterLink
+                            :to="adminLink"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Painel admin</span>
+                            <ShieldCheckIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink>
+                                                    <RouterLink
+                            :to="{ name: 'admin-profile' }"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Meus dados</span>
+                            <UserCircleIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink><RouterLink
+                            v-if="auth.user?.role === 'AdminGeral'"
+                            to="/admin/system-config"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Configurações</span>
+                            <Cog6ToothIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink>
+                          <button
+                            type="button"
+                            class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="() => { closeProfileMenu(); handleSignOut(); }"
+                          >
+                            <span>Sair</span>
+                            <ArrowRightOnRectangleIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </button>
+                        </div>
+                      </div>
+                    </transition>
+                  </div>
                 <button
                   type="button"
                   class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-neutral-700 shadow-sm transition hover:bg-[#f7f8ff] dark:border-[color:var(--border-card)] dark:bg-[color:var(--surface-card-alt)] dark:text-[color:var(--text)] sm:hidden"
@@ -164,18 +270,77 @@
                 <ShieldCheckIcon class="h-5 w-5" />
                 <span>{{ adminLinkLabel }}</span>
               </RouterLink>
-              <RouterLink
-                v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
-                to="/admin/system-config"
-                class="btn-muted w-full justify-center"
-                @click="closeMobileMenu"
-              >
-                Configurações
-              </RouterLink>
-              <button v-if="auth.isAuthenticated" type="button" class="btn-muted w-full justify-center" @click="handleSignOut">
-                <ArrowRightOnRectangleIcon class="h-5 w-5" />
-                <span>Sair</span>
-              </button>
+                                <RouterLink
+                    v-if="auth.isAuthenticated && auth.user?.role === 'AdminGeral'"
+                    to="/admin/system-config"
+                    class="btn-muted hidden font-medium sm:inline-flex"
+                  >
+                    Configurações
+                  </RouterLink>
+                  <div v-if="auth.isAuthenticated" class="relative hidden lg:flex" ref="profileMenuRef">
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30"
+                      @click.stop="toggleProfileMenu"
+                    >
+                      <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-[#1f4fff] text-white">
+                        <img v-if="userAvatar" :src="userAvatar" alt="Foto de perfil" class="h-full w-full object-cover" />
+                        <span v-else>{{ userInitials }}</span>
+                      </div>
+                      <ChevronDownIcon class="h-4 w-4 text-[#475569] dark:text-white" />
+                    </button>
+                    <transition name="fade">
+                      <div
+                        v-if="profileMenuOpen"
+                        class="absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur"
+                      >
+                        <div class="flex items-center gap-3 rounded-xl bg-white/5 p-2">
+                          <div class="h-12 w-12 overflow-hidden rounded-full bg-[#1f4fff] text-center text-white">
+                            <img v-if="userAvatar" :src="userAvatar" alt="Foto de perfil" class="h-full w-full object-cover" />
+                            <span v-else class="leading-[3rem]">{{ userInitials }}</span>
+                          </div>
+                          <div class="flex flex-col text-sm text-[color:var(--text)]">
+                            <span class="font-semibold">{{ auth.user?.name }}</span>
+                            <span class="text-xs text-[color:var(--text-muted)]">{{ auth.user?.email }}</span>
+                          </div>
+                        </div>
+                        <div class="mt-3 space-y-1 text-sm">
+                          <RouterLink
+                            :to="adminLink"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Painel admin</span>
+                            <ShieldCheckIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink>
+                                                    <RouterLink
+                            :to="{ name: 'admin-profile' }"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Meus dados</span>
+                            <UserCircleIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink><RouterLink
+                            v-if="auth.user?.role === 'AdminGeral'"
+                            to="/admin/system-config"
+                            class="flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="closeProfileMenu"
+                          >
+                            <span>Configurações</span>
+                            <Cog6ToothIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </RouterLink>
+                          <button
+                            type="button"
+                            class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10"
+                            @click="() => { closeProfileMenu(); handleSignOut(); }"
+                          >
+                            <span>Sair</span>
+                            <ArrowRightOnRectangleIcon class="h-4 w-4 text-[color:var(--text-muted)]" />
+                          </button>
+                        </div>
+                      </div>
+                    </transition>
+                  </div>
             </div>
           </transition>
         </header>
@@ -213,9 +378,11 @@ import {
   ShieldCheckIcon,
   Squares2X2Icon,
   SunIcon,
+  UserCircleIcon,
   UserPlusIcon,
   UsersIcon,
-  XMarkIcon
+  XMarkIcon,
+  ChevronDownIcon
 } from "@heroicons/vue/24/outline";
 
 import { useTheme } from "./composables/useTheme";
@@ -234,8 +401,11 @@ const { config: systemConfig } = storeToRefs(systemConfigStore);
 const mobileMenuOpen = ref(false);
 const currentTime = ref(new Date());
 const isSidebarOpen = ref(true);
+const profileMenuOpen = ref(false);
+const apiOffline = ref(false);
 const mobileViewportBreakpoint = 768;
 let timer: number | undefined;
+const profileMenuRef = ref<HTMLElement | null>(null);
 
 const isMobileViewport = () => typeof window !== "undefined" && window.innerWidth < mobileViewportBreakpoint;
 
@@ -260,17 +430,17 @@ const baseAdminMenu: MenuDefinition[] = [
   { label: "Eventos", to: { name: "admin-events" }, icon: CalendarDaysIcon, module: "events" },
   { label: "Distritos", to: { name: "admin-districts" }, icon: MapPinIcon, module: "districts" },
   { label: "Igrejas", to: { name: "admin-churches" }, icon: BuildingOffice2Icon, module: "churches" },
-  { label: "Ministerios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
-  { label: "Usuarios", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
-  { label: "Permissoes", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
+  { label: "Ministérios", to: { name: "admin-ministries" }, icon: UsersIcon, module: "ministries" },
+  { label: "Usuários", to: { name: "admin-users" }, icon: UserPlusIcon, module: "users" },
+  { label: "Permissões", to: { name: "admin-profiles" }, icon: ShieldCheckIcon, module: "profiles" },
   { label: "Pedidos", to: { name: "admin-orders" }, icon: ClipboardDocumentListIcon, module: "orders" },
-  { label: "Inscricoes", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
-  { label: "Relatorios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
+  { label: "Inscrições", to: { name: "admin-registrations" }, icon: UsersIcon, module: "registrations" },
+  { label: "Relatórios", to: { name: "admin-reports", params: { tab: "event" } }, icon: PresentationChartBarIcon, module: "reports" },
   { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
   { label: "Financeiro (responsáveis)", to: { name: "admin-district-finance" }, icon: BanknotesIcon, module: "financial" },
   { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
   { label: "PIX / Pagamentos", to: { name: "admin-pix-config" }, icon: Cog6ToothIcon, requiresRole: "AdminGeral" },
-  { label: "Configuracoes", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
+  { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
 ];
 
 const adminMenuItems = computed(() =>
@@ -310,6 +480,29 @@ const handleViewportResize = () => {
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
+};
+
+const handleApiOffline = () => {
+  apiOffline.value = true;
+};
+
+const handleApiOnline = () => {
+  apiOffline.value = false;
+};
+
+const toggleProfileMenu = () => {
+  profileMenuOpen.value = !profileMenuOpen.value;
+};
+
+const closeProfileMenu = () => {
+  profileMenuOpen.value = false;
+};
+
+const handleOutsideClick = (event: MouseEvent) => {
+  const target = event.target as Node | null;
+  if (profileMenuOpen.value && profileMenuRef.value && target && !profileMenuRef.value.contains(target)) {
+    closeProfileMenu();
+  }
 };
 
 watch(
@@ -382,6 +575,9 @@ onMounted(() => {
       isSidebarOpen.value = false;
     }
     window.addEventListener("resize", handleViewportResize);
+    window.addEventListener("api-offline", handleApiOffline);
+    window.addEventListener("api-online", handleApiOnline);
+    window.addEventListener("click", handleOutsideClick);
   }
   if (typeof window !== "undefined") {
     timer = window.setInterval(() => {
@@ -396,6 +592,9 @@ onBeforeUnmount(() => {
   }
   if (typeof window !== "undefined") {
     window.removeEventListener("resize", handleViewportResize);
+    window.removeEventListener("api-offline", handleApiOffline);
+    window.removeEventListener("api-online", handleApiOnline);
+    window.removeEventListener("click", handleOutsideClick);
   }
   lockBodyScroll(false);
 });
@@ -420,6 +619,8 @@ const userInitials = computed(() => {
   return letters || "CI";
 });
 
+const userAvatar = computed(() => auth.user?.photoUrl?.trim() ?? "");
+
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value;
 };
@@ -438,7 +639,32 @@ const closeMobileMenu = () => {
 .fade-leave-to {
   opacity: 0;
 }
+
+.offline-banner-enter-active,
+.offline-banner-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.offline-banner-enter-from,
+.offline-banner-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

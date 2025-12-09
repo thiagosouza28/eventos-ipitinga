@@ -2,6 +2,22 @@ import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
 
 export class FinancialService {
+  private computeFeeAndNet(
+    totalCents: number,
+    feeCents: number | null | undefined,
+    netAmountCents: number | null | undefined,
+    paymentMethod?: string | null
+  ) {
+    const method = paymentMethod ? paymentMethod.toUpperCase() : "";
+    const fallbackFee = method === "PIX_MP" ? Math.round(totalCents * 0.0094) : 0;
+    const fee = feeCents !== null && feeCents !== undefined && feeCents > 0 ? feeCents : fallbackFee;
+    const net =
+      netAmountCents !== null && netAmountCents !== undefined && netAmountCents > 0
+        ? netAmountCents
+        : totalCents - fee;
+    return { fee, net };
+  }
+
   /**
    * Retorna o resumo financeiro de um evento
    */
@@ -61,13 +77,20 @@ export class FinancialService {
     }
 
     // Converter BigInt para Number
-    const paidOrdersBase = paidOrdersRaw.map(row => ({
-      id: row.id,
-      totalCents: Number(row.totalCents),
-      feeCents: Number(row.feeCents || 0),
-      netAmountCents: Number(row.netAmountCents || row.totalCents),
-      paymentMethod: (row as any).paymentMethod as string | null
-    }));
+    const paidOrdersBase = paidOrdersRaw.map((row) => {
+      const total = Number(row.totalCents);
+      const fee = row.feeCents !== null && row.feeCents !== undefined ? Number(row.feeCents) : null;
+      const netRaw = row.netAmountCents !== null && row.netAmountCents !== undefined ? Number(row.netAmountCents) : null;
+      const method = (row as any).paymentMethod as string | null;
+      const normalized = this.computeFeeAndNet(total, fee, netRaw, method);
+      return {
+        id: row.id,
+        totalCents: total,
+        feeCents: normalized.fee,
+        netAmountCents: normalized.net,
+        paymentMethod: method
+      };
+    });
 
     // Buscar registrations separadamente para evitar problemas com Prisma Client
     const orderIds = paidOrdersBase.map(o => o.id);
@@ -134,12 +157,12 @@ export class FinancialService {
       totalGrossCents += order.totalCents;
       totalFeesCents += order.feeCents;
       totalNetCents += order.netAmountCents;
-      const method = (order as any).paymentMethod ? String((order as any).paymentMethod).toUpperCase() : '';
-      if (method === 'PIX_MP') {
+      const method = (order as any).paymentMethod ? String((order as any).paymentMethod).toUpperCase() : "";
+      if (method === "PIX_MP") {
         pixGrossCents += order.totalCents;
         pixFeesCents += order.feeCents;
         pixNetCents += order.netAmountCents;
-      } else if (method === 'CASH') {
+      } else if (method === "CASH") {
         cashCents += order.totalCents;
       }
     }
@@ -266,10 +289,15 @@ export class FinancialService {
         totalGrossCents += priceCents;
         // Distribuir taxas proporcionalmente (assumir 1 registro por pedido se não houver preço)
         const registrationShare = priceCents > 0 && order.totalCents > 0 ? priceCents / order.totalCents : 1;
-        const feeCents = (order as any).feeCents;
-        const netAmountCents = (order as any).netAmountCents;
-        totalFeesCents += (feeCents !== undefined && feeCents !== null ? feeCents : 0) * registrationShare;
-        totalNetCents += (netAmountCents !== undefined && netAmountCents !== null ? netAmountCents : order.totalCents) * registrationShare;
+        const method = (order as any).paymentMethod as string | null;
+        const normalized = this.computeFeeAndNet(
+          order.totalCents,
+          (order as any).feeCents,
+          (order as any).netAmountCents,
+          method
+        );
+        totalFeesCents += normalized.fee * registrationShare;
+        totalNetCents += normalized.net * registrationShare;
       }
     }
 
@@ -331,10 +359,15 @@ export class FinancialService {
         totalGrossCents += priceCents;
         // Distribuir taxas proporcionalmente (assumir 1 registro por pedido se não houver preço)
         const registrationShare = priceCents > 0 && order.totalCents > 0 ? priceCents / order.totalCents : 1;
-        const feeCents = (order as any).feeCents;
-        const netAmountCents = (order as any).netAmountCents;
-        totalFeesCents += (feeCents !== undefined && feeCents !== null ? feeCents : 0) * registrationShare;
-        totalNetCents += (netAmountCents !== undefined && netAmountCents !== null ? netAmountCents : order.totalCents) * registrationShare;
+        const method = (order as any).paymentMethod as string | null;
+        const normalized = this.computeFeeAndNet(
+          order.totalCents,
+          (order as any).feeCents,
+          (order as any).netAmountCents,
+          method
+        );
+        totalFeesCents += normalized.fee * registrationShare;
+        totalNetCents += normalized.net * registrationShare;
       }
     }
 

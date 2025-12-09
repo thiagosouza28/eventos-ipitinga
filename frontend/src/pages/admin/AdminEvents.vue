@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="eventPermissions.canList" class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -54,7 +54,7 @@
       </div>
       <TableSkeleton
         v-if="loadingEvents"
-        helperText="🔄 Carregando eventos..."
+        helperText="ðŸ”„ Carregando eventos..."
       />
       <div
         v-else
@@ -63,14 +63,14 @@
         <table class="w-full table-auto text-left text-sm text-neutral-700 dark:text-neutral-200">
           <thead class="bg-white/50 text-[11px] uppercase tracking-wide text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400">
             <tr>
-              <th class="px-4 py-3">T?tulo</th>
-              <th class="px-4 py-3">Distrito / Igreja</th>
-              <th class="px-4 py-3">Per?odo</th>
+              <th class="px-4 py-3">Título</th>
+              <th class="px-4 py-3">Distrito</th>
+              <th class="px-4 py-3">Período</th>
               <th class="px-4 py-3">Valor vigente</th>
               <th class="px-4 py-3">Regra de valor pendente</th>
               <th class="px-4 py-3">Lote atual</th>
               <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3 text-right">A??es</th>
+              <th class="px-4 py-3 text-right">Açoes</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -83,10 +83,7 @@
               </td>
               <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
                 <div class="font-semibold text-neutral-900 dark:text-neutral-100">
-                  {{ event.district?.name ?? "N??o informado" }}
-                </div>
-                <div class="text-xs text-neutral-500 dark:text-neutral-400">
-                  {{ event.church?.name ?? "Igreja n??o vinculada" }}
+                  {{ event.district?.name ?? "Nao informado" }}
                 </div>
               </td>
               <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
@@ -164,7 +161,7 @@
         >
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Título</p>
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">TÃ­tulo</p>
               <p class="text-base font-semibold text-neutral-900 dark:text-white">{{ event.title }}</p>
               <p class="text-xs text-neutral-500 dark:text-neutral-400">Slug: {{ event.slug }}</p>
             </div>
@@ -181,7 +178,7 @@
           </div>
           <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
             <div>
-              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Início</p>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">InÃ­cio</p>
               <p>{{ formatDate(event.startDate) }}</p>
             </div>
             <div>
@@ -199,10 +196,6 @@
             <div>
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">Distrito</p>
               <p>{{ event.district?.name ?? "Nao informado" }}</p>
-            </div>
-            <div>
-              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Igreja</p>
-              <p>{{ event.church?.name ?? "Nao vinculada" }}</p>
             </div>
             <div class="col-span-2">
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">Regra de valor pendente</p>
@@ -265,7 +258,7 @@
       <form class="mt-2 grid gap-4 md:grid-cols-2" @submit.prevent="submitCreate">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Título
+            TÃ­tulo
           </label>
           <input
             v-model="createForm.title"
@@ -299,7 +292,7 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Descricao
+            Descrição
           </label>
           <textarea
             v-model="createForm.description"
@@ -352,7 +345,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Data de inicio
+            Data de início
           </label>
           <input
             v-model="createForm.startDate"
@@ -363,7 +356,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Data de termino
+            Data de término
           </label>
           <input
             v-model="createForm.endDate"
@@ -385,7 +378,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Idade minima
+            Idade mínima
           </label>
           <input
             v-model="createForm.minAgeYears"
@@ -414,30 +407,6 @@
           </select>
           <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             Todo evento precisa de um distrito para gerar relatórios e repasses.
-          </p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Igreja
-          </label>
-          <select
-            v-model="createForm.churchId"
-            :disabled="createChurchLocked || !createForm.districtId || churchesLoading.create"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
-          >
-            <option value="">
-              {{ createChurchLocked ? "Usando sua igreja vinculada" : "Selecione..." }}
-            </option>
-            <option
-              v-for="church in createChurchOptions"
-              :key="church.id"
-              :value="church.id"
-            >
-              {{ church.name }}
-            </option>
-          </select>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Se o distrito for o seu, usamos automaticamente a igreja vinculada ao seu perfil.
           </p>
         </div>
         <div class="md:col-span-2">
@@ -487,12 +456,12 @@
               type="checkbox"
               class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
             />
-            Evento gratuito
+            Evento gratuíto
           </label>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Ministerio responsavel
+            Ministério responsavel
           </label>
           <select
             v-model="createForm.ministryId"
@@ -572,7 +541,7 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Descricao
+            Descrição
           </label>
           <textarea
             v-model="editForm.description"
@@ -625,7 +594,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Data de inicio
+            Data de início
           </label>
           <input
             v-model="editForm.startDate"
@@ -636,7 +605,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Data de termino
+            Data de término
           </label>
           <input
             v-model="editForm.endDate"
@@ -658,7 +627,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Idade minima
+            Idade mínima
           </label>
           <input
             v-model="editForm.minAgeYears"
@@ -686,36 +655,12 @@
             </option>
           </select>
           <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Mantemos o distrito obrigatório para garantir repasses corretos.
-          </p>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Igreja
-          </label>
-          <select
-            v-model="editForm.churchId"
-            :disabled="editChurchLocked || !editForm.districtId || churchesLoading.edit"
-            class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm disabled:opacity-70 dark:border-neutral-700 dark:bg-neutral-800"
-          >
-            <option value="">
-              {{ editChurchLocked ? "Usando sua igreja vinculada" : "Selecione..." }}
-            </option>
-            <option
-              v-for="church in editChurchOptions"
-              :key="church.id"
-              :value="church.id"
-            >
-              {{ church.name }}
-            </option>
-          </select>
-          <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            No distrito do proprio usuario, a igreja e preenchida automaticamente.
+            Mantemos o distrito obrigatÃ³rio para garantir repasses corretos.
           </p>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Formas de pagamento disponiveis
+            Formas de pagamento disponíveis
           </label>
           <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label
@@ -760,12 +705,12 @@
               type="checkbox"
               class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
             />
-            Evento gratuito
+            Evento gratuíto
           </label>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Ministerio responsavel
+            Ministério responsável
           </label>
           <select
             v-model="editForm.ministryId"
@@ -845,7 +790,7 @@
 
           <dl class="mt-6 grid gap-4 text-sm text-white/80 sm:grid-cols-2">
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Periodo</dt>
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Período</dt>
               <dd class="mt-1 font-semibold text-white">
                 {{ formatDate(details.event?.startDate ?? '') }} - {{ formatDate(details.event?.endDate ?? '') }}
               </dd>
@@ -861,10 +806,6 @@
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Distrito</dt>
               <dd class="mt-1 font-semibold text-white">{{ details.event?.district?.name ?? 'Nao informado' }}</dd>
-            </div>
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Igreja</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.church?.name ?? 'Nao vinculada' }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Valor atual</dt>
@@ -900,7 +841,7 @@
           <div v-if="!details.event?.isFree" class="mt-8 space-y-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p class="text-xs uppercase tracking-[0.3em] text-white/60">Lotes de inscricao</p>
+                <p class="text-xs uppercase tracking-[0.3em] text-white/60">Lotes de inscrição</p>
                 <p class="text-sm text-white/70">
                   Valor vigente: <span class="font-semibold text-white">{{ currentPriceDisplay }}</span>
                   <span class="ml-1 text-white/60">(base: {{ basePriceDisplay }})</span>
@@ -987,7 +928,7 @@
           </div>
 
           <div v-else class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/80">
-            Este evento é gratuito. Não há lotes cadastrados e todas as inscrições são confirmadas automaticamente.
+            Este evento é gratuíto. Não há lotes cadastrados e todas as inscrições são confirmadas automaticamente.
           </div>
 
           <div class="mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:justify-between">
@@ -1043,7 +984,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-              Inicio
+              Início
             </label>
             <input
               v-model="lotForm.startsAt"
@@ -1085,7 +1026,7 @@
             class="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
             :disabled="lotSaving"
           >
-            {{ lotSaving ? 'Salvando...' : editingLotId ? 'Salvar alterações' : 'Adicionar lote' }}
+            {{ lotSaving ? 'Salvando...' : editingLotId ? 'Salvar alteraÃ§Ãµes' : 'Adicionar lote' }}
           </button>
         </div>
       </form>
@@ -1329,7 +1270,7 @@ const confirmDeleteDescription = computed(() => {
   if (!confirmDelete.target) {
     return "Confirme a exclusão do evento selecionado.";
   }
-  return `Tem certeza que deseja excluir o evento "${confirmDelete.target.title}"? Esta acao não pode ser desfeita.`;
+  return `Tem certeza que deseja excluir o evento "${confirmDelete.target.title}"? Esta ação não pode ser desfeita.`;
 });
 
 const details = reactive({
@@ -1462,7 +1403,7 @@ const isCurrentLot = (lot: EventLot) => details.event?.currentLot?.id === lot.id
 
 const currentPriceDisplay = computed(() =>
   details.event?.isFree
-    ? "Gratuito"
+    ? "Gratuíto"
     : formatCurrency(details.event?.currentPriceCents ?? details.event?.priceCents ?? 0)
 );
 const basePriceDisplay = computed(() =>
@@ -1623,7 +1564,7 @@ const cancelLotEdit = () => {
 };
 
 const openLotCreateModal = () => {
-  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes.")) {
+  if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes")) {
     return;
   }
   resetLotForm();
@@ -1713,14 +1654,14 @@ const submitLot = async () => {
     return;
   }
   if (!lotForm.startsAt) {
-    showError("Falha ao salvar lote", { message: "Informe a data de inicio do lote." });
+    showError("Falha ao salvar lote", { message: "Informe a data de início do lote." });
     return;
   }
 
   const priceCents = toPriceCents(lotForm.price);
   const startDate = new Date(lotForm.startsAt);
   if (Number.isNaN(startDate.getTime())) {
-    showError("Falha ao salvar lote", { message: "Data inicial invalida." });
+    showError("Falha ao salvar lote", { message: "Data inicial inválida." });
     return;
   }
 
@@ -1728,7 +1669,7 @@ const submitLot = async () => {
   if (lotForm.endsAt) {
     const endDate = new Date(lotForm.endsAt);
     if (Number.isNaN(endDate.getTime())) {
-      showError("Falha ao salvar lote", { message: "Data final invalida." });
+      showError("Falha ao salvar lote", { message: "Data final inválida." });
       return;
     }
     if (endDate <= startDate) {
@@ -1827,8 +1768,6 @@ const submitCreate = async () => {
     });
     return;
   }
-  const selectedChurchId =
-    (createChurchLocked.value ? userChurchId.value : createForm.churchId) || undefined;
   const normalizedSlug = sanitizeSlugInput(createForm.slug);
   savingCreate.value = true;
   try {
@@ -1847,8 +1786,7 @@ const submitCreate = async () => {
       minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
       isActive: true,
       ministryId: createForm.ministryId,
-      districtId: createForm.districtId,
-      churchId: selectedChurchId
+      districtId: createForm.districtId
     } as Partial<ApiEvent>);
     resetCreateForm();
     createModalOpen.value = false;
@@ -1883,8 +1821,6 @@ const submitEdit = async () => {
     });
     return;
   }
-  const selectedChurchId =
-    (editChurchLocked.value ? userChurchId.value : editForm.churchId) || undefined;
   const normalizedSlug = sanitizeSlugInput(editForm.slug);
   savingEdit.value = true;
   try {
@@ -1903,8 +1839,7 @@ const submitEdit = async () => {
       paymentMethods: [...editForm.paymentMethods],
       pendingPaymentValueRule: editForm.pendingPaymentValueRule,
       ministryId: editForm.ministryId,
-      districtId: editForm.districtId,
-      churchId: selectedChurchId
+      districtId: editForm.districtId
     } as Partial<ApiEvent>);
     cancelEdit();
   } catch (error) {
@@ -1965,7 +1900,7 @@ const toggleActive = async (event: ApiEvent) => {
 };
 
 const openDelete = (event: ApiEvent) => {
-  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
+  if (!assertPermission(eventPermissions.canDelete.value, "VocÃª não possui permissão para excluir eventos.")) {
     return;
   }
   confirmDelete.target = event;
@@ -1979,7 +1914,7 @@ const closeDeleteDialog = () => {
 
 const handleDelete = async () => {
   if (!confirmDelete.target) return;
-  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
+  if (!assertPermission(eventPermissions.canDelete.value, "VocÃª não possui permissão para excluir eventos.")) {
     closeDeleteDialog();
     return;
   }
@@ -1987,7 +1922,7 @@ const handleDelete = async () => {
     await admin.deleteEvent(confirmDelete.target.id);
     closeDeleteDialog();
   } catch (error) {
-    showError("Não foi possível excluir o evento", error);
+    showError("NÃ£o foi possÃ­vel excluir o evento", error);
   }
 };
 
@@ -2049,12 +1984,13 @@ onMounted(async () => {
       createModalOpen.value = true;
     }
   } catch (error) {
-    showError("Falha ao carregar eventos ou catalogos", error);
+    showError("Falha ao carregar eventos ou catálogos", error);
   } finally {
     loadingEvents.value = false;
   }
 });
 </script>
+
 
 
 

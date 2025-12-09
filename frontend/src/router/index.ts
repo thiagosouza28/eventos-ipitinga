@@ -27,6 +27,7 @@ const AdminDistrictFinance = () => import("../pages/admin/AdminDistrictFinance.v
 const AdminReports = () => import("../pages/admin/AdminReports.vue");
 const AdminEventFinancial = () => import("../pages/admin/AdminEventFinancial.vue");
 const AdminUsers = () => import("../pages/admin/AdminUsers.vue");
+const AdminProfile = () => import("../pages/admin/AdminProfile.vue");
 const AdminProfiles = () => import("../pages/admin/AdminProfiles.vue");
 const AdminAccessDenied = () => import("../pages/admin/AdminAccessDenied.vue");
 const AdminSystemConfig = () => import("../pages/admin/AdminSystemConfig.vue");
@@ -65,6 +66,12 @@ export const router = createRouter({
       name: "admin-users",
       component: AdminUsers,
       meta: { requiresAuth: true, requiresPermission: { module: "users", action: "view" } }
+    },
+    {
+      path: "/admin/profile",
+      name: "admin-profile",
+      component: AdminProfile,
+      meta: { requiresAuth: true }
     },
     {
       path: "/admin/profiles",
