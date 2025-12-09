@@ -6,3 +6,10 @@ coverage/
 .env
 .env.*
 tmp/
+
+# Prisma generated client
+src/prisma/generated/
+
+# Prisma engines
+*.dll.node
+*.so.node
