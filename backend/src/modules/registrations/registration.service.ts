@@ -23,6 +23,7 @@ import { Gender, parseGender } from "../../config/gender";
 import { storageService } from "../../storage/storage.service";
 import { orderService } from "../orders/order.service";
 import { resolveOrderExpirationDate } from "../../utils/order-expiration";
+import { logger } from "../../utils/logger";
 
 const receiptsDir = path.resolve(__dirname, "..", "..", "tmp", "receipts");
 
@@ -806,10 +807,39 @@ export class RegistrationService {
       throw new AppError("Token invalido", 403);
     }
 
-    await this.generateReceipt(registrationId);
     const filePath = path.join(receiptsDir, `${registrationId}.pdf`);
-    const buffer = await fs.readFile(filePath);
-    return buffer;
+
+    const readReceiptIfExists = async () => {
+      try {
+        return await fs.readFile(filePath);
+      } catch (error: any) {
+        if (error?.code === "ENOENT") return null;
+        throw error;
+      }
+    };
+
+    const cached = await readReceiptIfExists();
+    if (cached) return cached;
+
+    try {
+      await this.generateReceipt(registrationId);
+    } catch (error) {
+      logger.error({ error, registrationId }, "Falha ao gerar recibo");
+      throw new AppError(
+        "Nao foi possivel gerar o comprovante agora. Tente novamente em instantes.",
+        500
+      );
+    }
+
+    const freshlyGenerated = await readReceiptIfExists();
+    if (!freshlyGenerated) {
+      throw new AppError(
+        "Comprovante ainda nao disponivel. Tente novamente em instantes.",
+        503
+      );
+    }
+
+    return freshlyGenerated;
   }
 
   computeAge(birthDate: string) {

@@ -45,9 +45,13 @@ const brDateFormatter = new Intl.DateTimeFormat("pt-BR", {
 const formatDate = (date: Date) => brDateFormatter.format(date);
 
 const ensureBrowser = async () => {
-  if (browser) return browser;
+  if (browser && browser.isConnected()) return browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({
+      headless: true,
+      // Flags help when running inside containers/servers without sandbox enabled.
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+    });
     return browser;
   } catch (error: any) {
     browser = null;
@@ -144,15 +148,18 @@ export const generateReceiptPdf = async (payload: ReceiptPayload) => {
 
   const browserInstance = await ensureBrowser();
   const page = await browserInstance.newPage();
-  await page.setContent(compiledHtml, { waitUntil: "networkidle" });
-  const pdfBuffer = await page.pdf({
-    width: "210mm",
-    height: "297mm",
-    printBackground: true,
-    margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }
-  });
-  await page.close();
-  return { pdfBuffer, validationUrl };
+  try {
+    await page.setContent(compiledHtml, { waitUntil: "networkidle" });
+    const pdfBuffer = await page.pdf({
+      width: "210mm",
+      height: "297mm",
+      printBackground: true,
+      margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }
+    });
+    return { pdfBuffer, validationUrl };
+  } finally {
+    await page.close().catch(() => undefined);
+  }
 };
 
 export const closeReceiptBrowser = async () => {
