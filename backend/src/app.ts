@@ -23,6 +23,11 @@ export const createApp = () => {
   app.set("trust proxy", 1);
   app.use(
     helmet({
+      // COOP/COEP/OAC serao definidos no Nginx para evitar duplicidade e garantir contexto seguro
+      crossOriginOpenerPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      originAgentCluster: false,
+      hsts: false,
       crossOriginResourcePolicy: { policy: "cross-origin" }
     })
   );
