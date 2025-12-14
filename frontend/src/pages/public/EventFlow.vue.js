@@ -1899,7 +1899,7 @@ else {
                 ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            (__VLS_ctx.formatCurrency(__VLS_ctx.ticketPriceCents * (__VLS_ctx.inlinePayment?.participantCount ?? __VLS_ctx.people.length)));
+            (__VLS_ctx.formatCurrency(__VLS_ctx.inlinePayment?.totalCents ?? __VLS_ctx.ticketPriceCents * (__VLS_ctx.inlinePayment?.participantCount ?? __VLS_ctx.people.length)));
             if (__VLS_ctx.currentLotName) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({

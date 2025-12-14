@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{title}}</title>
+    <style>
+      :root {
+        --bg: #0d1627;
+        --panel: #152036;
+        --card: #192544;
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #eef2ff;
+        --text-soft: #cbd5e1;
+        --muted: #94a3b8;
+        --accent: #4dd2ff;
+        --accent-strong: #7affe0;
+        --row-alt: rgba(255, 255, 255, 0.04);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", system-ui, sans-serif;
+      }
+
+      .page {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: #111a2c;
+      }
+
+      /* HEADER */
+      .header {
+        padding: 22px 26px;
+        border-bottom: 1px solid var(--border);
+        background: #0f1729;
+      }
+
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.20em;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .header p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--text-soft);
+      }
+
+      /* META CARDS */
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
+        padding: 18px 20px;
+      }
+
+      .meta-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        padding: 12px 14px;
+        border-radius: 12px;
+      }
+
+      .meta-card .label {
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        color: var(--muted);
+        margin-bottom: 5px;
+      }
+
+      .meta-card .value {
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      /* SUMMARY */
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+        padding: 0 20px 18px;
+      }
+
+      .summary-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        padding: 14px;
+        border-radius: 12px;
+      }
+
+      .summary-card span {
+        display: block;
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        margin-bottom: 6px;
+      }
+
+      .summary-card strong {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .status-paid strong { color: var(--accent-strong); }
+      .status-pending strong { color: #fcd34d; }
+      .status-refunded strong { color: #cbd5e1; }
+
+      /* CHIPS */
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 0 20px 12px;
+      }
+
+      .chip {
+        padding: 6px 12px;
+        font-size: 11px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--border);
+      }
+
+      /* GROUPS */
+      .groups {
+        padding: 0 20px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .group {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+
+      .group header {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .group-eyebrow {
+        text-transform: uppercase;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        color: var(--muted);
+      }
+
+      .group h2 {
+        margin: 6px 0 0;
+        font-size: 18px;
+      }
+
+      /* TABLE */
+      table.participants {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table.participants thead th {
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      table.participants tbody td {
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      table.participants tbody tr:nth-child(even) td {
+        background: var(--row-alt);
+      }
+
+      .status-badge {
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      .status-paid { background: rgba(112,240,192,0.1); color: #70f0c0; }
+      .status-pending { background: rgba(252,211,77,0.12); color: #fcd34d; }
+      .status-refunded { background: rgba(203,213,225,0.14); color: #cbd5e1; }
+
+      .empty {
+        padding: 14px;
+        text-align: center;
+        font-style: italic;
+        color: var(--muted);
+      }
+
+      /* FOOTER */
+      .footer {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+        background: #0e1526;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+
+      <div class="header">
+        <p class="eyebrow">{{eyebrow}}</p>
+        <h1>{{title}}</h1>
+        <p>{{subtitle}}</p>
+      </div>
+
+      <div class="meta">{{metaCards}}</div>
+
+      <div class="summary">{{summaryCards}}</div>
+
+      <div class="chips">{{extraStatusChips}}</div>
+
+      <div class="groups">{{sections}}</div>
+
+      <div class="footer">
+        Gerado automaticamente — {{generatedAt}}
+      </div>
+
+    </div>
+  </body>
+</html>

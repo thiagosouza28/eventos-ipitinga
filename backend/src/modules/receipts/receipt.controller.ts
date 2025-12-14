@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { registrationService } from "../registrations/registration.service";
 import { sanitizeCpf } from "../../utils/mask";
+import { env } from "../../config/env";
 
 const lookupSchema = z.object({
   cpf: z.string().min(11),
@@ -22,13 +23,24 @@ export const downloadReceiptHandler = async (request: Request, response: Respons
   const { registrationId } = request.params;
   const { token } = request.query;
   if (typeof token !== "string") {
-    return response.status(400).json({ message: "Token obrigatório" });
+    return response.status(400).json({ message: "Token obrigatИrio" });
   }
+
+  const origin = request.headers.origin;
+  const allowedOrigins = env.corsOrigins ?? [];
+  const resolvedOrigin =
+    origin && allowedOrigins.includes(origin) ? origin : allowedOrigins.includes("*") ? "*" : origin ?? "*";
+  response.setHeader("Access-Control-Allow-Origin", resolvedOrigin);
+  response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+  response.setHeader("Vary", "Origin");
+
   const buffer = await registrationService.streamReceipt(registrationId, token);
   response.setHeader("Content-Type", "application/pdf");
   response.setHeader(
     "Content-Disposition",
-    `attachment; filename=recibo-${registrationId}.pdf`
+    `inline; filename=recibo-${registrationId}.pdf`
   );
   return response.send(buffer);
 };

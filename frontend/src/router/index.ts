@@ -9,6 +9,7 @@ const PaymentPage = () => import("../pages/public/PaymentPage.vue");
 const AdminPendingOrders = () => import("../pages/public/PendingOrders.vue");
 const ReceiptLookup = () => import("../pages/public/ReceiptLookup.vue");
 const CheckinValidate = () => import("../pages/public/CheckinValidate.vue");
+const DocumentPreview = () => import("../pages/shared/DocumentPreview.vue");
 
 const AdminLogin = () => import("../pages/admin/AdminLogin.vue");
 const AdminForgotPassword = () => import("../pages/admin/AdminForgotPassword.vue");
@@ -47,6 +48,7 @@ export const router = createRouter({
     },
     { path: "/comprovante", name: "receipt", component: ReceiptLookup },
     { path: "/checkin/validate", name: "checkin-validate", component: CheckinValidate },
+    { path: "/documentos/visualizar", name: "document-preview", component: DocumentPreview },
     { path: "/admin", name: "admin-login", component: AdminLogin },
     { path: "/admin/esqueci-senha", name: "admin-forgot-password", component: AdminForgotPassword },
     {

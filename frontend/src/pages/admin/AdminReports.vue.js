@@ -12,6 +12,7 @@ import { useAdminStore } from "../../stores/admin";
 import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import { formatCurrency } from "../../utils/format";
+import { createPreviewSession } from "../../utils/documentPreview";
 const props = defineProps();
 const router = useRouter();
 const route = useRoute();
@@ -163,18 +164,19 @@ const downloadEventReport = async () => {
     try {
         const response = await admin.downloadRegistrationReport({ eventId: eventReport.eventId }, "event", "standard");
         const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
         const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
-        link.href = url;
-        link.download = `relatorio-evento-${filename}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        await createPreviewSession([
+            {
+                id: `event-${eventReport.eventId}`,
+                title: selectedEvent.value?.title ?? "Relatorio do evento",
+                fileName: `relatorio-evento-${filename}.pdf`,
+                blob,
+                mimeType: "application/pdf"
+            }
+        ], { context: "Relatorios administrativos" });
     }
     catch (error) {
-        showError("Erro ao gerar relatório do evento", error);
+        showError("Erro ao gerar relatorio do evento", error);
     }
     finally {
         eventDownloadState.value = false;
@@ -236,14 +238,16 @@ const downloadChurchReport = async () => {
         }
         const response = await admin.downloadRegistrationReport(baseFilters, "church", churchReport.template);
         const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `confirmacao-${findChurchName(churchReport.churchId)}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        const churchName = findChurchName(churchReport.churchId);
+        await createPreviewSession([
+            {
+                id: `church-${churchReport.churchId}`,
+                title: `Confirmacao - ${churchName}`,
+                fileName: `confirmacao-${churchName}.pdf`,
+                blob,
+                mimeType: "application/pdf"
+            }
+        ], { context: "Relatorios administrativos" });
     }
     catch (error) {
         showError("Erro ao gerar PDF da igreja", error);
@@ -298,15 +302,16 @@ const downloadFinancialPdf = async () => {
     try {
         const response = await admin.downloadFinancialReport(selectedFinancialEventId.value);
         const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
         const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
-        link.href = url;
-        link.download = `relatorio-financeiro-${eventSlug}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        await createPreviewSession([
+            {
+                id: `financial-${selectedFinancialEventId.value}`,
+                title: `Relatorio financeiro - ${findEventTitle(selectedFinancialEventId.value)}`,
+                fileName: `relatorio-financeiro-${eventSlug}.pdf`,
+                blob,
+                mimeType: "application/pdf"
+            }
+        ], { context: "Relatorios administrativos" });
     }
     catch (error) {
         showError("Erro ao gerar PDF financeiro", error);
@@ -709,7 +714,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.eventDownloadState ? "Gerando..." : "Baixar PDF");
+    (__VLS_ctx.eventDownloadState ? "Preparando..." : "Visualizar PDF");
     if (__VLS_ctx.selectedEvent) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5" },
@@ -983,7 +988,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.churchReportDownloadState ? "Gerando..." : "Gerar PDF");
+    (__VLS_ctx.churchReportDownloadState ? "Preparando..." : "Visualizar PDF");
     var __VLS_24;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
@@ -1131,7 +1136,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.financialDownloadState ? "Gerando..." : "PDF do evento");
+    (__VLS_ctx.financialDownloadState ? "Preparando..." : "Visualizar PDF");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.exportFinancialCsv) },
         type: "button",

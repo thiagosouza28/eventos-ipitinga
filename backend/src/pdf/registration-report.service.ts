@@ -1,6 +1,12 @@
+﻿import { promises as fs } from "fs";
+import path from "path";
+
 import { chromium, Browser } from "playwright";
 
 import { AppError } from "../utils/errors";
+
+const templateCache = new Map<string, string>();
+const templatesDir = path.resolve(__dirname, "templates");
 
 let browser: Browser | null = null;
 
@@ -14,12 +20,21 @@ const ensureBrowser = async () => {
     const message = String(error?.message ?? "");
     if (message.includes("executable doesn't exist") || message.includes("Failed to launch")) {
       throw new AppError(
-        "Motor de PDF indisponível. Execute `npm run playwright:install` e tente novamente.",
+        "Motor de PDF indisponivel. Execute `npm run playwright:install` e tente novamente.",
         500
       );
     }
     throw error;
   }
+};
+
+const loadTemplate = async (fileName: string) => {
+  const cached = templateCache.get(fileName);
+  if (cached) return cached;
+  const templatePath = path.join(templatesDir, fileName);
+  const content = await fs.readFile(templatePath, "utf-8");
+  templateCache.set(fileName, content);
+  return content;
 };
 
 export type RegistrationReportParticipant = {
@@ -88,7 +103,7 @@ const buildAvatarMarkup = (photoUrl?: string | null) => {
     return `<div class="avatar photo"><img src="${escapeHtml(photoUrl)}" alt="Foto do participante" /></div>`;
   }
   return `
-    <div class="avatar placeholder" aria-label="Avatar padrão">
+    <div class="avatar placeholder" aria-label="Avatar padrao">
       <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
         <circle cx="32" cy="24" r="12" fill="none" stroke="currentColor" stroke-width="4"></circle>
         <path
@@ -171,9 +186,9 @@ export const generateRegistrationReportPdf = async ({
 
   const firstGroup = groupsWithFallback[0];
   const metaCards = [
-    { label: "Evento/Igreja", value: firstGroup?.title ?? "Não informado" },
-    { label: "Período", value: firstGroup?.subtitle ?? "Não informado" },
-    { label: "Local / Extra", value: firstGroup?.extraInfo ?? "Não informado" },
+    { label: groupBy === "event" ? "Evento" : "Igreja/Distrito", value: firstGroup?.title ?? "Nao informado" },
+    { label: "Periodo", value: firstGroup?.subtitle ?? "Nao informado" },
+    { label: "Local / Extra", value: firstGroup?.extraInfo ?? "Nao informado" },
     { label: "Gerado em", value: generatedAt }
   ]
     .map(
@@ -188,7 +203,9 @@ export const generateRegistrationReportPdf = async ({
 
   const sectionHtml = groupsWithFallback
     .map((group) => {
-      const subtitlePieces = [group.subtitle, group.extraInfo].filter(Boolean).map((piece) => escapeHtml(piece!));
+      const subtitlePieces = [group.subtitle, group.extraInfo]
+        .filter(Boolean)
+        .map((piece) => escapeHtml(piece!));
       const rows = group.participants.length
         ? group.participants
             .map((participant) => {
@@ -198,9 +215,8 @@ export const generateRegistrationReportPdf = async ({
                 <tr>
                   <td class="col-participant">
                     <span class="cell-title">${formatCellText(participant.fullName)}</span>
+                    <small>${formatCellText(participant.churchName)} - ${formatCellText(participant.districtName)}</small>
                   </td>
-                  <td>${formatCellText(participant.churchName)}</td>
-                  <td>${formatCellText(participant.districtName)}</td>
                   <td class="col-birth">${formatCellText(participant.birthDate)}</td>
                   <td class="col-age">${formatCellText(age)}</td>
                   <td class="col-status">
@@ -210,30 +226,27 @@ export const generateRegistrationReportPdf = async ({
               `;
             })
             .join("")
-        : '<tr class="empty-row"><td colspan="6" class="empty">Nenhum participante encontrado para este grupo.</td></tr>';
+        : `<tr class="empty-row"><td colspan="4" class="empty">Nenhum participante neste grupo.</td></tr>`;
 
       return `
         <section class="group">
-          <div class="group-head">
+          <header>
             <div>
-              <p class="eyebrow">${groupBy === "event" ? "Evento" : "Igreja"}</p>
-              <h2>${formatCellText(group.title)}</h2>
-              ${subtitlePieces.length ? `<p class="subtitle">${subtitlePieces.join(" · ")}</p>` : ""}
+              <p class="group-eyebrow">${groupBy === "event" ? "Evento" : "Igreja/Distrito"}</p>
+              <h2>${escapeHtml(group.title)}</h2>
             </div>
-            <div class="chips">
-              ${group.participants.length ? `<span class="chip">Total: ${group.participants.length}</span>` : ""}
+            <div class="group-meta">
+              ${subtitlePieces.map((piece) => `<span>${piece}</span>`).join('<span class="sep">•</span>')}
             </div>
-          </div>
-          <div class="table-wrapper">
+          </header>
+          <div class="table-container">
             <table class="participants">
               <thead>
                 <tr>
                   <th>Participante</th>
-                  <th>Igreja</th>
-                  <th>Distrito</th>
-                  <th>Nascimento</th>
-                  <th>Idade</th>
-                  <th>Status</th>
+                  <th class="col-birth">Nascimento</th>
+                  <th class="col-age">Idade</th>
+                  <th class="col-status">Status</th>
                 </tr>
               </thead>
               <tbody>${rows}</tbody>
@@ -244,99 +257,21 @@ export const generateRegistrationReportPdf = async ({
     })
     .join("");
 
-  const html = `
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-      <head>
-        <meta charset="UTF-8" />
-        <title>Relatório Oficial de Inscrições</title>
-        <style>
-          @page { size: A4; margin: 18mm 12mm 16mm 12mm; }
-          * { box-sizing: border-box; font-family: "Inter", Arial, sans-serif; }
-          body { margin: 0; padding: 0; background: #f7f8fb; color: #0f172a; -webkit-print-color-adjust: exact; }
-          header.site-header {
-            padding: 14px 18px;
-            background: linear-gradient(135deg, #0b1220 0%, #1d4ed8 100%);
-            color: #fff;
-            border-radius: 14px 14px 0 0;
-          }
-          header .title { margin: 2px 0 0; font-size: 22px; font-weight: 800; letter-spacing: 0.02em; }
-          header .subtitle { margin: 4px 0 0; font-size: 13px; opacity: 0.9; }
-          .eyebrow { letter-spacing: 0.32em; text-transform: uppercase; font-size: 10px; color: #cbd5f5; margin: 0; }
-          footer.site-footer {
-            text-align: center;
-            padding: 8px 0;
-            color: #475569; font-size: 11px;
-          }
-          main { padding: 0; margin: 0; }
-          .page { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0 0 14px 14px; overflow: hidden; }
-          .bar-meta {
-            display: flex; flex-wrap: wrap; gap: 10px;
-            padding: 10px 18px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-            font-size: 12px;
-          }
-          .bar-meta span { color: #475569; }
-          .bar-meta .label { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; color: #0f172a; margin-right: 6px; }
-          .summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 8px;
-            padding: 10px 18px 6px;
-          }
-          .summary-card { padding: 10px 12px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; }
-          .summary-card span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 4px; }
-          .summary-card strong { font-size: 18px; color: #0f172a; }
-          .summary-card.status-pending strong { color: #b45309; }
-          .summary-card.status-paid strong { color: #15803d; }
-          .summary-card.status-refunded strong { color: #0f172a; }
-          .table-wrapper { padding: 0 0 12px; }
-          table.participants { width: 100%; border-collapse: collapse; font-size: 12px; }
-          table.participants thead { background: #0f172a; color: #fff; }
-          table.participants thead th { padding: 9px 10px; text-transform: uppercase; letter-spacing: 0.16em; font-size: 10.5px; font-weight: 700; }
-          table.participants tbody tr:nth-child(even) { background: #f8fafc; }
-          table.participants tbody tr:nth-child(odd) { background: #ffffff; }
-          table.participants tbody td { padding: 11px 10px; color: #1f2937; }
-          .col-birth, .col-age { text-align: center; font-variant-numeric: tabular-nums; }
-          .col-status { text-align: center; }
-          .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid transparent; }
-          .status-badge.status-paid { background: #ecfdf5; color: #047857; border-color: #6ee7b7; }
-          .status-badge.status-pending { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
-          .status-badge.status-refunded { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
-          .status-badge.status-default { background: #e0e7ff; color: #3730a3; border-color: #c7d2fe; }
-          .empty { text-align: center; font-style: italic; color: #94a3b8; padding: 16px; }
-          table.participants tbody tr.empty-row td { background: #f1f5f9 !important; }
-        </style>
-      </head>
-      <body>
-        <div class="page">
-          <header class="site-header">
-            <p class="eyebrow">${groupBy === "event" ? "RELATÓRIO OFICIAL DE INSCRIÇÕES POR EVENTO" : "RELATÓRIO OFICIAL DE INSCRIÇÕES POR IGREJA"}</p>
-            <h1 class="title">Relatório Oficial de Inscrições</h1>
-            <p class="subtitle">Total: ${totals.totalParticipants} participantes · ${totals.totalGroups} grupos · Gerado em ${generatedAt}</p>
-          </header>
+  const templateName =
+    groupBy === "event" ? "registration-report-event.html" : "registration-report-church.html";
+  const htmlTemplate = await loadTemplate(templateName);
 
-          <div class="bar-meta">
-            <span><span class="label">Evento/Igreja:</span>${escapeHtml(firstGroup?.title ?? "Não informado")}</span>
-            <span><span class="label">Período:</span>${escapeHtml(firstGroup?.subtitle ?? "Não informado")}</span>
-            <span><span class="label">Local/Extra:</span>${escapeHtml(firstGroup?.extraInfo ?? "Não informado")}</span>
-          </div>
-
-          <div class="summary">${summaryCards}</div>
-          ${extraStatusChips ? `<div class="chips" style="padding:0 18px 10px;">${extraStatusChips}</div>` : ""}
-
-          <div class="table-wrapper">
-            ${sectionHtml}
-          </div>
-
-          <footer class="site-footer">
-            Documento gerado automaticamente pelo sistema · ${generatedAt}
-          </footer>
-        </div>
-      </body>
-    </html>
-  `;
+  const html = htmlTemplate
+    .replaceAll("{{eyebrow}}", groupBy === "event" ? "Relatorio por evento" : "Relatorio por igreja/distrito")
+    .replaceAll("{{title}}", "Relatorio Oficial de Inscricoes")
+    .replaceAll(
+      "{{subtitle}}",
+      `Total: ${totals.totalParticipants} participantes • ${totals.totalGroups} grupos • Gerado em ${escapeHtml(generatedAt)}`
+    )
+    .replaceAll("{{metaCards}}", metaCards)
+    .replaceAll("{{summaryCards}}", summaryCards)
+    .replaceAll("{{extraStatusChips}}", extraStatusChips ? `<div class="chips">${extraStatusChips}</div>` : "")
+    .replaceAll("{{sections}}", sectionHtml);
 
   const browserInstance = await ensureBrowser();
   const page = await browserInstance.newPage();
@@ -350,7 +285,7 @@ export const generateRegistrationReportPdf = async ({
   return pdfBuffer;
 };
 
-// Gera PDF com fichas individuais simplificadas para confirmação presencial no evento
+// Gera PDF com fichas individuais simplificadas para confirmacao presencial no evento
 export const generateRegistrationEventSheetPdf = async ({
   generatedAt,
   context,
@@ -385,13 +320,13 @@ export const generateRegistrationEventSheetPdf = async ({
           </div>
         </div>
         <section class="terms">
-          <h3>Termo de participação</h3>
+          <h3>Termo de participacao</h3>
           <p>
-            Declaro estar de acordo com as normas do evento, cuidando da minha segurança e do grupo. Autorizo o uso da minha imagem em materiais institucionais.
+            Declaro estar de acordo com as normas do evento, cuidando da minha seguranca e do grupo. Autorizo o uso da minha imagem em materiais institucionais.
           </p>
           ${
             minor
-              ? `<p class="minor-alert">Participante menor de idade: a confirmação presencial requer autorização e assinatura do responsável legal.</p>`
+              ? `<p class="minor-alert">Participante menor de idade: a confirmacao presencial requer autorizacao e assinatura do responsavel legal.</p>`
               : ""
           }
         </section>
@@ -410,11 +345,11 @@ export const generateRegistrationEventSheetPdf = async ({
             minor
               ? `<div class="line-group">
                   <div class="sign-field">
-                    <span class="label">Nome do responsável</span>
+                    <span class="label">Nome do responsavel</span>
                     <span class="line"></span>
                   </div>
                   <div class="sign-field">
-                    <span class="label">Assinatura do responsável</span>
+                    <span class="label">Assinatura do responsavel</span>
                     <span class="line"></span>
                   </div>
                 </div>`
@@ -452,17 +387,17 @@ export const generateRegistrationEventSheetPdf = async ({
 
   const bodyContainer = layout === "single" ? `<div class="cards">${bodyHtml}</div>` : bodyHtml;
 
-  const headerTitle = context?.title ? escapeHtml(context.title) : "Confirmação Presencial";
+  const headerTitle = context?.title ? escapeHtml(context.title) : "Confirmacao Presencial";
   const html = `
     <!DOCTYPE html>
     <html lang="pt-BR">
       <head>
         <meta charset="UTF-8" />
-        <title>Confirmação Presencial</title>
+        <title>Confirmacao Presencial</title>
         <style>
           @page { size: A4; margin: 16mm; }
           * { box-sizing: border-box; font-family: "Inter", Arial, sans-serif; }
-          body { margin: 0; padding: 28px 24px 32px; background: #f3f4f6; color: #0f172a; -webkit-print-color-adjust: exact; }
+          body { margin: 0; padding: 28px 24px 32px; background: #0b1224; color: #e5e7eb; -webkit-print-color-adjust: exact; }
           .sheet-header {
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
             color: #fff;
@@ -484,17 +419,18 @@ export const generateRegistrationEventSheetPdf = async ({
           .cards.cards-two { display: grid; grid-template-columns: 1fr; gap: 18px; }
           .cards.cards-four { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
           .card {
-            background: #fff;
+            background: #0f172a;
             border-radius: 18px;
             padding: 20px 22px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 14px 34px rgba(15, 23, 42, 0.09);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
             page-break-inside: avoid;
+            color: #e5e7eb;
           }
           .card-head {
             display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; margin-bottom: 14px;
           }
-          .card-head .avatar { width: 92px; height: 92px; border-radius: 999px; border: 4px solid #f1f5f9; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+          .card-head .avatar { width: 92px; height: 92px; border-radius: 999px; border: 4px solid rgba(255,255,255,0.08); background: #111827; display: flex; align-items: center; justify-content: center; overflow: hidden; }
           .card-head .avatar.photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 999px; }
           .card-head .avatar.placeholder svg { width: 46px; height: 46px; color: #94a3b8; }
           .card-compact { padding: 16px 18px; }
@@ -506,25 +442,25 @@ export const generateRegistrationEventSheetPdf = async ({
           .participant-name { font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
           .participant-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px 12px; text-align: right; }
           .participant-meta .label { display: block; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #94a3b8; }
-          .participant-meta .value { display: block; font-size: 13px; font-weight: 600; color: #0f172a; }
-          .terms { background: #f9fafb; border-radius: 16px; padding: 16px 18px; border: 1px solid #e5e7eb; line-height: 1.6; color: #1f2937; }
-          .terms h3 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #0f172a; }
+          .participant-meta .value { display: block; font-size: 13px; font-weight: 600; color: #e5e7eb; }
+          .terms { background: #0b1327; border-radius: 16px; padding: 16px 18px; border: 1px solid rgba(255,255,255,0.08); line-height: 1.6; color: #cbd5e1; }
+          .terms h3 { margin: 0 0 8px; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: #e5e7eb; }
           .terms p { margin: 0 0 6px; font-size: 12px; }
-          .terms .minor-alert { margin-top: 6px; padding: 10px 12px; border-radius: 12px; background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; font-weight: 600; }
+          .terms .minor-alert { margin-top: 6px; padding: 10px 12px; border-radius: 12px; background: rgba(252, 211, 77, 0.1); border: 1px solid #fcd34d; color: #fcd34d; font-weight: 600; }
           .signatures { margin-top: 16px; }
           .line-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 10px; }
           .sign-field { display: flex; flex-direction: column; gap: 6px; }
           .sign-field .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: #94a3b8; }
-          .sign-field .line { height: 32px; border-bottom: 1px dashed #cbd5f5; border-radius: 999px; }
-          .empty-state { padding: 24px; border-radius: 16px; text-align: center; color: #94a3b8; border: 1px dashed #cbd5f5; background: #fff; }
+          .sign-field .line { height: 32px; border-bottom: 1px dashed rgba(255,255,255,0.18); border-radius: 999px; }
+          .empty-state { padding: 24px; border-radius: 16px; text-align: center; color: #94a3b8; border: 1px dashed rgba(255,255,255,0.18); background: #0f172a; }
           .page-chunk { display: flex; flex-direction: column; gap: 18px; page-break-inside: avoid; }
         </style>
       </head>
       <body>
         <header class="sheet-header">
-          <p class="eyebrow">Confirmação Presencial</p>
+          <p class="eyebrow">Confirmacao Presencial</p>
           <h1>${headerTitle}</h1>
-          <p>Gerado em ${generatedAt} &middot; Total de participantes: ${participants.length}</p>
+          <p>Gerado em ${generatedAt} · Total de participantes: ${participants.length}</p>
         </header>
         ${bodyContainer}
       </body>
@@ -542,5 +478,3 @@ export const generateRegistrationEventSheetPdf = async ({
   await page.close();
   return pdfBuffer;
 };
-
-

@@ -65,7 +65,7 @@
               @click="downloadEventReport"
             >
               <span v-if="eventDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
-              <span>{{ eventDownloadState ? "Gerando..." : "Baixar PDF" }}</span>
+              <span>{{ eventDownloadState ? "Preparando..." : "Visualizar PDF" }}</span>
             </button>
           </div>
         </div>
@@ -205,7 +205,7 @@
             @click="downloadChurchReport"
           >
             <span v-if="churchReportDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
-            <span>{{ churchReportDownloadState ? "Gerando..." : "Gerar PDF" }}</span>
+            <span>{{ churchReportDownloadState ? "Preparando..." : "Visualizar PDF" }}</span>
           </button>
         </div>
       </BaseCard>
@@ -293,7 +293,7 @@
               @click="downloadFinancialPdf"
             >
               <span v-if="financialDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
-              <span>{{ financialDownloadState ? "Gerando..." : "PDF do evento" }}</span>
+              <span>{{ financialDownloadState ? "Preparando..." : "Visualizar PDF" }}</span>
             </button>
             <button
               type="button"
@@ -429,6 +429,7 @@ import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import type { Church, District, Event, Registration } from "../../types/api";
 import { formatCurrency } from "../../utils/format";
+import { createPreviewSession } from "../../utils/documentPreview";
 
 const props = defineProps<{ tab?: string }>();
 
@@ -604,22 +605,25 @@ const downloadEventReport = async () => {
   try {
     const response = await admin.downloadRegistrationReport({ eventId: eventReport.eventId }, "event", "standard");
     const blob = new Blob([response.data], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
-    link.href = url;
-    link.download = `relatorio-evento-${filename}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    await createPreviewSession(
+      [
+        {
+          id: `event-${eventReport.eventId}`,
+          title: selectedEvent.value?.title ?? "Relatorio do evento",
+          fileName: `relatorio-evento-${filename}.pdf`,
+          blob,
+          mimeType: "application/pdf"
+        }
+      ],
+      { context: "Relatorios administrativos" }
+    );
   } catch (error) {
-    showError("Erro ao gerar relatório do evento", error);
+    showError("Erro ao gerar relatorio do evento", error);
   } finally {
     eventDownloadState.value = false;
   }
 };
-
 const churchReport = reactive({
   eventId: "",
   districtId: "",
@@ -679,14 +683,19 @@ const downloadChurchReport = async () => {
       churchReport.template
     );
     const blob = new Blob([response.data], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `confirmacao-${findChurchName(churchReport.churchId)}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    const churchName = findChurchName(churchReport.churchId);
+    await createPreviewSession(
+      [
+        {
+          id: `church-${churchReport.churchId}`,
+          title: `Confirmacao - ${churchName}`,
+          fileName: `confirmacao-${churchName}.pdf`,
+          blob,
+          mimeType: "application/pdf"
+        }
+      ],
+      { context: "Relatorios administrativos" }
+    );
   } catch (error) {
     showError("Erro ao gerar PDF da igreja", error);
   } finally {
@@ -739,15 +748,19 @@ const downloadFinancialPdf = async () => {
   try {
     const response = await admin.downloadFinancialReport(selectedFinancialEventId.value);
     const blob = new Blob([response.data], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
-    link.href = url;
-    link.download = `relatorio-financeiro-${eventSlug}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    await createPreviewSession(
+      [
+        {
+          id: `financial-${selectedFinancialEventId.value}`,
+          title: `Relatorio financeiro - ${findEventTitle(selectedFinancialEventId.value)}`,
+          fileName: `relatorio-financeiro-${eventSlug}.pdf`,
+          blob,
+          mimeType: "application/pdf"
+        }
+      ],
+      { context: "Relatorios administrativos" }
+    );
   } catch (error) {
     showError("Erro ao gerar PDF financeiro", error);
   } finally {
@@ -1035,12 +1048,6 @@ onMounted(async () => {
   }
 });
 </script>
-
-
-
-
-
-
 
 
 

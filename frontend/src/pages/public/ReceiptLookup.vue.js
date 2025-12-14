@@ -5,6 +5,7 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import { useApi } from "../../composables/useApi";
 import { formatCPF, normalizeCPF } from "../../utils/cpf";
 import { API_BASE_URL } from "../../config/api";
+import { createPreviewSession } from "../../utils/documentPreview";
 const statusLabels = {
     PAID: "Pago",
     CHECKED_IN: "Check-in realizado",
@@ -14,10 +15,12 @@ const primaryButtonClass = "inline-flex items-center justify-center rounded-full
 const resetFeedback = () => {
     errorMessage.value = "";
     emptyMessage.value = "";
+    previewError.value = "";
 };
 const clearResults = () => {
     results.value = [];
     hasSearched.value = false;
+    openingReceiptId.value = "";
 };
 const { api } = useApi();
 const cpf = ref("");
@@ -27,6 +30,8 @@ const loading = ref(false);
 const errorMessage = ref("");
 const emptyMessage = ref("");
 const hasSearched = ref(false);
+const openingReceiptId = ref("");
+const previewError = ref("");
 const hasResults = computed(() => results.value.length > 0);
 const showResultSummary = computed(() => hasResults.value);
 const showFeedbackCard = computed(() => Boolean(errorMessage.value) || hasResults.value || (hasSearched.value && !loading.value));
@@ -63,6 +68,27 @@ const resolveReceiptUrl = (url) => {
     }
     catch {
         return url;
+    }
+};
+const openReceiptPreview = async (receipt) => {
+    previewError.value = "";
+    openingReceiptId.value = receipt.registrationId;
+    try {
+        await createPreviewSession([
+            {
+                id: receipt.registrationId,
+                title: receipt.eventTitle,
+                fileName: `comprovante-${receipt.registrationId}.pdf`,
+                sourceUrl: resolveReceiptUrl(receipt.receiptUrl),
+                mimeType: "application/pdf"
+            }
+        ], { context: "Comprovante de inscrição" });
+    }
+    catch (error) {
+        previewError.value = error?.message ?? "Não foi possível abrir o comprovante agora.";
+    }
+    finally {
+        openingReceiptId.value = "";
     }
 };
 const search = async () => {
@@ -233,14 +259,38 @@ if (__VLS_ctx.showFeedbackCard) {
             });
             (__VLS_ctx.formatStatus(receipt.status));
             (__VLS_ctx.formatIssuedAt(receipt.issuedAt));
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.a, __VLS_intrinsicElements.a)({
-                href: (__VLS_ctx.resolveReceiptUrl(receipt.receiptUrl)),
-                target: "_blank",
-                rel: "noopener",
-                download: (`comprovante-${receipt.registrationId}.pdf`),
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.showFeedbackCard))
+                            return;
+                        if (!!(__VLS_ctx.errorMessage))
+                            return;
+                        if (!(__VLS_ctx.hasResults))
+                            return;
+                        __VLS_ctx.openReceiptPreview(receipt);
+                    } },
+                type: "button",
                 ...{ class: ([__VLS_ctx.primaryButtonClass, 'px-5 py-2 text-xs uppercase tracking-[0.3em]']) },
+                disabled: (__VLS_ctx.openingReceiptId === receipt.registrationId),
             });
+            if (__VLS_ctx.openingReceiptId === receipt.registrationId) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "flex items-center justify-center gap-2" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                    ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            }
         }
+    }
+    if (__VLS_ctx.previewError) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm text-red-600 dark:text-red-300" },
+        });
+        (__VLS_ctx.previewError);
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -413,6 +463,20 @@ if (__VLS_ctx.showFeedbackCard) {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-t-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
@@ -430,13 +494,15 @@ const __VLS_self = (await import('vue')).defineComponent({
             errorMessage: errorMessage,
             emptyMessage: emptyMessage,
             hasSearched: hasSearched,
+            openingReceiptId: openingReceiptId,
+            previewError: previewError,
             hasResults: hasResults,
             showResultSummary: showResultSummary,
             showFeedbackCard: showFeedbackCard,
             onCpfInput: onCpfInput,
             formatStatus: formatStatus,
             formatIssuedAt: formatIssuedAt,
-            resolveReceiptUrl: resolveReceiptUrl,
+            openReceiptPreview: openReceiptPreview,
             search: search,
         };
     },

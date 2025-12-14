@@ -39,7 +39,7 @@
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <div>
       <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">Resumo geral</p>
-      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">Vis├úo consolidada</h2>
+      <h2 class="text-2xl font-semibold text-neutral-900 dark:text-white">Visao consolidada</h2>
     </div>
     <p class="text-xs text-neutral-500 dark:text-neutral-400">
       Atualizado automaticamente conforme as movimenta├º├Áes dos eventos.
@@ -162,7 +162,7 @@
             :disabled="downloadingReport"
             @click="downloadEventReport"
           >
-            {{ downloadingReport ? "Gerando PDF..." : "Baixar PDF" }}
+            {{ downloadingReport ? "Preparando..." : "Visualizar PDF" }}
           </button>
         </div>
       </div>
@@ -399,6 +399,7 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { createPreviewSession } from "../../utils/documentPreview";
 
 const admin = useAdminStore();
 const { api } = useApi();
@@ -503,23 +504,25 @@ const downloadEventReport = async () => {
     downloadingReport.value = true;
     const response = await admin.downloadFinancialReport(selectedEventId.value);
     const blob = new Blob([response.data], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
-    link.href = url;
-    link.download = `relatorio-financeiro-${filenameBase}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  } catch (error: any) {
-    showError("Erro ao gerar relat├│rio financeiro", error);
+    await createPreviewSession(
+      [
+        {
+          id: `financial-${selectedEventId.value}`,
+          title: `Relatorio financeiro - ${eventSummary.value?.event?.title || "Evento"}`,
+          fileName: `relatorio-financeiro-${filenameBase}.pdf`,
+          blob,
+          mimeType: "application/pdf"
+        }
+      ],
+      { context: "Relatorios administrativos" }
+    );
+  } catch (error) {
+    showError("Erro ao gerar relatorio financeiro", error);
   } finally {
     downloadingReport.value = false;
   }
 };
-
-
 const handleReceiptUpload = async (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
@@ -637,9 +640,6 @@ onMounted(async () => {
   }
 });
 </script>
-
-
-
 
 
 

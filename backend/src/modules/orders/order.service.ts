@@ -261,6 +261,7 @@ export class OrderService {
 
     const isFreeEvent = Boolean((event as any).isFree);
     const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
+    const sanitizedBuyerCpf = sanitizeCpf(payload.buyerCpf);
     
     // Se for m�todo gratuito, n�o usar PIX_MP mesmo para eventos gratuitos
     if (isFreePaymentMethod) {
@@ -309,7 +310,6 @@ export class OrderService {
 
     const orderDistrictId = event.districtId;
     const districtAdminId = await this.resolveDistrictAdminId(orderDistrictId);
-
     const orderId = randomUUID();
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
@@ -371,7 +371,7 @@ export class OrderService {
         data: {
           id: orderId,
           eventId: payload.eventId,
-          buyerCpf: sanitizeCpf(payload.buyerCpf),
+          buyerCpf: sanitizedBuyerCpf,
           totalCents: unitPriceCents * payload.people.length,
           status: orderStatus,
           paymentMethod: resolvedMethod,
@@ -440,7 +440,7 @@ export class OrderService {
       metadata: {
         count: registrations.registrations.length,
         eventId: payload.eventId,
-        buyerCpf: sanitizeCpf(payload.buyerCpf),
+        buyerCpf: sanitizedBuyerCpf,
         paymentMethod: resolvedMethod
       }
     });
@@ -1381,8 +1381,3 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
-
-
-
-
-

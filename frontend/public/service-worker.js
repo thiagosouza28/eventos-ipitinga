@@ -18,7 +18,14 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") {
+  // Ignore non-GET requests and cross-origin calls (API requests, analytics, etc.)
+  const requestUrl = new URL(event.request.url);
+  if (event.request.method !== "GET" || requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  // Deixe chamadas da API seguirem direto (evita problemas com PDFs/recibos)
+  if (requestUrl.pathname.startsWith("/api/")) {
     return;
   }
 
@@ -33,7 +40,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(cacheName).then((cache) => cache.put(event.request, responseClone));
           return response;
         })
-        .catch(() => cachedResponse);
+        .catch(() => cachedResponse || Response.error());
       return cachedResponse || fetchPromise;
     })
   );

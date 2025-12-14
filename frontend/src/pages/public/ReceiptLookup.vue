@@ -95,17 +95,24 @@
                 Status: {{ formatStatus(receipt.status) }} - emitido em {{ formatIssuedAt(receipt.issuedAt) }}
               </p>
             </div>
-            <a
-              :href="resolveReceiptUrl(receipt.receiptUrl)"
-              target="_blank"
-              rel="noopener"
-              :download="`comprovante-${receipt.registrationId}.pdf`"
+            <button
+              type="button"
               :class="[primaryButtonClass, 'px-5 py-2 text-xs uppercase tracking-[0.3em]']"
+              :disabled="openingReceiptId === receipt.registrationId"
+              @click="openReceiptPreview(receipt)"
             >
-              Baixar PDF
-            </a>
+              <span v-if="openingReceiptId === receipt.registrationId" class="flex items-center justify-center gap-2">
+                <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Abrindo...
+              </span>
+              <span v-else>Visualizar</span>
+            </button>
           </div>
         </div>
+
+        <p v-if="previewError" class="text-sm text-red-600 dark:text-red-300">
+          {{ previewError }}
+        </p>
 
         <p
           v-else
@@ -126,6 +133,7 @@ import BaseCard from "../../components/ui/BaseCard.vue";
 import { useApi } from "../../composables/useApi";
 import { formatCPF, normalizeCPF } from "../../utils/cpf";
 import { API_BASE_URL } from "../../config/api";
+import { createPreviewSession } from "../../utils/documentPreview";
 
 type ReceiptSummary = {
   registrationId: string;
@@ -147,11 +155,13 @@ const primaryButtonClass =
 const resetFeedback = () => {
   errorMessage.value = "";
   emptyMessage.value = "";
+  previewError.value = "";
 };
 
 const clearResults = () => {
   results.value = [];
   hasSearched.value = false;
+  openingReceiptId.value = "";
 };
 
 const { api } = useApi();
@@ -162,6 +172,8 @@ const loading = ref(false);
 const errorMessage = ref("");
 const emptyMessage = ref("");
 const hasSearched = ref(false);
+const openingReceiptId = ref("");
+const previewError = ref("");
 
 const hasResults = computed(() => results.value.length > 0);
 const showResultSummary = computed(() => hasResults.value);
@@ -205,6 +217,29 @@ const resolveReceiptUrl = (url: string) => {
   }
 };
 
+const openReceiptPreview = async (receipt: ReceiptSummary) => {
+  previewError.value = "";
+  openingReceiptId.value = receipt.registrationId;
+  try {
+    await createPreviewSession(
+      [
+        {
+          id: receipt.registrationId,
+          title: receipt.eventTitle,
+          fileName: `comprovante-${receipt.registrationId}.pdf`,
+          sourceUrl: resolveReceiptUrl(receipt.receiptUrl),
+          mimeType: "application/pdf"
+        }
+      ],
+      { context: "Comprovante de inscrição" }
+    );
+  } catch (error: any) {
+    previewError.value = error?.message ?? "Não foi possível abrir o comprovante agora.";
+  } finally {
+    openingReceiptId.value = "";
+  }
+};
+
 const search = async () => {
   const digits = normalizeCPF(cpf.value);
   resetFeedback();
@@ -240,6 +275,3 @@ const search = async () => {
   }
 };
 </script>
-
-
-

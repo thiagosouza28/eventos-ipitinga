@@ -21,6 +21,8 @@ export const createApp = () => {
   // Confiar no proxy reverso (Nginx/ALB) para interpretar X-Forwarded-For corretamente com rate limiting
   // Usamos "1" para um hop de proxy conhecido. Ajuste se houver múltiplos proxies em cadeia.
   app.set("trust proxy", 1);
+  const corsOrigins = env.corsOrigins.includes("*") ? true : env.corsOrigins;
+  app.set("corsOrigins", env.corsOrigins);
   app.use(
     helmet({
       // COOP/COEP/OAC serao definidos no Nginx para evitar duplicidade e garantir contexto seguro
@@ -31,7 +33,13 @@ export const createApp = () => {
       crossOriginResourcePolicy: { policy: "cross-origin" }
     })
   );
-  app.use(cors({ origin: env.corsOrigins, credentials: true }));
+  app.use(
+    cors({
+      origin: corsOrigins,
+      credentials: true,
+      exposedHeaders: ["Content-Disposition"]
+    })
+  );
 
   const globalLimiter = rateLimit({
     windowMs: env.RATE_LIMIT_WINDOW_MS,

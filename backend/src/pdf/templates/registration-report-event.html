@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title}}</title>
+
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #5f6b7a;
+      --border: #e5e7eb;
+      --bg: #ffffff;
+      --card: #fafafa;
+      --accent: #1d4ed8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-print-color-adjust: exact;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    /* HEADER */
+    .header {
+      padding: 22px 26px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header .eyebrow {
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* META */
+    .meta {
+      padding: 20px 26px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .meta-card {
+      padding: 12px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .meta .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.14em;
+    }
+
+    .meta .value {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    /* SUMMARY */
+    .summary {
+      padding: 0 26px 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      padding: 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .summary-card span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 6px;
+    }
+
+    .summary-card strong {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* STATUS CHIPS */
+    .chips {
+      padding: 0 26px 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-chip {
+      padding: 6px 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    /* GROUPS */
+    .groups {
+      padding: 0 26px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .group {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .group header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .group-eyebrow {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0;
+      letter-spacing: 0.16em;
+    }
+
+    .group h2 {
+      margin: 4px 0 0;
+      font-size: 17px;
+    }
+
+    /* TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table thead th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+
+    table tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    table tbody tr:nth-child(even) td {
+      background: #f6f7f9;
+    }
+
+    .empty {
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* FOOTER */
+    .footer {
+      padding: 16px 26px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">
+      <p class="eyebrow">{{eyebrow}}</p>
+      <h1>{{title}}</h1>
+      <p>{{subtitle}}</p>
+    </div>
+
+    <div class="meta">
+      {{metaCards}}
+    </div>
+
+    <div class="summary">
+      {{summaryCards}}
+    </div>
+
+    {{extraStatusChips}}
+
+    <div class="groups">
+      {{sections}}
+    </div>
+
+    <div class="footer">
+      Gerado automaticamente – {{generatedAt}}
+    </div>
+  </div>
+</body>
+</html>

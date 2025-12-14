@@ -1,478 +1,317 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Comprovante de Inscrição</title>
-    <style>
-      :root {
-        --bg: #e9f0ff;
-        --card-bg: #ffffff;
-        --accent: #2563eb;
-        --accent-soft: rgba(37, 99, 235, 0.12);
-        --text-main: #0f172a;
-        --text-muted: #64748b;
-        --success: #16a34a;
-        --radius-xl: 28px;
-        --radius-md: 16px;
-        --shadow-soft: 0 24px 50px rgba(15, 23, 42, 0.18);
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Comprovante de Inscrição</title>
 
-      * {
-        box-sizing: border-box;
-        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        margin: 0;
+  <style>
+    :root {
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #d1d5db;
+      --light: #f8fafc;
+      --success: #16a34a;
+      --font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: var(--font);
+      color: var(--text);
+      background: #ffffff;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      padding: 28px;
+    }
+
+    /* Cabeçalho */
+    .header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    /* Blocos */
+    .section {
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .participant-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .avatar {
+      width: 140px;
+      height: 140px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .field {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+
+    .field small {
+      display: block;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .field strong {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    /* Status */
+    .status {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 6px 12px;
+      border: 1px solid var(--success);
+      color: var(--success);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    /* Valor */
+    .total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 2px solid var(--border);
+      padding-top: 14px;
+      margin-top: 18px;
+    }
+
+    .total span {
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .total strong {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    /* QR */
+    .qr {
+      margin-top: 20px;
+      border-top: 1px dashed var(--border);
+      padding-top: 16px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .qr img {
+      width: 110px;
+      height: 110px;
+      border: 1px solid var(--border);
+      padding: 6px;
+    }
+
+    code {
+      font-size: 0.75rem;
+      word-break: break-all;
+      color: var(--muted);
+    }
+
+    /* Rodapé */
+    .footer {
+      margin-top: 22px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Impressão */
+    @media print {
+      body {
         padding: 0;
       }
+      .container {
+        border: none;
+      }
+    }
 
-      body {
-        background: radial-gradient(circle at top left, #dbeafe, #e5e7eb 45%, #e0f2fe);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px 12px;
-        color: var(--text-main);
-      }
+  </style>
+</head>
+<body>
 
-      .receipt-wrapper {
-        width: 100%;
-        max-width: 860px;
-        background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-soft);
-        padding: 28px;
-        position: relative;
-        overflow: hidden;
-      }
+  <div class="container">
 
-      .receipt-wrapper::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.25), transparent 55%);
-        opacity: 0.9;
-        pointer-events: none;
-      }
+    <header class="header">
+      <h1>Comprovante de Inscrição</h1>
+      <p>{{eventTitle}} • {{eventLocation}} • {{eventPeriod}}</p>
+      <div class="status">{{status}}</div>
+    </header>
 
-      .receipt-inner {
-        position: relative;
-        z-index: 1;
-        display: grid;
-        grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.4fr);
-        gap: 22px;
-      }
-
-      .header {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 18px;
-        align-items: flex-start;
-      }
-
-      .event-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .event-title {
-        font-weight: 700;
-        font-size: 1.15rem;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        color: var(--text-main);
-      }
-
-      .event-sub {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        line-height: 1.4;
-      }
-
-      .status-chip {
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        border: 1px solid rgba(22, 163, 74, 0.18);
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(22, 163, 74, 0.18));
-        color: #065f46;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        white-space: nowrap;
-      }
-
-      .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: #22c55e;
-        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.28);
-      }
-
-      .participant-card {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 14px;
-        padding: 14px;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: var(--radius-md);
-        border: 1px solid rgba(148, 163, 184, 0.25);
-      }
-
-      .avatar {
-        width: 70px;
-        height: 70px;
-        border-radius: 20px;
-        background: linear-gradient(145deg, #e5edff, #dbeafe);
-        display: grid;
-        place-items: center;
-        font-size: 0.65rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        overflow: hidden;
-      }
-      .avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .participant-data {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        align-content: center;
-      }
-
-      .field {
-        padding: 8px 10px;
-        border-radius: 12px;
-        background: #f8fafc;
-        border: 1px solid rgba(148, 163, 184, 0.25);
-      }
-
-      .field-label {
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--text-muted);
-        margin-bottom: 3px;
-      }
-
-      .field-value {
-        font-size: 0.86rem;
-        font-weight: 600;
-        color: var(--text-main);
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-      }
-
-      .section-title {
-        font-size: 0.72rem;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        margin: 18px 0 10px;
-      }
-
-      .grid-3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .grid-2 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .side-card {
-        height: 100%;
-        padding: 14px;
-        border-radius: var(--radius-md);
-        background:
-          radial-gradient(circle at top right, rgba(37, 99, 235, 0.2), transparent 60%),
-          var(--card-bg);
-        border: 1px solid rgba(148, 163, 184, 0.28);
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-      }
-
-      .side-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-      }
-
-      .side-title {
-        font-size: 0.78rem;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: var(--text-muted);
-      }
-
-      .amount {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--accent);
-      }
-
-      .chip {
-        font-size: 0.7rem;
-        padding: 4px 10px;
-        border-radius: 999px;
-        background: var(--accent-soft);
-        color: var(--accent);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        font-weight: 600;
-      }
-
-      .qr-row {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 12px;
-        align-items: center;
-        padding: 12px;
-        border-radius: 16px;
-        background: rgba(15, 23, 42, 0.96);
-        color: #e5e7eb;
-      }
-
-      .qr-box {
-        width: 92px;
-        height: 92px;
-        background: #ffffff;
-        border-radius: 14px;
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-      }
-      .qr-box img {
-        width: 100%;
-        height: 100%;
-      }
-
-      .qr-text-main {
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-
-      .qr-text-sub {
-        font-size: 0.7rem;
-        color: #9ca3af;
-        line-height: 1.3;
-      }
-
-      .qr-url {
-        font-size: 0.7rem;
-        color: #c4ddff;
-        margin-top: 6px;
-        word-break: break-all;
-      }
-
-      .footer-meta {
-        margin-top: 8px;
-        font-size: 0.68rem;
-        color: var(--text-muted);
-        line-height: 1.4;
-      }
-
-      .footer-meta span {
-        font-weight: 600;
-        color: var(--text-main);
-      }
-
-      .divider {
-        height: 1px;
-        background: linear-gradient(to right, transparent, rgba(148, 163, 184, 0.4), transparent);
-        margin: 4px 0 6px;
-      }
-
-      .pill-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-top: 6px;
-      }
-
-      .pill {
-        font-size: 0.65rem;
-        padding: 4px 9px;
-        border-radius: 999px;
-        background: #eff6ff;
-        color: #1d4ed8;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        border: 1px solid rgba(59, 130, 246, 0.25);
-      }
-
-      @media (max-width: 720px) {
-        .receipt-inner {
-          grid-template-columns: minmax(0, 1fr);
-        }
-        .receipt-wrapper {
-          padding: 20px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="receipt-wrapper">
-      <div class="receipt-inner">
-        <!-- COLUNA ESQUERDA -->
-        <div>
-          <div class="header">
-            <div class="event-info">
-              <div class="event-title">{{eventTitle}}</div>
-              <div class="event-sub">
-                {{eventLocation}} • {{eventPeriod}}
-              </div>
-            </div>
-
-            <div>
-              <div class="status-chip">
-                <span class="status-dot"></span>
-                {{status}}
-              </div>
-            </div>
+    <section class="section">
+      <div class="section-title">Participante</div>
+      <div class="participant-row">
+        <div class="avatar">
+          <img src="{{photoUrl}}" alt="Foto do participante">
+        </div>
+        <div class="grid">
+          <div class="field">
+            <small>Nome completo</small>
+            <strong>{{fullName}}</strong>
           </div>
-
-          <!-- PARTICIPANTE -->
-          <div class="participant-card">
-            <div class="avatar">
-              <img src="{{photoUrl}}" alt="Foto do participante" />
-            </div>
-            <div class="participant-data">
-              <div class="field">
-                <div class="field-label">Nome completo</div>
-                <div class="field-value">{{fullName}}</div>
-              </div>
-              <div class="field">
-                <div class="field-label">CPF</div>
-                <div class="field-value">{{cpf}}</div>
-              </div>
-              <div class="field">
-                <div class="field-label">Data de nascimento</div>
-                <div class="field-value">{{birthDate}}</div>
-              </div>
-              <div class="field">
-                <div class="field-label">Idade</div>
-                <div class="field-value">{{ageYears}} anos</div>
-              </div>
-            </div>
+          <div class="field">
+            <small>CPF</small>
+            <strong>{{cpf}}</strong>
           </div>
-
-          <!-- DADOS DA INSCRIÇÃO -->
-          <div class="section-title">Dados da inscrição</div>
-          <div class="grid-3">
-            <div class="field">
-              <div class="field-label">ID da inscrição</div>
-              <div class="field-value">{{registrationId}}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Forma de pagamento</div>
-              <div class="field-value">{{paymentMethod}}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Status</div>
-              <div class="field-value">{{status}}</div>
-            </div>
+          <div class="field">
+            <small>Data de nascimento</small>
+            <strong>{{birthDate}}</strong>
           </div>
-
-          <div class="grid-3" style="margin-top:10px;">
-            <div class="field">
-              <div class="field-label">Data da inscrição</div>
-              <div class="field-value">{{registrationDate}}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Data do pagamento</div>
-              <div class="field-value">{{paymentDate}}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Lote</div>
-              <div class="field-value">{{lotName}}</div>
-            </div>
-          </div>
-
-          <!-- IGREJA E DISTRITO -->
-          <div class="section-title">Igreja e distrito</div>
-          <div class="grid-2">
-            <div class="field">
-              <div class="field-label">Distrito</div>
-              <div class="field-value">{{districtName}}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Igreja</div>
-              <div class="field-value">{{churchName}}</div>
-            </div>
+          <div class="field">
+            <small>Idade</small>
+            <strong>{{ageYears}} anos</strong>
           </div>
         </div>
-
-        <!-- COLUNA DIREITA -->
-        <aside class="side-card">
-          <div class="side-header">
-            <div>
-              <div class="side-title">Resumo financeiro</div>
-              <div class="amount">{{amountTotal}}</div>
-            </div>
-            <div class="chip">{{participantType}}</div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="grid-2">
-            <div class="field">
-              <div class="field-label">Valor do evento</div>
-              <div class="field-value">{{amountEvent}}</div>
-            </div>
-            <div class="field">
-              <div class="field-label">Taxas</div>
-              <div class="field-value">{{amountFees}}</div>
-            </div>
-          </div>
-
-          <div class="qr-row">
-            <div class="qr-box">
-              <img src="{{qrDataUrl}}" alt="QR Code de autenticação" />
-            </div>
-            <div>
-              <div class="qr-text-main">Autenticação do comprovante</div>
-              <div class="qr-text-sub">
-                Aponte a câmera do celular para o QR Code ou acesse o link abaixo
-                para conferir a autenticidade desta inscrição.
-              </div>
-              <div class="qr-url">
-                {{validationUrl}}
-              </div>
-            </div>
-          </div>
-
-          <div class="footer-meta">
-            Comprovante gerado em <span>{{generatedAt}}</span>.<br />
-            Apresente este comprovante (impresso ou digital) no momento do check-in.
-            <div class="pill-row">
-              <div class="pill">{{eventTitle}}</div>
-              <div class="pill">{{lotName}}</div>
-              <div class="pill">Uso interno</div>
-            </div>
-          </div>
-        </aside>
       </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Inscrição</div>
+      <div class="grid grid-3">
+        <div class="field">
+          <small>Registro</small>
+          <strong>{{registrationId}}</strong>
+        </div>
+        <div class="field">
+          <small>Data</small>
+          <strong>{{registrationDate}}</strong>
+        </div>
+        <div class="field">
+          <small>Tipo</small>
+          <strong>{{participantType}}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Local</div>
+      <div class="grid grid-3">
+        <div class="field">
+          <small>Distrito</small>
+          <strong>{{districtName}}</strong>
+        </div>
+        <div class="field">
+          <small>Igreja</small>
+          <strong>{{churchName}}</strong>
+        </div>
+        <div class="field">
+          <small>Lote</small>
+          <strong>{{lotName}}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Pagamento</div>
+      <div class="grid grid-3">
+        <div class="field">
+          <small>Método</small>
+          <strong>{{paymentMethod}}</strong>
+        </div>
+        <div class="field">
+          <small>Data</small>
+          <strong>{{paymentDate}}</strong>
+        </div>
+        <div class="field">
+          <small>Status</small>
+          <strong>{{status}}</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="total">
+      <span>Valor total pago</span>
+      <strong>{{amountTotal}}</strong>
     </div>
-  </body>
+
+    <section class="qr">
+      <img src="{{qrDataUrl}}" alt="QR Code">
+      <div>
+        <strong>Validação do comprovante</strong><br>
+        <small>Escaneie o QR Code ou acesse:</small><br>
+        <code>{{validationUrl}}</code>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Documento gerado em {{generatedAt}} • Válido para check-in oficial
+    </footer>
+
+  </div>
+
+</body>
 </html>

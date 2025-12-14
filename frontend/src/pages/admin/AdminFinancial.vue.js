@@ -9,6 +9,7 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { createPreviewSession } from "../../utils/documentPreview";
 const admin = useAdminStore();
 const { api } = useApi();
 const loading = ref(true);
@@ -101,7 +102,7 @@ const loadEventSummary = async () => {
     }
 };
 const loadEventDetails = () => {
-    // TODO: Implementar página de detalhes do evento
+    // TODO: Implementar p├ígina de detalhes do evento
     console.log("Carregar detalhes do evento", selectedEventId.value);
 };
 const downloadEventReport = async () => {
@@ -111,18 +112,19 @@ const downloadEventReport = async () => {
         downloadingReport.value = true;
         const response = await admin.downloadFinancialReport(selectedEventId.value);
         const blob = new Blob([response.data], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
         const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
-        link.href = url;
-        link.download = `relatorio-financeiro-${filenameBase}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
+        await createPreviewSession([
+            {
+                id: `financial-${selectedEventId.value}`,
+                title: `Relatorio financeiro - ${eventSummary.value?.event?.title || "Evento"}`,
+                fileName: `relatorio-financeiro-${filenameBase}.pdf`,
+                blob,
+                mimeType: "application/pdf"
+            }
+        ], { context: "Relatorios administrativos" });
     }
     catch (error) {
-        showError("Erro ao gerar relatório financeiro", error);
+        showError("Erro ao gerar relatorio financeiro", error);
     }
     finally {
         downloadingReport.value = false;
@@ -316,11 +318,11 @@ if (__VLS_ctx.loading) {
     // @ts-ignore
     const __VLS_14 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
         rows: (3),
-        helperText: "📡 Carregando dados financeiros...",
+        helperText: "Carregando dados financeiros...",
     }));
     const __VLS_15 = __VLS_14({
         rows: (3),
-        helperText: "📡 Carregando dados financeiros...",
+        helperText: "Carregando dados financeiros...",
     }, ...__VLS_functionalComponentArgsRest(__VLS_14));
 }
 if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
@@ -369,6 +371,9 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
         ...{ class: "mt-2 text-2xl font-bold text-red-600 dark:text-red-400" },
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.generalMpFees));
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -525,7 +530,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
         ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
         disabled: (__VLS_ctx.downloadingReport),
     });
-    (__VLS_ctx.downloadingReport ? "Gerando PDF..." : "Baixar PDF");
+    (__VLS_ctx.downloadingReport ? "Preparando..." : "Visualizar PDF");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" },
     });
@@ -543,6 +548,9 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
         ...{ class: "text-red-600 dark:text-red-400" },
     });
     (__VLS_ctx.formatCurrency(__VLS_ctx.eventMpFees));
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
@@ -656,7 +664,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.selectedEventId && __VLS_ctx.expenses.length
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-2 text-sm text-neutral-600 dark:text-neutral-400" },
         });
-        (expense.items || "—");
+        (expense.items || "ÔÇö");
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-2 text-right font-medium text-red-600 dark:text-red-400" },
         });
@@ -976,6 +984,9 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
@@ -1251,6 +1262,9 @@ if (!__VLS_ctx.loading && !__VLS_ctx.generalSummary && !__VLS_ctx.errorDialog.op
 /** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;

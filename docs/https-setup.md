@@ -46,6 +46,18 @@ sudo certbot --nginx -d api.seudominio.com
      `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, `Origin-Agent-Cluster: ?1`, `Strict-Transport-Security`, etc.  
    - Navegador sem avisos: console limpo sem "ignored" ou "not origin-keyed".
 
+## E se eu nao tiver dominio?
+
+- Use um DNS dinamico gratuito (ex.: `<seu-ip>.nip.io` resolve automaticamente para o IP).  
+- Ajuste `server_name` no Nginx para `api.<seu-ip>.nip.io` e emita o certificado:  
+  ```bash
+  sudo certbot --nginx -d api.203-0-113-10.nip.io
+  ```  
+  (troque pelo IP real com hifens).  
+- Atualize `.env` (`APP_URL`/`API_URL`/`CORS_ORIGINS`) para `https://api.<seu-ip>.nip.io`.  
+- Esse dominio continua sendo https valido (Let's Encrypt aceita), eliminando os avisos de COOP/COEP/OAC.  
+- Evite acessar por IP puro ou http; sempre use o host https padrao que você definir.
+
 ## Boas praticas resumidas
 
 - Centralize COOP/COEP/OAC no Nginx (Express nao envia esses headers).  

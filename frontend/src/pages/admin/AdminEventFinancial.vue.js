@@ -9,6 +9,7 @@ import { useAdminStore } from '../../stores/admin';
 import { useApi } from '../../composables/useApi';
 import { formatCurrency } from '../../utils/format';
 import { formatCPF } from '../../utils/cpf';
+import { createPreviewSession } from '../../utils/documentPreview';
 const route = useRoute();
 const eventId = String(route.params.eventId || '');
 const admin = useAdminStore();
@@ -75,14 +76,15 @@ const doExportPdf = async () => {
     try {
         const resp = await admin.downloadRegistrationReport({ eventId }, 'event');
         const blob = new Blob([resp.data], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `relatorio-inscrições-evento-${eventId}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        await createPreviewSession([
+            {
+                id: `event-${eventId}`,
+                title: `Inscricoes do evento ${eventId}`,
+                fileName: `relatorio-inscricoes-evento-${eventId}.pdf`,
+                blob,
+                mimeType: 'application/pdf'
+            }
+        ], { context: 'Relatorios administrativos' });
     }
     catch (e) {
         showError('Falha ao gerar PDF', e);

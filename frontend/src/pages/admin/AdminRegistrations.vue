@@ -685,6 +685,7 @@ import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf'
 import { paymentMethodLabel } from '../../config/paymentMethods'
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto'
 import { useModulePermissions } from '../../composables/usePermissions'
+import { createPreviewSession } from '../../utils/documentPreview'
 
 const admin = useAdminStore()
 const catalog = useCatalogStore()
@@ -1571,18 +1572,29 @@ const downloadReceipt = async (registration: Registration) => {
     const response = await admin.getRegistrationReceiptLink(registration.id)
     const url = response?.url
     if (!url) {
-      showError('Comprovante indisponível', new Error('Não foi possível gerar o link do comprovante.'))
+      showError('Comprovante indisponivel', new Error('Nao foi possivel gerar o link do comprovante.'))
       return
     }
-    window.open(url, '_blank')
+    await createPreviewSession(
+      [
+        {
+          id: registration.id,
+          title: registration.fullName || "Inscricao " + registration.id,
+          fileName: "comprovante-" + registration.id + ".pdf",
+          sourceUrl: url,
+          mimeType: 'application/pdf'
+        }
+      ],
+      { context: 'Comprovante de inscricao' }
+    )
   } catch (error) {
     showError('Falha ao gerar comprovante', error)
   } finally {
     receiptDownloadState.downloadingId = ''
   }
 }
-</script>
 
+</script>
 
 
 

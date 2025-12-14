@@ -92,7 +92,7 @@
           <input v-model="filters.search" type="text" placeholder="Digite nome ou CPF" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
         </div>
         <div class="flex items-end gap-2">
-          <button type="button" @click="doExportPdf" class="shrink-0 rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-white">Baixar PDF</button>
+          <button type="button" @click="doExportPdf" class="shrink-0 rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-white">Visualizar PDF</button>
           <button type="button" @click="doExportCsv" class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">Exportar CSV</button>
         </div>
       </form>
@@ -153,6 +153,7 @@ import { useApi } from '../../composables/useApi'
 import type { Registration } from '../../types/api'
 import { formatCurrency } from '../../utils/format'
 import { formatCPF } from '../../utils/cpf'
+import { createPreviewSession } from '../../utils/documentPreview'
 
 const route = useRoute()
 const eventId = String(route.params.eventId || '')
@@ -226,15 +227,20 @@ const doExportPdf = async () => {
   try {
     const resp = await admin.downloadRegistrationReport({ eventId }, 'event')
     const blob = new Blob([resp.data], { type: 'application/pdf' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `relatorio-inscrições-evento-${eventId}.pdf`
-    document.body.appendChild(a)
-    a.click(); a.remove(); URL.revokeObjectURL(url)
+    await createPreviewSession(
+      [
+        {
+          id: `event-${eventId}`,
+          title: `Inscricoes do evento ${eventId}`,
+          fileName: `relatorio-inscricoes-evento-${eventId}.pdf`,
+          blob,
+          mimeType: 'application/pdf'
+        }
+      ],
+      { context: 'Relatorios administrativos' }
+    );
   } catch (e) { showError('Falha ao gerar PDF', e) }
 }
-
 const doExportCsv = () => {
   const rows = [
     ['Nome', 'CPF', 'Status', 'Pagamento', 'Valor (centavos)', 'Pago em'] as string[]

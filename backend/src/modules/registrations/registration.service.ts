@@ -40,6 +40,13 @@ const brDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short"
 });
 
+const apiBaseUrl = (() => {
+  const base = env.API_URL.endsWith("/") ? env.API_URL : `${env.API_URL}/`;
+  return base;
+})();
+
+const RECEIPT_TOKEN_TTL_MINUTES = 60 * 24 * 30; // 30 dias para evitar expiração precoce do link
+
 const toPublicPhotoUrl = (value?: string | null) => {
   if (!value) return undefined;
   if (/^data:/i.test(value) || /^https?:\/\//i.test(value)) {
@@ -79,16 +86,16 @@ const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => 
   let baseUrl: URL;
   try {
     if (storedUrl) {
-      baseUrl = new URL(storedUrl, env.APP_URL);
+      baseUrl = new URL(storedUrl, apiBaseUrl);
       baseUrl.search = "";
     } else {
-      baseUrl = new URL(`/api/receipts/${registrationId}.pdf`, env.APP_URL);
+      baseUrl = new URL(`receipts/${registrationId}.pdf`, apiBaseUrl);
     }
   } catch {
-    baseUrl = new URL(`/api/receipts/${registrationId}.pdf`, env.APP_URL);
+    baseUrl = new URL(`receipts/${registrationId}.pdf`, apiBaseUrl);
   }
 
-  const token = signReceiptToken(registrationId);
+  const token = signReceiptToken(registrationId, RECEIPT_TOKEN_TTL_MINUTES);
   baseUrl.searchParams.set("token", token);
 
   return {
@@ -699,7 +706,7 @@ export class RegistrationService {
       feeCents: registration.order?.feeCents ?? 0,
       totalCents: registration.order?.totalCents ?? registration.priceCents ?? 0,
       lotName: registration.order?.pricingLot?.name ?? "Lote vigente",
-      participantType: "Inscrição individual"
+      participantType: "Inscricao individual"
     });
 
     const filePath = path.join(receiptsDir, `${registrationId}.pdf`);

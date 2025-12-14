@@ -607,7 +607,7 @@
                 </div>
                 <div>
                   <span class="block text-xs uppercase tracking-wide text-neutral-400">Total</span>
-                  <span>{{ formatCurrency(ticketPriceCents * (inlinePayment?.participantCount ?? people.length)) }}</span>
+                  <span>{{ formatCurrency(inlinePayment?.totalCents ?? ticketPriceCents * (inlinePayment?.participantCount ?? people.length)) }}</span>
                 </div>
                 <div v-if="currentLotName">
                   <span class="block text-xs uppercase tracking-wide text-neutral-400">Lote vigente</span>
@@ -1834,7 +1834,6 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
-
 
 
 

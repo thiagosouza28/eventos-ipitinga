@@ -92,24 +92,20 @@
                 <div>
                   <p class="text-base font-semibold">Comprovantes disponiveis</p>
                   <p class="text-sm text-emerald-800 dark:text-emerald-100/80">
-                    {{
-                      autoReceiptDownloadState === "done"
-                        ? "Download automatico concluido. Se precisar novamente, clique abaixo."
-                        : "Escolha um comprovante individual ou baixe todos de uma vez."
-                    }}
+                    Visualize antes de baixar: abrimos os PDFs em nova aba com opções para exportar ou apenas checar o conteúdo.
                   </p>
                 </div>
                 <button
                   type="button"
                   class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400"
-                  :disabled="downloadingReceipts"
-                  @click="handleManualReceiptDownload"
+                  :disabled="receiptPreviewLoading"
+                  @click="handleOpenAllReceipts"
                 >
-                  <span v-if="downloadingReceipts" class="flex items-center gap-2">
+                  <span v-if="receiptPreviewLoading && !previewingReceiptId" class="flex items-center gap-2">
                     <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Baixando...
+                    Abrindo...
                   </span>
-                  <span v-else>Baixar todos</span>
+                  <span v-else>Visualizar todos</span>
                 </button>
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
@@ -138,24 +134,27 @@
                   <button
                     type="button"
                     class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-emerald-500/40 dark:text-emerald-50"
-                    :disabled="downloadingReceipts"
-                    @click="handleSingleReceiptDownload(receipt.registrationId)"
+                    :disabled="receiptPreviewLoading && previewingReceiptId === receipt.registrationId"
+                    @click="handleOpenSingleReceipt(receipt.registrationId)"
                   >
                     <span class="h-4 w-4" aria-hidden="true">ï¿½?"</span>
-                    Baixar comprovante
+                    <span v-if="previewingReceiptId === receipt.registrationId && receiptPreviewLoading" class="flex items-center gap-2">
+                      <span class="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+                      Abrindo...
+                    </span>
+                    <span v-else>Visualizar comprovante</span>
                   </button>
                 </article>
               </div>
-              <p v-if="receiptDownloadError" class="text-sm text-red-600 dark:text-red-300">
-                {{ receiptDownloadError }}
+              <p v-if="receiptPreviewError" class="text-sm text-red-600 dark:text-red-300">
+                {{ receiptPreviewError }}
               </p>
             </div>
             <div
               v-else-if="receiptsGenerating"
               class="mt-4 rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-200"
             >
-              Estamos finalizando os comprovantes deste pedido. Assim que ficarem prontos faremos o download
-              automaticamente.
+              Estamos finalizando os comprovantes deste pedido. Assim que ficarem prontos voce podera visualiza-los em uma nova aba.
             </div>
           </div>
         </div>
@@ -311,7 +310,6 @@
 </template>
 
 <script setup lang="ts">
-import JSZip from "jszip";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 
@@ -322,6 +320,7 @@ import { API_BASE_URL } from "../../config/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { sanitizeFileName } from "../../utils/files";
 import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
+import { createPreviewSession } from "../../utils/documentPreview";
 
 type PaymentReceiptLink = {
   registrationId: string;
@@ -359,11 +358,12 @@ const route = useRoute();
 const router = useRouter();
 const eventStore = useEventStore();
 
-type DownloadState = "idle" | "pending" | "done" | "failed";
-
 const payment = ref<PaymentResponse | null>(null);
 const loadingStatus = ref(false);
 const pollHandle = ref<number | null>(null);
+const receiptPreviewLoading = ref(false);
+const receiptPreviewError = ref("");
+const previewingReceiptId = ref<string | null>(null);
 
 const PAID_STATUSES = new Set(["PAID", "APPROVED"]);
 const isPaidStatus = (status?: string | null) => {
@@ -371,20 +371,6 @@ const isPaidStatus = (status?: string | null) => {
   return PAID_STATUSES.has(status.toUpperCase());
 };
 
-const receiptDownloadStorageKey = `order:${props.orderId}:receipts-downloaded`;
-const readStoredReceiptState = (): DownloadState => {
-  if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") {
-    return "idle";
-  }
-  try {
-    return window.sessionStorage.getItem(receiptDownloadStorageKey) === "done" ? "done" : "idle";
-  } catch {
-    return "idle";
-  }
-};
-const autoReceiptDownloadState = ref<DownloadState>(readStoredReceiptState());
-const downloadingReceipts = ref(false);
-const receiptDownloadError = ref("");
 const apiBase = (() => {
   try {
     return new URL(API_BASE_URL, typeof window !== "undefined" ? window.location.origin : undefined);
@@ -492,114 +478,63 @@ const manualInstructions = computed(() => {
   }
 });
 
-const persistReceiptDownloadState = () => {
-  if (typeof window === "undefined" || typeof window.sessionStorage === "undefined") return;
-  try {
-    window.sessionStorage.setItem(receiptDownloadStorageKey, "done");
-  } catch {
-    // Silently ignore storage errors (private mode, etc).
-  }
-};
-
 const buildReceiptFileName = (receipt: PaymentReceiptLink, index: number) => {
   const base = sanitizeFileName(receipt.fullName || `participante-${index + 1}`, "participante");
   return `${base}-${receipt.registrationId}.pdf`;
 };
 
-const triggerBlobDownload = (blob: Blob, fileName: string) => {
-  if (typeof window === "undefined") return;
-  const href = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = href;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(href);
-};
+const buildReceiptDocument = (receipt: PaymentReceiptLink, index: number) => ({
+  id: receipt.registrationId,
+  title: receipt.fullName || `Participante ${index + 1}`,
+  fileName: buildReceiptFileName(receipt, index),
+  sourceUrl: receipt.resolvedUrl ?? receipt.receiptUrl,
+  mimeType: "application/pdf"
+});
 
-const fetchReceiptBlob = async (url: string) => {
-  const response = await fetch(url, { credentials: "include" });
-  if (!response.ok) {
-    throw new Error(`Falha ao baixar comprovante (${response.status})`);
-  }
-  return await response.blob();
-};
-
-const downloadSingleReceipt = async (receipt: PaymentReceiptLink, index: number) => {
-  const blob = await fetchReceiptBlob(receipt.resolvedUrl ?? receipt.receiptUrl);
-  triggerBlobDownload(blob, buildReceiptFileName(receipt, index));
-};
-
-const downloadReceiptArchive = async (receipts: PaymentReceiptLink[]) => {
-  const zip = new JSZip();
-  for (let index = 0; index < receipts.length; index += 1) {
-    const receipt = receipts[index];
-    const blob = await fetchReceiptBlob(receipt.resolvedUrl ?? receipt.receiptUrl);
-    zip.file(buildReceiptFileName(receipt, index), blob);
-  }
-  const archiveName = `comprovantes-${sanitizeFileName(props.orderId, "pedido")}.zip`;
-  const archive = await zip.generateAsync({ type: "blob" });
-  triggerBlobDownload(archive, archiveName);
-};
-
-const downloadReceipts = async (mode: "auto" | "manual" = "manual") => {
-  if (typeof window === "undefined" || !hasReceiptLinks.value) return false;
-  downloadingReceipts.value = true;
-  if (mode === "manual") {
-    receiptDownloadError.value = "";
-  }
-  try {
-    if (receiptLinks.value.length === 1) {
-      await downloadSingleReceipt(receiptLinks.value[0], 0);
-    } else {
-      await downloadReceiptArchive(receiptLinks.value);
-    }
-    persistReceiptDownloadState();
-    autoReceiptDownloadState.value = "done";
-    return true;
-  } catch (error) {
-    console.error("Erro ao baixar comprovantes", error);
-    receiptDownloadError.value =
-      mode === "auto"
-        ? "Tentamos baixar os comprovantes automaticamente, mas algo deu errado. Use o botão abaixo para tentar novamente."
-        : "Não foi possível baixar os comprovantes. Tente novamente.";
-    return false;
-  } finally {
-    downloadingReceipts.value = false;
-  }
-};
-
-const triggerAutoReceiptDownload = () => {
-  if (autoReceiptDownloadState.value !== "idle" || !hasReceiptLinks.value) return;
-  if (typeof window === "undefined") return;
-  autoReceiptDownloadState.value = "pending";
-  void downloadReceipts("auto").then((success) => {
-    autoReceiptDownloadState.value = success ? "done" : "failed";
-  });
-};
-
-const handleManualReceiptDownload = () => downloadReceipts("manual");
-
-const handleSingleReceiptDownload = async (registrationId: string) => {
-  if (!hasReceiptLinks.value || downloadingReceipts.value) return;
-  const index = receiptLinks.value.findIndex((receipt) => receipt.registrationId === registrationId);
-  if (index < 0) {
-    receiptDownloadError.value = "Não encontramos este comprovante. Atualize a página e tente novamente.";
+const openReceiptPreview = async (registrationId?: string) => {
+  if (!hasReceiptLinks.value) {
+    receiptPreviewError.value = "Nenhum comprovante disponivel no momento.";
     return;
   }
-  downloadingReceipts.value = true;
-  receiptDownloadError.value = "";
+  receiptPreviewError.value = "";
+  receiptPreviewLoading.value = true;
   try {
-    await downloadSingleReceipt(receiptLinks.value[index], index);
+    const selected = registrationId
+      ? receiptLinks.value.filter((receipt) => receipt.registrationId === registrationId)
+      : receiptLinks.value;
+    if (!selected.length) {
+      throw new Error("Nenhum comprovante dispon?vel no momento.");
+    }
+    const documents = selected.map((receipt) => {
+      const index = receiptLinks.value.findIndex((item) => item.registrationId === receipt.registrationId);
+      return buildReceiptDocument(receipt, index >= 0 ? index : 0);
+    });
+    const defaultIndex =
+      registrationId && documents.length > 1
+        ? documents.findIndex((doc) => doc.id === registrationId)
+        : 0;
+    await createPreviewSession(documents, {
+      context: `Comprovantes do pedido ${props.orderId}`,
+      defaultIndex: Math.max(defaultIndex, 0)
+    });
   } catch (error) {
-    console.error("Erro ao baixar comprovante individual", error);
-    receiptDownloadError.value = "Não foi possível baixar este comprovante. Tente novamente.";
+    console.error('Erro ao abrir comprovantes', error);
+    receiptPreviewError.value = (error as any)?.message ?? 'Nao foi possivel abrir os comprovantes agora.';
   } finally {
-    downloadingReceipts.value = false;
+    receiptPreviewLoading.value = false;
+    previewingReceiptId.value = null;
   }
 };
 
+const handleOpenAllReceipts = async () => {
+  previewingReceiptId.value = null;
+  await openReceiptPreview();
+};
+
+const handleOpenSingleReceipt = async (registrationId: string) => {
+  previewingReceiptId.value = registrationId;
+  await openReceiptPreview(registrationId);
+};
 const statusTitle = computed(() => {
   if (isFreeEvent.value) return "Inscrições confirmadas";
   if (isManualPayment.value) {
@@ -738,19 +673,6 @@ const stopPolling = () => {
   }
 };
 
-watch(
-  () => ({
-    status: payment.value?.status,
-    receiptCount: receiptLinks.value.length
-  }),
-  ({ status, receiptCount }) => {
-    if (isPaidStatus(status) && receiptCount > 0) {
-      triggerAutoReceiptDownload();
-    }
-  },
-  { immediate: true }
-);
-
 onMounted(async () => {
   clearRegistrationDraftState();
   if (!eventStore.event || eventStore.event.slug !== props.slug) {
@@ -769,5 +691,3 @@ onUnmounted(() => {
   stopPolling();
 });
 </script>
-
-
