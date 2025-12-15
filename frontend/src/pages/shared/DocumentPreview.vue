@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div
     class="min-h-screen bg-gradient-to-br from-neutral-50 via-sky-50 to-primary-50 text-neutral-900 dark:from-neutral-900 dark:via-neutral-950 dark:to-sky-950 dark:text-neutral-50"
   >
@@ -8,7 +8,7 @@
       >
         <div class="space-y-2">
           <p class="text-xs font-semibold uppercase tracking-[0.35em] text-primary-700 dark:text-primary-200">
-            Pré-visualização
+            PRÉ-VISUALIZAÇÃO
           </p>
           <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">
             {{ headerTitle }}
@@ -21,7 +21,7 @@
           <button
             type="button"
             class="rounded-full border border-neutral-200/80 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:border-primary-200 hover:text-primary-700 dark:border-white/10 dark:text-neutral-100 dark:hover:border-primary-500/50 dark:hover:text-primary-100"
-            @click="scrollToPreview"
+            @click="viewDocument"
           >
             Apenas visualizar
           </button>
@@ -156,7 +156,11 @@
               v-else
               class="flex h-[70vh] items-center justify-center p-6 text-sm text-neutral-500 dark:text-neutral-300"
             >
-              {{ loadingDoc ? "Carregando documento..." : "Selecione um documento para visualizar." }}
+              {{
+                loadingDoc
+                  ? "Carregando documento..."
+                  : "Clique em \"Apenas visualizar\" para carregar o documento."
+              }}
             </div>
           </div>
         </section>
@@ -187,6 +191,7 @@ const session = ref<DocumentPreviewSession | null>(null);
 const errorMessage = ref("");
 const loading = ref(true);
 const loadingDoc = ref(false);
+const previewActivated = ref(false);
 const imageDownloadState = ref<"idle" | "processing" | "error">("idle");
 const previewRef = ref<HTMLElement | null>(null);
 const currentIndex = ref(0);
@@ -249,26 +254,30 @@ const ensureDocUrl = async (doc?: PreviewDocument) => {
 const loadSession = async () => {
   const sessionId = route.query.session?.toString() ?? "";
   if (!sessionId) {
-    errorMessage.value = "Nenhuma sessão de documento foi informada.";
+    errorMessage.value = "Nenhuma sess?o de documento foi informada.";
     loading.value = false;
     return;
   }
   const payload = consumePreviewSession(sessionId);
   if (!payload || !payload.documents?.length) {
-    errorMessage.value = "Sessão expirada ou inválida. Gere o documento novamente.";
+    errorMessage.value = "Sess?o expirada ou inv?lida. Gere o documento novamente.";
     loading.value = false;
     return;
   }
+  blobCache.clear();
+  urlCache.clear();
+  viewerSrc.value = "";
+  previewActivated.value = false;
   session.value = payload;
   const startIndex = Math.min(payload.defaultIndex ?? 0, payload.documents.length - 1);
   currentIndex.value = startIndex;
-  await ensureDocUrl(payload.documents[startIndex]);
   loading.value = false;
 };
 
 watch(currentIndex, (next) => {
   const doc = documents.value[next];
   if (!doc) return;
+  if (!previewActivated.value) return;
   const cachedUrl = urlCache.get(doc.id) ?? doc.src;
   if (cachedUrl) {
     viewerSrc.value = cachedUrl;
@@ -276,7 +285,10 @@ watch(currentIndex, (next) => {
   void ensureDocUrl(doc);
 });
 
-const scrollToPreview = () => {
+const viewDocument = async () => {
+  if (!documents.value.length) return;
+  previewActivated.value = true;
+  await ensureDocUrl(documents.value[currentIndex.value]);
   previewRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
@@ -399,3 +411,7 @@ onBeforeUnmount(() => {
   });
 });
 </script>
+
+
+
+

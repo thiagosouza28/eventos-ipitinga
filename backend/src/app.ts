@@ -21,7 +21,18 @@ export const createApp = () => {
   // Confiar no proxy reverso (Nginx/ALB) para interpretar X-Forwarded-For corretamente com rate limiting
   // Usamos "1" para um hop de proxy conhecido. Ajuste se houver múltiplos proxies em cadeia.
   app.set("trust proxy", 1);
-  const corsOrigins = env.corsOrigins.includes("*") ? true : env.corsOrigins;
+  const corsOrigins =
+    env.corsOrigins.includes("*") || !env.corsOrigins.length
+      ? true
+      : (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+          // Permitir chamadas locais mesmo se não estiverem listadas explicitamente
+          if (!origin) return callback(null, true);
+          if (env.corsOrigins.includes(origin)) return callback(null, true);
+          if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
+            return callback(null, true);
+          }
+          return callback(null, false);
+        };
   app.set("corsOrigins", env.corsOrigins);
   app.use(
     helmet({

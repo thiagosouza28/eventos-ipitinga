@@ -111,7 +111,8 @@ const applyScopedLocationFilters = (
   if (user.role === "DiretorLocal") {
     if (user.churchId) {
       scoped.churchId = user.churchId;
-    } else if (user.districtScopeId) {
+    }
+    if (user.districtScopeId) {
       scoped.districtId = user.districtScopeId;
     }
   } else if (user.role === "AdminDistrital") {
@@ -254,4 +255,3 @@ export const bulkPaymentHandler = async (request: Request, response: Response) =
     });
   }
 };
-

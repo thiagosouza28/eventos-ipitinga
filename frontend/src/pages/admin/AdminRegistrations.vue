@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="registrationPermissions.canList" class="space-y-6" data-uppercase-scope>
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -18,7 +18,7 @@
           </p>
           <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Inscrições</h1>
           <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Filtre e gerencie inscrições por evento, distrito, igreja ou status.
+            {{ hideFilters ? 'Visualize apenas as inscrições da sua igreja.' : 'Filtre e gerencie inscrições por evento, distrito, igreja ou status.' }}
           </p>
         </div>
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -42,6 +42,7 @@
 
     <BaseCard
       class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+      v-if="!hideFilters"
     >
       <form @submit.prevent="applyFilters" class="grid gap-5 md:grid-cols-12">
         <div class="space-y-2 md:col-span-3">
@@ -703,6 +704,7 @@ const filters = reactive({
 const currentUser = computed(() => auth.user)
 const userRole = computed(() => currentUser.value?.role ?? null)
 const isLocalDirector = computed(() => userRole.value === 'DiretorLocal')
+const hideFilters = computed(() => isLocalDirector.value)
 const lockedDistrictId = computed(() => (isLocalDirector.value ? currentUser.value?.districtScopeId ?? '' : ''))
 const lockedChurchId = computed(() => (isLocalDirector.value ? currentUser.value?.churchId ?? '' : ''))
 const activeEventId = computed(() => admin.events.find((event) => event.isActive)?.id ?? admin.events[0]?.id ?? '')
@@ -780,12 +782,22 @@ const applyScopedFilters = () => {
   return hasChanged
 }
 
-const buildFilterParams = () => ({
-  eventId: filters.eventId || undefined,
-  districtId: filters.districtId || undefined,
-  churchId: filters.churchId || undefined,
-  status: filters.status || undefined
-})
+const buildFilterParams = () => {
+  if (isLocalDirector.value) {
+    return {
+      eventId: lockedEventId.value || undefined,
+      districtId: lockedDistrictId.value || undefined,
+      churchId: lockedChurchId.value || undefined
+    }
+  }
+  return {
+    eventId: filters.eventId || undefined,
+    districtId: filters.districtId || undefined,
+    churchId: filters.churchId || undefined,
+    status: filters.status || undefined,
+    search: filters.search || undefined
+  }
+}
 
 const applyFilters = async () => {
   if (!registrationPermissions.canList.value) { return }
@@ -1595,7 +1607,6 @@ const downloadReceipt = async (registration: Registration) => {
 }
 
 </script>
-
 
 
 

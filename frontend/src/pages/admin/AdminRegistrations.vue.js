@@ -30,6 +30,7 @@ const filters = reactive({
 const currentUser = computed(() => auth.user);
 const userRole = computed(() => currentUser.value?.role ?? null);
 const isLocalDirector = computed(() => userRole.value === 'DiretorLocal');
+const hideFilters = computed(() => isLocalDirector.value);
 const lockedDistrictId = computed(() => (isLocalDirector.value ? currentUser.value?.districtScopeId ?? '' : ''));
 const lockedChurchId = computed(() => (isLocalDirector.value ? currentUser.value?.churchId ?? '' : ''));
 const activeEventId = computed(() => admin.events.find((event) => event.isActive)?.id ?? admin.events[0]?.id ?? '');
@@ -99,12 +100,22 @@ const applyScopedFilters = () => {
     }
     return hasChanged;
 };
-const buildFilterParams = () => ({
-    eventId: filters.eventId || undefined,
-    districtId: filters.districtId || undefined,
-    churchId: filters.churchId || undefined,
-    status: filters.status || undefined
-});
+const buildFilterParams = () => {
+    if (isLocalDirector.value) {
+        return {
+            eventId: lockedEventId.value || undefined,
+            districtId: lockedDistrictId.value || undefined,
+            churchId: lockedChurchId.value || undefined
+        };
+    }
+    return {
+        eventId: filters.eventId || undefined,
+        districtId: filters.districtId || undefined,
+        churchId: filters.churchId || undefined,
+        status: filters.status || undefined,
+        search: filters.search || undefined
+    };
+};
 const applyFilters = async () => {
     if (!registrationPermissions.canList.value) {
         return;
@@ -1062,6 +1073,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-1 text-sm text-neutral-600 dark:text-neutral-400" },
     });
+    (__VLS_ctx.hideFilters ? 'Visualize apenas as inscrições da sua igreja.' : 'Filtre e gerencie inscrições por evento, distrito, igreja ou status.');
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center" },
     });
@@ -1086,139 +1098,141 @@ if (__VLS_ctx.registrationPermissions.canList) {
         });
     }
     var __VLS_9;
-    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-    // @ts-ignore
-    const __VLS_14 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }));
-    const __VLS_15 = __VLS_14({
-        ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_14));
-    __VLS_16.slots.default;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
-        ...{ onSubmit: (__VLS_ctx.applyFilters) },
-        ...{ class: "grid gap-5 md:grid-cols-12" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2 md:col-span-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.filters.eventId),
-        disabled: (__VLS_ctx.isEventFilterLocked),
-        ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "",
-    });
-    (__VLS_ctx.isEventFilterLocked ? 'Evento vinculado' : 'Todos');
-    for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
+    if (!__VLS_ctx.hideFilters) {
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_14 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }));
+        const __VLS_15 = __VLS_14({
+            ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_14));
+        __VLS_16.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
+            ...{ onSubmit: (__VLS_ctx.applyFilters) },
+            ...{ class: "grid gap-5 md:grid-cols-12" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2 md:col-span-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.filters.eventId),
+            disabled: (__VLS_ctx.isEventFilterLocked),
+            ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (event.id),
-            value: (event.id),
+            value: "",
         });
-        (event.title);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2 md:col-span-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.filters.districtId),
-        disabled: (__VLS_ctx.isDistrictFilterLocked),
-        ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "",
-    });
-    (__VLS_ctx.isDistrictFilterLocked ? 'Distrito vinculado' : 'Todos');
-    for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
+        (__VLS_ctx.isEventFilterLocked ? 'Evento vinculado' : 'Todos');
+        for (const [event] of __VLS_getVForSourceType((__VLS_ctx.admin.events))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (event.id),
+                value: (event.id),
+            });
+            (event.title);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2 md:col-span-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.filters.districtId),
+            disabled: (__VLS_ctx.isDistrictFilterLocked),
+            ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (district.id),
-            value: (district.id),
+            value: "",
         });
-        (district.name);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2 md:col-span-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.filters.churchId),
-        disabled: (__VLS_ctx.isChurchFilterLocked || !__VLS_ctx.filters.districtId),
-        ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "",
-    });
-    (__VLS_ctx.isChurchFilterLocked ? 'Igreja vinculada' : (__VLS_ctx.filters.districtId ? 'Todas' : 'Selecione o distrito'));
-    for (const [church] of __VLS_getVForSourceType((__VLS_ctx.churchesByDistrict(__VLS_ctx.filters.districtId)))) {
+        (__VLS_ctx.isDistrictFilterLocked ? 'Distrito vinculado' : 'Todos');
+        for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (district.id),
+                value: (district.id),
+            });
+            (district.name);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2 md:col-span-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.filters.churchId),
+            disabled: (__VLS_ctx.isChurchFilterLocked || !__VLS_ctx.filters.districtId),
+            ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (church.id),
-            value: (church.id),
+            value: "",
         });
-        (church.name);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2 md:col-span-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-        value: (__VLS_ctx.filters.status),
-        ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-        value: "",
-    });
-    for (const [option] of __VLS_getVForSourceType((__VLS_ctx.registrationStatusOptions))) {
+        (__VLS_ctx.isChurchFilterLocked ? 'Igreja vinculada' : (__VLS_ctx.filters.districtId ? 'Todas' : 'Selecione o distrito'));
+        for (const [church] of __VLS_getVForSourceType((__VLS_ctx.churchesByDistrict(__VLS_ctx.filters.districtId)))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (church.id),
+                value: (church.id),
+            });
+            (church.name);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2 md:col-span-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.filters.status),
+            ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-            key: (option.value),
-            value: (option.value),
+            value: "",
         });
-        (option.label);
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-2 md:col-span-6" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-        ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-        value: (__VLS_ctx.filters.search),
-        type: "text",
-        placeholder: "Digite nome ou CPF",
-        ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
-        autocomplete: "off",
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "md:col-span-12 flex flex-wrap items-center justify-end gap-3" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.resetFilters) },
-        type: "button",
-        ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        type: "submit",
-        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
-        disabled: (__VLS_ctx.isApplying),
-    });
-    if (__VLS_ctx.isApplying) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-            ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+        for (const [option] of __VLS_getVForSourceType((__VLS_ctx.registrationStatusOptions))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (option.value),
+                value: (option.value),
+            });
+            (option.label);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2 md:col-span-6" },
         });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            value: (__VLS_ctx.filters.search),
+            type: "text",
+            placeholder: "Digite nome ou CPF",
+            ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-400 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+            autocomplete: "off",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "md:col-span-12 flex flex-wrap items-center justify-end gap-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.resetFilters) },
+            type: "button",
+            ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            type: "submit",
+            ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
+            disabled: (__VLS_ctx.isApplying),
+        });
+        if (__VLS_ctx.isApplying) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" },
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        (__VLS_ctx.isApplying ? "Aplicando..." : "Aplicar filtro");
+        var __VLS_16;
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.isApplying ? "Aplicando..." : "Aplicar filtro");
-    var __VLS_16;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
     const __VLS_17 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
@@ -3370,6 +3384,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             catalog: catalog,
             registrationPermissions: registrationPermissions,
             filters: filters,
+            hideFilters: hideFilters,
             isDistrictFilterLocked: isDistrictFilterLocked,
             isChurchFilterLocked: isChurchFilterLocked,
             isEventFilterLocked: isEventFilterLocked,

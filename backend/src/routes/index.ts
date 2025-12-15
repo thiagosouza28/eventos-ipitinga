@@ -161,6 +161,7 @@ router.get("/payments/order/:orderId", getOrderPaymentHandler);
 router.get("/payments/preference/:preferenceId", getPaymentByPreferenceIdHandler);
 router.post("/payments/pix/create", createPixPaymentHandler);
 router.post("/receipts/lookup", lookupReceiptsHandler);
+router.options("/receipts/:registrationId.pdf", downloadReceiptHandler);
 router.get("/receipts/:registrationId.pdf", downloadReceiptHandler);
 router.get("/checkin/validate", validateCheckinLinkHandler);
 router.post("/checkin/confirm", confirmCheckinLinkHandler);
@@ -421,7 +422,6 @@ router.post(
 );
 
 export default router;
-
 
 
 

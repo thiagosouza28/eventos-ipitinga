@@ -293,7 +293,7 @@ for (const [order] of __VLS_getVForSourceType((__VLS_ctx.admin.orders))) {
                     ...{ class: "inline-flex rounded-full px-3 py-1 font-semibold uppercase" },
                     ...{ class: (__VLS_ctx.registrationStatusBadge(registration.status)) },
                 });
-                (registration.status);
+                (__VLS_ctx.formatRegistrationStatus(registration.status));
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                     ...{ class: "text-neutral-500 dark:text-neutral-300" },
                 });

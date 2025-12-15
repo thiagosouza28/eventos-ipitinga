@@ -141,7 +141,7 @@
                       class="inline-flex rounded-full px-3 py-1 font-semibold uppercase"
                       :class="registrationStatusBadge(registration.status)"
                     >
-                      {{ registration.status }}
+                      {{ formatRegistrationStatus(registration.status) }}
                     </span>
                     <span class="text-neutral-500 dark:text-neutral-300">
                       Igreja: {{ findChurchName(registration.churchId) }} / {{ findDistrictName(registration.districtId) }}

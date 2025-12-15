@@ -11,6 +11,7 @@ const session = ref(null);
 const errorMessage = ref("");
 const loading = ref(true);
 const loadingDoc = ref(false);
+const previewActivated = ref(false);
 const imageDownloadState = ref("idle");
 const previewRef = ref(null);
 const currentIndex = ref(0);
@@ -74,25 +75,30 @@ const ensureDocUrl = async (doc) => {
 const loadSession = async () => {
     const sessionId = route.query.session?.toString() ?? "";
     if (!sessionId) {
-        errorMessage.value = "Nenhuma sessão de documento foi informada.";
+        errorMessage.value = "Nenhuma sess?o de documento foi informada.";
         loading.value = false;
         return;
     }
     const payload = consumePreviewSession(sessionId);
     if (!payload || !payload.documents?.length) {
-        errorMessage.value = "Sessão expirada ou inválida. Gere o documento novamente.";
+        errorMessage.value = "Sess?o expirada ou inv?lida. Gere o documento novamente.";
         loading.value = false;
         return;
     }
+    blobCache.clear();
+    urlCache.clear();
+    viewerSrc.value = "";
+    previewActivated.value = false;
     session.value = payload;
     const startIndex = Math.min(payload.defaultIndex ?? 0, payload.documents.length - 1);
     currentIndex.value = startIndex;
-    await ensureDocUrl(payload.documents[startIndex]);
     loading.value = false;
 };
 watch(currentIndex, (next) => {
     const doc = documents.value[next];
     if (!doc)
+        return;
+    if (!previewActivated.value)
         return;
     const cachedUrl = urlCache.get(doc.id) ?? doc.src;
     if (cachedUrl) {
@@ -100,7 +106,11 @@ watch(currentIndex, (next) => {
     }
     void ensureDocUrl(doc);
 });
-const scrollToPreview = () => {
+const viewDocument = async () => {
+    if (!documents.value.length)
+        return;
+    previewActivated.value = true;
+    await ensureDocUrl(documents.value[currentIndex.value]);
     previewRef.value?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 const triggerDownload = (blob, fileName) => {
@@ -249,7 +259,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
     ...{ class: "flex flex-wrap items-center gap-2" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.scrollToPreview) },
+    ...{ onClick: (__VLS_ctx.viewDocument) },
     type: "button",
     ...{ class: "rounded-full border border-neutral-200/80 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:border-primary-200 hover:text-primary-700 dark:border-white/10 dark:text-neutral-100 dark:hover:border-primary-500/50 dark:hover:text-primary-100" },
 });
@@ -417,7 +427,9 @@ else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex h-[70vh] items-center justify-center p-6 text-sm text-neutral-500 dark:text-neutral-300" },
         });
-        (__VLS_ctx.loadingDoc ? "Carregando documento..." : "Selecione um documento para visualizar.");
+        (__VLS_ctx.loadingDoc
+            ? "Carregando documento..."
+            : "Clique em \"Apenas visualizar\" para carregar o documento.");
     }
 }
 /** @type {__VLS_StyleScopedClasses['min-h-screen']} */ ;
@@ -778,7 +790,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             headerTitle: headerTitle,
             formattedCreatedAt: formattedCreatedAt,
             currentDocLabel: currentDocLabel,
-            scrollToPreview: scrollToPreview,
+            viewDocument: viewDocument,
             handleDownloadPdf: handleDownloadPdf,
             handleDownloadImage: handleDownloadImage,
             reloadSession: reloadSession,

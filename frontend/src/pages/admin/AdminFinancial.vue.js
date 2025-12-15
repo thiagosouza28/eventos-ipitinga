@@ -21,7 +21,7 @@ const showExpenseForm = ref(false);
 const editingExpense = ref(null);
 const submitting = ref(false);
 const downloadingReport = ref(false);
-const generalMpFees = computed(() => {
+const generalTotalsFees = computed(() => {
     const totals = generalSummary.value?.totals;
     if (!totals)
         return 0;
@@ -35,7 +35,33 @@ const generalMpFees = computed(() => {
     }
     return 0;
 });
-const eventMpFees = computed(() => {
+const generalTotals = computed(() => {
+    const totals = generalSummary.value?.totals ?? {};
+    const gross = totals.grossCents ?? 0;
+    const fees = generalTotalsFees.value ?? 0;
+    const expenses = totals.expensesCents ?? 0;
+    const cash = totals.cashCents ?? 0;
+    const pixFees = totals.pix?.feesCents ?? 0;
+    const pixNet = totals.pix?.netCents ??
+        Math.max(0, (totals.pix?.grossCents ?? 0) - pixFees);
+    const net = typeof totals.netCents === "number" ? totals.netCents : Math.max(0, gross - fees);
+    const generalNet = typeof totals.generalNetCents === "number"
+        ? totals.generalNetCents
+        : Math.max(0, net - expenses);
+    const cashBalance = typeof totals.cashBalanceCents === "number" ? totals.cashBalanceCents : generalNet;
+    return {
+        gross,
+        fees,
+        net,
+        expenses,
+        cash,
+        pixNet,
+        pixFees,
+        cashBalance,
+        generalNet
+    };
+});
+const eventTotalsFees = computed(() => {
     const totals = eventSummary.value?.totals;
     if (!totals)
         return 0;
@@ -48,6 +74,32 @@ const eventMpFees = computed(() => {
         return totals.grossCents - totals.netCents;
     }
     return 0;
+});
+const eventTotals = computed(() => {
+    const totals = eventSummary.value?.totals ?? {};
+    const gross = totals.grossCents ?? 0;
+    const fees = eventTotalsFees.value ?? 0;
+    const expenses = totals.expensesCents ?? 0;
+    const cash = totals.cashCents ?? 0;
+    const pixFees = totals.pix?.feesCents ?? 0;
+    const pixNet = totals.pix?.netCents ??
+        Math.max(0, (totals.pix?.grossCents ?? 0) - pixFees);
+    const net = typeof totals.netCents === "number" ? totals.netCents : Math.max(0, gross - fees);
+    const generalNet = typeof totals.generalNetCents === "number"
+        ? totals.generalNetCents
+        : Math.max(0, net - expenses);
+    const cashBalance = typeof totals.cashBalanceCents === "number" ? totals.cashBalanceCents : generalNet;
+    return {
+        gross,
+        fees,
+        net,
+        expenses,
+        cash,
+        pixNet,
+        pixFees,
+        cashBalance,
+        generalNet
+    };
 });
 const expenseForm = ref({
     description: "",
@@ -102,7 +154,7 @@ const loadEventSummary = async () => {
     }
 };
 const loadEventDetails = () => {
-    // TODO: Implementar p├ígina de detalhes do evento
+    // TODO: Implementar página de detalhes do evento
     console.log("Carregar detalhes do evento", selectedEventId.value);
 };
 const downloadEventReport = async () => {
@@ -360,7 +412,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-neutral-900 dark:text-white" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.grossCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.gross));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -370,7 +422,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalMpFees));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.fees));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
     });
@@ -383,7 +435,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.netCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.net));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -393,7 +445,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.expensesCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.expenses));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -403,7 +455,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-neutral-900 dark:text-white" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.cashCents || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.cash));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -413,7 +465,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-neutral-900 dark:text-white" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.pix?.netCents || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.pixNet));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -423,7 +475,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.pix?.feesCents || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.pixFees));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-primary-400/60 bg-gradient-to-br from-primary-600/10 to-primary-400/10 p-4 shadow-lg shadow-primary-300/30 dark:border-primary-500/30 dark:from-primary-900/30 dark:to-primary-700/20" },
     });
@@ -433,7 +485,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-primary-600 dark:text-primary-300" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.cashBalanceCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.cashBalance));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-sm border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5" },
     });
@@ -443,7 +495,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.generalSummary) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "mt-2 text-2xl font-bold text-neutral-900 dark:text-white" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.generalSummary.totals.generalNetCents || __VLS_ctx.generalSummary.totals.netCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.generalTotals.generalNet));
     var __VLS_19;
 }
 if (!__VLS_ctx.loading) {
@@ -539,7 +591,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.grossCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.gross));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
@@ -547,7 +599,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({
         ...{ class: "text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventMpFees));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.fees));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
     });
@@ -558,7 +610,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({
         ...{ class: "text-primary-600 dark:text-primary-300" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.netCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.net));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
@@ -566,19 +618,19 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({
         ...{ class: "text-red-600 dark:text-red-400" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.expensesCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.expenses));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.cashCents || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.cash));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.pix?.netCents || 0));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.pixNet));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
@@ -586,13 +638,13 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({
         ...{ class: "text-primary-600 dark:text-primary-300" },
     });
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.cashBalanceCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.cashBalance));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/20 dark:border-white/10 dark:bg-white/5" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
-    (__VLS_ctx.formatCurrency(__VLS_ctx.eventSummary.totals.generalNetCents || __VLS_ctx.eventSummary.totals.netCents));
+    (__VLS_ctx.formatCurrency(__VLS_ctx.eventTotals.generalNet));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mt-4 text-sm text-neutral-600 dark:text-neutral-400" },
     });
@@ -664,7 +716,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.selectedEventId && __VLS_ctx.expenses.length
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-2 text-sm text-neutral-600 dark:text-neutral-400" },
         });
-        (expense.items || "ÔÇö");
+        (expense.items || "--");
         __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
             ...{ class: "py-2 text-right font-medium text-red-600 dark:text-red-400" },
         });
@@ -1628,8 +1680,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             editingExpense: editingExpense,
             submitting: submitting,
             downloadingReport: downloadingReport,
-            generalMpFees: generalMpFees,
-            eventMpFees: eventMpFees,
+            generalTotals: generalTotals,
+            eventTotals: eventTotals,
             expenseForm: expenseForm,
             confirmDelete: confirmDelete,
             errorDialog: errorDialog,

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="eventStore.loading">
     <LoadingSpinner />
   </div>
@@ -56,15 +56,13 @@
               {{ priceInfo.helper }}
             </p>
             <div class="mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-              <p v-if="daysToNextLot !== null">
+              <p v-if="nextLotCountdownText">
                 Próximo lote em
                 <span class="font-semibold text-neutral-800 dark:text-white">
-                  {{ formatDayCount(daysToNextLot) }}
+                  {{ nextLotCountdownText }}
                 </span>
               </p>
-              <p v-else>
-                Nenhum próximo lote programado.
-              </p>
+              <p v-else>Nenhum próximo lote programado.</p>
               <p v-if="daysToLastLotEnd !== null">
                 Todos os lotes encerram em
                 <span class="font-semibold text-neutral-800 dark:text-white">
@@ -703,7 +701,7 @@
   </div>
 </template>
 <script setup lang="ts">
-  import { computed, nextTick, onMounted, reactive, ref, watch } from "vue";
+    import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
   import { useRouter } from "vue-router";
 
   import DateField from "../../components/forms/DateField.vue";
@@ -832,12 +830,33 @@ const nextLotInfo = computed(() => {
     price: formatCurrency(nextLot.value.priceCents)
   };
 });
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-const diffInDaysFromNow = (value?: string | null) => {
+const nowMs = ref(Date.now());
+const countdownInterval = ref<number | null>(null);
+onMounted(() => {
+  countdownInterval.value = window.setInterval(() => {
+    nowMs.value = Date.now();
+  }, 1000);
+});
+onUnmounted(() => {
+  if (countdownInterval.value) {
+    clearInterval(countdownInterval.value);
+    countdownInterval.value = null;
+  }
+});
+
+const MS_PER_MIN = 1000 * 60;
+const MS_PER_HOUR = MS_PER_MIN * 60;
+const MS_PER_DAY = MS_PER_HOUR * 24;
+const diffInMsFromNow = (value?: string | null) => {
   if (!value) return null;
   const target = new Date(value).getTime();
   if (Number.isNaN(target)) return null;
-  const diff = Math.ceil((target - Date.now()) / MS_PER_DAY);
+  return target - nowMs.value;
+};
+const diffInDaysFromNow = (value?: string | null) => {
+  const diffMs = diffInMsFromNow(value);
+  if (diffMs === null) return null;
+  const diff = Math.ceil(diffMs / MS_PER_DAY);
   return diff < 0 ? 0 : diff;
 };
 const sortedLots = computed(() => {
@@ -845,6 +864,13 @@ const sortedLots = computed(() => {
   return lots
     .slice()
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+});
+const nextLotCountdownTarget = computed(() => {
+  const now = Date.now();
+  const currentEnds = eventStore.event?.currentLot?.endsAt ?? null;
+  const hasCurrentEnd = currentEnds && new Date(currentEnds).getTime() > now;
+  if (hasCurrentEnd) return currentEnds;
+  return nextLot.value?.startsAt ?? null;
 });
 const lastLotEndDate = computed(() => {
   if (!sortedLots.value.length) {
@@ -858,8 +884,30 @@ const lastLotEndDate = computed(() => {
     return new Date(candidate).getTime() > new Date(latest).getTime() ? candidate : latest;
   }, sortedLots.value[0].endsAt ?? sortedLots.value[0].startsAt);
 });
-const daysToNextLot = computed(() => diffInDaysFromNow(nextLot.value?.startsAt));
+const msToNextLot = computed(() => diffInMsFromNow(nextLotCountdownTarget.value));
 const daysToLastLotEnd = computed(() => diffInDaysFromNow(lastLotEndDate.value));
+const nextLotCountdownText = computed(() => {
+  const diff = msToNextLot.value;
+  if (diff === null) return "";
+  if (diff <= 0) return "menos de 1 minuto";
+
+  const days = Math.floor(diff / MS_PER_DAY);
+  const hours = Math.floor((diff % MS_PER_DAY) / MS_PER_HOUR);
+  const minutes = Math.floor((diff % MS_PER_HOUR) / MS_PER_MIN);
+  const seconds = Math.floor((diff % MS_PER_MIN) / 1000);
+
+  if (days >= 1) {
+    // Exibe dias e, se houver, horas restantes
+    return `${formatDayCount(days)}${hours > 0 ? ` ${hours}h` : ""}`;
+  }
+
+  if (hours >= 1) {
+    return `${hours}h ${minutes.toString().padStart(2, "0")}m ${seconds.toString().padStart(2, "0")}s`;
+  }
+
+  const clampedMinutes = Math.max(minutes, 0);
+  return `${clampedMinutes.toString().padStart(2, "0")}m ${seconds.toString().padStart(2, "0")}s`;
+});
 const formatDayCount = (value: number | null) => {
   if (value === null) return "";
   if (value <= 0) return "menos de 1 dia";
@@ -1834,10 +1882,5 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
-
-
-
-
-
 
 
