@@ -11,6 +11,7 @@ import { PaymentMethod } from "../../config/payment-methods";
 import { logger } from "../../utils/logger";
 import { env } from "../../config/env";
 import { getScopedMinistryIds } from "../../utils/user-scope";
+import { hasPermission } from "../../utils/permissions";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 // Aceitar IDs vazios como undefined e ignorar valores inválidos em filtros
@@ -33,7 +34,12 @@ const listSchema = z.object({
   eventId: optionalId,
   districtId: optionalId,
   churchId: optionalId,
-  status: optionalStatus
+  status: optionalStatus,
+  lotId: optionalId,
+  search: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(120).optional()
+  )
 });
 
 const reportSchema = listSchema.extend({
@@ -69,11 +75,17 @@ const refundSchema = z.object({
 const bulkMarkPaidSchema = z.object({
   registrationIds: z.array(cuidOrUuid).min(1),
   paidAt: z.string().datetime().optional(),
-  reference: z.string().min(3).optional()
+  reference: z.string().min(3).optional(),
+  paymentMethod: z.nativeEnum(PaymentMethod).optional()
 });
 
-const applyScopedLocationFilters = (
-  filters: { churchId?: string; districtId?: string },
+const paymentOrderSchema = z.object({
+  registrationIds: z.array(cuidOrUuid).min(1),
+  paymentMethod: z.nativeEnum(PaymentMethod).optional()
+});
+
+const applyScopedLocationFilters = <T extends { churchId?: string; districtId?: string }>(
+  filters: T,
   user?: Request["user"]
 ) => {
   if (!user) return filters;
@@ -153,6 +165,29 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
         )
       : await registrationService.generateReportPdf(scopedFilters, groupBy, ministryIds);
   const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
+  response.setHeader("Content-Type", "application/pdf");
+  response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  return response.send(pdfBuffer);
+};
+
+export const downloadRegistrationsListPdfHandler = async (request: Request, response: Response) => {
+  const filters = listSchema.parse(request.query);
+
+  const origin = request.headers.origin;
+  if (origin && env.corsOrigins.includes(origin)) {
+    response.setHeader("Access-Control-Allow-Origin", origin);
+    response.setHeader("Vary", "Origin");
+    response.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  const ministryIds = getScopedMinistryIds(request.user);
+  const scopedFilters = applyScopedLocationFilters(filters, request.user);
+  const includeCpf = hasPermission(request.user?.permissions, "registrations", "reports");
+
+  const pdfBuffer = await registrationService.generateListPdf(scopedFilters, ministryIds, {
+    includeCpf
+  });
+  const filename = `lista-inscricoes-${Date.now()}.pdf`;
   response.setHeader("Content-Type", "application/pdf");
   response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
   return response.send(pdfBuffer);
@@ -265,7 +300,8 @@ export const markRegistrationsPaidHandler = async (request: Request, response: R
     payload.registrationIds,
     {
       paidAt: payload.paidAt ? new Date(payload.paidAt) : undefined,
-      reference: payload.reference
+      reference: payload.reference,
+      paymentMethod: payload.paymentMethod
     },
     request.user?.id
   );
@@ -284,11 +320,22 @@ export const regenerateRegistrationPaymentLinkHandler = async (
   return response.json(result);
 };
 
+export const createPaymentForRegistrationsHandler = async (
+  request: Request,
+  response: Response
+) => {
+  const payload = paymentOrderSchema.parse(request.body);
+  const result = await orderService.createPaymentForRegistrations(
+    payload.registrationIds,
+    payload.paymentMethod,
+    request.user
+  );
+  return response.status(201).json(result);
+};
+
 // Histórico da inscrição
 export const getRegistrationHistoryHandler = async (request: Request, response: Response) => {
   const { id } = request.params;
   const history = await registrationService.getHistory(id);
   return response.json(history);
 };
-
-

@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import path from "path";
 
 import { env } from "./config/env";
+import { createConcurrencyLimiter } from "./middlewares/concurrency-limit";
 import { errorHandler } from "./middlewares/error-handler";
 import { normalizeBody } from "./middlewares/normalize-body";
 import { publicLimiter } from "./middlewares/rate-limit";
@@ -51,6 +52,13 @@ export const createApp = () => {
       exposedHeaders: ["Content-Disposition"]
     })
   );
+
+  const concurrencyLimiter = createConcurrencyLimiter({
+    maxConcurrent: env.MAX_CONCURRENT_REQUESTS,
+    maxQueue: env.MAX_PENDING_REQUESTS,
+    queueTimeoutMs: env.REQUEST_QUEUE_TIMEOUT_MS
+  });
+  app.use(concurrencyLimiter);
 
   const globalLimiter = rateLimit({
     windowMs: env.RATE_LIMIT_WINDOW_MS,

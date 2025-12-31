@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import type { Prisma } from "@/prisma/generated/client";
+import type { Request } from "express";
 
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
 import { prisma } from "../../lib/prisma";
@@ -44,6 +45,8 @@ type BatchPerson = {
 };
 
 const isManualPayment = (paymentId: string) => paymentId.startsWith("MANUAL-");
+
+type ActorUser = Request["user"];
 
 const resolveOrderDistrictId = (
   registrations: Array<{ districtId?: string | null }>,
@@ -216,7 +219,7 @@ export class OrderService {
     buyerCpf: string;
     people: BatchPerson[];
     paymentMethod?: PaymentMethod;
-  }, actor?: Express.User | undefined) {
+  }, actor?: ActorUser | undefined) {
     const actorId = actor?.id;
     const actorRole = actor?.role;
     const actorDistrictId = actor?.districtScopeId ?? null;
@@ -985,6 +988,197 @@ export class OrderService {
     const payment = await paymentService.createPreference(newOrderId);
     return { orderId: newOrderId, payment };
   }
+
+  async createPaymentForRegistrations(
+    registrationIds: string[],
+    paymentMethod?: PaymentMethod,
+    actor?: ActorUser
+  ) {
+    if (!registrationIds.length) {
+      throw new AppError("Informe ao menos uma inscricao para gerar pagamento", 400);
+    }
+
+    const registrations = await prisma.registration.findMany({
+      where: { id: { in: registrationIds } },
+      include: {
+        order: {
+          include: {
+            registrations: true
+          }
+        },
+        event: true
+      }
+    });
+
+    if (!registrations.length || registrations.length !== registrationIds.length) {
+      throw new NotFoundError("Algumas inscricoes nao foram encontradas");
+    }
+
+    const eventId = registrations[0].eventId;
+    if (!registrations.every((reg) => reg.eventId === eventId)) {
+      throw new AppError("Selecione apenas inscricoes do mesmo evento", 400);
+    }
+
+    const event = registrations[0].event;
+    if (!event || !event.isActive) {
+      throw new AppError("Evento indisponivel para pagamento", 400);
+    }
+
+    if (!event.districtId) {
+      throw new AppError("Evento sem distrito associado", 400);
+    }
+
+    const disallowedStatuses = new Set<RegistrationStatus>([
+      RegistrationStatus.PAID,
+      RegistrationStatus.CHECKED_IN,
+      RegistrationStatus.REFUNDED
+    ]);
+
+    for (const reg of registrations) {
+      if (disallowedStatuses.has(reg.status as RegistrationStatus)) {
+        throw new AppError(
+          `Inscricao ${reg.fullName ?? reg.id} ja paga ou confirmada. Remova-a da selecao.`,
+          400
+        );
+      }
+    }
+
+    const allowedMethods = parsePaymentMethods(event.paymentMethods);
+    const requestedMethod = paymentMethod;
+    const fallbackMethod =
+      allowedMethods[0] ?? DEFAULT_PAYMENT_METHODS[0] ?? PaymentMethod.PIX_MP;
+    let resolvedMethod =
+      requestedMethod && (allowedMethods.includes(requestedMethod) || AdminOnlyPaymentMethods.includes(requestedMethod as any))
+        ? requestedMethod
+        : fallbackMethod;
+
+    if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
+      if (!actor?.id || !actor.role) {
+        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+      }
+      const isAdmin = actor.role === "AdminGeral" || actor.role === "AdminDistrital";
+      if (!isAdmin) {
+        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+      }
+    }
+
+    const isFreeEvent = Boolean((event as any).isFree);
+    const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
+
+    if (isFreeEvent && !isFreePaymentMethod) {
+      resolvedMethod = PaymentMethod.PIX_MP;
+    }
+
+    const prices = registrations.map((reg) =>
+      reg.priceCents && reg.priceCents > 0 ? reg.priceCents : reg.event?.priceCents ?? 0
+    );
+    const totalCents = prices.reduce((acc, price) => acc + (price ?? 0), 0);
+
+    const orderStatus =
+      isFreeEvent || isFreePaymentMethod || totalCents === 0
+        ? OrderStatus.PAID
+        : OrderStatus.PENDING;
+    const paidAtValue = orderStatus === OrderStatus.PAID ? new Date() : null;
+
+    const buyerCpf =
+      sanitizeCpf(
+        registrations[0].order?.buyerCpf ?? registrations[0].cpf ?? registrations[0].order?.responsibleDocument ?? ""
+      ) || sanitizeCpf(registrations[0].cpf) || "00000000000";
+    const orderId = randomUUID();
+    const expiresAt = resolveOrderExpirationDate(resolvedMethod);
+    const districtAdminId = await this.resolveDistrictAdminId(event.districtId);
+
+    const previousOrderIds = new Set<string>();
+    registrations.forEach((reg) => previousOrderIds.add(reg.orderId));
+
+    const order = await prisma.$transaction(async (tx) => {
+      const createdOrder = await tx.order.create({
+        data: {
+          id: orderId,
+          eventId,
+          buyerCpf,
+          totalCents,
+          status: orderStatus,
+          paymentMethod: resolvedMethod,
+          externalReference: orderId,
+          expiresAt,
+          pricingLotId: null,
+          mpPaymentId: null,
+          mpPreferenceId: null,
+          preferenceVersion: 0,
+          paidAt: paidAtValue,
+          districtId: event.districtId,
+          districtAdminId,
+          responsibleUserId: event.createdById ?? null,
+          amountToTransfer: orderStatus === OrderStatus.PAID ? totalCents : 0,
+          transferStatus: orderStatus === OrderStatus.PAID ? OrderTransferStatus.PENDING : null
+        }
+      });
+
+      for (const reg of registrations) {
+        await tx.registration.update({
+          where: { id: reg.id },
+          data: {
+            orderId: createdOrder.id,
+            paymentMethod: resolvedMethod,
+            status:
+              orderStatus === OrderStatus.PAID
+                ? RegistrationStatus.PAID
+                : RegistrationStatus.PENDING_PAYMENT,
+            paidAt: paidAtValue,
+            responsibleUserId: event.createdById ?? reg.responsibleUserId ?? null
+          }
+        });
+      }
+
+      const oldOrderIds = Array.from(previousOrderIds).filter(
+        (id) => id && id !== createdOrder.id
+      );
+      for (const oldOrderId of oldOrderIds) {
+        const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
+        if (!remaining.length) {
+          await tx.order.delete({ where: { id: oldOrderId } });
+          continue;
+        }
+        const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
+        await tx.order.update({
+          where: { id: oldOrderId },
+          data: {
+            totalCents: newTotal,
+            status: newTotal > 0 ? OrderStatus.PENDING : OrderStatus.CANCELED,
+            mpPreferenceId: null,
+            mpPaymentId: null,
+            preferenceVersion: { increment: 1 }
+          }
+        });
+      }
+
+      return createdOrder;
+    });
+
+    let payment: any = null;
+    if (
+      order.status === OrderStatus.PENDING &&
+      !ManualPaymentMethods.includes(resolvedMethod as PaymentMethod)
+    ) {
+      try {
+        payment = await paymentService.createPreference(order.id);
+      } catch (error) {
+        logger.warn(
+          { orderId: order.id, error },
+          "Falha ao gerar preferencia para pagamento em massa de inscricoes"
+        );
+      }
+    }
+
+    return {
+      orderId: order.id,
+      status: order.status,
+      paymentMethod: resolvedMethod,
+      totalCents,
+      payment
+    };
+  }
   async markPaid(
     orderId: string,
     paymentId: string,
@@ -1302,7 +1496,7 @@ export class OrderService {
 
   async markManualRegistrationsPaid(
     registrationIds: string[],
-    options?: { paidAt?: Date; reference?: string },
+    options?: { paidAt?: Date; reference?: string; paymentMethod?: PaymentMethod },
     actorUserId?: string | null
   ) {
     if (!registrationIds.length) {
@@ -1312,12 +1506,28 @@ export class OrderService {
     const registrations = await prisma.registration.findMany({
       where: { id: { in: registrationIds } },
       include: {
-        order: true
+        order: true,
+        event: true
       }
     });
 
     if (!registrations.length) {
       throw new NotFoundError("Nenhuma inscricao encontrada para quitacao");
+    }
+
+    const eventIds = new Set(registrations.map((r) => r.eventId));
+    if (eventIds.size > 1) {
+      throw new AppError("Selecione apenas inscricoes do mesmo evento para confirmar manualmente.", 400);
+    }
+
+    const event = registrations[0].event;
+    if (!event || !event.isActive) {
+      throw new AppError("Evento indisponivel para confirmacao.", 400);
+    }
+
+    const allowedMethods = parsePaymentMethods(event.paymentMethods);
+    if (!allowedMethods.length) {
+      throw new AppError("Evento sem formas de pagamento configuradas.", 400);
     }
 
     const grouped = new Map<
@@ -1330,12 +1540,16 @@ export class OrderService {
     >();
 
     for (const registration of registrations) {
-      const method = (registration.order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
-      if (!ManualPaymentMethods.includes(method)) {
-        throw new AppError(
-          `Inscricao ${registration.id} nao utiliza pagamento manual. Utilize o fluxo do provedor.`,
-          400
-        );
+      const methodFromOrder = (registration.order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
+      const methodToUse =
+        options?.paymentMethod && allowedMethods.includes(options.paymentMethod)
+          ? options.paymentMethod
+          : allowedMethods.includes(methodFromOrder)
+            ? methodFromOrder
+            : allowedMethods[0];
+
+      if (!allowedMethods.includes(methodToUse)) {
+        throw new AppError(`Metodo de pagamento nao permitido para o evento.`, 400);
       }
       if (registration.status === RegistrationStatus.PAID) {
         continue;
@@ -1347,7 +1561,7 @@ export class OrderService {
         );
       }
       const group = grouped.get(registration.orderId) ?? {
-        paymentMethod: method,
+        paymentMethod: methodToUse,
         registrationIds: [],
         statusSet: new Set<string>()
       };

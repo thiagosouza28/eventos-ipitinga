@@ -965,10 +965,10 @@ if (__VLS_ctx.eventPermissions.canList) {
         /** @type {[typeof TableSkeleton, ]} */ ;
         // @ts-ignore
         const __VLS_25 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
-            helperText: "ðŸ”„ Carregando eventos...",
+            helperText: "ð Carregando eventos...",
         }));
         const __VLS_26 = __VLS_25({
-            helperText: "ðŸ”„ Carregando eventos...",
+            helperText: "ð Carregando eventos...",
         }, ...__VLS_functionalComponentArgsRest(__VLS_25));
     }
     else {

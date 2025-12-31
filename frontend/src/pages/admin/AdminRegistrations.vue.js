@@ -1,5 +1,5 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { reactive, ref, onMounted, watch, computed } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import DateField from '../../components/forms/DateField.vue';
 import BaseCard from '../../components/ui/BaseCard.vue';
@@ -12,7 +12,7 @@ import { useAuthStore } from '../../stores/auth';
 import { formatCurrency } from '../../utils/format';
 import ConfirmDialog from '../../components/ui/ConfirmDialog.vue';
 import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf';
-import { paymentMethodLabel } from '../../config/paymentMethods';
+import { paymentMethodLabel, PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS } from '../../config/paymentMethods';
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto';
 import { useModulePermissions } from '../../composables/usePermissions';
 import { createPreviewSession } from '../../utils/documentPreview';
@@ -20,8 +20,15 @@ const admin = useAdminStore();
 const catalog = useCatalogStore();
 const auth = useAuthStore();
 const registrationPermissions = useModulePermissions('registrations');
+const reportsPermissions = useModulePermissions('reports');
+const canGenerateListPdf = computed(() => reportsPermissions.canReports.value);
+const isAdminUser = computed(() => {
+    const role = auth.user?.role;
+    return role === 'AdminGeral' || role === 'AdminDistrital';
+});
 const filters = reactive({
     eventId: '',
+    lotId: '',
     districtId: '',
     churchId: '',
     status: '',
@@ -54,6 +61,45 @@ const registrationStatusOptions = [
     { value: 'CANCELED', label: statusLabels.CANCELED },
     { value: 'REFUNDED', label: statusLabels.REFUNDED }
 ];
+const lotsForSelectedEvent = computed(() => {
+    if (!filters.eventId)
+        return [];
+    const fromStore = admin.eventLots[filters.eventId];
+    if (fromStore)
+        return fromStore;
+    const event = admin.events.find((item) => item.id === filters.eventId);
+    return event?.lots ?? [];
+});
+const selectedLotName = computed(() => lotsForSelectedEvent.value.find((lot) => lot.id === filters.lotId)?.name ?? '');
+const selectedRegistrationIds = ref(new Set());
+const paymentDialog = reactive({
+    open: false,
+    loading: false,
+    error: '',
+    items: [],
+    successOrderId: null,
+    successLink: null,
+    paymentMethod: ''
+});
+const manualConfirmDialog = reactive({
+    open: false,
+    loading: false,
+    error: '',
+    items: [],
+    paymentMethod: ''
+});
+const manualConfirmPaymentOptions = computed(() => {
+    const first = manualConfirmDialog.items[0];
+    if (!first)
+        return [];
+    return resolveAllowedPaymentMethods(first.eventId);
+});
+const paymentDialogAllowedMethods = computed(() => {
+    const first = paymentDialog.items[0];
+    if (!first)
+        return [];
+    return resolveAllowedPaymentMethods(first.eventId);
+});
 const genderOptions = [
     { value: 'MALE', label: 'Masculino' },
     { value: 'FEMALE', label: 'Feminino' },
@@ -63,6 +109,16 @@ const filtersReady = ref(false);
 const isApplying = ref(false);
 let applyDebounce = null;
 const pendingApply = ref(false);
+let searchDebounce = null;
+const debouncedSearch = ref('');
+const isMobile = ref(false);
+const updateMobileState = () => {
+    if (typeof window === 'undefined')
+        return;
+    isMobile.value = window.matchMedia('(max-width: 768px)').matches;
+};
+const shouldAutoApply = computed(() => hideFilters.value || !isMobile.value);
+const listPdfState = reactive({ loading: false });
 const errorDialog = reactive({ open: false, title: 'Ocorreu um erro', message: '', details: '' });
 const extractErrorInfo = (error) => {
     const anyError = error;
@@ -101,17 +157,21 @@ const applyScopedFilters = () => {
     return hasChanged;
 };
 const buildFilterParams = () => {
-    if (isLocalDirector.value) {
-        return {
+    const base = isLocalDirector.value
+        ? {
             eventId: lockedEventId.value || undefined,
             districtId: lockedDistrictId.value || undefined,
-            churchId: lockedChurchId.value || undefined
+            churchId: lockedChurchId.value || undefined,
+            lotId: filters.lotId || undefined
+        }
+        : {
+            eventId: filters.eventId || undefined,
+            lotId: filters.lotId || undefined,
+            districtId: filters.districtId || undefined,
+            churchId: filters.churchId || undefined
         };
-    }
     return {
-        eventId: filters.eventId || undefined,
-        districtId: filters.districtId || undefined,
-        churchId: filters.churchId || undefined,
+        ...base,
         status: filters.status || undefined,
         search: filters.search || undefined
     };
@@ -144,20 +204,26 @@ const applyFilters = async () => {
     }
 };
 const scheduleApply = (immediate = false) => {
+    if (!filtersReady.value)
+        return;
+    if (!shouldAutoApply.value && !immediate)
+        return;
     if (immediate) {
         applyFilters();
         return;
     }
-    if (!filtersReady.value)
-        return;
     if (applyDebounce)
         window.clearTimeout(applyDebounce);
     applyDebounce = window.setTimeout(applyFilters, 300);
 };
 const resetFilters = () => {
-    Object.assign(filters, { eventId: '', districtId: '', churchId: '', status: '', search: '' });
+    Object.assign(filters, { eventId: '', lotId: '', districtId: '', churchId: '', status: '', search: '' });
     const changed = applyScopedFilters();
     if (filtersReady.value) {
+        if (!shouldAutoApply.value) {
+            scheduleApply(true);
+            return;
+        }
         if (changed) {
             scheduleApply(true);
         }
@@ -188,6 +254,20 @@ watch(() => filters.eventId, (value) => {
         filters.eventId = lockedEventId.value || '';
         return;
     }
+    filters.lotId = '';
+    const loadLots = async () => {
+        if (!value)
+            return;
+        if (!admin.eventLots[value]) {
+            try {
+                await admin.loadEventLots(value);
+            }
+            catch (e) {
+                showError('Falha ao carregar lotes', e);
+            }
+        }
+    };
+    loadLots();
     if (filtersReady.value)
         scheduleApply();
 });
@@ -201,15 +281,71 @@ watch(() => filters.churchId, (value) => {
 });
 watch(() => filters.status, () => { if (filtersReady.value)
     scheduleApply(); });
+watch(() => filters.lotId, () => { if (filtersReady.value)
+    scheduleApply(); });
+watch(() => filters.search, (value) => {
+    if (searchDebounce)
+        window.clearTimeout(searchDebounce);
+    searchDebounce = window.setTimeout(() => {
+        debouncedSearch.value = value;
+    }, 300);
+});
 watch([lockedEventId, lockedDistrictId, lockedChurchId], () => {
     const changed = applyScopedFilters();
     if (changed && filtersReady.value) {
         scheduleApply(true);
     }
 });
+watch(() => admin.registrations, () => {
+    const validIds = new Set(admin.registrations.map((reg) => reg.id));
+    const next = new Set();
+    selectedRegistrationIds.value.forEach((id) => {
+        const match = admin.registrations.find((reg) => reg.id === id);
+        if (match && validIds.has(id) && isRegistrationSelectable(match)) {
+            next.add(id);
+        }
+    });
+    selectedRegistrationIds.value = next;
+    if (paymentDialog.open) {
+        paymentDialog.items = paymentDialog.items.filter((item) => next.has(item.id));
+        if (!paymentDialog.items.length)
+            paymentDialog.open = false;
+    }
+    openedActions.value = null;
+}, { deep: true });
+watch(manualConfirmPaymentOptions, (options) => {
+    if (!manualConfirmDialog.open)
+        return;
+    if (!options.length) {
+        manualConfirmDialog.paymentMethod = '';
+        return;
+    }
+    if (!options.some((option) => option.value === manualConfirmDialog.paymentMethod)) {
+        manualConfirmDialog.paymentMethod = options[0].value;
+    }
+}, { immediate: true });
+watch(paymentDialogAllowedMethods, (options) => {
+    if (!paymentDialog.open)
+        return;
+    if (!options.length) {
+        paymentDialog.paymentMethod = '';
+        return;
+    }
+    if (!options.some((option) => option.value === paymentDialog.paymentMethod)) {
+        paymentDialog.paymentMethod = options[0].value;
+    }
+}, { immediate: true });
 onMounted(async () => {
+    updateMobileState();
+    if (typeof window !== 'undefined') {
+        window.addEventListener('resize', updateMobileState);
+    }
     try {
-        await Promise.all([admin.loadEvents(), catalog.loadDistricts(), catalog.loadChurches()]);
+        const tasks = [admin.loadEvents(), catalog.loadDistricts()];
+        if (!isMobile.value) {
+            tasks.push(catalog.loadChurches());
+        }
+        await Promise.all(tasks);
     }
     catch (error) {
         showError('Falha ao carregar dados iniciais', error);
@@ -217,19 +353,71 @@ onMounted(async () => {
     applyScopedFilters();
     await applyFilters();
     filtersReady.value = true;
+    debouncedSearch.value = filters.search;
+});
+onBeforeUnmount(() => {
+    if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', updateMobileState);
+    }
+    if (applyDebounce)
+        window.clearTimeout(applyDebounce);
+    if (searchDebounce)
+        window.clearTimeout(searchDebounce);
 });
 const churchesByDistrict = (districtId) => {
     if (!districtId)
         return catalog.churches;
     return catalog.churches.filter((c) => c.districtId === districtId);
 };
-const findEventTitle = (eventId) => admin.events.find((e) => e.id === eventId)?.title ?? 'Evento';
+const eventMap = computed(() => new Map(admin.events.map((event) => [event.id, event])));
+const districtMap = computed(() => new Map(catalog.districts.map((district) => [district.id, district])));
+const churchMap = computed(() => new Map(catalog.churches.map((church) => [church.id, church])));
+const registrationDistrictMap = computed(() => {
+    const map = new Map();
+    admin.registrations.forEach((registration) => {
+        const name = registration.district?.name;
+        if (name)
+            map.set(registration.districtId, name);
+    });
+    return map;
+});
+const registrationChurchMap = computed(() => {
+    const map = new Map();
+    admin.registrations.forEach((registration) => {
+        const name = registration.church?.name;
+        if (name)
+            map.set(registration.churchId, name);
+    });
+    return map;
+});
+const findEventTitle = (eventId) => eventMap.value.get(eventId)?.title ?? 'Evento';
 const findEventPriceCents = (eventId) => {
-    const event = admin.events.find((e) => e.id === eventId);
+    const event = eventMap.value.get(eventId);
     return event?.currentPriceCents ?? event?.priceCents ?? 0;
 };
-const findDistrictName = (id) => catalog.districts.find((d) => d.id === id)?.name ?? 'Não informado';
-const findChurchName = (id) => catalog.churches.find((c) => c.id === id)?.name ?? 'Não informado';
+const registrationLotId = (registration) => registration.lotId ||
+    registration.order?.lotId ||
+    registration.order?.pricingLotId ||
+    registration.lot?.id ||
+    '';
+const registrationLotName = (registration) => registration.lotName ||
+    registration.order?.lotName ||
+    registration.order?.pricingLot?.name ||
+    registration.lot?.name ||
+    '';
+const findRegistrationLotLabel = (registration) => {
+    const name = registrationLotName(registration);
+    if (name)
+        return name;
+    const lotId = registrationLotId(registration);
+    if (!lotId)
+        return '';
+    const lots = admin.eventLots[registration.eventId] || [];
+    const lot = lots.find((item) => item.id === lotId);
+    return lot?.name || '';
+};
+const findDistrictName = (id) => districtMap.value.get(id)?.name ?? registrationDistrictMap.value.get(id) ?? 'Nao informado';
+const findChurchName = (id) => churchMap.value.get(id)?.name ?? registrationChurchMap.value.get(id) ?? 'Nao informado';
 const parseDateParts = (value) => {
     if (!value)
         return null;
@@ -309,18 +497,299 @@ const statusBadgeClass = (s) => {
             return "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200";
     }
 };
+const statusAccentClass = (s) => {
+    switch (s) {
+        case "PAID":
+        case "CHECKED_IN":
+            return "bg-emerald-500";
+        case "PENDING_PAYMENT":
+            return "bg-amber-500";
+        case "CANCELED":
+        case "REFUNDED":
+            return "bg-slate-400";
+        case "DRAFT":
+            return "bg-slate-300";
+        default:
+            return "bg-slate-400";
+    }
+};
 // Busca local por nome/CPF
 const displayedRegistrations = computed(() => {
-    const q = (filters.search || '').trim().toLowerCase();
-    if (!q)
-        return admin.registrations;
+    const q = (debouncedSearch.value || '').trim().toLowerCase();
     const digits = q.replace(/\D/g, '');
     return admin.registrations.filter((r) => {
+        if (filters.eventId && r.eventId !== filters.eventId)
+            return false;
+        if (filters.lotId) {
+            const lotId = registrationLotId(r);
+            const lotName = registrationLotName(r).toLowerCase();
+            const targetName = selectedLotName.value.toLowerCase();
+            const lotMatch = lotId ? lotId === filters.lotId : (lotName && targetName ? lotName === targetName : false);
+            if (!lotMatch)
+                return false;
+        }
+        if (!q)
+            return true;
         const nameMatch = (r.fullName || '').toLowerCase().includes(q);
         const cpfMatch = digits ? String(r.cpf || '').includes(digits) : false;
         return nameMatch || cpfMatch;
     });
 });
+const isFilterActive = computed(() => {
+    if (hideFilters.value)
+        return true;
+    return Boolean(filters.eventId ||
+        filters.lotId ||
+        filters.districtId ||
+        filters.churchId ||
+        filters.status ||
+        filters.search);
+});
+const registrationCount = computed(() => {
+    const displayed = displayedRegistrations.value.length;
+    const total = admin.registrations.length;
+    return {
+        displayed,
+        total,
+        filterActive: isFilterActive.value,
+        hasDifference: total !== displayed
+    };
+});
+const isRegistrationSelectable = (registration) => {
+    const blockedStatuses = new Set(['PAID', 'CHECKED_IN', 'REFUNDED']);
+    if (blockedStatuses.has(registration.status))
+        return false;
+    return true;
+};
+const openedActions = ref(null);
+const toggleActions = (id) => {
+    openedActions.value = openedActions.value === id ? null : id;
+};
+const selectionDisabledReason = (registration) => {
+    if (registration.status === 'PAID' || registration.status === 'CHECKED_IN' || registration.status === 'REFUNDED') {
+        return 'Pago';
+    }
+    return '';
+};
+const isRegistrationSelected = (id) => selectedRegistrationIds.value.has(id);
+const selectedRegistrations = computed(() => admin.registrations.filter((registration) => selectedRegistrationIds.value.has(registration.id)));
+const selectionTotalCents = computed(() => selectedRegistrations.value.reduce((acc, registration) => acc + (registration.priceCents ?? findEventPriceCents(registration.eventId) ?? 0), 0));
+const normalizePaymentMethods = (input) => {
+    if (Array.isArray(input)) {
+        return input.filter((value) => typeof value === 'string' && value.length > 0);
+    }
+    if (typeof input === 'string') {
+        return input.split(',').map((value) => value.trim()).filter(Boolean);
+    }
+    return [];
+};
+const resolveAllowedPaymentMethods = (eventId, eventPaymentMethods) => {
+    const eventFromStore = admin.events.find((e) => e.id === eventId);
+    const allowed = normalizePaymentMethods(eventPaymentMethods ?? eventFromStore?.paymentMethods);
+    return PAYMENT_METHODS.filter((option) => {
+        if (!allowed.includes(option.value))
+            return false;
+        if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdminUser.value)
+            return false;
+        return true;
+    });
+};
+const allDisplayedSelected = computed(() => {
+    const selectable = displayedRegistrations.value.filter(isRegistrationSelectable);
+    if (!selectable.length)
+        return false;
+    return selectable.every((registration) => selectedRegistrationIds.value.has(registration.id));
+});
+const someDisplayedSelected = computed(() => displayedRegistrations.value.some((registration) => isRegistrationSelectable(registration) && selectedRegistrationIds.value.has(registration.id)));
+const toggleRegistrationSelection = (registration, checked) => {
+    if (!isRegistrationSelectable(registration))
+        return;
+    const next = new Set(selectedRegistrationIds.value);
+    const shouldSelect = typeof checked === 'boolean' ? checked : !next.has(registration.id);
+    if (shouldSelect) {
+        next.add(registration.id);
+        if (paymentDialog.open && !paymentDialog.items.some((item) => item.id === registration.id)) {
+            paymentDialog.items = [...paymentDialog.items, registration];
+        }
+    }
+    else {
+        next.delete(registration.id);
+        if (paymentDialog.open) {
+            paymentDialog.items = paymentDialog.items.filter((item) => item.id !== registration.id);
+            if (!paymentDialog.items.length)
+                paymentDialog.open = false;
+        }
+    }
+    selectedRegistrationIds.value = next;
+};
+const toggleSelectAllDisplayed = (checked) => {
+    const next = new Set(selectedRegistrationIds.value);
+    displayedRegistrations.value.forEach((registration) => {
+        if (!isRegistrationSelectable(registration))
+            return;
+        if (checked) {
+            next.add(registration.id);
+        }
+        else {
+            next.delete(registration.id);
+        }
+    });
+    selectedRegistrationIds.value = next;
+    if (paymentDialog.open) {
+        paymentDialog.items = paymentDialog.items.filter((item) => next.has(item.id));
+        if (!paymentDialog.items.length)
+            paymentDialog.open = false;
+    }
+};
+const closePaymentDialog = () => {
+    paymentDialog.open = false;
+    paymentDialog.error = '';
+    paymentDialog.successOrderId = null;
+    paymentDialog.successLink = null;
+    paymentDialog.paymentMethod = '';
+};
+const openPaymentDialog = (itemsInput) => {
+    const items = (Array.isArray(itemsInput) && itemsInput.length ? itemsInput : selectedRegistrations.value).filter(isRegistrationSelectable);
+    if (!items.length) {
+        showError('Selecione ao menos uma inscricao', new Error('Selecione ao menos uma inscricao para gerar o pagamento.'));
+        return;
+    }
+    const uniqueEvents = new Set(items.map((item) => item.eventId));
+    if (uniqueEvents.size > 1) {
+        showError('Selecione apenas inscricoes do mesmo evento', new Error('Selecione inscricoes de um unico evento para gerar o pagamento.'));
+        return;
+    }
+    const allowed = resolveAllowedPaymentMethods(items[0].eventId);
+    if (!allowed.length) {
+        showError('Evento sem formas de pagamento', new Error('Nenhuma forma de pagamento disponivel para este evento.'));
+        return;
+    }
+    paymentDialog.items = items;
+    paymentDialog.error = '';
+    paymentDialog.successOrderId = null;
+    paymentDialog.successLink = null;
+    paymentDialog.paymentMethod = allowed[0].value;
+    paymentDialog.open = true;
+};
+const removeFromPaymentDialog = (registrationId) => {
+    paymentDialog.items = paymentDialog.items.filter((item) => item.id !== registrationId);
+    const next = new Set(selectedRegistrationIds.value);
+    next.delete(registrationId);
+    selectedRegistrationIds.value = next;
+    if (!paymentDialog.items.length) {
+        paymentDialog.open = false;
+    }
+};
+const confirmPaymentGeneration = async () => {
+    if (!paymentDialog.items.length) {
+        paymentDialog.error = 'Selecione ao menos uma inscricao para continuar.';
+        return;
+    }
+    if (!paymentDialog.paymentMethod) {
+        paymentDialog.error = 'Selecione a forma de pagamento.';
+        return;
+    }
+    const allowed = paymentDialogAllowedMethods.value;
+    if (allowed.length && !allowed.some((option) => option.value === paymentDialog.paymentMethod)) {
+        paymentDialog.error = 'Forma de pagamento indisponivel para o evento.';
+        return;
+    }
+    paymentDialog.loading = true;
+    paymentDialog.error = '';
+    try {
+        const result = await admin.createPaymentOrderForRegistrations({
+            registrationIds: paymentDialog.items.map((item) => item.id),
+            paymentMethod: paymentDialog.paymentMethod
+        });
+        const mpLink = result?.payment?.initPoint ??
+            result?.payment?.init_point ??
+            result?.payment?.sandboxInitPoint ??
+            '';
+        const fallbackSlug = paymentDialog.items[0] ? findEventSlug(paymentDialog.items[0].eventId) : '';
+        const fallbackLink = fallbackSlug && result?.orderId
+            ? `${window.location.origin}/evento/${fallbackSlug}/pagamento/${result.orderId}`
+            : '';
+        paymentDialog.successLink = mpLink || fallbackLink || null;
+        paymentDialog.successOrderId = result?.orderId ?? null;
+        selectedRegistrationIds.value = new Set();
+        if (!paymentDialog.successLink) {
+            paymentDialog.error = 'Pagamento criado. Nao foi possivel gerar link automatico (pagamento manual).';
+        }
+    }
+    catch (error) {
+        const message = error?.response?.data?.message ?? error?.message ?? 'Erro ao gerar pagamento';
+        paymentDialog.error = message;
+        showError('Erro ao gerar pagamento', error);
+    }
+    finally {
+        paymentDialog.loading = false;
+    }
+};
+const copyPaymentUrl = async (url) => {
+    if (!url)
+        return;
+    try {
+        await navigator.clipboard.writeText(url);
+    }
+    catch (e) {
+        console.warn('Clipboard copy failed', e);
+    }
+};
+const openManualConfirmDialog = (registrations) => {
+    if (!registrations.length) {
+        showError('Selecione ao menos uma inscrição', new Error('Selecione ao menos uma inscrição.'));
+        return;
+    }
+    const uniqueEvents = new Set(registrations.map((r) => r.eventId));
+    if (uniqueEvents.size > 1) {
+        showError('Selecione apenas inscrições do mesmo evento', new Error('Selecione apenas inscrições do mesmo evento para confirmar manualmente.'));
+        return;
+    }
+    const allowed = resolveAllowedPaymentMethods(registrations[0].eventId);
+    if (!allowed.length) {
+        showError('Evento sem formas de pagamento', new Error('Nenhuma forma de pagamento disponível para este evento.'));
+        return;
+    }
+    manualConfirmDialog.items = registrations;
+    manualConfirmDialog.paymentMethod = allowed[0].value;
+    manualConfirmDialog.error = '';
+    manualConfirmDialog.open = true;
+};
+const closeManualConfirmDialog = () => {
+    manualConfirmDialog.open = false;
+    manualConfirmDialog.error = '';
+    manualConfirmDialog.paymentMethod = '';
+    manualConfirmDialog.items = [];
+};
+const confirmManualPayment = async () => {
+    if (!manualConfirmDialog.items.length) {
+        manualConfirmDialog.error = 'Selecione ao menos uma inscricao.';
+        return;
+    }
+    const allowedOptions = manualConfirmPaymentOptions.value;
+    if (!manualConfirmDialog.paymentMethod) {
+        manualConfirmDialog.error = 'Selecione a forma de pagamento do evento.';
+        return;
+    }
+    if (allowedOptions.length && !allowedOptions.some((opt) => opt.value === manualConfirmDialog.paymentMethod)) {
+        manualConfirmDialog.error = 'Forma de pagamento nao disponivel para este evento.';
+        return;
+    }
+    manualConfirmDialog.loading = true;
+    manualConfirmDialog.error = '';
+    try {
+        await admin.markRegistrationsPaid(manualConfirmDialog.items.map((item) => item.id), { paymentMethod: manualConfirmDialog.paymentMethod, paidAt: new Date().toISOString() });
+        selectedRegistrationIds.value = new Set();
+        closeManualConfirmDialog();
+    }
+    catch (error) {
+        manualConfirmDialog.error = error?.response?.data?.message ?? error?.message ?? 'Erro ao confirmar pagamento';
+        showError('Erro ao confirmar pagamento', error);
+    }
+    finally {
+        manualConfirmDialog.loading = false;
+    }
+};
 function registrationCode(registration) {
     if (!registration)
         return '';
@@ -368,10 +837,19 @@ const resetAddForm = (paymentMethod = 'PIX_MP') => {
     responsibleLookup.status = 'idle';
     responsibleLookup.message = defaultResponsibleMessage;
 };
-const openAddDialog = () => {
+const openAddDialog = async () => {
     if (!registrationPermissions.canCreate.value) {
         showError('Acesso negado', new Error('Você não possui permissão para criar inscrições.'));
         return;
+    }
+    if (!catalog.churches.length) {
+        const preferredDistrictId = lockedDistrictId.value || filters.districtId || catalog.districts[0]?.id || '';
+        try {
+            await catalog.loadChurches(preferredDistrictId || undefined);
+        }
+        catch (error) {
+            showError('Falha ao carregar igrejas', error);
+        }
     }
     resetAddForm();
     addDialog.open = true;
@@ -556,7 +1034,7 @@ const resolvePhotoUrl = (photoUrl) => {
 };
 const paymentMethodShort = (method) => {
     if (!method)
-        return '—';
+        return '--';
     if (method === 'PIX_MP')
         return 'Pix';
     if (method === 'CASH')
@@ -586,7 +1064,7 @@ const humanEvent = (e) => {
         REGISTRATION_UPDATED: 'Inscrição atualizada',
         REGISTRATION_CANCELED: 'Inscrição cancelada',
         REGISTRATION_DELETED: 'Inscrição excluída',
-        PAYMENT_REFUNDED: `Estorno realizado${e.details?.reason ? ' — ' + e.details.reason : ''}`,
+        PAYMENT_REFUNDED: `Estorno realizado${e.details?.reason ? ' - ' + e.details.reason : ''}`,
         CHECKIN_COMPLETED: 'Check-in realizado'
     };
     return map[e.type] || e.type;
@@ -910,6 +1388,7 @@ const openManualPaymentDialog = (registration) => {
     manualPayment.paidAt = formatDateTimeLocalInput(new Date());
     manualPayment.existingProofUrl = registration.order?.manualPaymentProofUrl || '';
     resetManualPaymentState();
+    openedActions.value = null;
 };
 const closeManualPaymentDialog = () => {
     manualPayment.open = false;
@@ -1013,10 +1492,49 @@ const downloadReceipt = async (registration) => {
         receiptDownloadState.downloadingId = '';
     }
 };
+const sanitizeFilePart = (value) => value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 40);
+const generateRegistrationListPdf = async () => {
+    if (!canGenerateListPdf.value || listPdfState.loading)
+        return;
+    listPdfState.loading = true;
+    try {
+        const params = buildFilterParams();
+        const response = await admin.downloadRegistrationListPdf(params);
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const eventLabel = filters.eventId ? findEventTitle(filters.eventId) : 'inscricoes';
+        const churchLabel = filters.churchId ? findChurchName(filters.churchId) : '';
+        const lotLabel = filters.lotId ? selectedLotName.value : '';
+        const parts = ['lista', eventLabel, churchLabel, lotLabel].filter(Boolean).map(sanitizeFilePart);
+        const fileName = `${parts.filter(Boolean).join('-') || 'lista-inscricoes'}.pdf`;
+        await createPreviewSession([
+            {
+                title: 'Lista de inscricoes',
+                fileName,
+                blob,
+                mimeType: 'application/pdf'
+            }
+        ], { context: 'Lista de inscricoes' });
+    }
+    catch (error) {
+        showError('Falha ao gerar lista em PDF', error);
+    }
+    finally {
+        listPdfState.loading = false;
+    }
+};
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+// CSS variable injection 
+// CSS variable injection end 
 if (__VLS_ctx.registrationPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "space-y-6" },
@@ -1075,7 +1593,28 @@ if (__VLS_ctx.registrationPermissions.canList) {
     });
     (__VLS_ctx.hideFilters ? 'Visualize apenas as inscrições da sua igreja.' : 'Filtre e gerencie inscrições por evento, distrito, igreja ou status.');
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center" },
+        ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-800 shadow-md shadow-neutral-200/60 dark:border-white/10 dark:bg-white/10 dark:text-white" },
+        'aria-live': "polite",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "text-sm font-bold" },
+    });
+    (__VLS_ctx.registrationCount.displayed);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "text-[11px] font-medium" },
+    });
+    (__VLS_ctx.registrationCount.displayed === 1 ? '' : 's');
+    if (__VLS_ctx.registrationCount.hasDifference) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "text-[11px] font-medium text-neutral-600 dark:text-neutral-200" },
+        });
+        (__VLS_ctx.registrationCount.total);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3" },
     });
     const __VLS_10 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
@@ -1090,6 +1629,19 @@ if (__VLS_ctx.registrationPermissions.canList) {
     }, ...__VLS_functionalComponentArgsRest(__VLS_11));
     __VLS_13.slots.default;
     var __VLS_13;
+    if (__VLS_ctx.canGenerateListPdf) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.generateRegistrationListPdf) },
+            type: "button",
+            ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-primary-200/70 bg-white/90 px-5 py-2.5 text-sm font-semibold text-primary-700 shadow-sm shadow-primary-200/40 transition hover:-translate-y-0.5 hover:border-primary-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
+            disabled: (__VLS_ctx.listPdfState.loading || __VLS_ctx.displayedRegistrations.length === 0),
+        });
+        if (__VLS_ctx.listPdfState.loading) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-primary-600 border-t-transparent dark:border-primary-200" },
+            });
+        }
+    }
     if (__VLS_ctx.registrationPermissions.canCreate) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.openAddDialog) },
@@ -1133,6 +1685,28 @@ if (__VLS_ctx.registrationPermissions.canList) {
                 value: (event.id),
             });
             (event.title);
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2 md:col-span-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+            value: (__VLS_ctx.filters.lotId),
+            disabled: (!__VLS_ctx.filters.eventId || !__VLS_ctx.lotsForSelectedEvent.length),
+            ...{ class: "w-full rounded-sm border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            value: "",
+        });
+        (!__VLS_ctx.filters.eventId ? 'Selecione o evento' : 'Todos os lotes');
+        for (const [lot] of __VLS_getVForSourceType((__VLS_ctx.lotsForSelectedEvent))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                key: (lot.id),
+                value: (lot.id),
+            });
+            (lot.name);
         }
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "space-y-2 md:col-span-3" },
@@ -1199,7 +1773,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
             (option.label);
         }
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "space-y-2 md:col-span-6" },
+            ...{ class: "space-y-2 md:col-span-9" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             ...{ class: "text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400" },
@@ -1242,6 +1816,31 @@ if (__VLS_ctx.registrationPermissions.canList) {
         ...{ class: "border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_17));
     __VLS_19.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "text-sm text-neutral-600 dark:text-neutral-400 text-center md:text-left" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "hidden flex-wrap items-center gap-2 md:flex" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.openPaymentDialog) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" },
+        disabled: (!__VLS_ctx.registrationPermissions.canFinancial || __VLS_ctx.selectedRegistrations.length === 0),
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.registrationPermissions.canList))
+                    return;
+                __VLS_ctx.openManualConfirmDialog(__VLS_ctx.selectedRegistrations);
+            } },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-6 py-2.5 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        disabled: (!__VLS_ctx.registrationPermissions.canFinancial || __VLS_ctx.selectedRegistrations.length === 0),
+    });
     if (__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0) {
         /** @type {[typeof TableSkeleton, ]} */ ;
         // @ts-ignore
@@ -1259,35 +1858,57 @@ if (__VLS_ctx.registrationPermissions.canList) {
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "overflow-hidden rounded-sm border border-white/40 bg-white/70 shadow-lg shadow-neutral-200/40 dark:border-white/10 dark:bg-neutral-950/40 dark:shadow-black/30" },
+            ...{ class: "overflow-hidden rounded-sm border-0 bg-transparent shadow-none md:rounded-sm md:border md:border-white/40 md:bg-white/70 md:shadow-lg md:shadow-neutral-200/40 dark:md:border-white/10 dark:md:bg-neutral-950/40 dark:md:shadow-black/30" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "hidden md:block overflow-x-auto" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.table, __VLS_intrinsicElements.table)({
-            ...{ class: "min-w-full table-auto text-sm text-neutral-700 dark:text-neutral-200" },
+            ...{ class: "min-w-[900px] w-full table-auto text-sm text-neutral-700 dark:text-neutral-200" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.thead, __VLS_intrinsicElements.thead)({
             ...{ class: "bg-white/60 text-left text-[11px] uppercase tracking-[0.2em] text-neutral-500 dark:bg-neutral-900/60 dark:text-neutral-400" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "w-20 px-5 py-3" },
+            ...{ class: "w-10 px-5 py-3 text-center whitespace-nowrap" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+            ...{ onChange: (...[$event]) => {
+                    if (!(__VLS_ctx.registrationPermissions.canList))
+                        return;
+                    if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                        return;
+                    if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                        return;
+                    __VLS_ctx.toggleSelectAllDisplayed($event.target?.checked ?? false);
+                } },
+            type: "checkbox",
+            ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
+            checked: (__VLS_ctx.allDisplayedSelected),
+            indeterminate: (__VLS_ctx.someDisplayedSelected && !__VLS_ctx.allDisplayedSelected),
+            'aria-label': "Selecionar todas as inscrições exibidas",
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "px-5 py-3" },
+            ...{ class: "w-20 min-w-[64px] px-4 py-3 whitespace-nowrap" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "px-5 py-3" },
+            ...{ class: "min-w-[300px] px-4 py-3 whitespace-nowrap" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "px-5 py-3" },
+            ...{ class: "min-w-[200px] px-4 py-3 whitespace-nowrap" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "px-5 py-3" },
+            ...{ class: "min-w-[150px] px-4 py-3 whitespace-nowrap" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "px-5 py-3" },
+            ...{ class: "min-w-[120px] px-4 py-3 whitespace-nowrap" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
-            ...{ class: "px-5 py-3 text-right" },
+            ...{ class: "min-w-[170px] px-4 py-3 whitespace-nowrap" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+            ...{ class: "min-w-[75x] px-4 py-3 text-right whitespace-nowrap" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({
             ...{ class: "divide-y divide-neutral-100 dark:divide-white/5" },
@@ -1298,71 +1919,106 @@ if (__VLS_ctx.registrationPermissions.canList) {
                 ...{ class: "transition hover:bg-white/80 dark:hover:bg-white/5" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top" },
+                ...{ class: "px-5 py-2.5 align-top text-center" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                ...{ onChange: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        __VLS_ctx.toggleRegistrationSelection(registration, $event.target?.checked ?? false);
+                    } },
+                type: "checkbox",
+                ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40" },
+                disabled: (!__VLS_ctx.isRegistrationSelectable(registration)),
+                checked: (__VLS_ctx.isRegistrationSelected(registration.id)),
+                'aria-label': (`Selecionar inscrição ${registration.fullName}`),
+            });
+            if (__VLS_ctx.selectionDisabledReason(registration)) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "mt-1 text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
+                });
+                (__VLS_ctx.selectionDisabledReason(registration));
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-5 py-2.5 align-top" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
                 src: (__VLS_ctx.resolvePhotoUrl(registration.photoUrl)),
                 ...{ class: "h-12 w-12 rounded-full border border-white/70 object-cover dark:border-white/10" },
                 alt: (`Foto de ${registration.fullName}`),
+                loading: "lazy",
+                decoding: "async",
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top" },
+                ...{ class: "px-5 py-2.5 align-top" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+                ...{ class: "font-semibold text-neutral-900 dark:text-white leading-snug" },
             });
             (registration.fullName);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 leading-tight" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             (__VLS_ctx.formatCPF(registration.cpf));
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "hidden sm:inline" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             (__VLS_ctx.registrationCode(registration));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "text-[11px] text-neutral-500 dark:text-neutral-500 leading-tight" },
             });
             (__VLS_ctx.formatDateTime(registration.createdAt));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top" },
+                ...{ class: "px-5 py-2.5 align-top" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "font-medium text-neutral-800 dark:text-neutral-200" },
+                ...{ class: "font-medium text-neutral-800 dark:text-neutral-200 leading-snug" },
             });
             (__VLS_ctx.findEventTitle(registration.eventId));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "mt-1 flex flex-wrap items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 leading-tight" },
             });
+            if (__VLS_ctx.findRegistrationLotLabel(registration)) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (__VLS_ctx.findRegistrationLotLabel(registration));
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             (__VLS_ctx.formatCurrency(registration.priceCents ?? __VLS_ctx.findEventPriceCents(registration.eventId)));
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "hidden sm:inline" },
             });
-            (__VLS_ctx.paymentMethodLabel(registration.paymentMethod));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.paymentMethodShort(registration.paymentMethod));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top" },
+                ...{ class: "px-5 py-2.5 align-top" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-sm text-neutral-700 dark:text-neutral-300" },
+                ...{ class: "text-sm text-neutral-700 dark:text-neutral-300 leading-snug" },
             });
             (__VLS_ctx.findDistrictName(registration.districtId));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400 leading-tight" },
             });
             (__VLS_ctx.findChurchName(registration.churchId));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top" },
+                ...{ class: "px-5 py-2.5 align-top" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-sm text-neutral-700 dark:text-neutral-300" },
+                ...{ class: "text-sm text-neutral-700 dark:text-neutral-300 leading-snug" },
             });
             (__VLS_ctx.formatBirthDate(registration.birthDate));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400 leading-tight" },
             });
             (__VLS_ctx.calculateAge(registration.birthDate));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top" },
+                ...{ class: "px-5 py-3 align-top" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase" },
@@ -1370,23 +2026,31 @@ if (__VLS_ctx.registrationPermissions.canList) {
             });
             (__VLS_ctx.translateStatus(registration.status));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "mt-1 text-[11px] text-neutral-500 dark:text-neutral-500 leading-tight space-y-0.5" },
             });
-            if (registration.paymentMethod) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                (__VLS_ctx.paymentMethodShort(registration.paymentMethod));
-            }
-            if (registration.paidAt) {
+            if (registration.paymentMethod || registration.paidAt) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+                    ...{ class: "flex flex-wrap items-center gap-2" },
                 });
-                (new Date(registration.paidAt).toLocaleString("pt-BR"));
+                if (registration.paymentMethod) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    (__VLS_ctx.paymentMethodShort(registration.paymentMethod));
+                }
+                if (registration.paymentMethod && registration.paidAt) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "hidden sm:inline" },
+                    });
+                }
+                if (registration.paidAt) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    (new Date(registration.paidAt).toLocaleString("pt-BR"));
+                }
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
-                ...{ class: "px-5 py-4 align-top text-right" },
+                ...{ class: "px-5 py-2.5 align-top text-right" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "inline-flex flex-wrap justify-end gap-2 text-xs font-semibold uppercase tracking-wide" },
+                ...{ class: "flex flex-nowrap items-center justify-end gap-2 text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap" },
             });
             if (__VLS_ctx.registrationPermissions.canEdit) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
@@ -1401,23 +2065,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
                                 return;
                             __VLS_ctx.openEdit(registration);
                         } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
-                });
-            }
-            if (__VLS_ctx.isPaymentLinkVisible(registration) && __VLS_ctx.registrationPermissions.canEdit) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(__VLS_ctx.isPaymentLinkVisible(registration) && __VLS_ctx.registrationPermissions.canEdit))
-                                return;
-                            __VLS_ctx.copyPaymentLink(registration);
-                        } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
+                    ...{ class: "action-btn" },
                 });
             }
             if (__VLS_ctx.canEmitReceipt(registration)) {
@@ -1433,37 +2081,416 @@ if (__VLS_ctx.registrationPermissions.canList) {
                                 return;
                             __VLS_ctx.downloadReceipt(registration);
                         } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
+                    ...{ class: "action-btn" },
                 });
-                if (__VLS_ctx.receiptDownloadState.downloadingId === registration.id) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-                        ...{ class: "mr-1 inline-block h-3 w-3 animate-spin rounded-full border border-current border-b-transparent" },
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        __VLS_ctx.toggleActions(registration.id);
+                    } },
+                ...{ class: "action-btn" },
+            });
+            if (__VLS_ctx.openedActions === registration.id) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "dropdown-panel" },
+                });
+                if (__VLS_ctx.isPaymentLinkVisible(registration) && __VLS_ctx.registrationPermissions.canEdit) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.isPaymentLinkVisible(registration) && __VLS_ctx.registrationPermissions.canEdit))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.copyPaymentLink(registration);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openPaymentDialog([registration]);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openManualConfirmDialog([registration]);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (__VLS_ctx.canConfirmManualPix(registration)) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canConfirmManualPix(registration)))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openManualPaymentDialog(registration);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (__VLS_ctx.canViewManualProof(registration)) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canViewManualProof(registration)))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.viewManualProof(registration);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (__VLS_ctx.canCancelRegistration(registration.status) &&
+                    registration.status === 'PENDING_PAYMENT' &&
+                    __VLS_ctx.registrationPermissions.canDeactivate) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canCancelRegistration(registration.status) &&
+                                    registration.status === 'PENDING_PAYMENT' &&
+                                    __VLS_ctx.registrationPermissions.canDeactivate))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('cancel', registration);
+                            } },
+                        ...{ class: "dropdown-item text-red-600 hover:text-red-500 dark:text-red-400" },
+                    });
+                }
+                if (registration.status === 'PAID' && __VLS_ctx.registrationPermissions.canFinancial) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'PAID' && __VLS_ctx.registrationPermissions.canFinancial))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('refund', registration);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (registration.status === 'CANCELED' && __VLS_ctx.registrationPermissions.canApprove) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'CANCELED' && __VLS_ctx.registrationPermissions.canApprove))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('reactivate', registration);
+                            } },
+                        ...{ class: "dropdown-item" },
+                    });
+                }
+                if (__VLS_ctx.canDeleteRegistration(registration.status) && __VLS_ctx.registrationPermissions.canDelete) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canDeleteRegistration(registration.status) && __VLS_ctx.registrationPermissions.canDelete))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('delete', registration);
+                            } },
+                        ...{ class: "dropdown-item text-red-600 hover:text-red-500 dark:text-red-400" },
                     });
                 }
             }
-            if (registration.paymentMethod === 'CASH' &&
-                registration.status === 'PENDING_PAYMENT' &&
-                registration.orderId &&
-                __VLS_ctx.registrationPermissions.canFinancial) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(registration.paymentMethod === 'CASH' &&
-                                registration.status === 'PENDING_PAYMENT' &&
-                                registration.orderId &&
-                                __VLS_ctx.registrationPermissions.canFinancial))
-                                return;
-                            __VLS_ctx.openConfirm('confirm-cash', registration);
-                        } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "md:hidden space-y-5 p-4" },
+        });
+        if (__VLS_ctx.registrationPermissions.canFinancial) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
+                ...{ class: "space-y-3" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.openPaymentDialog) },
+                type: "button",
+                ...{ class: "w-full rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60" },
+                disabled: (__VLS_ctx.selectedRegistrations.length === 0),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        if (!(__VLS_ctx.registrationPermissions.canFinancial))
+                            return;
+                        __VLS_ctx.openManualConfirmDialog(__VLS_ctx.selectedRegistrations);
+                    } },
+                type: "button",
+                ...{ class: "w-full rounded-2xl border border-neutral-300 px-4 py-3 text-sm font-semibold text-neutral-800 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-100" },
+                disabled: (__VLS_ctx.selectedRegistrations.length === 0),
+            });
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "rounded-xl border border-blue-100 bg-blue-50 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/50" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-3 flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-300" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-bold text-slate-900 dark:text-white" },
+        });
+        (__VLS_ctx.selectedRegistrations.length);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-bold text-slate-900 dark:text-white" },
+        });
+        (__VLS_ctx.formatCurrency(__VLS_ctx.selectionTotalCents));
+        if (__VLS_ctx.registrationPermissions.canFinancial) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-3 grid grid-cols-2 gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.openPaymentDialog) },
+                type: "button",
+                ...{ class: "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-primary-600 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-blue-300" },
+                disabled: (__VLS_ctx.selectedRegistrations.length === 0),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        if (!(__VLS_ctx.registrationPermissions.canFinancial))
+                            return;
+                        __VLS_ctx.openManualConfirmDialog(__VLS_ctx.selectedRegistrations);
+                    } },
+                type: "button",
+                ...{ class: "w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200" },
+                disabled: (__VLS_ctx.selectedRegistrations.length === 0),
+            });
+        }
+        if (__VLS_ctx.canGenerateListPdf) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.generateRegistrationListPdf) },
+                type: "button",
+                ...{ class: "mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary-200/80 bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider text-primary-600 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
+                disabled: (__VLS_ctx.listPdfState.loading || __VLS_ctx.displayedRegistrations.length === 0),
+            });
+            if (__VLS_ctx.listPdfState.loading) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+                    ...{ class: "h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent dark:border-primary-200" },
                 });
             }
-            if (__VLS_ctx.canConfirmManualPix(registration)) {
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-4" },
+        });
+        for (const [registration] of __VLS_getVForSourceType((__VLS_ctx.displayedRegistrations))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.article, __VLS_intrinsicElements.article)({
+                key: (registration.id),
+                ...{ class: "group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-primary/30 hover:shadow-md dark:border-slate-700 dark:bg-slate-800" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "absolute left-0 top-0 h-full w-1.5" },
+                ...{ class: (__VLS_ctx.statusAccentClass(registration.status)) },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "p-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mb-3 flex items-start gap-3" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "pt-1 pl-1" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                ...{ onChange: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        __VLS_ctx.toggleRegistrationSelection(registration, $event.target?.checked ?? false);
+                    } },
+                type: "checkbox",
+                ...{ class: "h-5 w-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:opacity-40 dark:border-slate-600" },
+                disabled: (!__VLS_ctx.isRegistrationSelectable(registration)),
+                checked: (__VLS_ctx.isRegistrationSelected(registration.id)),
+                'aria-label': (`Selecionar inscricao ${registration.fullName}`),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                src: (__VLS_ctx.resolvePhotoUrl(registration.photoUrl)),
+                ...{ class: "h-12 w-12 rounded-full border border-slate-200 object-cover dark:border-slate-700" },
+                alt: (`Foto de ${registration.fullName}`),
+                loading: "lazy",
+                decoding: "async",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "min-w-0 flex-1" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
+                ...{ class: "truncate text-sm font-bold text-slate-900 dark:text-white" },
+            });
+            (registration.fullName);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-1 text-xs font-mono text-slate-500 dark:text-slate-400" },
+            });
+            (__VLS_ctx.formatCPF(registration.cpf));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-2 flex flex-wrap items-center gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide" },
+                ...{ class: (__VLS_ctx.statusBadgeClass(registration.status)) },
+            });
+            (__VLS_ctx.translateStatus(registration.status));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-[10px] text-slate-400 dark:text-slate-500" },
+            });
+            (__VLS_ctx.paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || ''));
+            (__VLS_ctx.formatDateTime(registration.paidAt || registration.createdAt));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        __VLS_ctx.toggleActions(registration.id);
+                    } },
+                ...{ class: "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200" },
+                'aria-expanded': (__VLS_ctx.openedActions === registration.id),
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "ml-9 space-y-3 border-l-2 border-slate-100 pl-4 pt-1 dark:border-slate-700/50" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[10px] font-bold uppercase tracking-wide text-slate-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-slate-700 dark:text-slate-200" },
+            });
+            (__VLS_ctx.findEventTitle(registration.eventId));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-slate-500 dark:text-slate-400" },
+            });
+            if (__VLS_ctx.findRegistrationLotLabel(registration)) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                (__VLS_ctx.findRegistrationLotLabel(registration));
+            }
+            (__VLS_ctx.formatCurrency(registration.priceCents ?? __VLS_ctx.findEventPriceCents(registration.eventId)));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-end justify-between gap-3" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[10px] font-bold uppercase tracking-wide text-slate-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-slate-700 dark:text-slate-200" },
+            });
+            (__VLS_ctx.findChurchName(registration.churchId));
+            (__VLS_ctx.findDistrictName(registration.districtId));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex gap-1" },
+            });
+            if (__VLS_ctx.registrationPermissions.canEdit) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                     ...{ onClick: (...[$event]) => {
                             if (!(__VLS_ctx.registrationPermissions.canList))
@@ -1472,100 +2499,498 @@ if (__VLS_ctx.registrationPermissions.canList) {
                                 return;
                             if (!!(__VLS_ctx.displayedRegistrations.length === 0))
                                 return;
-                            if (!(__VLS_ctx.canConfirmManualPix(registration)))
+                            if (!(__VLS_ctx.registrationPermissions.canEdit))
                                 return;
-                            __VLS_ctx.openManualPaymentDialog(registration);
+                            __VLS_ctx.openEdit(registration);
                         } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
+                    ...{ class: "rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700" },
+                    title: "Editar",
                 });
             }
-            if (__VLS_ctx.canViewManualProof(registration)) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(__VLS_ctx.canViewManualProof(registration)))
-                                return;
-                            __VLS_ctx.viewManualProof(registration);
-                        } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                            return;
+                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                            return;
+                        __VLS_ctx.toggleActions(registration.id);
+                    } },
+                ...{ class: "rounded-lg p-2 text-primary-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/20" },
+                title: "Acoes",
+            });
+            if (__VLS_ctx.openedActions === registration.id) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "mt-3 rounded-xl border border-white/10 bg-neutral-900/95 p-2 text-[11px] dark:border-white/10" },
                 });
-            }
-            if (__VLS_ctx.canCancelRegistration(registration.status) &&
-                registration.status === 'PENDING_PAYMENT' &&
-                __VLS_ctx.registrationPermissions.canDeactivate) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(__VLS_ctx.canCancelRegistration(registration.status) &&
-                                registration.status === 'PENDING_PAYMENT' &&
-                                __VLS_ctx.registrationPermissions.canDeactivate))
-                                return;
-                            __VLS_ctx.openConfirm('cancel', registration);
-                        } },
-                    ...{ class: "text-red-600 hover:text-red-500" },
-                });
-            }
-            if (registration.status === 'PAID' && __VLS_ctx.registrationPermissions.canFinancial) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(registration.status === 'PAID' && __VLS_ctx.registrationPermissions.canFinancial))
-                                return;
-                            __VLS_ctx.openConfirm('refund', registration);
-                        } },
-                    ...{ class: "text-neutral-900 transition hover:text-primary-600 dark:text-neutral-100 dark:hover:text-primary-200" },
-                });
-            }
-            if (registration.status === 'CANCELED' && __VLS_ctx.registrationPermissions.canApprove) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(registration.status === 'CANCELED' && __VLS_ctx.registrationPermissions.canApprove))
-                                return;
-                            __VLS_ctx.openConfirm('reactivate', registration);
-                        } },
-                    ...{ class: "text-primary-600 hover:text-primary-500" },
-                });
-            }
-            if (__VLS_ctx.canDeleteRegistration(registration.status) && __VLS_ctx.registrationPermissions.canDelete) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (...[$event]) => {
-                            if (!(__VLS_ctx.registrationPermissions.canList))
-                                return;
-                            if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                                return;
-                            if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                                return;
-                            if (!(__VLS_ctx.canDeleteRegistration(registration.status) && __VLS_ctx.registrationPermissions.canDelete))
-                                return;
-                            __VLS_ctx.openConfirm('delete', registration);
-                        } },
-                    ...{ class: "text-red-600 hover:text-red-500" },
-                });
+                if (__VLS_ctx.canEmitReceipt(registration)) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canEmitReceipt(registration)))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.downloadReceipt(registration);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (__VLS_ctx.isPaymentLinkVisible(registration) && __VLS_ctx.registrationPermissions.canEdit) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.isPaymentLinkVisible(registration) && __VLS_ctx.registrationPermissions.canEdit))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.copyPaymentLink(registration);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openPaymentDialog([registration]);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'PENDING_PAYMENT' && __VLS_ctx.registrationPermissions.canFinancial))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openManualConfirmDialog([registration]);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (__VLS_ctx.canConfirmManualPix(registration)) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canConfirmManualPix(registration)))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openManualPaymentDialog(registration);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (__VLS_ctx.canViewManualProof(registration)) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canViewManualProof(registration)))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.viewManualProof(registration);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (__VLS_ctx.canCancelRegistration(registration.status) &&
+                    registration.status === 'PENDING_PAYMENT' &&
+                    __VLS_ctx.registrationPermissions.canDeactivate) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canCancelRegistration(registration.status) &&
+                                    registration.status === 'PENDING_PAYMENT' &&
+                                    __VLS_ctx.registrationPermissions.canDeactivate))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('cancel', registration);
+                            } },
+                        ...{ class: "dropdown-item w-full text-red-400 hover:text-red-300" },
+                    });
+                }
+                if (registration.status === 'PAID' && __VLS_ctx.registrationPermissions.canFinancial) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'PAID' && __VLS_ctx.registrationPermissions.canFinancial))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('refund', registration);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (registration.status === 'CANCELED' && __VLS_ctx.registrationPermissions.canApprove) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(registration.status === 'CANCELED' && __VLS_ctx.registrationPermissions.canApprove))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('reactivate', registration);
+                            } },
+                        ...{ class: "dropdown-item w-full" },
+                    });
+                }
+                if (__VLS_ctx.canDeleteRegistration(registration.status) && __VLS_ctx.registrationPermissions.canDelete) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                        ...{ onClick: (...[$event]) => {
+                                if (!(__VLS_ctx.registrationPermissions.canList))
+                                    return;
+                                if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
+                                    return;
+                                if (!!(__VLS_ctx.displayedRegistrations.length === 0))
+                                    return;
+                                if (!(__VLS_ctx.openedActions === registration.id))
+                                    return;
+                                if (!(__VLS_ctx.canDeleteRegistration(registration.status) && __VLS_ctx.registrationPermissions.canDelete))
+                                    return;
+                                __VLS_ctx.openedActions = null;
+                                __VLS_ctx.openConfirm('delete', registration);
+                            } },
+                        ...{ class: "dropdown-item w-full text-red-400 hover:text-red-300" },
+                    });
+                }
             }
         }
     }
     var __VLS_19;
+    if (__VLS_ctx.manualConfirmDialog.open) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "w-full max-w-2xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-start justify-between gap-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
+            ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.closeManualConfirmDialog) },
+            type: "button",
+            ...{ class: "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white" },
+            'aria-label': "Fechar confirmacao manual",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-4 space-y-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-wrap items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
+        (__VLS_ctx.manualConfirmDialog.items.length);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.strong, __VLS_intrinsicElements.strong)({});
+        (__VLS_ctx.findEventTitle(__VLS_ctx.manualConfirmDialog.items[0]?.eventId ?? ''));
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+            ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-200" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "grid gap-2 sm:grid-cols-2" },
+        });
+        for (const [option] of __VLS_getVForSourceType((__VLS_ctx.manualConfirmPaymentOptions))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                key: (option.value),
+                ...{ class: "flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-sm shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:hover:border-primary-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center gap-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                type: "radio",
+                ...{ class: "h-4 w-4 text-primary-600 focus:ring-primary-500" },
+                value: (option.value),
+            });
+            (__VLS_ctx.manualConfirmDialog.paymentMethod);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            (__VLS_ctx.paymentMethodLabel(option.value));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (option.description ?? '');
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.closeManualConfirmDialog) },
+            type: "button",
+            ...{ class: "rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800" },
+            disabled: (__VLS_ctx.manualConfirmDialog.loading),
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.confirmManualPayment) },
+            type: "button",
+            ...{ class: "rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-60" },
+            disabled: (__VLS_ctx.manualConfirmDialog.loading || !__VLS_ctx.manualConfirmDialog.paymentMethod),
+        });
+        (__VLS_ctx.manualConfirmDialog.loading ? "Confirmando..." : "Confirmar pagamento");
+        if (__VLS_ctx.manualConfirmDialog.error) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-2 text-sm text-red-600 dark:text-red-400" },
+            });
+            (__VLS_ctx.manualConfirmDialog.error);
+        }
+    }
+    if (__VLS_ctx.paymentDialog.open) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "w-full max-w-3xl rounded-lg bg-white p-5 shadow-lg dark:bg-neutral-900" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-start justify-between gap-4" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
+            ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.closePaymentDialog) },
+            type: "button",
+            ...{ class: "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white" },
+            'aria-label': "Fechar resumo de pagamento",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-4 max-h-[60vh] space-y-3 overflow-auto" },
+        });
+        for (const [item] of __VLS_getVForSourceType((__VLS_ctx.paymentDialog.items))) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                key: (item.id),
+                ...{ class: "flex items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 dark:border-neutral-700 dark:bg-neutral-900" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+            });
+            (item.fullName);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+            });
+            (__VLS_ctx.formatCPF(item.cpf));
+            (__VLS_ctx.formatCurrency(item.priceCents ?? __VLS_ctx.findEventPriceCents(item.eventId)));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!(__VLS_ctx.paymentDialog.open))
+                            return;
+                        __VLS_ctx.removeFromPaymentDialog(item.id);
+                    } },
+                type: "button",
+                ...{ class: "text-xs font-semibold text-red-600 hover:text-red-500 disabled:opacity-50" },
+                disabled: (__VLS_ctx.paymentDialog.loading),
+            });
+        }
+        if (!__VLS_ctx.paymentDialog.items.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+            });
+        }
+        if (__VLS_ctx.paymentDialogAllowedMethods.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-4 space-y-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-200" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "grid gap-2 sm:grid-cols-2" },
+            });
+            for (const [option] of __VLS_getVForSourceType((__VLS_ctx.paymentDialogAllowedMethods))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                    key: (option.value),
+                    ...{ class: "flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-sm shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:hover:border-primary-400" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex items-center gap-2" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                    type: "radio",
+                    ...{ class: "h-4 w-4 text-primary-600 focus:ring-primary-500" },
+                    value: (option.value),
+                });
+                (__VLS_ctx.paymentDialog.paymentMethod);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+                });
+                (__VLS_ctx.paymentMethodLabel(option.value));
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                });
+                (option.description ?? '');
+            }
+        }
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "text-sm text-neutral-600 dark:text-neutral-400" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+        });
+        (__VLS_ctx.selectedRegistrations.length);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold text-neutral-900 dark:text-white" },
+        });
+        (__VLS_ctx.formatCurrency(__VLS_ctx.selectionTotalCents));
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-wrap gap-2" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.closePaymentDialog) },
+            type: "button",
+            ...{ class: "rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-800" },
+            disabled: (__VLS_ctx.paymentDialog.loading),
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.confirmPaymentGeneration) },
+            type: "button",
+            ...{ class: "rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-60" },
+            disabled: (__VLS_ctx.paymentDialog.loading || !__VLS_ctx.paymentDialog.items.length),
+        });
+        (__VLS_ctx.paymentDialog.loading ? "Gerando..." : "Confirmar pagamento");
+        if (__VLS_ctx.paymentDialog.successOrderId) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-4 rounded-lg border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "font-semibold" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-1 text-xs text-primary-800 dark:text-primary-100" },
+            });
+            (__VLS_ctx.paymentDialog.successOrderId);
+            if (__VLS_ctx.paymentDialog.successLink) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "mt-2 flex flex-wrap items-center gap-2" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.code, __VLS_intrinsicElements.code)({
+                    ...{ class: "rounded bg-white/80 px-2 py-1 text-xs text-neutral-800 shadow-sm dark:bg-neutral-900 dark:text-neutral-100" },
+                });
+                (__VLS_ctx.paymentDialog.successLink);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                    ...{ onClick: (...[$event]) => {
+                            if (!(__VLS_ctx.registrationPermissions.canList))
+                                return;
+                            if (!(__VLS_ctx.paymentDialog.open))
+                                return;
+                            if (!(__VLS_ctx.paymentDialog.successOrderId))
+                                return;
+                            if (!(__VLS_ctx.paymentDialog.successLink))
+                                return;
+                            __VLS_ctx.copyPaymentUrl(__VLS_ctx.paymentDialog.successLink);
+                        } },
+                    type: "button",
+                    ...{ class: "rounded-full bg-primary-600 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-500" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.a, __VLS_intrinsicElements.a)({
+                    href: (__VLS_ctx.paymentDialog.successLink),
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    ...{ class: "rounded-full border border-primary-500 px-3 py-1 text-xs font-semibold text-primary-700 transition hover:bg-primary-50 dark:border-primary-300 dark:text-primary-100 dark:hover:bg-primary-500/10" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "mt-1 text-xs text-primary-800 dark:text-primary-100" },
+                });
+            }
+        }
+        if (__VLS_ctx.paymentDialog.error) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-2 text-sm text-red-600 dark:text-red-400" },
+            });
+            (__VLS_ctx.paymentDialog.error);
+        }
+    }
     if (__VLS_ctx.addDialog.open) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" },
@@ -1880,7 +3305,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "mt-1 text-sm text-neutral-700 dark:text-neutral-200" },
         });
-        (__VLS_ctx.editDialog.original?.paidAt ? new Date(__VLS_ctx.editDialog.original.paidAt).toLocaleString('pt-BR') : '—');
+        (__VLS_ctx.editDialog.original?.paidAt ? new Date(__VLS_ctx.editDialog.original.paidAt).toLocaleString('pt-BR') : '--');
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
         __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
             ...{ class: "block text-xs font-semibold uppercase text-neutral-500" },
@@ -1888,7 +3313,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "mt-1 text-sm text-neutral-700 dark:text-neutral-200" },
         });
-        (__VLS_ctx.refundedAt ? new Date(__VLS_ctx.refundedAt).toLocaleString('pt-BR') : '—');
+        (__VLS_ctx.refundedAt ? new Date(__VLS_ctx.refundedAt).toLocaleString('pt-BR') : '--');
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "md:col-span-2" },
         });
@@ -2278,6 +3703,40 @@ else {
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-md']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-neutral-200/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
@@ -2296,6 +3755,38 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-200/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-t-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
@@ -2437,13 +3928,43 @@ else {
 /** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:focus:border-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:focus:ring-primary-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:col-span-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.2em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-primary-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-9']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
@@ -2529,21 +4050,86 @@ else {
 /** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:from-neutral-900/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:to-neutral-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-r']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white/70']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-neutral-200/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-950/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
-/** @type {__VLS_StyleScopedClasses['min-w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:border']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:border-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:bg-white/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:shadow-neutral-200/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:md:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:md:bg-neutral-950/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:md:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:block']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-x-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[900px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['table-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
@@ -2556,22 +4142,47 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-20']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[64px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[300px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[200px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[150px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[120px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[170px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[75x]']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['divide-y']} */ ;
 /** @type {__VLS_StyleScopedClasses['divide-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:divide-white/5']} */ ;
@@ -2579,7 +4190,24 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/5']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['align-top']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-12']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-12']} */ ;
@@ -2589,52 +4217,69 @@ else {
 /** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-snug']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-tight']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:inline']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-tight']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-snug']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-tight']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:inline']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-snug']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-tight']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-snug']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-tight']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
@@ -2644,57 +4289,658 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-tight']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:inline']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-5']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['align-top']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-right']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-end']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['whitespace-nowrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['action-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-panel']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-r']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['active:scale-[0.98]']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['active:scale-[0.98]']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-blue-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-blue-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-slate-800/50']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-slate-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-blue-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-slate-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wider']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['mr-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-block']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-3.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-3.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-t-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['group']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-current']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition-all']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-primary/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:shadow-md']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-slate-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['left-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['mb-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['pt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['pl-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-slate-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['truncate']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-mono']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-slate-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['ml-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-l-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-slate-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['pl-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['pt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-slate-700/50']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-end']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-slate-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-slate-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-slate-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-slate-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-blue-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-blue-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-blue-900/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-900/95']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-red-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['dropdown-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-red-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['fixed']} */ ;
+/** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-black/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['cursor-pointer']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-end']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['fixed']} */ ;
+/** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['z-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-black/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-h-[60vh]']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['cursor-pointer']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-primary-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-primary-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-primary-500/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
 /** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['z-50']} */ ;
@@ -3383,20 +5629,28 @@ const __VLS_self = (await import('vue')).defineComponent({
             admin: admin,
             catalog: catalog,
             registrationPermissions: registrationPermissions,
+            canGenerateListPdf: canGenerateListPdf,
             filters: filters,
             hideFilters: hideFilters,
             isDistrictFilterLocked: isDistrictFilterLocked,
             isChurchFilterLocked: isChurchFilterLocked,
             isEventFilterLocked: isEventFilterLocked,
             registrationStatusOptions: registrationStatusOptions,
+            lotsForSelectedEvent: lotsForSelectedEvent,
+            paymentDialog: paymentDialog,
+            manualConfirmDialog: manualConfirmDialog,
+            manualConfirmPaymentOptions: manualConfirmPaymentOptions,
+            paymentDialogAllowedMethods: paymentDialogAllowedMethods,
             genderOptions: genderOptions,
             isApplying: isApplying,
+            listPdfState: listPdfState,
             errorDialog: errorDialog,
             applyFilters: applyFilters,
             resetFilters: resetFilters,
             churchesByDistrict: churchesByDistrict,
             findEventTitle: findEventTitle,
             findEventPriceCents: findEventPriceCents,
+            findRegistrationLotLabel: findRegistrationLotLabel,
             findDistrictName: findDistrictName,
             findChurchName: findChurchName,
             formatBirthDate: formatBirthDate,
@@ -3404,7 +5658,28 @@ const __VLS_self = (await import('vue')).defineComponent({
             formatDateTime: formatDateTime,
             translateStatus: translateStatus,
             statusBadgeClass: statusBadgeClass,
+            statusAccentClass: statusAccentClass,
             displayedRegistrations: displayedRegistrations,
+            registrationCount: registrationCount,
+            isRegistrationSelectable: isRegistrationSelectable,
+            openedActions: openedActions,
+            toggleActions: toggleActions,
+            selectionDisabledReason: selectionDisabledReason,
+            isRegistrationSelected: isRegistrationSelected,
+            selectedRegistrations: selectedRegistrations,
+            selectionTotalCents: selectionTotalCents,
+            allDisplayedSelected: allDisplayedSelected,
+            someDisplayedSelected: someDisplayedSelected,
+            toggleRegistrationSelection: toggleRegistrationSelection,
+            toggleSelectAllDisplayed: toggleSelectAllDisplayed,
+            closePaymentDialog: closePaymentDialog,
+            openPaymentDialog: openPaymentDialog,
+            removeFromPaymentDialog: removeFromPaymentDialog,
+            confirmPaymentGeneration: confirmPaymentGeneration,
+            copyPaymentUrl: copyPaymentUrl,
+            openManualConfirmDialog: openManualConfirmDialog,
+            closeManualConfirmDialog: closeManualConfirmDialog,
+            confirmManualPayment: confirmManualPayment,
             registrationCode: registrationCode,
             addDialog: addDialog,
             addForm: addForm,
@@ -3455,9 +5730,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             canViewManualProof: canViewManualProof,
             viewManualProof: viewManualProof,
             openExistingManualProof: openExistingManualProof,
-            receiptDownloadState: receiptDownloadState,
             canEmitReceipt: canEmitReceipt,
             downloadReceipt: downloadReceipt,
+            generateRegistrationListPdf: generateRegistrationListPdf,
         };
     },
 });

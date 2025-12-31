@@ -231,6 +231,8 @@ export interface Registration {
   paidAt?: string | null;
   photoUrl?: string | null;
   receiptPdfUrl?: string | null;
+  district?: District | null;
+  church?: Church | null;
   order?: RegistrationOrderSummary | null;
 }
 
@@ -263,6 +265,10 @@ export interface RegistrationOrderSummary {
   totalCents: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
+  lotId?: string | null;
+  lotName?: string | null;
+  pricingLotId?: string | null;
+  pricingLot?: { id: string; name: string } | null;
   mpPaymentId?: string | null;
   manualPaymentReference?: string | null;
   manualPaymentProofUrl?: string | null;

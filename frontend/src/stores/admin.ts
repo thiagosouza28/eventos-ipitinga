@@ -136,6 +136,14 @@ export const useAdminStore = defineStore("admin", () => {
     });
   };
 
+  const downloadRegistrationListPdf = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    return api.get<ArrayBuffer>("/admin/registrations/list.pdf", {
+      params,
+      responseType: "arraybuffer"
+    });
+  };
+
   const downloadFinancialReport = async (eventId: string) => {
     return api.get<ArrayBuffer>(`/admin/financial/events/${eventId}/report.pdf`, {
       responseType: "arraybuffer"
@@ -193,13 +201,28 @@ export const useAdminStore = defineStore("admin", () => {
 
   const markRegistrationsPaid = async (
     registrationIds: string[],
-    payload?: { paidAt?: string; reference?: string }
+    payload?: { paidAt?: string; reference?: string; paymentMethod?: string }
   ) => {
     await api.post(`/admin/registrations/mark-paid`, {
       registrationIds,
       ...(payload ?? {})
     });
     await loadRegistrations(registrationFilters.value);
+  };
+
+  const createPaymentOrderForRegistrations = async (payload: {
+    registrationIds: string[];
+    paymentMethod?: string;
+  }) => {
+    const response = await api.post(`/admin/registrations/payment-order`, payload);
+    await loadRegistrations(registrationFilters.value);
+    return response.data as {
+      orderId: string;
+      status: string;
+      paymentMethod: string;
+      totalCents: number;
+      payment?: any;
+    };
   };
 
   const deleteRegistration = async (id: string) => {
@@ -257,11 +280,40 @@ export const useAdminStore = defineStore("admin", () => {
       paymentId?: string;
       manualReference?: string;
       paidAt?: string;
-      proofFile?: string;
+      proofFile?: string | File | Blob;
       proofUrl?: string;
     }
   ) => {
-    await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
+    const toFile = (input?: string | File | Blob) => {
+      if (!input) return null;
+      if (input instanceof File || input instanceof Blob) return input;
+      const match = input.match(/^data:(.+);base64,(.*)$/);
+      if (!match) return null;
+      const mime = match[1];
+      const base64 = match[2];
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const ext = mime.includes("pdf") ? "pdf" : mime.split("/")[1] || "bin";
+      return new File([bytes], `comprovante.${ext}`, { type: mime });
+    };
+
+    const proof = toFile(payload?.proofFile);
+    if (proof) {
+      const formData = new FormData();
+      if (payload?.paymentId) formData.append("paymentId", payload.paymentId);
+      if (payload?.manualReference) formData.append("manualReference", payload.manualReference);
+      if (payload?.paidAt) formData.append("paidAt", payload.paidAt);
+      formData.append("proofFile", proof);
+      if (payload?.proofUrl) formData.append("proofUrl", payload.proofUrl);
+      await api.post(`/admin/orders/${orderId}/mark-paid`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+    } else {
+      await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
+    }
     await loadRegistrations(registrationFilters.value);
   };
 
@@ -456,6 +508,7 @@ export const useAdminStore = defineStore("admin", () => {
     deleteEventLot,
     loadRegistrations,
     downloadRegistrationReport,
+    downloadRegistrationListPdf,
     downloadFinancialReport,
     responsibleFinance,
     responsiblePending,
@@ -471,6 +524,7 @@ export const useAdminStore = defineStore("admin", () => {
     createAdminRegistration,
     refundRegistration,
     markRegistrationsPaid,
+    createPaymentOrderForRegistrations,
     confirmOrderPayment,
     getOrderPayment,
     regenerateRegistrationPaymentLink,

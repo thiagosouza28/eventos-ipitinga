@@ -1,13 +1,14 @@
 const normalizeBaseUrl = (value?: string) => (value ? value.replace(/\/+$/, "") : undefined);
-const buildApiUrl = (value?: string) => {
+const ensureApiSuffix = (value?: string) => {
   const base = normalizeBaseUrl(value);
-  return base ? `${base}/api` : undefined;
+  if (!base) return undefined;
+  return base.endsWith("/api") ? base : `${base}/api`;
 };
 
-const envApiUrl = normalizeBaseUrl(import.meta.env.VITE_API_URL);
-const appUrlFallback = buildApiUrl(import.meta.env.VITE_APP_URL);
+const envApiUrl = ensureApiSuffix(import.meta.env.VITE_API_URL);
+const appUrlFallback = ensureApiSuffix(import.meta.env.VITE_APP_URL);
 const runtimeFallback =
-  typeof window !== "undefined" && window.location?.origin ? buildApiUrl(window.location.origin) : undefined;
+  typeof window !== "undefined" && window.location?.origin ? ensureApiSuffix(window.location.origin) : undefined;
 
 const resolvedApiUrl = envApiUrl ?? appUrlFallback ?? runtimeFallback;
 

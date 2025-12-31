@@ -60,12 +60,14 @@ import {
   deleteRegistrationHandler,
   listRegistrationsHandler,
   downloadRegistrationsReportHandler,
+  downloadRegistrationsListPdfHandler,
   registrationsReportHandler,
   reactivateRegistrationHandler,
   refundRegistrationHandler,
   updateRegistrationHandler,
   markRegistrationsPaidHandler,
   regenerateRegistrationPaymentLinkHandler,
+  createPaymentForRegistrationsHandler,
   getRegistrationHistoryHandler,
   getRegistrationReceiptLinkHandler
 } from "../controllers/registration.controller";
@@ -288,6 +290,12 @@ router.post("/admin/orders/:id/mark-paid", authorizePermission("orders", "financ
 
 router.get("/admin/registrations", authorizePermission("registrations", "view"), listRegistrationsHandler);
 router.get(
+  "/admin/registrations/list.pdf",
+  authorizePermission("registrations", "view"),
+  authorizePermission("reports", "reports"),
+  downloadRegistrationsListPdfHandler
+);
+router.get(
   "/admin/registrations/report",
   authorizePermission("registrations", "reports"),
   registrationsReportHandler
@@ -318,6 +326,11 @@ router.post(
   "/admin/registrations/mark-paid",
   authorizePermission("registrations", "financial"),
   markRegistrationsPaidHandler
+);
+router.post(
+  "/admin/registrations/payment-order",
+  authorizePermission("registrations", "financial"),
+  createPaymentForRegistrationsHandler
 );
 
 router.post(
@@ -422,10 +435,6 @@ router.post(
 );
 
 export default router;
-
-
-
-
 
 
 

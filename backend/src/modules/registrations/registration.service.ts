@@ -15,7 +15,10 @@ import {
   generateRegistrationReportPdf,
   RegistrationReportGroup,
   generateRegistrationEventSheetPdf,
-  EventSheetParticipant
+  EventSheetParticipant,
+  generateRegistrationListPdf,
+  type RegistrationListItem,
+  type RegistrationListMeta
 } from "../../pdf/registration-report.service";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/default-photo";
 import { PaymentMethod, PAYMENT_METHOD_LABELS } from "../../config/payment-methods";
@@ -144,15 +147,45 @@ type RegistrationFilters = {
   districtId?: string;
   churchId?: string;
   status?: RegistrationStatusValue;
+  lotId?: string;
+  search?: string;
 };
 
-const buildRegistrationWhere = (filters: RegistrationFilters = {}, ministryIds?: string[]) => ({
-  eventId: filters.eventId,
-  districtId: filters.districtId,
-  churchId: filters.churchId,
-  status: filters.status,
-  ...(ministryIds && ministryIds.length ? { ministryId: { in: ministryIds } } : {})
-});
+const buildRegistrationWhere = (filters: RegistrationFilters = {}, ministryIds?: string[]) => {
+  const base: Prisma.RegistrationWhereInput = {};
+  if (filters.eventId) base.eventId = filters.eventId;
+  if (filters.districtId) base.districtId = filters.districtId;
+  if (filters.churchId) base.churchId = filters.churchId;
+  if (filters.status) base.status = filters.status;
+  if (ministryIds && ministryIds.length) {
+    base.ministryId = { in: ministryIds };
+  }
+
+  const conditions: Prisma.RegistrationWhereInput[] = [];
+  if (Object.keys(base).length) {
+    conditions.push(base);
+  }
+
+  if (filters.lotId) {
+    conditions.push({ order: { pricingLotId: filters.lotId } });
+  }
+
+  const search = filters.search?.trim();
+  if (search) {
+    const digits = search.replace(/\D/g, "");
+    const orConditions: Prisma.RegistrationWhereInput[] = [
+      { fullName: { contains: search, mode: "insensitive" } }
+    ];
+    if (digits.length >= 3) {
+      orConditions.push({ cpf: { contains: digits } });
+    }
+    conditions.push({ OR: orConditions });
+  }
+
+  if (!conditions.length) return {};
+  if (conditions.length === 1) return conditions[0];
+  return { AND: conditions };
+};
 
 export class RegistrationService {
   findById(id: string) {
@@ -248,7 +281,8 @@ export class RegistrationService {
             endDate: true,
             location: true,
             priceCents: true,
-            isFree: true
+            isFree: true,
+            paymentMethods: true
           }
         },
         order: {
@@ -257,6 +291,13 @@ export class RegistrationService {
             totalCents: true,
             status: true,
             paymentMethod: true,
+            pricingLotId: true,
+            pricingLot: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
             mpPaymentId: true,
             manualPaymentReference: true,
             manualPaymentProofUrl: true,
@@ -944,6 +985,71 @@ export class RegistrationService {
       groupBy,
       generatedAt: brDateTimeFormatter.format(new Date()),
       groups
+    });
+
+    return pdfBuffer;
+  }
+
+  async generateListPdf(
+    filters: RegistrationFilters,
+    ministryIds?: string[],
+    options?: { includeCpf?: boolean }
+  ) {
+    const registrations = await prisma.registration.findMany({
+      where: buildRegistrationWhere(filters, ministryIds),
+      include: {
+        event: true,
+        church: true,
+        district: true,
+        order: {
+          include: {
+            pricingLot: true
+          }
+        }
+      },
+      orderBy: [{ createdAt: "desc" }]
+    });
+
+    const items: RegistrationListItem[] = registrations.map((registration) => ({
+      fullName: registration.fullName,
+      cpf: registration.cpf,
+      status: registration.status,
+      createdAt: registration.createdAt,
+      eventTitle: registration.event?.title ?? "Evento nao informado",
+      churchName: registration.church?.name ?? "Igreja nao informada",
+      districtName: registration.district?.name ?? registration.church?.district?.name ?? null,
+      lotName: registration.order?.pricingLot?.name ?? null
+    }));
+
+    const [eventMeta, churchMeta, districtMeta, lotMeta] = await Promise.all([
+      filters.eventId
+        ? prisma.event.findUnique({ where: { id: filters.eventId }, select: { title: true } })
+        : null,
+      filters.churchId
+        ? prisma.church.findUnique({ where: { id: filters.churchId }, select: { name: true } })
+        : null,
+      filters.districtId
+        ? prisma.district.findUnique({ where: { id: filters.districtId }, select: { name: true } })
+        : null,
+      filters.lotId
+        ? prisma.eventLot.findUnique({ where: { id: filters.lotId }, select: { name: true } })
+        : null
+    ]);
+
+    const meta: RegistrationListMeta = {
+      eventName: filters.eventId ? eventMeta?.title ?? "Nao informado" : null,
+      churchName: filters.churchId ? churchMeta?.name ?? "Nao informado" : null,
+      districtName: filters.districtId ? districtMeta?.name ?? "Nao informado" : null,
+      lotName: filters.lotId ? lotMeta?.name ?? "Nao informado" : null,
+      statusLabel: filters.status ? resolvePaymentStatusLabel(filters.status) : null,
+      search: filters.search?.trim() ?? null
+    };
+
+    const pdfBuffer = await generateRegistrationListPdf({
+      generatedAt: brDateTimeFormatter.format(new Date()),
+      items,
+      meta,
+      includeCpf: options?.includeCpf ?? false
     });
 
     return pdfBuffer;

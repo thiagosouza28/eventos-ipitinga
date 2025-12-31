@@ -70,38 +70,16 @@
       </div>
 
       <div v-else class="grid gap-4 lg:grid-cols-[280px_1fr]">
-        <aside
-          v-if="documents.length > 1"
-          class="rounded-3xl border border-white/60 bg-white/90 p-4 shadow-lg shadow-primary-100/50 dark:border-white/10 dark:bg-white/5 dark:shadow-black/40"
-        >
-          <p class="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-300">Documentos</p>
-          <div class="mt-3 space-y-2">
-            <button
-              v-for="(doc, index) in documents"
-              :key="doc.id"
-              type="button"
-              class="w-full rounded-xl border px-3 py-3 text-left text-sm font-semibold transition hover:-translate-y-0.5 hover:border-primary-200 hover:text-primary-700 dark:border-white/10 dark:hover:border-primary-500/60 dark:hover:text-primary-100"
-              :class="index === currentIndex ? 'border-primary-300 bg-primary-50/70 text-primary-800 shadow-sm shadow-primary-200/60 dark:border-primary-500/70 dark:bg-primary-500/10 dark:text-primary-100' : 'border-neutral-200/80 bg-white/60 text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'"
-              @click="currentIndex = index"
-            >
-              <span class="block truncate">{{ doc.title }}</span>
-              <span class="mt-1 block text-xs font-normal text-neutral-500 dark:text-neutral-400">{{ doc.fileName }}</span>
-            </button>
-          </div>
-        </aside>
-
-        <section
-          class="rounded-3xl border border-white/70 bg-white/90 shadow-2xl shadow-primary-100/60 backdrop-blur-lg dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/50"
-        >
-          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100/80 px-5 py-4 dark:border-neutral-800/80">
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Visualizando</p>
-              <h2 class="text-lg font-semibold text-neutral-900 dark:text-white">
-                {{ currentDoc?.title ?? "Documento" }}
-              </h2>
-              <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ currentDoc?.fileName }}</p>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
+        <aside class="space-y-4">
+          <div
+            class="rounded-3xl border border-white/60 bg-white/90 p-4 shadow-lg shadow-primary-100/50 dark:border-white/10 dark:bg-white/5 dark:shadow-black/40"
+          >
+            <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Visualizando</p>
+            <h2 class="mt-1 text-lg font-semibold text-neutral-900 dark:text-white">
+              {{ currentDoc?.title ?? "Documento" }}
+            </h2>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ currentDoc?.fileName }}</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-neutral-600 dark:text-neutral-300">
               <span class="rounded-full bg-primary-50 px-3 py-1 font-semibold text-primary-700 dark:bg-primary-500/20 dark:text-primary-100">
                 {{ currentDocLabel }}
               </span>
@@ -114,6 +92,30 @@
             </div>
           </div>
 
+          <div
+            v-if="documents.length > 1"
+            class="rounded-3xl border border-white/60 bg-white/90 p-4 shadow-lg shadow-primary-100/50 dark:border-white/10 dark:bg-white/5 dark:shadow-black/40"
+          >
+            <p class="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-500 dark:text-neutral-300">Documentos</p>
+            <div class="mt-3 space-y-2">
+              <button
+                v-for="(doc, index) in documents"
+                :key="doc.id"
+                type="button"
+                class="w-full rounded-xl border px-3 py-3 text-left text-sm font-semibold transition hover:-translate-y-0.5 hover:border-primary-200 hover:text-primary-700 dark:border-white/10 dark:hover:border-primary-500/60 dark:hover:text-primary-100"
+                :class="index === currentIndex ? 'border-primary-300 bg-primary-50/70 text-primary-800 shadow-sm shadow-primary-200/60 dark:border-primary-500/70 dark:bg-primary-500/10 dark:text-primary-100' : 'border-neutral-200/80 bg-white/60 text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200'"
+                @click="currentIndex = index"
+              >
+                <span class="block truncate">{{ doc.title }}</span>
+                <span class="mt-1 block text-xs font-normal text-neutral-500 dark:text-neutral-400">{{ doc.fileName }}</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <section
+          class="rounded-3xl border border-white/70 bg-white/90 p-5 shadow-2xl shadow-primary-100/60 backdrop-blur-lg dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/50"
+        >
           <div
             ref="previewRef"
             class="relative isolate overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-inner shadow-primary-100/40 dark:border-neutral-800 dark:bg-neutral-950/60"

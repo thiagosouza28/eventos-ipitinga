@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="eventPermissions.canList" class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -54,7 +54,7 @@
       </div>
       <TableSkeleton
         v-if="loadingEvents"
-        helperText="ðŸ”„ Carregando eventos..."
+        helperText="ð Carregando eventos..."
       />
       <div
         v-else

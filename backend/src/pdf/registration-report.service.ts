@@ -65,6 +65,26 @@ export type EventSheetParticipant = {
   eventTitle?: string | null;
 };
 
+export type RegistrationListItem = {
+  fullName: string;
+  cpf?: string | null;
+  status: string;
+  createdAt: Date | string | null;
+  eventTitle: string;
+  churchName: string;
+  districtName?: string | null;
+  lotName?: string | null;
+};
+
+export type RegistrationListMeta = {
+  eventName?: string | null;
+  churchName?: string | null;
+  districtName?: string | null;
+  lotName?: string | null;
+  statusLabel?: string | null;
+  search?: string | null;
+};
+
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Rascunho",
   PENDING_PAYMENT: "Pendente",
@@ -77,6 +97,11 @@ const STATUS_LABELS: Record<string, string> = {
 
 const formatStatus = (status: string | null | undefined) =>
   status ? STATUS_LABELS[status] ?? status : STATUS_LABELS.OUTROS;
+
+const brDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short"
+});
 
 const escapeHtml = (value: string | number | null | undefined) => {
   if (value === null || value === undefined) return "";
@@ -96,6 +121,13 @@ const statusBadgeClass = (status: string) => {
   if (status === STATUS_LABELS.PENDING_PAYMENT) return "status-pending";
   if (status === STATUS_LABELS.REFUNDED) return "status-refunded";
   return "status-default";
+};
+
+const formatCpf = (value?: string | null) => {
+  if (!value) return "-";
+  const digits = String(value).replace(/\D/g, "");
+  if (digits.length !== 11) return value;
+  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
 const buildAvatarMarkup = (photoUrl?: string | null) => {
@@ -280,6 +312,123 @@ export const generateRegistrationReportPdf = async ({
     format: "A4",
     printBackground: true,
     margin: { top: "12mm", bottom: "18mm", left: "10mm", right: "10mm" }
+  });
+  await page.close();
+  return pdfBuffer;
+};
+
+export const generateRegistrationListPdf = async ({
+  generatedAt,
+  items,
+  meta,
+  includeCpf
+}: {
+  generatedAt: string;
+  items: RegistrationListItem[];
+  meta: RegistrationListMeta;
+  includeCpf: boolean;
+}) => {
+  const total = items.length;
+
+  const metaCards = [
+    { label: "Evento", value: meta.eventName ?? "Todos" },
+    { label: "Igreja", value: meta.churchName ?? "Todas" },
+    { label: "Distrito", value: meta.districtName ?? "Todos" },
+    { label: "Lote", value: meta.lotName ?? "Todos" },
+    { label: "Status", value: meta.statusLabel ?? "Todos" },
+    { label: "Filtro", value: meta.search ?? "Nao aplicado" }
+  ]
+    .map(
+      (item) => `
+      <div class="meta-card">
+        <span class="label">${escapeHtml(item.label)}</span>
+        <span class="value">${escapeHtml(item.value)}</span>
+      </div>
+    `
+    )
+    .join("");
+
+  const summaryCards = `
+    <div class="summary-card">
+      <span>Total de inscritos</span>
+      <strong>${total}</strong>
+    </div>
+  `;
+
+  const headerCells = [
+    '<th class="col-name">Inscrito</th>',
+    includeCpf ? '<th class="col-cpf">CPF</th>' : "",
+    '<th class="col-event">Evento</th>',
+    '<th class="col-church">Igreja</th>',
+    '<th class="col-status">Status</th>',
+    '<th class="col-date">Data</th>'
+  ]
+    .filter(Boolean)
+    .join("");
+
+  const colSpan = includeCpf ? 6 : 5;
+  const rows = items.length
+    ? items
+        .map((item) => {
+          const statusLabel = formatStatus(item.status);
+          const createdAtValue = item.createdAt
+            ? brDateTimeFormatter.format(new Date(item.createdAt))
+            : "-";
+          const churchLabel = item.churchName || "Nao informado";
+          const districtLabel = item.districtName ? `Distrito: ${item.districtName}` : "";
+          const lotLabel = item.lotName ? `Lote: ${item.lotName}` : "";
+          const nameCell = `
+            <td class="col-name">
+              <span class="main">${formatCellText(item.fullName)}</span>
+              ${districtLabel ? `<span class="sub">${escapeHtml(districtLabel)}</span>` : ""}
+            </td>
+          `;
+          const cpfCell = includeCpf
+            ? `<td class="col-cpf">${formatCellText(formatCpf(item.cpf))}</td>`
+            : "";
+          const eventCell = `
+            <td class="col-event">
+              <span class="main">${formatCellText(item.eventTitle)}</span>
+              ${lotLabel ? `<span class="sub">${escapeHtml(lotLabel)}</span>` : ""}
+            </td>
+          `;
+          const churchCell = `
+            <td class="col-church">
+              <span class="main">${formatCellText(churchLabel)}</span>
+            </td>
+          `;
+          const statusCell = `
+            <td class="col-status">
+              <span class="status ${statusBadgeClass(statusLabel)}">${escapeHtml(statusLabel)}</span>
+            </td>
+          `;
+          const dateCell = `<td class="col-date">${formatCellText(createdAtValue)}</td>`;
+
+          return `<tr>${nameCell}${cpfCell}${eventCell}${churchCell}${statusCell}${dateCell}</tr>`;
+        })
+        .join("")
+    : `<tr><td class="empty" colspan="${colSpan}">Nenhuma inscricao encontrada para os filtros selecionados.</td></tr>`;
+
+  const htmlTemplate = await loadTemplate("registration-list.html");
+  const html = htmlTemplate
+    .replaceAll("{{title}}", "Lista de inscricoes")
+    .replaceAll(
+      "{{subtitle}}",
+      `Total: ${total} inscritos - Gerado em ${escapeHtml(generatedAt)}`
+    )
+    .replaceAll("{{metaCards}}", metaCards)
+    .replaceAll("{{summaryCards}}", summaryCards)
+    .replaceAll("{{tableHeader}}", headerCells)
+    .replaceAll("{{tableRows}}", rows)
+    .replaceAll("{{generatedAt}}", escapeHtml(generatedAt));
+
+  const browserInstance = await ensureBrowser();
+  const page = await browserInstance.newPage();
+  await page.setContent(html, { waitUntil: "networkidle" });
+  const pdfBuffer = await page.pdf({
+    format: "A4",
+    printBackground: true,
+    margin: { top: "12mm", bottom: "16mm", left: "10mm", right: "10mm" }
   });
   await page.close();
   return pdfBuffer;

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title}}</title>
+
+  <style>
+    :root {
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --bg: #ffffff;
+      --card: #f8fafc;
+      --accent: #1d4ed8;
+      --chip: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 22px;
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-print-color-adjust: exact;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header .eyebrow {
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .meta {
+      padding: 18px 24px 6px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .meta-card {
+      padding: 12px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .meta .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.14em;
+    }
+
+    .meta .value {
+      font-size: 14px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .summary {
+      padding: 8px 24px 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      padding: 12px 14px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .summary-card span {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-card strong {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .table-wrap {
+      padding: 0 24px 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #f9fafb;
+    }
+
+    .col-name .main {
+      font-weight: 600;
+      display: block;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .col-name .sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: var(--chip);
+      color: #0f172a;
+    }
+
+    .status-paid { background: #dcfce7; color: #15803d; }
+    .status-pending { background: #fee2e2; color: #b91c1c; }
+    .status-refunded { background: #e0e7ff; color: #4338ca; }
+    .status-default { background: #e2e8f0; color: #0f172a; }
+
+    .empty {
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">
+      <p class="eyebrow">Lista de inscricoes</p>
+      <h1>{{title}}</h1>
+      <p>{{subtitle}}</p>
+    </div>
+
+    <div class="meta">
+      {{metaCards}}
+    </div>
+
+    <div class="summary">
+      {{summaryCards}}
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {{tableHeader}}
+          </tr>
+        </thead>
+        <tbody>
+          {{tableRows}}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      Gerado automaticamente - {{generatedAt}}
+    </div>
+  </div>
+</body>
+</html>

@@ -28,6 +28,7 @@ const envSchema = z.object({
   APP_URL: z.string().url(),
   API_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
+  DATABASE_POOL_LIMIT: z.coerce.number().int().positive().default(20),
   JWT_SECRET: z.string().min(32, "JWT_SECRET deve possuir ao menos 32 caracteres"),
   JWT_EXPIRES_IN: z.string().default("30d"),
   PASSWORD_SALT_ROUNDS: z.coerce.number().default(10),
@@ -48,6 +49,9 @@ const envSchema = z.object({
   PDF_SIGN_SECRET: z.string().min(1),
   HMAC_SECRET: z.string().min(1),
   CORS_ORIGINS: z.string().default("http://localhost:5173"),
+  MAX_CONCURRENT_REQUESTS: z.coerce.number().int().positive().default(20),
+  MAX_PENDING_REQUESTS: z.coerce.number().int().min(0).default(100),
+  REQUEST_QUEUE_TIMEOUT_MS: z.coerce.number().int().min(0).default(15000),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   ORDER_EXPIRATION_MINUTES: z.coerce.number().default(45),
@@ -91,7 +95,26 @@ const resolveSqliteUrl = (url: string) => {
   return `file:${absolutePath}${queryPart ? `?${queryPart}` : ""}`;
 };
 
-const databaseUrl = resolveSqliteUrl(rawEnv.DATABASE_URL);
+const applyDatabasePoolLimit = (url: string, limit: number) => {
+  if (limit <= 0) return url;
+  if (url.startsWith("file:")) return url;
+  try {
+    const dbUrl = new URL(url);
+    const protocol = dbUrl.protocol.replace(":", "");
+    if (!["mysql", "postgres", "postgresql"].includes(protocol)) {
+      return url;
+    }
+    if (!dbUrl.searchParams.has("connection_limit")) {
+      dbUrl.searchParams.set("connection_limit", String(limit));
+      return dbUrl.toString();
+    }
+  } catch {
+    return url;
+  }
+  return url;
+};
+
+const databaseUrl = applyDatabasePoolLimit(resolveSqliteUrl(rawEnv.DATABASE_URL), rawEnv.DATABASE_POOL_LIMIT);
 process.env.DATABASE_URL = databaseUrl;
 
 export const env = {

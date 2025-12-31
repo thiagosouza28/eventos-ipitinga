@@ -4,10 +4,13 @@ import { resolve } from "path";
 
 const normalizeBaseUrl = (value?: string) => (value ? value.replace(/\/+$/, "") : undefined);
 
-const ensureBackendEnv = (mode: string) => {
+const resolveEnvValue = (key: string, env: Record<string, string>) => env[key] ?? process.env[key];
+
+const ensureBackendEnv = (mode: string, frontendEnv: Record<string, string>) => {
   const backendEnvDir = resolve(__dirname, "../backend");
   const backendEnv = loadEnv(mode, backendEnvDir, "");
-  if (!process.env.VITE_API_URL) {
+  const existingApiUrl = resolveEnvValue("VITE_API_URL", frontendEnv);
+  if (!existingApiUrl) {
     const normalizedApiUrl = normalizeBaseUrl(backendEnv.API_URL);
     if (normalizedApiUrl) {
       process.env.VITE_API_URL = normalizedApiUrl;
@@ -22,24 +25,37 @@ const ensureBackendEnv = (mode: string) => {
     }
   }
 
-  if (!process.env.VITE_APP_URL && backendEnv.APP_URL) {
+  const existingAppUrl = resolveEnvValue("VITE_APP_URL", frontendEnv);
+  if (!existingAppUrl && backendEnv.APP_URL) {
     process.env.VITE_APP_URL = backendEnv.APP_URL;
   }
 };
 
 export default defineConfig(({ mode }) => {
-  ensureBackendEnv(mode);
-  const env = loadEnv(mode, process.cwd(), "");
+  const frontendEnv = loadEnv(mode, process.cwd(), "");
+  ensureBackendEnv(mode, frontendEnv);
+  const env = { ...frontendEnv, ...process.env };
 
   return {
     plugins: [vue()],
     server: {
-      port: Number(env.VITE_DEV_SERVER_PORT || process.env.VITE_DEV_SERVER_PORT) || 5173
+      host: "0.0.0.0",
+      port: Number(env.VITE_DEV_SERVER_PORT || process.env.VITE_DEV_SERVER_PORT) || 5173,
+      strictPort: true,
+      hmr: {
+        host: env.VITE_DEV_SERVER_HOST || "localhost",
+        port: Number(env.VITE_DEV_SERVER_PORT || process.env.VITE_DEV_SERVER_PORT) || 5173,
+        protocol: "ws"
+      }
     },
     resolve: {
       alias: {
         "@": resolve(__dirname, "./src")
-      }
+      },
+      extensions: [".mjs", ".ts", ".js", ".jsx", ".tsx", ".json"]
+    },
+    optimizeDeps: {
+      exclude: ["pdfjs-dist"]
     },
     build: {
       target: "es2015",

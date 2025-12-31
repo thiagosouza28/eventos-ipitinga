@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+
+.action-btn {
+  @apply flex h-7 w-7 items-center justify-center rounded-md
+         text-neutral-600 transition
+         hover:bg-neutral-100 hover:text-primary-600
+         dark:text-neutral-300 dark:hover:bg-white/10 dark:hover:text-primary-300;
+}
+
+.dropdown-item {
+  @apply flex w-full items-center gap-2 px-3 py-2 text-left text-xs
+         text-neutral-700 transition
+         hover:bg-neutral-100
+         dark:text-neutral-200 dark:hover:bg-white/10;
+}
+
 @layer base {
   :root {
     --font-sans: "Inter", "system-ui", sans-serif;
