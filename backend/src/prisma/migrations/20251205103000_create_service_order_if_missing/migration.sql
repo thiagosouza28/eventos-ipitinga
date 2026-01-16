@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS `ServiceOrder` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Add foreign keys only when they do not exist (avoid duplicate constraint errors)
+-- Drop and recreate the order foreign key to enforce ON DELETE RESTRICT
 SET @fk_order_exists := (
   SELECT COUNT(*)
   FROM information_schema.REFERENTIAL_CONSTRAINTS
@@ -25,15 +25,21 @@ SET @fk_order_exists := (
     AND CONSTRAINT_NAME = 'ServiceOrder_orderId_fkey'
 );
 
-SET @sql_order_fk := IF(
-  @fk_order_exists = 0,
-  'ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;',
+SET @sql_drop_order_fk := IF(
+  @fk_order_exists > 0,
+  'ALTER TABLE `ServiceOrder` DROP FOREIGN KEY `ServiceOrder_orderId_fkey`;',
   'SELECT 1'
 );
-PREPARE stmt FROM @sql_order_fk;
+PREPARE stmt FROM @sql_drop_order_fk;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @sql_add_order_fk := 'ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;';
+PREPARE stmt FROM @sql_add_order_fk;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Add foreign keys only when they do not exist (avoid duplicate constraint errors)
 SET @fk_issued_exists := (
   SELECT COUNT(*)
   FROM information_schema.REFERENTIAL_CONSTRAINTS

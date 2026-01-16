@@ -1,5 +1,2 @@
--- DropForeignKey
-ALTER TABLE `ServiceOrder` DROP FOREIGN KEY `ServiceOrder_orderId_fkey`;
-
--- AddForeignKey
-ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+-- No-op: ServiceOrder foreign key adjustment moved to 20251205103000_create_service_order_if_missing.
+SELECT 1;

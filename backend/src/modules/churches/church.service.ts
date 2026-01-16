@@ -2,6 +2,12 @@ import { prisma } from "../../lib/prisma";
 import { NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { sanitizeCpf } from "../../utils/mask";
+import { env } from "../../config/env";
+import { cacheDeletePrefix, cacheGetOrSet } from "../../utils/cache";
+
+const CHURCHES_CACHE_PREFIX = "catalog:churches:";
+const buildChurchesCacheKey = (districtId?: string) =>
+  districtId ? `${CHURCHES_CACHE_PREFIX}district:${districtId}` : `${CHURCHES_CACHE_PREFIX}all`;
 
 const normalizeString = (value: unknown): string | undefined => {
   if (value === undefined || value === null) return undefined;
@@ -47,36 +53,44 @@ const normalizeCpf = (value: unknown): string | null => {
 
 export class ChurchService {
   async list(districtId?: string) {
-    const where = districtId ? { districtId } : undefined;
-    const churches = await prisma.church.findMany({
-      where,
-      include: {
-        district: true
-      },
-      orderBy: {
-        name: "asc"
-      }
-    });
-    return churches.map((church) => ({
-      id: church.id,
-      name: church.name,
-      districtId: church.districtId,
-      directorName: church.directorName ?? null,
-      directorCpf: church.directorCpf ?? null,
-      directorBirthDate: church.directorBirthDate ?? null,
-      directorEmail: church.directorEmail ?? null,
-      directorWhatsapp: church.directorWhatsapp ?? null,
-      directorPhotoUrl: church.directorPhotoUrl ?? null,
-      createdAt: church.createdAt,
-      district: church.district
-        ? {
-            id: church.district.id,
-            name: church.district.name,
-            pastorName: church.district.pastorName ?? null,
-            createdAt: church.district.createdAt
+    const cacheKey = buildChurchesCacheKey(districtId);
+    return cacheGetOrSet(
+      cacheKey,
+      env.CACHE_TTL_MS,
+      async () => {
+        const where = districtId ? { districtId } : undefined;
+        const churches = await prisma.church.findMany({
+          where,
+          include: {
+            district: true
+          },
+          orderBy: {
+            name: "asc"
           }
-        : null
-    }));
+        });
+        return churches.map((church) => ({
+          id: church.id,
+          name: church.name,
+          districtId: church.districtId,
+          directorName: church.directorName ?? null,
+          directorCpf: church.directorCpf ?? null,
+          directorBirthDate: church.directorBirthDate ?? null,
+          directorEmail: church.directorEmail ?? null,
+          directorWhatsapp: church.directorWhatsapp ?? null,
+          directorPhotoUrl: church.directorPhotoUrl ?? null,
+          createdAt: church.createdAt,
+          district: church.district
+            ? {
+                id: church.district.id,
+                name: church.district.name,
+                pastorName: church.district.pastorName ?? null,
+                createdAt: church.district.createdAt
+              }
+            : null
+        }));
+      },
+      { maxEntries: env.CACHE_MAX_ENTRIES }
+    );
   }
 
   async create(data: {
@@ -117,6 +131,7 @@ export class ChurchService {
         districtId
       }
     });
+    cacheDeletePrefix(CHURCHES_CACHE_PREFIX);
     return {
       id: church.id,
       name: church.name,
@@ -230,6 +245,7 @@ export class ChurchService {
       entityId: church.id,
       metadata: updateData
     });
+    cacheDeletePrefix(CHURCHES_CACHE_PREFIX);
     return {
       id: church.id,
       name: church.name,
@@ -295,6 +311,7 @@ export class ChurchService {
         districtId: church.districtId
       }
     });
+    cacheDeletePrefix(CHURCHES_CACHE_PREFIX);
     return { success: true };
   }
 }

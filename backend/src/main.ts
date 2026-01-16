@@ -103,6 +103,12 @@ const bootstrap = async () => {
       console.log(`🚀 Server running on port ${port}`);
       startOrderExpirationJob();
     });
+    server.keepAliveTimeout = env.SERVER_KEEP_ALIVE_TIMEOUT_MS;
+    server.headersTimeout = Math.max(
+      env.SERVER_HEADERS_TIMEOUT_MS,
+      env.SERVER_KEEP_ALIVE_TIMEOUT_MS + 1000
+    );
+    server.requestTimeout = env.SERVER_REQUEST_TIMEOUT_MS;
 
     const shutdown = async () => {
       logger.info("Encerrando servidor...");
@@ -124,3 +130,4 @@ const bootstrap = async () => {
 };
 
 void bootstrap();
+

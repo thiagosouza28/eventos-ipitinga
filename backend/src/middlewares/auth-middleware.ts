@@ -1,9 +1,10 @@
 import { NextFunction, Request, Response, type RequestHandler } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError, NotBeforeError, TokenExpiredError } from "jsonwebtoken";
 
 import { env } from "../config/env";
 import type { Role } from "../config/roles";
 import { UnauthorizedError } from "../utils/errors";
+import { requestLogger } from "../utils/logger";
 import type { PermissionMap } from "../utils/permissions";
 
 type TokenPayload = {
@@ -18,19 +19,52 @@ type TokenPayload = {
   mustChangePassword?: boolean;
 };
 
+const TOKEN_PATTERN = /^Bearer\s+(.+)$/i;
+const CLOCK_TOLERANCE_SECONDS = 30;
+
+const logAuthFailure = (
+  request: Request,
+  code: string,
+  message: string,
+  extra?: Record<string, unknown>
+) => {
+  requestLogger.warn(
+    {
+      code,
+      message,
+      method: request.method,
+      path: request.originalUrl,
+      ...extra
+    },
+    "Auth failure"
+  );
+};
+
 export const authenticate: RequestHandler = (request: Request, _response: Response, next: NextFunction) => {
-  const authHeader = request.headers.authorization;
-  if (!authHeader) {
-    throw new UnauthorizedError();
+  const headerValue = Array.isArray(request.headers.authorization)
+    ? request.headers.authorization[0]
+    : request.headers.authorization;
+  if (!headerValue) {
+    logAuthFailure(request, "TOKEN_MISSING", "Token ausente");
+    throw new UnauthorizedError("Token ausente", { code: "TOKEN_MISSING" });
   }
 
-  const [, token] = authHeader.split(" ");
+  const match = headerValue.match(TOKEN_PATTERN);
+  if (!match) {
+    logAuthFailure(request, "TOKEN_MALFORMED", "Formato de token invalido");
+    throw new UnauthorizedError("Formato de token invalido", { code: "TOKEN_MALFORMED" });
+  }
+
+  const token = match[1].trim();
   if (!token) {
-    throw new UnauthorizedError();
+    logAuthFailure(request, "TOKEN_MALFORMED", "Formato de token invalido");
+    throw new UnauthorizedError("Formato de token invalido", { code: "TOKEN_MALFORMED" });
   }
 
   try {
-    const decoded = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET, {
+      clockTolerance: CLOCK_TOLERANCE_SECONDS
+    }) as TokenPayload;
     request.user = {
       id: decoded.sub,
       role: decoded.role,
@@ -44,6 +78,19 @@ export const authenticate: RequestHandler = (request: Request, _response: Respon
     };
     return next();
   } catch (error) {
-    throw new UnauthorizedError();
+    if (error instanceof TokenExpiredError) {
+      logAuthFailure(request, "TOKEN_EXPIRED", "Token expirado", {
+        expiredAt: error.expiredAt?.toISOString()
+      });
+      throw new UnauthorizedError("Token expirado", { code: "TOKEN_EXPIRED" });
+    }
+    if (error instanceof JsonWebTokenError || error instanceof NotBeforeError) {
+      logAuthFailure(request, "TOKEN_INVALID", "Token invalido", {
+        error: error.message
+      });
+      throw new UnauthorizedError("Token invalido", { code: "TOKEN_INVALID" });
+    }
+    logAuthFailure(request, "TOKEN_INVALID", "Token invalido");
+    throw new UnauthorizedError("Token invalido", { code: "TOKEN_INVALID" });
   }
 };

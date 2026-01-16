@@ -4,6 +4,7 @@ import { AppError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { storageService } from "../../storage/storage.service";
 import { logger } from "../../utils/logger";
+import { hasTable } from "../../utils/schema-cache";
 
 export class ExpenseService {
   async create(payload: {
@@ -105,14 +106,8 @@ export class ExpenseService {
   async listByEvent(eventId: string) {
     try {
       // Verificar se a tabela Expense existe
-      const tables = await prisma.$queryRawUnsafe<Array<{ TABLE_NAME: string }>>(
-        `SELECT TABLE_NAME
-         FROM information_schema.TABLES
-         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Expense'`
-      );
-
-      if (tables.length === 0) {
-        // Se a tabela não existe, retornar array vazio
+      const hasExpenseTable = await hasTable("Expense");
+      if (!hasExpenseTable) {
         return [];
       }
 
@@ -173,4 +168,5 @@ export class ExpenseService {
 }
 
 export const expenseService = new ExpenseService();
+
 

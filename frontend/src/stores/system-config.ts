@@ -203,8 +203,9 @@ export const useSystemConfigStore = defineStore("systemConfig", {
     async saveConfig(payload: PartialSystemConfigSettings) {
       const auth = useAuthStore();
       const headers: Record<string, string> = {};
-      if (auth.token) {
-        headers.Authorization = `Bearer ${auth.token}`;
+      const authHeader = auth.getAuthorizationHeader();
+      if (authHeader) {
+        headers.Authorization = authHeader;
       }
       const normalizedPayload = JSON.parse(JSON.stringify(payload)) as PartialSystemConfigSettings;
       const response = await axios.put<SystemConfigResponse>(

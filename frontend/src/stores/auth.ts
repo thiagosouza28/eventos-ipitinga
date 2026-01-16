@@ -1,4 +1,4 @@
-﻿import { defineStore } from "pinia";
+import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import axios from "axios";
 
@@ -24,41 +24,131 @@ type AuthUser = {
   permissions?: Record<string, PermissionState>;
 };
 
+type JwtPayload = {
+  exp?: number;
+};
+
 const STORAGE_KEY = "catre-auth";
 const ROLE_KEY = "catre-role";
+const TOKEN_SKEW_SECONDS = 30;
+
+const decodeBase64 = (value: string) => {
+  if (typeof atob === "function") {
+    return atob(value);
+  }
+  const buffer = (
+    globalThis as {
+      Buffer?: { from: (input: string, encoding: string) => { toString: (enc: string) => string } };
+    }
+  ).Buffer;
+  if (buffer?.from) {
+    return buffer.from(value, "base64").toString("utf8");
+  }
+  return null;
+};
+
+const decodeJwtPayload = (token: string): JwtPayload | null => {
+  const parts = token.split(".");
+  if (parts.length < 2) {
+    return null;
+  }
+  const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+  const decoded = decodeBase64(padded);
+  if (!decoded) {
+    return null;
+  }
+  try {
+    return JSON.parse(decoded) as JwtPayload;
+  } catch {
+    return null;
+  }
+};
+
+const isTokenValid = (value: string) => {
+  const payload = decodeJwtPayload(value);
+  if (!payload) {
+    return false;
+  }
+  if (typeof payload.exp !== "number") {
+    return true;
+  }
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  return nowSeconds + TOKEN_SKEW_SECONDS < payload.exp;
+};
 
 export const useAuthStore = defineStore("auth", () => {
   const token = ref<string | null>(null);
   const user = ref<AuthUser | null>(null);
+  const isReady = ref(false);
 
   const isAuthenticated = computed(() => Boolean(token.value));
+  const hasValidSession = computed(() => Boolean(token.value && isTokenValid(token.value)));
 
-  const loadFromStorage = () => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      token.value = parsed.token;
-      user.value = parsed.user;
-      if (parsed?.user?.role) {
+  const persist = () => {
+    try {
+      if (token.value && user.value) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: token.value, user: user.value }));
         try {
-          localStorage.setItem(ROLE_KEY, parsed.user.role);
+          localStorage.setItem(ROLE_KEY, user.value.role);
+        } catch {}
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+        try {
+          localStorage.removeItem(ROLE_KEY);
         } catch {}
       }
+    } catch (error) {
+      console.warn("[auth] Failed to persist session", error);
     }
   };
 
-  const persist = () => {
-    if (token.value && user.value) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: token.value, user: user.value }));
-      try {
-        localStorage.setItem(ROLE_KEY, user.value.role);
-      } catch {}
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-      try {
-        localStorage.removeItem(ROLE_KEY);
-      } catch {}
+  const clearSession = () => {
+    token.value = null;
+    user.value = null;
+    persist();
+  };
+
+  const loadFromStorage = () => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        token.value = parsed.token;
+        user.value = parsed.user;
+        if (parsed?.user?.role) {
+          try {
+            localStorage.setItem(ROLE_KEY, parsed.user.role);
+          } catch {}
+        }
+      }
+    } catch (error) {
+      console.warn("[auth] Failed to read stored session", error);
     }
+    if (token.value && !isTokenValid(token.value)) {
+      console.warn("[auth] Stored token expired or invalid. Clearing session.");
+      clearSession();
+    }
+    isReady.value = true;
+  };
+
+  const ensureValidSession = () => {
+    if (!token.value) {
+      return false;
+    }
+    if (isTokenValid(token.value)) {
+      return true;
+    }
+    console.warn("[auth] Token expired or invalid. Signing out.");
+    clearSession();
+    return false;
+  };
+
+  const getAuthorizationHeader = () => {
+    if (!ensureValidSession()) {
+      return null;
+    }
+    return token.value ? `Bearer ${token.value}` : null;
   };
 
   const setSession = (payload: { token: string; user: AuthUser }) => {
@@ -88,6 +178,7 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
+    const authHeader = getAuthorizationHeader();
     const response = await withLoader(() =>
       axios.post(
         `${API_BASE_URL}/admin/profile/change-password`,
@@ -95,7 +186,7 @@ export const useAuthStore = defineStore("auth", () => {
           currentPassword,
           newPassword
         },
-        { headers: { Authorization: token.value ? `Bearer ${token.value}` : undefined } }
+        { headers: { Authorization: authHeader ?? undefined } }
       )
     );
     setSession(response.data);
@@ -106,9 +197,7 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   const signOut = () => {
-    token.value = null;
-    user.value = null;
-    persist();
+    clearSession();
   };
 
   loadFromStorage();
@@ -168,7 +257,11 @@ export const useAuthStore = defineStore("auth", () => {
   return {
     token,
     user,
+    isReady,
     isAuthenticated,
+    hasValidSession,
+    ensureValidSession,
+    getAuthorizationHeader,
     role,
     isAdminGeral,
     isAdminDistrital,
@@ -181,7 +274,3 @@ export const useAuthStore = defineStore("auth", () => {
     signOut
   };
 });
-
-
-
-

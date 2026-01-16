@@ -3,6 +3,7 @@ import { AppError, NotFoundError, UnauthorizedError } from "../../utils/errors";
 import { OrderStatus } from "../../config/statuses";
 import { OrderTransferStatus, TransferStatus } from "../../config/transfer-status";
 import { mercadoPagoService } from "../../services/mercado-pago-transfer.service";
+import { hasColumn } from "../../utils/schema-cache";
 
 const FEE_RATE = 0.0094;
 const applyFeeDiscount = (amount: number | null | undefined) =>
@@ -42,11 +43,7 @@ export class ResponsibleFinanceService {
     if (this.eventDistrictColumn !== undefined) {
       return this.eventDistrictColumn;
     }
-    const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_schema = DATABASE() AND table_name = 'Event'
-    `;
-    this.eventDistrictColumn = columns.some((col) => col.column_name === "districtId");
+    this.eventDistrictColumn = await hasColumn("Event", "districtId");
     return this.eventDistrictColumn;
   }
   private async ensureAccess(responsibleUserId: string, actor?: Express.User) {

@@ -34,6 +34,7 @@ export const createApp = () => {
           }
           return callback(null, false);
         };
+  const corsAllowedHeaders = ["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"];
   app.set("corsOrigins", env.corsOrigins);
   app.use(
     helmet({
@@ -49,6 +50,7 @@ export const createApp = () => {
     cors({
       origin: corsOrigins,
       credentials: true,
+      allowedHeaders: corsAllowedHeaders,
       exposedHeaders: ["Content-Disposition"]
     })
   );
@@ -72,7 +74,13 @@ export const createApp = () => {
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
   app.use(normalizeBody);
   app.use(compression());
-  app.use("/uploads", express.static(path.resolve(__dirname, "..", "tmp", "uploads")));
+  app.use(
+    "/uploads",
+    express.static(path.resolve(__dirname, "..", "tmp", "uploads"), {
+      maxAge: env.STATIC_CACHE_MAX_AGE_MS,
+      immutable: false
+    })
+  );
 
   app.use((request, _response, next) => {
     requestLogger.info({ method: request.method, path: request.path }, "HTTP request");

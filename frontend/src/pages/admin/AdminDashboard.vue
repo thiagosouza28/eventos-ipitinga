@@ -39,7 +39,7 @@
               <span class="text-xs uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[color:var(--text-muted)]">Inscrições carregadas</span>
               <UsersIcon class="h-10 w-10 text-[#4b61ff] dark:text-[#b8a2ff]" aria-hidden="true" />
             </div>
-            <p class="text-4xl font-semibold">{{ admin.registrations.length }}</p>
+            <p class="text-4xl font-semibold">{{ admin.registrationsTotal ?? admin.registrations.length }}</p>
           </div>
         </div>
       </div>
@@ -168,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { CalendarDaysIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/vue/24/outline";
 
@@ -181,6 +181,7 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 const admin = useAdminStore();
 const auth = useAuthStore();
 const loadingDashboard = ref(true);
+const hasRequested = ref(false);
 
 const canViewEvents = computed(() => auth.hasPermission("events", "view"));
 const canViewOrders = computed(() => auth.hasPermission("orders", "view"));
@@ -217,19 +218,41 @@ const visibleEvents = computed(() => {
   return admin.events;
 });
 
-onMounted(async () => {
+const loadDashboardData = async () => {
+  if (hasRequested.value) return;
+  if (!auth.ensureValidSession()) {
+    console.warn("[dashboard] Session invalid. Skipping dashboard load.");
+    loadingDashboard.value = false;
+    return;
+  }
   const tasks: Promise<unknown>[] = [];
   if (canViewEvents.value) tasks.push(admin.loadEvents());
   if (canViewOrders.value) tasks.push(admin.loadOrders(localDirectorFilters.value));
   if (canViewRegistrations.value) tasks.push(admin.loadRegistrations(localDirectorFilters.value));
+  hasRequested.value = true;
+  loadingDashboard.value = true;
   try {
+    console.info("[dashboard] Loading admin dashboard data");
     await Promise.all(tasks);
   } catch (error) {
     console.error("Falha ao carregar dados iniciais do dashboard", error);
   } finally {
     loadingDashboard.value = false;
   }
-});
+};
+
+watch(
+  () => auth.isReady && auth.isAuthenticated && auth.hasValidSession,
+  (ready) => {
+    if (!ready) {
+      hasRequested.value = false;
+      loadingDashboard.value = false;
+      return;
+    }
+    loadDashboardData();
+  },
+  { immediate: true }
+);
 
 const activeEvents = computed(() => visibleEvents.value.filter((event) => event.isActive).length);
 </script>

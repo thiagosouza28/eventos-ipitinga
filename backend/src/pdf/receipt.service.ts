@@ -34,6 +34,36 @@ type ReceiptPayload = {
 
 let browser: Browser | null = null;
 let templateCache: string | null = null;
+const receiptConcurrency = Math.max(1, env.RECEIPT_MAX_CONCURRENCY);
+
+const createLimiter = (maxConcurrent: number) => {
+  let active = 0;
+  const queue: Array<() => void> = [];
+
+  const runNext = () => {
+    if (active >= maxConcurrent) return;
+    const next = queue.shift();
+    if (next) next();
+  };
+
+  return async <T>(task: () => Promise<T>): Promise<T> =>
+    new Promise<T>((resolve, reject) => {
+      const run = () => {
+        active += 1;
+        task()
+          .then(resolve)
+          .catch(reject)
+          .finally(() => {
+            active = Math.max(0, active - 1);
+            runNext();
+          });
+      };
+      queue.push(run);
+      runNext();
+    });
+};
+
+const receiptLimiter = createLimiter(receiptConcurrency);
 
 const brDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -89,77 +119,79 @@ const loadReceiptTemplate = async () => {
 };
 
 export const generateReceiptPdf = async (payload: ReceiptPayload) => {
-  const htmlTemplate = await loadReceiptTemplate();
+  return receiptLimiter(async () => {
+    const htmlTemplate = await loadReceiptTemplate();
 
-  const signature = generateCheckinSignature(payload.registrationId, payload.createdAt);
-  const validationUrl = `${env.API_URL}/checkin/validate?rid=${payload.registrationId}&sig=${signature}`;
-  const qrDataUrl = await QRCode.toDataURL(validationUrl, { errorCorrectionLevel: "H" });
-  const photoUrl =
-    payload.photoUrl ||
-    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNkYmVhZmUiIG9mZnNldD0iMCUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNlZWYyZmYiIG9mZnNldD0iMTAwJSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJibCIgeD0iLTAlIiB5PSItMCUiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAuMSIgZmxvb2Qtb2Zmc2V0PSIwIi8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9InVybCgjZykiIHN0cm9rZT0iI2Q3ZWFmZSIvPgogIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmNGY3ZmYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxjaXJjbGUgY3g9IjQ4IiBjeT0iMzYiIHI9IjE4IiBmaWxsPSIjZjBmMmZmIiBzdHJva2U9IiM5NGEzYjgiLz4KICA8cGF0aCBkPSJNNzMgODIuN2MwLTMuNy0zLjgtNy4zLTEwLjUtOS41LTYuOS0yLjMtMTYuOS0yLjMtMjMuOCAwQzMyIDc1LjQgMjggNzkgMjggODIuN2MwIDMuNSAzLjQgNi4zIDkuNCA3LjlsLjguMmMxMy4xIDMuNiAzNi4zIDMuNiA0OS41IDBsLjgtMmM2LTQuOCA5LjQtOC4yIDkuNC0xMi4xWiIgZmlsbD0iI2YwZjJmZiIgc3Ryb2tlPSIjOTRhM2I4Ii8+Cjwvc3ZnPg==";
+    const signature = generateCheckinSignature(payload.registrationId, payload.createdAt);
+    const validationUrl = `${env.API_URL}/checkin/validate?rid=${payload.registrationId}&sig=${signature}`;
+    const qrDataUrl = await QRCode.toDataURL(validationUrl, { errorCorrectionLevel: "H" });
+    const photoUrl =
+      payload.photoUrl ||
+      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNkYmVhZmUiIG9mZnNldD0iMCUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNlZWYyZmYiIG9mZnNldD0iMTAwJSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJibCIgeD0iLTAlIiB5PSItMCUiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAuMSIgZmxvb2Qtb2Zmc2V0PSIwIi8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9InVybCgjZykiIHN0cm9rZT0iI2Q3ZWFmZSIvPgogIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmNGY3ZmYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxjaXJjbGUgY3g9IjQ4IiBjeT0iMzYiIHI9IjE4IiBmaWxsPSIjZjBmMmZmIiBzdHJva2U9IiM5NGEzYjgiLz4KICA8cGF0aCBkPSJNNzMgODIuN2MwLTMuNy0zLjgtNy4zLTEwLjUtOS41LTYuOS0yLjMtMTYuOS0yLjMtMjMuOCAwQzMyIDc1LjQgMjggNzkgMjggODIuN2MwIDMuNSAzLjQgNi4zIDkuNCA3LjlsLjguMmMxMy4xIDMuNiAzNi4zIDMuNiA0OS41IDBsLjgtMmM2LTQuOCA5LjQtOC4yIDkuNC0xMi4xWiIgZmlsbD0iI2YwZjJmZiIgc3Ryb2tlPSIjOTRhM2I4Ii8+Cjwvc3ZnPg==";
 
-  const formatMoney = (value: number | undefined | null) => {
-    const normalized = typeof value === "number" && Number.isFinite(value) ? Math.max(0, value) : 0;
-    return `R$ ${(normalized / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
+    const formatMoney = (value: number | undefined | null) => {
+      const normalized = typeof value === "number" && Number.isFinite(value) ? Math.max(0, value) : 0;
+      return `R$ ${(normalized / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
 
-  const amountEvent = formatMoney(payload.priceCents);
-  const amountFees = formatMoney(payload.feeCents);
-  const totalCents =
-    typeof payload.totalCents === "number" && Number.isFinite(payload.totalCents)
-      ? payload.totalCents
-      : payload.priceCents + (payload.feeCents ?? 0);
-  const amountTotal = formatMoney(totalCents);
-  const lotName = payload.lotName && payload.lotName.trim() ? payload.lotName : "Lote vigente";
-  const participantType = payload.participantType && payload.participantType.trim()
-    ? payload.participantType
-    : "Inscrição individual";
+    const amountEvent = formatMoney(payload.priceCents);
+    const amountFees = formatMoney(payload.feeCents);
+    const totalCents =
+      typeof payload.totalCents === "number" && Number.isFinite(payload.totalCents)
+        ? payload.totalCents
+        : payload.priceCents + (payload.feeCents ?? 0);
+    const amountTotal = formatMoney(totalCents);
+    const lotName = payload.lotName && payload.lotName.trim() ? payload.lotName : "Lote vigente";
+    const participantType = payload.participantType && payload.participantType.trim()
+      ? payload.participantType
+      : "Inscrição individual";
 
-  const replacements: Record<string, string> = {
-    eventTitle: payload.eventTitle,
-    eventLocation: payload.eventLocation,
-    eventPeriod: payload.eventPeriod,
-    fullName: payload.fullName,
-    cpf: maskCpf(payload.cpf),
-    birthDate: payload.birthDate,
-    ageYears: String(payload.ageYears),
-    districtName: payload.districtName,
-    churchName: payload.churchName,
-    registrationId: payload.registrationId,
-    status: payload.status.toUpperCase(),
-    paymentMethod: payload.paymentMethod,
-    registrationDate: formatDate(payload.createdAt),
-    paymentDate: formatDate(payload.paymentDate),
-    photoUrl,
-    generatedAt: new Date().toLocaleString("pt-BR"),
-    validationUrl,
-    qrDataUrl,
-    lotName,
-    amountTotal,
-    amountEvent,
-    amountFees,
-    participantType
-  };
+    const replacements: Record<string, string> = {
+      eventTitle: payload.eventTitle,
+      eventLocation: payload.eventLocation,
+      eventPeriod: payload.eventPeriod,
+      fullName: payload.fullName,
+      cpf: maskCpf(payload.cpf),
+      birthDate: payload.birthDate,
+      ageYears: String(payload.ageYears),
+      districtName: payload.districtName,
+      churchName: payload.churchName,
+      registrationId: payload.registrationId,
+      status: payload.status.toUpperCase(),
+      paymentMethod: payload.paymentMethod,
+      registrationDate: formatDate(payload.createdAt),
+      paymentDate: formatDate(payload.paymentDate),
+      photoUrl,
+      generatedAt: new Date().toLocaleString("pt-BR"),
+      validationUrl,
+      qrDataUrl,
+      lotName,
+      amountTotal,
+      amountEvent,
+      amountFees,
+      participantType
+    };
 
-  const compiledHtml = Object.entries(replacements).reduce(
-    (acc, [key, value]) => acc.replaceAll(`{{${key}}}`, value),
-    htmlTemplate
-  );
+    const compiledHtml = Object.entries(replacements).reduce(
+      (acc, [key, value]) => acc.replaceAll(`{{${key}}}`, value),
+      htmlTemplate
+    );
 
-  const browserInstance = await ensureBrowser();
-  const page = await browserInstance.newPage();
-  try {
-    await page.setContent(compiledHtml, { waitUntil: "networkidle" });
-    const pdfBuffer = await page.pdf({
-      width: "210mm",
-      height: "297mm",
-      printBackground: true,
-      margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }
-    });
-    return { pdfBuffer, validationUrl };
-  } finally {
-    await page.close().catch(() => undefined);
-  }
+    const browserInstance = await ensureBrowser();
+    const page = await browserInstance.newPage();
+    try {
+      await page.setContent(compiledHtml, { waitUntil: "networkidle" });
+      const pdfBuffer = await page.pdf({
+        width: "210mm",
+        height: "297mm",
+        printBackground: true,
+        margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }
+      });
+      return { pdfBuffer, validationUrl };
+    } finally {
+      await page.close().catch(() => undefined);
+    }
+  });
 };
 
 export const closeReceiptBrowser = async () => {
@@ -168,3 +200,5 @@ export const closeReceiptBrowser = async () => {
     browser = null;
   }
 };
+
+

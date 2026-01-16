@@ -17,10 +17,18 @@ import type {
 
 export const useAdminStore = defineStore("admin", () => {
   const { api } = useApi();
+  const registrationsTimeoutMs = (() => {
+    const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_TIMEOUT_MS);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
+  })();
   const events = ref<Event[]>([]);
   const eventLots = ref<Record<string, EventLot[]>>({});
   const registrations = ref<Registration[]>([]);
   const registrationFilters = ref<Record<string, unknown>>({});
+  const registrationsTotal = ref<number | null>(null);
+  const registrationsHasMore = ref(false);
+  const registrationsPage = ref(1);
+  const registrationsPageSize = ref<number | null>(null);
   const orders = ref<Order[]>([]);
   const dashboard = ref<Record<string, unknown> | null>(null);
   const users = ref<AdminUser[]>([]);
@@ -117,11 +125,64 @@ export const useAdminStore = defineStore("admin", () => {
       Object.entries(input ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "")
     );
 
-  const loadRegistrations = async (filters: Record<string, unknown> = {}) => {
+  type RegistrationsLoadOptions = {
+    page?: number;
+    pageSize?: number;
+    append?: boolean;
+  };
+
+  const loadRegistrations = async (
+    filters: Record<string, unknown> = {},
+    options: RegistrationsLoadOptions = {}
+  ) => {
     const params = normalizeFilters(filters);
     registrationFilters.value = params;
-    const response = await api.get("/admin/registrations", { params });
-    registrations.value = response.data;
+    if (options.page || options.pageSize) {
+      const page = Math.max(1, Math.floor(options.page ?? 1));
+      const pageSize = Math.max(1, Math.floor(options.pageSize ?? 200));
+      params.page = page;
+      params.pageSize = pageSize;
+    }
+    const response = await api.get("/admin/registrations", {
+      params,
+      timeout: registrationsTimeoutMs
+    });
+    const data = response.data;
+    if (Array.isArray(data)) {
+      registrations.value = data;
+      registrationsTotal.value = data.length;
+      registrationsHasMore.value = false;
+      registrationsPage.value = 1;
+      registrationsPageSize.value = null;
+      return;
+    }
+    const items = Array.isArray(data?.items) ? data.items : [];
+    registrations.value = options.append ? [...registrations.value, ...items] : items;
+    const total = typeof data?.total === "number" && Number.isFinite(data.total) ? data.total : null;
+    registrationsTotal.value = total;
+    registrationsHasMore.value =
+      typeof data?.hasMore === "boolean"
+        ? data.hasMore
+        : total !== null
+          ? registrations.value.length < total
+          : false;
+    registrationsPage.value =
+      typeof data?.page === "number" && Number.isFinite(data.page) ? data.page : (params.page as number) ?? 1;
+    registrationsPageSize.value =
+      typeof data?.pageSize === "number" && Number.isFinite(data.pageSize)
+        ? data.pageSize
+        : (params.pageSize as number) ?? null;
+  };
+
+  const reloadRegistrations = async () => {
+    if (registrationsPageSize.value) {
+      await loadRegistrations(registrationFilters.value, {
+        page: registrationsPage.value,
+        pageSize: registrationsPageSize.value
+      });
+      return;
+    }
+    await reloadRegistrations();
   };
 
   const downloadRegistrationReport = async (
@@ -180,23 +241,23 @@ export const useAdminStore = defineStore("admin", () => {
 
   const updateRegistration = async (id: string, payload: Record<string, unknown>) => {
     await api.patch(`/admin/registrations/${id}`, payload);
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
   };
 
   const cancelRegistration = async (id: string) => {
     await api.post(`/admin/registrations/${id}/cancel`);
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
   };
 
   const reactivateRegistration = async (id: string) => {
     const response = await api.post(`/admin/registrations/${id}/reactivate`);
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
     return response.data as { orderId?: string };
   };
 
   const refundRegistration = async (id: string, payload: { amountCents?: number; reason?: string }) => {
     await api.post(`/admin/registrations/${id}/refund`, payload);
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
   };
 
   const markRegistrationsPaid = async (
@@ -207,7 +268,7 @@ export const useAdminStore = defineStore("admin", () => {
       registrationIds,
       ...(payload ?? {})
     });
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
   };
 
   const createPaymentOrderForRegistrations = async (payload: {
@@ -215,7 +276,7 @@ export const useAdminStore = defineStore("admin", () => {
     paymentMethod?: string;
   }) => {
     const response = await api.post(`/admin/registrations/payment-order`, payload);
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
     return response.data as {
       orderId: string;
       status: string;
@@ -227,7 +288,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   const deleteRegistration = async (id: string) => {
     await api.delete(`/admin/registrations/${id}`);
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
   };
 
   const createAdminRegistration = async (payload: {
@@ -270,7 +331,7 @@ export const useAdminStore = defineStore("admin", () => {
         });
       }
     }
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
     return resp.data;
   };
 
@@ -314,7 +375,7 @@ export const useAdminStore = defineStore("admin", () => {
     } else {
       await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
     }
-    await loadRegistrations(registrationFilters.value);
+    await reloadRegistrations();
   };
 
   // Consulta status do pagamento de um pedido (PIX/Manual)
@@ -495,6 +556,10 @@ export const useAdminStore = defineStore("admin", () => {
     events,
     eventLots,
     registrations,
+    registrationsTotal,
+    registrationsHasMore,
+    registrationsPage,
+    registrationsPageSize,
     orders,
     dashboard,
     users,

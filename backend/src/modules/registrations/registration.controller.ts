@@ -42,6 +42,10 @@ const listSchema = z.object({
   )
 });
 
+const listWithPaginationSchema = listSchema.extend({
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(500).optional()
+});
 const reportSchema = listSchema.extend({
   groupBy: z.enum(["event", "church"])
 });
@@ -107,15 +111,26 @@ const applyScopedLocationFilters = <T extends { churchId?: string; districtId?: 
 
 export const listRegistrationsHandler = async (request: Request, response: Response) => {
   try {
-    const filters = listSchema.parse(request.query);
+    const { page, pageSize, ...filters } = listWithPaginationSchema.parse(request.query);
     const scopedFilters = applyScopedLocationFilters(filters, request.user);
     const ministryIds = getScopedMinistryIds(request.user);
+
+    if (page || pageSize) {
+      const resolvedPage = page ?? 1;
+      const resolvedPageSize = Math.min(pageSize ?? 200, 500);
+      const { items, hasMore } = await registrationService.listPaged(scopedFilters, ministryIds, {
+        page: resolvedPage,
+        pageSize: resolvedPageSize
+      });
+      return response.json({ items, hasMore, page: resolvedPage, pageSize: resolvedPageSize });
+    }
+
     const registrations = await registrationService.list(scopedFilters, ministryIds);
     return response.json(registrations);
   } catch (error: any) {
-    console.error("Erro ao listar inscrições:", error);
+    console.error("Erro ao listar inscricoes:", error);
     return response.status(500).json({
-      message: "Erro ao listar inscrições",
+      message: "Erro ao listar inscricoes",
       error: error.message
     });
   }

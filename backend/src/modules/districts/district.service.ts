@@ -1,6 +1,11 @@
 import { prisma } from "../../lib/prisma";
 import { NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
+import { env } from "../../config/env";
+import { cacheDelete, cacheDeletePrefix, cacheGetOrSet } from "../../utils/cache";
+
+const DISTRICTS_CACHE_KEY = "catalog:districts";
+const CHURCHES_CACHE_PREFIX = "catalog:churches:";
 
 const normalizeString = (value: unknown): string | undefined => {
   if (value === undefined || value === null) {
@@ -29,17 +34,24 @@ const normalizeString = (value: unknown): string | undefined => {
 
 export class DistrictService {
   async list() {
-    const districts = await prisma.district.findMany({
-      orderBy: {
-        name: "asc"
-      }
-    });
-    return districts.map((district) => ({
-      id: district.id,
-      name: district.name,
-      pastorName: district.pastorName ?? null,
-      createdAt: district.createdAt
-    }));
+    return cacheGetOrSet(
+      DISTRICTS_CACHE_KEY,
+      env.CACHE_TTL_MS,
+      async () => {
+        const districts = await prisma.district.findMany({
+          orderBy: {
+            name: "asc"
+          }
+        });
+        return districts.map((district) => ({
+          id: district.id,
+          name: district.name,
+          pastorName: district.pastorName ?? null,
+          createdAt: district.createdAt
+        }));
+      },
+      { maxEntries: env.CACHE_MAX_ENTRIES }
+    );
   }
 
   async create(data: { name: unknown; pastorName?: unknown }, actorId?: string) {
@@ -64,6 +76,8 @@ export class DistrictService {
         pastorName: pastorName ?? null
       }
     });
+    cacheDelete(DISTRICTS_CACHE_KEY);
+    cacheDeletePrefix(CHURCHES_CACHE_PREFIX);
     return {
       id: district.id,
       name: district.name,
@@ -108,6 +122,8 @@ export class DistrictService {
       entityId: district.id,
       metadata: payload
     });
+    cacheDelete(DISTRICTS_CACHE_KEY);
+    cacheDeletePrefix(CHURCHES_CACHE_PREFIX);
     return {
       id: district.id,
       name: district.name,
@@ -145,6 +161,8 @@ export class DistrictService {
         name: district.name
       }
     });
+    cacheDelete(DISTRICTS_CACHE_KEY);
+    cacheDeletePrefix(CHURCHES_CACHE_PREFIX);
     return { success: true };
   }
 }

@@ -5,7 +5,13 @@ import { env } from "../../config/env";
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
+import { cacheGetOrSet } from "../../utils/cache";
 import { eventLotService } from "./event-lot.service";
+import {
+  invalidatePublicEventCache,
+  publicEventListCacheKey,
+  publicEventSlugCacheKey
+} from "./event-cache";
 import {
   DEFAULT_PAYMENT_METHODS,
   PaymentMethod,
@@ -23,6 +29,10 @@ type ActorUser = {
   role?: string | null;
   districtScopeId?: string | null;
   churchId?: string | null;
+};
+
+const cacheOptions = {
+  maxEntries: env.CACHE_MAX_ENTRIES
 };
 
 const buildSlug = (title: string) =>
@@ -88,31 +98,38 @@ export class EventService {
   }
 
   async getPublicBySlug(slug: string) {
-    const event = await prisma.event.findUnique({
-      where: { slug }
-    });
+    return cacheGetOrSet(
+      publicEventSlugCacheKey(slug),
+      env.CACHE_TTL_MS,
+      async () => {
+        const event = await prisma.event.findUnique({
+          where: { slug }
+        });
 
-    if (!event || !event.isActive) {
-      throw new NotFoundError("Evento nao encontrado");
-    }
+        if (!event || !event.isActive) {
+          throw new NotFoundError("Evento nao encontrado");
+        }
 
-    const paymentMethods = parsePaymentMethods(event.paymentMethods);
+        const paymentMethods = parsePaymentMethods(event.paymentMethods);
 
-    const isFree = Boolean((event as any).isFree);
-    const lots = isFree ? [] : await eventLotService.list(event.id);
-    const activeLot = isFree
-      ? null
-      : eventLotService.resolveActiveFromList(lots, new Date());
+        const isFree = Boolean((event as any).isFree);
+        const lots = isFree ? [] : await eventLotService.list(event.id);
+        const activeLot = isFree
+          ? null
+          : eventLotService.resolveActiveFromList(lots, new Date());
 
-    return {
-      ...event,
-      isFree,
-      lots,
-      paymentMethods,
-      publicLink: `${env.APP_URL}/evento/${event.slug}`,
-      currentLot: serializeLot(activeLot),
-      currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
-    };
+        return {
+          ...event,
+          isFree,
+          lots,
+          paymentMethods,
+          publicLink: `${env.APP_URL}/evento/${event.slug}`,
+          currentLot: serializeLot(activeLot),
+          currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
+        };
+      },
+      cacheOptions
+    );
   }
 
   private async getLotsMap(eventIds: string[]): Promise<Map<string, EventLotEntity[]>> {
@@ -138,34 +155,41 @@ export class EventService {
   }
 
   async listPublic() {
-    const events = await prisma.event.findMany({
-      where: { isActive: true },
-      orderBy: { startDate: "asc" }
-    });
+    return cacheGetOrSet(
+      publicEventListCacheKey(),
+      env.CACHE_TTL_MS,
+      async () => {
+        const events = await prisma.event.findMany({
+          where: { isActive: true },
+          orderBy: { startDate: "asc" }
+        });
 
-    if (events.length === 0) {
-      return [];
-    }
+        if (events.length === 0) {
+          return [];
+        }
 
-    const lotsMap = await this.getLotsMap(events.map((event) => event.id));
+        const lotsMap = await this.getLotsMap(events.map((event) => event.id));
 
-    return events.map((event) => {
-      const isFree = Boolean((event as any).isFree);
-      const lots = isFree
-        ? ([] as EventLotEntity[])
-        : lotsMap.get(event.id) ?? ([] as EventLotEntity[]);
-      const activeLot = isFree
-        ? null
-        : eventLotService.resolveActiveFromList(lots, new Date());
-      return {
-        ...event,
-        isFree,
-        lots,
-        paymentMethods: parsePaymentMethods(event.paymentMethods),
-        currentLot: serializeLot(activeLot),
-        currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
-      };
-    });
+        return events.map((event) => {
+          const isFree = Boolean((event as any).isFree);
+          const lots = isFree
+            ? ([] as EventLotEntity[])
+            : lotsMap.get(event.id) ?? ([] as EventLotEntity[]);
+          const activeLot = isFree
+            ? null
+            : eventLotService.resolveActiveFromList(lots, new Date());
+          return {
+            ...event,
+            isFree,
+            lots,
+            paymentMethods: parsePaymentMethods(event.paymentMethods),
+            currentLot: serializeLot(activeLot),
+            currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
+          };
+        });
+      },
+      cacheOptions
+    );
   }
 
   async listAdmin(ministryIds?: string[]) {
@@ -338,6 +362,7 @@ export class EventService {
       entityId: event.id,
       metadata: { slug }
     });
+    invalidatePublicEventCache({ clearAll: true });
     return serialized;
   }
 
@@ -485,6 +510,7 @@ export class EventService {
       entityId: id,
       metadata: payload
     });
+    invalidatePublicEventCache({ clearAll: true });
     return serialized;
   }
 
@@ -515,6 +541,7 @@ export class EventService {
       entityId: id,
       metadata: { slug: event.slug }
     });
+    invalidatePublicEventCache({ clearAll: true });
   }
 }
 

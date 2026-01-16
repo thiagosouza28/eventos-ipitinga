@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
+import { getTableColumns, hasTable } from "../../utils/schema-cache";
 
 export class FinancialService {
   private computeFeeAndNet(
@@ -37,14 +38,7 @@ export class FinancialService {
       : null;
 
     // Verificar se as colunas existem antes de usar
-    const columns = await prisma.$queryRaw<Array<{ column_name?: string; COLUMN_NAME?: string }>>`
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema = DATABASE() AND table_name = 'Order'
-    `;
-    const columnNames = columns.map(
-      (col) => col.column_name ?? col.COLUMN_NAME ?? (col as any).name ?? ""
-    );
+    const columnNames = await getTableColumns("Order");
     const hasFeeCents = columnNames.includes("feeCents");
     const hasNetAmountCents = columnNames.includes("netAmountCents");
 
@@ -424,19 +418,9 @@ export class FinancialService {
   async getGeneralSummary() {
     try {
       // Verificar se as colunas existem antes de usar
-    const columns = await prisma.$queryRaw<Array<{ column_name?: string; COLUMN_NAME?: string }>>`
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema = DATABASE() AND table_name = 'Order'
-    `;
-    const columnNames = columns.map(
-      (col) => col.column_name ?? col.COLUMN_NAME ?? (col as any).name ?? ""
-    );
+      const columnNames = await getTableColumns("Order");
       const hasFeeCents = columnNames.includes("feeCents");
       const hasNetAmountCents = columnNames.includes("netAmountCents");
-
-      console.log("Colunas encontradas:", columnNames);
-      console.log("hasFeeCents:", hasFeeCents, "hasNetAmountCents:", hasNetAmountCents);
 
       // Construir query dinamicamente baseado nas colunas disponíveis
       // Usar COALESCE para lidar com valores NULL
@@ -461,8 +445,6 @@ export class FinancialService {
         LEFT JOIN \`District\` d ON e.districtId = d.id
         WHERE o.status = 'PAID'
       `;
-
-      console.log("Query SQL:", query);
 
       const paidOrdersRaw = await prisma.$queryRawUnsafe<Array<{
         id: string;
@@ -519,12 +501,17 @@ export class FinancialService {
     // Verificar se a tabela Expense existe antes de tentar consultar
     let expensesCents = 0;
     try {
-      const expensesTotal = await prisma.expense.aggregate({
-        _sum: {
-          amountCents: true
-        }
-      });
-      expensesCents = expensesTotal._sum.amountCents || 0;
+      const hasExpenseTable = await hasTable("Expense");
+      if (hasExpenseTable) {
+        const expensesTotal = await prisma.expense.aggregate({
+          _sum: {
+            amountCents: true
+          }
+        });
+        expensesCents = expensesTotal._sum.amountCents || 0;
+      } else {
+        expensesCents = 0;
+      }
     } catch (error: any) {
       // Se a tabela não existir, assumir 0 despesas
       if (error.code === "P2021" || error.code === "P2022" || error.message?.includes("does not exist")) {

@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
+import { invalidatePublicEventCache } from "./event-cache";
 
 type ActorUser = {
   id?: string | null;
@@ -108,6 +109,7 @@ class EventLotService {
         endsAt: range.end
       }
     });
+    invalidatePublicEventCache({ clearAll: true });
     return lot;
   }
 
@@ -157,6 +159,7 @@ class EventLotService {
         endsAt
       }
     });
+    invalidatePublicEventCache({ clearAll: true });
     return updated;
   }
 
@@ -179,6 +182,7 @@ class EventLotService {
       }
       throw error;
     }
+    invalidatePublicEventCache({ clearAll: true });
   }
 
   findActive(eventId: string, referenceDate = new Date()) {

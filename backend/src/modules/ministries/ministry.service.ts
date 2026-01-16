@@ -1,6 +1,8 @@
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
+import { env } from "../../config/env";
+import { cacheDelete, cacheGetOrSet } from "../../utils/cache";
 
 type MinistryPayload = {
   name: string;
@@ -8,12 +10,21 @@ type MinistryPayload = {
   isActive?: boolean;
 };
 
+const ministriesCacheKey = (includeInactive: boolean) =>
+  `catalog:ministries:${includeInactive ? "all" : "active"}`;
+
 export class MinistryService {
   list(includeInactive = true) {
-    return prisma.ministry.findMany({
-      where: includeInactive ? {} : { isActive: true },
-      orderBy: { name: "asc" }
-    });
+    return cacheGetOrSet(
+      ministriesCacheKey(includeInactive),
+      env.CACHE_TTL_MS,
+      () =>
+        prisma.ministry.findMany({
+          where: includeInactive ? {} : { isActive: true },
+          orderBy: { name: "asc" }
+        }),
+      { maxEntries: env.CACHE_MAX_ENTRIES }
+    );
   }
 
   async create(data: MinistryPayload, actorUserId?: string) {
@@ -37,6 +48,8 @@ export class MinistryService {
       entityId: ministry.id,
       metadata: { name: ministry.name }
     });
+    cacheDelete(ministriesCacheKey(true));
+    cacheDelete(ministriesCacheKey(false));
 
     return ministry;
   }
@@ -70,6 +83,8 @@ export class MinistryService {
       entityId: id,
       metadata: data
     });
+    cacheDelete(ministriesCacheKey(true));
+    cacheDelete(ministriesCacheKey(false));
 
     return updated;
   }
@@ -96,6 +111,8 @@ export class MinistryService {
       entity: "ministry",
       entityId: id
     });
+    cacheDelete(ministriesCacheKey(true));
+    cacheDelete(ministriesCacheKey(false));
   }
 }
 

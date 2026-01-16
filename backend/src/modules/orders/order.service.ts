@@ -31,6 +31,7 @@ import { calculateMercadoPagoFees } from "../../utils/mercado-pago-fees";
 import { resolveEffectiveExpirationDate, resolveOrderExpirationDate } from "../../utils/order-expiration";
 import { getActivePixProvider } from "../payments/pix-gateway";
 import { pixPaymentService } from "../payments/pix.service";
+import { getTableColumns } from "../../utils/schema-cache";
 
 type GenderInput = Gender | "MASCULINO" | "FEMININO" | "OUTRO";
 
@@ -73,6 +74,21 @@ const resolveOrderDistrictId = (
 
 const isPendingTransferStatus = (status?: string | null) =>
   !status || status === OrderTransferStatus.PENDING || status === OrderTransferStatus.FAILED;
+
+const resolveOrderColumns = async () => {
+  const columns = await getTableColumns("Order");
+  const columnSet = new Set(columns);
+  return {
+    hasFeeCents: columnSet.has("feeCents"),
+    hasNetAmountCents: columnSet.has("netAmountCents"),
+    hasAmountToTransfer: columnSet.has("amountToTransfer"),
+    hasDistrictId: columnSet.has("districtId"),
+    hasDistrictAdminId: columnSet.has("districtAdminId"),
+    hasTransferStatus: columnSet.has("transferStatus"),
+    hasTransferBatchId: columnSet.has("transferBatchId"),
+    hasResponsibleUserId: columnSet.has("responsibleUserId")
+  };
+};
 
 export class OrderService {
   async findAllPendingOrders(cpf: string) {
@@ -317,38 +333,50 @@ export class OrderService {
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
     const registrations = await prisma.$transaction(async (tx) => {
-      // Limpar inscri��es e pedidos anteriores (pendentes/cancelados/expirados) para os CPFs informados
-      for (const person of peoplePrepared) {
-        const existing = await tx.registration.findFirst({
-          where: {
-            eventId: payload.eventId,
-            cpf: person.cpf
-          },
-          include: {
-            order: {
-              include: { registrations: true }
+      // Limpar inscricoes e pedidos anteriores (pendentes/cancelados/expirados) para os CPFs informados
+      const existingRegistrations = peoplePrepared.length
+        ? await tx.registration.findMany({
+            where: {
+              eventId: payload.eventId,
+              cpf: { in: peoplePrepared.map((person) => person.cpf) }
+            },
+            include: {
+              order: {
+                include: { registrations: true }
+              }
             }
+          })
+        : [];
+
+      if (existingRegistrations.length) {
+        for (const existing of existingRegistrations) {
+          const order = existing.order;
+          if (order && (order.status as OrderStatus) === OrderStatus.PAID) {
+            throw new ConflictError(
+              `CPF ${maskCpf(existing.cpf)} ja possui inscricao paga para este evento.`
+            );
           }
-        });
-
-        if (!existing) continue;
-
-        const order = existing.order;
-        if (order && (order.status as OrderStatus) === OrderStatus.PAID) {
-          throw new ConflictError(`CPF ${maskCpf(existing.cpf)} ja possui inscricao paga para este evento.`);
         }
 
-        // Apagar inscri��o anterior
-        await tx.registration.delete({ where: { id: existing.id } });
+        const existingIds = new Set(existingRegistrations.map((reg) => reg.id));
+        await tx.registration.deleteMany({
+          where: { id: { in: Array.from(existingIds) } }
+        });
 
-        // Se o pedido antigo estava pendente/cancelado/expirado, ajustar ou remover
         const cancelableStatuses: OrderStatus[] = [
           OrderStatus.PENDING,
           OrderStatus.CANCELED,
           OrderStatus.EXPIRED
         ];
-        if (order && cancelableStatuses.includes(order.status as OrderStatus)) {
-          const remaining = order.registrations.filter((r) => r.id !== existing.id);
+        const ordersToAdjust = new Map<string, (typeof existingRegistrations)[number]["order"]>();
+        for (const reg of existingRegistrations) {
+          if (!reg.order) continue;
+          if (!cancelableStatuses.includes(reg.order.status as OrderStatus)) continue;
+          ordersToAdjust.set(reg.order.id, reg.order);
+        }
+
+        for (const order of ordersToAdjust.values()) {
+          const remaining = order.registrations.filter((r) => !existingIds.has(r.id));
           if (remaining.length === 0) {
             await tx.order.delete({ where: { id: order.id } });
           } else {
@@ -765,14 +793,7 @@ export class OrderService {
   }
 
   async list(filters: { eventId?: string; status?: OrderStatusValue; churchId?: string; districtId?: string; ministryIds?: string[] }) {
-    const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_schema = DATABASE() AND table_name = 'Order'
-    `;
-    const columnNames = columns.map((col) => col.column_name);
-    const hasFeeCents = columnNames.includes("feeCents");
-    const hasNetAmountCents = columnNames.includes("netAmountCents");
+    const { hasFeeCents, hasNetAmountCents } = await resolveOrderColumns();
 
     // Usar select para evitar problemas com colunas que podem n�o existir
     const registrationFilter: Record<string, string> = {};
@@ -994,12 +1015,15 @@ export class OrderService {
     paymentMethod?: PaymentMethod,
     actor?: ActorUser
   ) {
-    if (!registrationIds.length) {
+    const uniqueRegistrationIds = Array.from(
+      new Set(registrationIds.map((id) => id.trim()).filter(Boolean))
+    );
+    if (!uniqueRegistrationIds.length) {
       throw new AppError("Informe ao menos uma inscricao para gerar pagamento", 400);
     }
 
     const registrations = await prisma.registration.findMany({
-      where: { id: { in: registrationIds } },
+      where: { id: { in: uniqueRegistrationIds } },
       include: {
         order: {
           include: {
@@ -1010,7 +1034,7 @@ export class OrderService {
       }
     });
 
-    if (!registrations.length || registrations.length !== registrationIds.length) {
+    if (!registrations.length || registrations.length !== uniqueRegistrationIds.length) {
       throw new NotFoundError("Algumas inscricoes nao foram encontradas");
     }
 
@@ -1115,32 +1139,62 @@ export class OrderService {
         }
       });
 
-      for (const reg of registrations) {
-        await tx.registration.update({
-          where: { id: reg.id },
-          data: {
-            orderId: createdOrder.id,
-            paymentMethod: resolvedMethod,
-            status:
-              orderStatus === OrderStatus.PAID
-                ? RegistrationStatus.PAID
-                : RegistrationStatus.PENDING_PAYMENT,
-            paidAt: paidAtValue,
-            responsibleUserId: event.createdById ?? reg.responsibleUserId ?? null
-          }
-        });
+      const registrationUpdateData: Prisma.RegistrationUncheckedUpdateManyInput = {
+        orderId: createdOrder.id,
+        paymentMethod: resolvedMethod,
+        status:
+          orderStatus === OrderStatus.PAID
+            ? RegistrationStatus.PAID
+            : RegistrationStatus.PENDING_PAYMENT,
+        paidAt: paidAtValue
+      };
+
+      if (event.createdById) {
+        registrationUpdateData.responsibleUserId = event.createdById;
       }
+
+      await tx.registration.updateMany({
+        where: { id: { in: registrations.map((reg) => reg.id) } },
+        data: registrationUpdateData
+      });
 
       const oldOrderIds = Array.from(previousOrderIds).filter(
         (id) => id && id !== createdOrder.id
       );
+      const remainingByOrder = oldOrderIds.length
+        ? await tx.registration.groupBy({
+            by: ["orderId"],
+            where: { orderId: { in: oldOrderIds } },
+            _sum: { priceCents: true },
+            _count: { _all: true }
+          })
+        : [];
+      const remainingByOrderMap = new Map(
+        remainingByOrder.map((summary) => [summary.orderId, summary])
+      );
+
       for (const oldOrderId of oldOrderIds) {
-        const remaining = await tx.registration.findMany({ where: { orderId: oldOrderId } });
-        if (!remaining.length) {
-          await tx.order.delete({ where: { id: oldOrderId } });
+        const summary = remainingByOrderMap.get(oldOrderId);
+        const remainingCount = summary?._count?._all ?? 0;
+
+        if (!remainingCount) {
+          await tx.order.update({
+            where: { id: oldOrderId },
+            data: {
+              totalCents: 0,
+              status: OrderStatus.CANCELED,
+              mpPreferenceId: null,
+              mpPaymentId: null,
+              manualPaymentReference: null,
+              manualPaymentProofUrl: null,
+              paidAt: null,
+              preferenceVersion: { increment: 1 }
+            }
+          });
           continue;
         }
-        const newTotal = remaining.reduce((acc, r) => acc + (r.priceCents ?? 0), 0);
+
+        const newTotal = summary?._sum?.priceCents ?? 0;
         await tx.order.update({
           where: { id: oldOrderId },
           data: {
@@ -1154,7 +1208,7 @@ export class OrderService {
       }
 
       return createdOrder;
-    });
+    }, { timeout: 15000 });
 
     let payment: any = null;
     if (
@@ -1205,6 +1259,8 @@ export class OrderService {
     });
     if (!order) throw new NotFoundError("Pedido nao encontrado");
 
+    const orderColumns = await resolveOrderColumns();
+
     const paidAt = options?.paidAt ?? new Date();
     const paymentMethod =
       options?.paymentMethod ?? (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
@@ -1215,18 +1271,14 @@ export class OrderService {
 
     if (order.status === OrderStatus.PAID) {
       const updatedOrder = await prisma.$transaction(async (tx) => {
-        const orderColumns = await tx.$queryRaw<Array<{ column_name: string }>>`
-          SELECT column_name
-          FROM information_schema.columns
-          WHERE table_schema = DATABASE() AND table_name = 'Order'
-        `;
-        const columnNames = orderColumns.map((col) => col.column_name);
-        const hasAmountToTransfer = columnNames.includes("amountToTransfer");
-        const hasTransferStatus = columnNames.includes("transferStatus");
-        const hasTransferBatchId = columnNames.includes("transferBatchId");
-        const hasDistrictId = columnNames.includes("districtId");
-        const hasDistrictAdminId = columnNames.includes("districtAdminId");
-        const hasResponsibleUserId = columnNames.includes("responsibleUserId");
+        const {
+          hasAmountToTransfer,
+          hasTransferStatus,
+          hasTransferBatchId,
+          hasDistrictId,
+          hasDistrictAdminId,
+          hasResponsibleUserId
+        } = orderColumns;
 
         const transferAmount = Math.max(
           order.amountToTransfer ?? order.netAmountCents ?? order.totalCents,
@@ -1345,20 +1397,16 @@ export class OrderService {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
-      const orderColumns = await tx.$queryRaw<Array<{ column_name: string }>>`
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_schema = DATABASE() AND table_name = 'Order'
-      `;
-      const columnNames = orderColumns.map((col) => col.column_name);
-      const hasFeeCents = columnNames.includes("feeCents");
-      const hasNetAmountCents = columnNames.includes("netAmountCents");
-      const hasAmountToTransfer = columnNames.includes("amountToTransfer");
-      const hasDistrictId = columnNames.includes("districtId");
-      const hasDistrictAdminId = columnNames.includes("districtAdminId");
-      const hasTransferStatus = columnNames.includes("transferStatus");
-      const hasTransferBatchId = columnNames.includes("transferBatchId");
-      const hasResponsibleUserId = columnNames.includes("responsibleUserId");
+      const {
+        hasFeeCents,
+        hasNetAmountCents,
+        hasAmountToTransfer,
+        hasDistrictId,
+        hasDistrictAdminId,
+        hasTransferStatus,
+        hasTransferBatchId,
+        hasResponsibleUserId
+      } = orderColumns;
 
       const updateData: any = {
         status: OrderStatus.PAID,
@@ -1595,3 +1643,4 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
+

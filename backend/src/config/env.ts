@@ -29,6 +29,7 @@ const envSchema = z.object({
   API_URL: z.string().url(),
   DATABASE_URL: z.string().min(1),
   DATABASE_POOL_LIMIT: z.coerce.number().int().positive().default(20),
+  DATABASE_POOL_TIMEOUT: z.coerce.number().int().positive().default(10),
   JWT_SECRET: z.string().min(32, "JWT_SECRET deve possuir ao menos 32 caracteres"),
   JWT_EXPIRES_IN: z.string().default("30d"),
   PASSWORD_SALT_ROUNDS: z.coerce.number().default(10),
@@ -56,6 +57,19 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   ORDER_EXPIRATION_MINUTES: z.coerce.number().default(45),
   CRON_CANCEL_EXPIRED: z.string().default("*/5 * * * *"),
+  CACHE_TTL_MS: z.coerce.number().int().min(0).default(30000),
+  CACHE_MAX_ENTRIES: z.coerce.number().int().positive().default(500),
+  SCHEMA_CACHE_TTL_MS: z.coerce.number().int().min(0).default(300000),
+  PERMISSIONS_CACHE_TTL_MS: z.coerce.number().int().min(0).default(60000),
+  RECEIPT_MAX_CONCURRENCY: z.coerce.number().int().positive().default(2),
+  SERVER_KEEP_ALIVE_TIMEOUT_MS: z.coerce.number().int().positive().default(65000),
+  SERVER_HEADERS_TIMEOUT_MS: z.coerce.number().int().positive().default(66000),
+  SERVER_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(120000),
+  STATIC_CACHE_MAX_AGE_MS: z.coerce.number().int().min(0).default(3600000),
+  MP_TRANSFER_TIMEOUT_MS: z.coerce.number().int().positive().default(10000),
+  MP_TRANSFER_MAX_RETRIES: z.coerce.number().int().min(0).default(1),
+  MP_READ_MAX_RETRIES: z.coerce.number().int().min(0).default(1),
+  MP_READ_RETRY_DELAY_MS: z.coerce.number().int().min(0).default(300),
   ADMIN_EMAIL: z.string().email(),
   ADMIN_PASSWORD: z.string().min(8),
   CHECKIN_CONFIRM_PASSWORD: z.string().min(4).optional(),
@@ -95,8 +109,8 @@ const resolveSqliteUrl = (url: string) => {
   return `file:${absolutePath}${queryPart ? `?${queryPart}` : ""}`;
 };
 
-const applyDatabasePoolLimit = (url: string, limit: number) => {
-  if (limit <= 0) return url;
+const applyDatabasePoolOptions = (url: string, limit: number, poolTimeout: number) => {
+  if (limit <= 0 && poolTimeout <= 0) return url;
   if (url.startsWith("file:")) return url;
   try {
     const dbUrl = new URL(url);
@@ -104,17 +118,24 @@ const applyDatabasePoolLimit = (url: string, limit: number) => {
     if (!["mysql", "postgres", "postgresql"].includes(protocol)) {
       return url;
     }
-    if (!dbUrl.searchParams.has("connection_limit")) {
+    if (limit > 0 && !dbUrl.searchParams.has("connection_limit")) {
       dbUrl.searchParams.set("connection_limit", String(limit));
-      return dbUrl.toString();
     }
+    if (poolTimeout > 0 && !dbUrl.searchParams.has("pool_timeout")) {
+      dbUrl.searchParams.set("pool_timeout", String(poolTimeout));
+    }
+    return dbUrl.toString();
   } catch {
     return url;
   }
   return url;
 };
 
-const databaseUrl = applyDatabasePoolLimit(resolveSqliteUrl(rawEnv.DATABASE_URL), rawEnv.DATABASE_POOL_LIMIT);
+const databaseUrl = applyDatabasePoolOptions(
+  resolveSqliteUrl(rawEnv.DATABASE_URL),
+  rawEnv.DATABASE_POOL_LIMIT,
+  rawEnv.DATABASE_POOL_TIMEOUT
+);
 process.env.DATABASE_URL = databaseUrl;
 
 export const env = {

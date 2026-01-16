@@ -1,6 +1,8 @@
 import type { Prisma } from "@/prisma/generated/client";
 
 import { prisma } from "../../lib/prisma";
+import { env } from "../../config/env";
+import { cacheDelete, cacheGetOrSet } from "../../utils/cache";
 import {
   DEFAULT_SYSTEM_CONFIG,
   mergeSystemConfig,
@@ -24,6 +26,9 @@ const includeAuthor = {
 } satisfies Prisma.SystemConfigDefaultArgs;
 
 type SystemConfigWithAuthor = Prisma.SystemConfigGetPayload<typeof includeAuthor>;
+
+const PUBLIC_CONFIG_CACHE_KEY = "system-config:public";
+const ADMIN_CONFIG_CACHE_KEY = "system-config:admin";
 
 class SystemConfigService {
   private async findOrCreateConfig() {
@@ -60,13 +65,27 @@ class SystemConfigService {
   }
 
   async getPublicConfig() {
-    const record = await this.findOrCreateConfig();
-    return this.toDto(record);
+    return cacheGetOrSet(
+      PUBLIC_CONFIG_CACHE_KEY,
+      env.CACHE_TTL_MS,
+      async () => {
+        const record = await this.findOrCreateConfig();
+        return this.toDto(record);
+      },
+      { maxEntries: env.CACHE_MAX_ENTRIES }
+    );
   }
 
   async getAdminConfig() {
-    const record = await this.findOrCreateConfig();
-    return this.toDto(record);
+    return cacheGetOrSet(
+      ADMIN_CONFIG_CACHE_KEY,
+      env.CACHE_TTL_MS,
+      async () => {
+        const record = await this.findOrCreateConfig();
+        return this.toDto(record);
+      },
+      { maxEntries: env.CACHE_MAX_ENTRIES }
+    );
   }
 
   async updateSettings(partial: PartialSystemConfigSettings, actorUserId?: string) {
@@ -80,6 +99,8 @@ class SystemConfigService {
       },
       ...includeAuthor
     });
+    cacheDelete(PUBLIC_CONFIG_CACHE_KEY);
+    cacheDelete(ADMIN_CONFIG_CACHE_KEY);
     return this.toDto(updated);
   }
 }

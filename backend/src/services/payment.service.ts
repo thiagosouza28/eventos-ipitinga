@@ -162,6 +162,15 @@ export const extractPreferenceVersion = (metadata: any): number | null => {
   return null;
 };
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryableError = (error: any) => {
+  const status = Number(error?.status ?? error?.response?.status);
+  if (!Number.isNaN(status) && status >= 500) return true;
+  const message = String(error?.message ?? "").toLowerCase();
+  return message.includes("timeout") || message.includes("network");
+};
+
 class PaymentService {
   private client = new MercadoPagoConfig({
     accessToken: env.MP_ACCESS_TOKEN,
@@ -173,9 +182,26 @@ class PaymentService {
   private refund = new PaymentRefund(this.client);
   private merchantOrder = new MerchantOrder(this.client);
 
+  private async withRetry<T>(operation: () => Promise<T>) {
+    const retries = Math.max(0, env.MP_READ_MAX_RETRIES);
+    const baseDelay = Math.max(0, env.MP_READ_RETRY_DELAY_MS);
+    let attempt = 0;
+    while (true) {
+      try {
+        return await operation();
+      } catch (error) {
+        attempt += 1;
+        if (attempt > retries || !isRetryableError(error)) {
+          throw error;
+        }
+        await delay(baseDelay * Math.max(1, attempt));
+      }
+    }
+  }
+
   async getPreference(preferenceId: string) {
     try {
-      const preference = await this.preference.get({ preferenceId });
+      const preference = await this.withRetry(() => this.preference.get({ preferenceId }));
       const pointOfInteraction = (preference as any).point_of_interaction;
       return {
         preferenceId: preference.id,
@@ -575,12 +601,12 @@ class PaymentService {
   }
 
   async fetchPayment(paymentId: string) {
-    return this.payment.get({ id: paymentId });
+    return this.withRetry(() => this.payment.get({ id: paymentId }));
   }
 
   async fetchMerchantOrder(merchantOrderId: string) {
     try {
-      return await this.merchantOrder.get({ merchantOrderId });
+      return await this.withRetry(() => this.merchantOrder.get({ merchantOrderId }));
     } catch (error: any) {
       logger.error({ merchantOrderId, error }, "Falha ao recuperar merchant order no Mercado Pago");
       const message =
@@ -593,14 +619,16 @@ class PaymentService {
 
   async findLatestPaymentByExternalReference(orderId: string) {
     try {
-      const searchResult = await this.payment.search({
-        options: {
-          external_reference: orderId,
-          sort: "date_created",
-          criteria: "desc",
-          limit: 1
-        }
-      });
+      const searchResult = await this.withRetry(() =>
+        this.payment.search({
+          options: {
+            external_reference: orderId,
+            sort: "date_created",
+            criteria: "desc",
+            limit: 1
+          }
+        })
+      );
 
       const payment = searchResult.results?.[0];
       if (!payment) return null;

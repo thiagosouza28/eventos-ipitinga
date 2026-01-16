@@ -96,7 +96,7 @@
           <button type="button" @click="doExportCsv" class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">Exportar CSV</button>
         </div>
       </form>
-      <p class="mt-3 text-xs text-neutral-500">Total de inscritos: {{ admin.registrations.length }} | Exibindo: {{ displayedRegistrations.length }}</p>
+      <p class="mt-3 text-xs text-neutral-500">Total de inscritos: {{ admin.registrationsTotal ?? admin.registrations.length }} | Exibindo: {{ displayedRegistrations.length }}</p>
     </BaseCard>
 
     <!-- Lista de inscrições do evento -->

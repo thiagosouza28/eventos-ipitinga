@@ -66,6 +66,20 @@
           </div>
         </div>
       </div>
+      <div v-if="canLoadMore" class="flex justify-center border-t border-white/40 px-4 py-4 dark:border-white/10">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full border border-neutral-200/70 px-6 py-2.5 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+          :disabled="isLoadingMore || isApplying"
+          @click="loadMoreRegistrations"
+        >
+          <span
+            v-if="isLoadingMore"
+            class="h-4 w-4 animate-spin rounded-full border-2 border-neutral-500 border-t-transparent dark:border-neutral-200"
+          />
+          {{ isLoadingMore ? 'Carregando...' : 'Carregar mais' }}
+        </button>
+      </div>
     </BaseCard>
     <div class="md:hidden flex items-center justify-between gap-3 px-1">
       <span class="rounded-full border border-slate-300 bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -1467,6 +1481,14 @@ const updateMobileState = () => {
 }
 const shouldAutoApply = computed(() => hideFilters.value || !isMobile.value)
 const listPdfState = reactive({ loading: false })
+const registrationsPage = ref(1)
+const registrationsPageSize = computed(() => {
+  const parsed = Number(import.meta.env.VITE_REGISTRATIONS_PAGE_SIZE)
+  if (!Number.isFinite(parsed) || parsed <= 0) return 200
+  return Math.min(500, Math.floor(parsed))
+})
+const isLoadingMore = ref(false)
+const canLoadMore = computed(() => admin.registrationsHasMore)
 
 const errorDialog = reactive({ open: false, title: 'Ocorreu um erro', message: '', details: '' })
 
@@ -1535,7 +1557,11 @@ const applyFilters = async () => {
   if (applyDebounce) { window.clearTimeout(applyDebounce); applyDebounce = null }
   isApplying.value = true
   try {
-    await admin.loadRegistrations(buildFilterParams())
+    registrationsPage.value = 1
+    await admin.loadRegistrations(buildFilterParams(), {
+      page: registrationsPage.value,
+      pageSize: registrationsPageSize.value
+    })
   } catch (error) {
     showError('Falha ao carregar inscrições', error)
   } finally {
@@ -1565,6 +1591,24 @@ const resetFilters = () => {
     } else {
       scheduleApply()
     }
+  }
+}
+
+const loadMoreRegistrations = async () => {
+  if (!canLoadMore.value || isApplying.value || isLoadingMore.value) return
+  isLoadingMore.value = true
+  const nextPage = registrationsPage.value + 1
+  try {
+    await admin.loadRegistrations(buildFilterParams(), {
+      page: nextPage,
+      pageSize: registrationsPageSize.value,
+      append: true
+    })
+    registrationsPage.value = nextPage
+  } catch (error) {
+    showError('Falha ao carregar mais inscricoes', error)
+  } finally {
+    isLoadingMore.value = false
   }
 }
 
@@ -1608,6 +1652,9 @@ watch(
     if (searchDebounce) window.clearTimeout(searchDebounce)
     searchDebounce = window.setTimeout(() => {
       debouncedSearch.value = value
+      if (filtersReady.value) {
+        scheduleApply(true)
+      }
     }, 300)
   }
 )
@@ -1679,11 +1726,10 @@ onMounted(async () => {
     window.addEventListener('resize', updateMobileState)
   }
   try {
-    const tasks = [admin.loadEvents(), catalog.loadDistricts()]
+    await Promise.all([admin.loadEvents(), catalog.loadDistricts()])
     if (!isMobile.value) {
-      tasks.push(catalog.loadChurches())
+      catalog.loadChurches().catch((error) => showError('Falha ao carregar igrejas', error))
     }
-    await Promise.all(tasks)
   } catch (error) {
     showError('Falha ao carregar dados iniciais', error)
   }
@@ -1909,12 +1955,12 @@ const isFilterActive = computed(() => {
 
 const registrationCount = computed(() => {
   const displayed = displayedRegistrations.value.length
-  const total = admin.registrations.length
+  const total = admin.registrationsTotal
   return {
     displayed,
-    total,
+    total: total ?? displayed,
     filterActive: isFilterActive.value,
-    hasDifference: total !== displayed
+    hasDifference: total !== null && total !== displayed
   }
 })
 
