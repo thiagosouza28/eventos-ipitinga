@@ -38,7 +38,7 @@ class MercadoPagoTransferService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async createPixTransfer(payload: PixTransferInput) {
+  async createPixTransfer(payload: PixTransferInput): Promise<{ id: string | null; raw: unknown }> {
     const url = env.MP_TRANSFER_URL;
     const body = {
       amount: payload.amount,
@@ -111,6 +111,7 @@ class MercadoPagoTransferService {
           clearTimeout(timeoutId);
         }
       }
+      throw new AppError("Falha ao criar transferencia PIX", 502);
     } catch (error: any) {
       logger.error(
         { error, payload: { ...payload, pixKey: "REDACTED" }, responseBody },

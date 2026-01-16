@@ -192,7 +192,7 @@ const buildRegistrationWhere = (filters: RegistrationFilters = {}, ministryIds?:
   if (search) {
     const digits = search.replace(/\D/g, "");
     const orConditions: Prisma.RegistrationWhereInput[] = [
-      { fullName: { contains: search, mode: "insensitive" } }
+      { fullName: { contains: search } }
     ];
     if (digits.length >= 3) {
       orConditions.push({ cpf: { contains: digits } });
@@ -323,15 +323,21 @@ export class RegistrationService {
     const { page, pageSize } = pagination;
     const skip = Math.max(0, (page - 1) * pageSize);
     const take = Math.max(1, pageSize);
-    const baseQuery = buildRegistrationListQuery(filters, ministryIds);
-    const rawItems = await prisma.registration.findMany({
-      ...baseQuery,
-      skip,
-      take: take + 1
-    });
-    const hasMore = rawItems.length > take;
-    const items = rawItems.slice(0, take);
-    return { items: normalizeRegistrationList(items), hasMore };
+    const where = buildRegistrationWhere(filters, ministryIds);
+
+    const [items, total] = await Promise.all([
+      prisma.registration.findMany({
+        where,
+        select: registrationListSelect,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take
+      }),
+      prisma.registration.count({ where })
+    ]);
+
+    const totalPages = total > 0 ? Math.ceil(total / take) : 0;
+    return { items: normalizeRegistrationList(items), total, totalPages };
   }
 
   async report(filters: RegistrationFilters, groupBy: "event" | "church", ministryIds?: string[]) {
@@ -1025,7 +1031,7 @@ export class RegistrationService {
       where: buildRegistrationWhere(filters, ministryIds),
       include: {
         event: true,
-        church: true,
+        church: { include: { district: true } },
         district: true,
         order: {
           include: {

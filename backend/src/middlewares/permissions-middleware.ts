@@ -12,28 +12,31 @@ export const hydratePermissions = async (request: Request, _response: Response, 
     throw new UnauthorizedError();
   }
 
+  const user = request.user;
+  const userId = user.id;
+
   // Se já houver mapa no token, aproveitamos para evitar consultas desnecessárias
-  if (request.user.permissions && Object.keys(request.user.permissions).length) {
+  if (user.permissions && Object.keys(user.permissions).length) {
     return next();
   }
 
   const cached = await cacheGetOrSet(
-    `permissions:${request.user.id}`,
+    `permissions:${userId}`,
     env.PERMISSIONS_CACHE_TTL_MS,
     async () => {
-      const user = await prisma.user.findUnique({
-        where: { id: request.user.id },
+      const dbUser = await prisma.user.findUnique({
+        where: { id: userId },
         include: {
           profile: { include: { permissions: true } }
         }
       });
 
-      if (!user) {
+      if (!dbUser) {
         throw new UnauthorizedError();
       }
 
-      const profilePermissions = user.profile?.permissions ?? [];
-      const roleKey = user.role as keyof typeof RolePermissionPresets;
+      const profilePermissions = dbUser.profile?.permissions ?? [];
+      const roleKey = dbUser.role as keyof typeof RolePermissionPresets;
       const basePermissions =
         profilePermissions.length > 0 ? profilePermissions : RolePermissionPresets[roleKey] ?? [];
       const permissionMap = buildPermissionMap(basePermissions);
@@ -43,7 +46,7 @@ export const hydratePermissions = async (request: Request, _response: Response, 
     { maxEntries: env.CACHE_MAX_ENTRIES }
   );
 
-  request.user.permissions = cached.permissionMap;
+  user.permissions = cached.permissionMap;
 
   return next();
 };

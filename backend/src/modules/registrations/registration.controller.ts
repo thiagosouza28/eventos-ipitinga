@@ -44,7 +44,8 @@ const listSchema = z.object({
 
 const listWithPaginationSchema = listSchema.extend({
   page: z.coerce.number().int().min(1).optional(),
-  pageSize: z.coerce.number().int().min(1).max(500).optional()
+  pageSize: z.coerce.number().int().min(1).max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(500).optional()
 });
 const reportSchema = listSchema.extend({
   groupBy: z.enum(["event", "church"])
@@ -111,18 +112,29 @@ const applyScopedLocationFilters = <T extends { churchId?: string; districtId?: 
 
 export const listRegistrationsHandler = async (request: Request, response: Response) => {
   try {
-    const { page, pageSize, ...filters } = listWithPaginationSchema.parse(request.query);
+    const { page, pageSize, limit, ...filters } = listWithPaginationSchema.parse(request.query);
     const scopedFilters = applyScopedLocationFilters(filters, request.user);
     const ministryIds = getScopedMinistryIds(request.user);
 
-    if (page || pageSize) {
-      const resolvedPage = page ?? 1;
-      const resolvedPageSize = Math.min(pageSize ?? 200, 500);
-      const { items, hasMore } = await registrationService.listPaged(scopedFilters, ministryIds, {
+    const resolvedPage = page ?? 1;
+    const resolvedLimit = Math.min(limit ?? pageSize ?? 200, 500);
+
+    if (page || pageSize || limit) {
+      const { items, total, totalPages } = await registrationService.listPaged(scopedFilters, ministryIds, {
         page: resolvedPage,
-        pageSize: resolvedPageSize
+        pageSize: resolvedLimit
       });
-      return response.json({ items, hasMore, page: resolvedPage, pageSize: resolvedPageSize });
+      const hasMore = totalPages > 0 ? resolvedPage < totalPages : false;
+      return response.json({
+        data: items,
+        items,
+        page: resolvedPage,
+        limit: resolvedLimit,
+        pageSize: resolvedLimit,
+        total,
+        totalPages,
+        hasMore
+      });
     }
 
     const registrations = await registrationService.list(scopedFilters, ministryIds);
