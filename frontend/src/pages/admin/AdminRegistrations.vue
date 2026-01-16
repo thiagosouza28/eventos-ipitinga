@@ -1991,13 +1991,13 @@ const pageRangeEnd = computed(() => {
   if (!total) return 0
   return Math.min(registrationsPage.value * selectedPageSize.value, total)
 })
-const paginationPages = computed(() => {
+const paginationPages = computed<Array<number | '...'>>(() => {
   const total = totalPages.value
   const current = registrationsPage.value
   if (total <= 7) {
     return Array.from({ length: total }, (_, index) => index + 1)
   }
-  const pages = [1]
+  const pages: Array<number | '...'> = [1]
   const start = Math.max(2, current - 2)
   const end = Math.min(total - 1, current + 2)
   if (start > 2) pages.push('...')

@@ -120,14 +120,14 @@ const updateMobileState = () => {
 const shouldAutoApply = computed(() => hideFilters.value || !isMobile.value);
 const listPdfState = reactive({ loading: false });
 const registrationsPage = ref(1);
-const registrationsPageSize = computed(() => {
+const pageSizeOptions = [10, 25, 50, 100];
+const defaultPageSize = computed(() => {
     const parsed = Number(import.meta.env.VITE_REGISTRATIONS_PAGE_SIZE);
     if (!Number.isFinite(parsed) || parsed <= 0)
-        return 200;
-    return Math.min(500, Math.floor(parsed));
+        return 25;
+    return pageSizeOptions.includes(parsed) ? parsed : 25;
 });
-const isLoadingMore = ref(false);
-const canLoadMore = computed(() => admin.registrationsHasMore);
+const selectedPageSize = ref(defaultPageSize.value);
 const errorDialog = reactive({ open: false, title: 'Ocorreu um erro', message: '', details: '' });
 const extractErrorInfo = (error) => {
     const anyError = error;
@@ -202,7 +202,7 @@ const applyFilters = async () => {
         registrationsPage.value = 1;
         await admin.loadRegistrations(buildFilterParams(), {
             page: registrationsPage.value,
-            pageSize: registrationsPageSize.value
+            limit: selectedPageSize.value
         });
     }
     catch (error) {
@@ -243,26 +243,6 @@ const resetFilters = () => {
         else {
             scheduleApply();
         }
-    }
-};
-const loadMoreRegistrations = async () => {
-    if (!canLoadMore.value || isApplying.value || isLoadingMore.value)
-        return;
-    isLoadingMore.value = true;
-    const nextPage = registrationsPage.value + 1;
-    try {
-        await admin.loadRegistrations(buildFilterParams(), {
-            page: nextPage,
-            pageSize: registrationsPageSize.value,
-            append: true
-        });
-        registrationsPage.value = nextPage;
-    }
-    catch (error) {
-        showError('Falha ao carregar mais inscricoes', error);
-    }
-    finally {
-        isLoadingMore.value = false;
     }
 };
 watch(() => filters.districtId, async (value) => {
@@ -316,6 +296,12 @@ watch(() => filters.status, () => { if (filtersReady.value)
     scheduleApply(); });
 watch(() => filters.lotId, () => { if (filtersReady.value)
     scheduleApply(); });
+watch(selectedPageSize, (value, previous) => {
+    if (!filtersReady.value || value === previous)
+        return;
+    registrationsPage.value = 1;
+    scheduleApply(true);
+});
 watch(() => filters.search, (value) => {
     if (searchDebounce)
         window.clearTimeout(searchDebounce);
@@ -595,6 +581,72 @@ const displayedRegistrations = computed(() => {
         return nameMatch || cpfMatch;
     });
 });
+const totalRegistrations = computed(() => admin.registrationsTotal ?? displayedRegistrations.value.length);
+const totalPages = computed(() => {
+    const total = admin.registrationsTotal;
+    if (typeof total !== 'number')
+        return 1;
+    if (total <= 0)
+        return 1;
+    return Math.ceil(total / selectedPageSize.value);
+});
+const isFirstPage = computed(() => registrationsPage.value <= 1);
+const isLastPage = computed(() => registrationsPage.value >= totalPages.value);
+const pageRangeStart = computed(() => {
+    const total = totalRegistrations.value;
+    if (!total)
+        return 0;
+    return (registrationsPage.value - 1) * selectedPageSize.value + 1;
+});
+const pageRangeEnd = computed(() => {
+    const total = totalRegistrations.value;
+    if (!total)
+        return 0;
+    return Math.min(registrationsPage.value * selectedPageSize.value, total);
+});
+const paginationPages = computed(() => {
+    const total = totalPages.value;
+    const current = registrationsPage.value;
+    if (total <= 7) {
+        return Array.from({ length: total }, (_, index) => index + 1);
+    }
+    const pages = [1];
+    const start = Math.max(2, current - 2);
+    const end = Math.min(total - 1, current + 2);
+    if (start > 2)
+        pages.push('...');
+    for (let page = start; page <= end; page += 1)
+        pages.push(page);
+    if (end < total - 1)
+        pages.push('...');
+    pages.push(total);
+    return pages;
+});
+const goToPage = async (page) => {
+    if (!registrationPermissions.canList.value) {
+        return;
+    }
+    if (isApplying.value) {
+        return;
+    }
+    const target = Math.min(Math.max(1, page), totalPages.value);
+    if (target === registrationsPage.value)
+        return;
+    isApplying.value = true;
+    try {
+        registrationsPage.value = target;
+        await admin.loadRegistrations(buildFilterParams(), {
+            page: target,
+            limit: selectedPageSize.value
+        });
+    }
+    catch (error) {
+        showError('Falha ao carregar inscricoes', error);
+    }
+    finally {
+        isApplying.value = false;
+    }
+};
 const isFilterActive = computed(() => {
     if (hideFilters.value)
         return true;
@@ -1708,23 +1760,6 @@ if (__VLS_ctx.registrationPermissions.canList) {
             type: "button",
             ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5" },
         });
-    }
-    if (__VLS_ctx.canLoadMore) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex justify-center border-t border-white/40 px-4 py-4 dark:border-white/10" },
-        });
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-            ...{ onClick: (__VLS_ctx.loadMoreRegistrations) },
-            type: "button",
-            ...{ class: "inline-flex items-center gap-2 rounded-full border border-neutral-200/70 px-6 py-2.5 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
-            disabled: (__VLS_ctx.isLoadingMore || __VLS_ctx.isApplying),
-        });
-        if (__VLS_ctx.isLoadingMore) {
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
-                ...{ class: "h-4 w-4 animate-spin rounded-full border-2 border-neutral-500 border-t-transparent dark:border-neutral-200" },
-            });
-        }
-        (__VLS_ctx.isLoadingMore ? 'Carregando...' : 'Carregar mais');
     }
     var __VLS_9;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -2961,6 +2996,87 @@ if (__VLS_ctx.registrationPermissions.canList) {
             }
         }
     }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "border-t border-white/40 bg-white/70 px-4 py-4 text-xs text-neutral-600 dark:border-white/10 dark:bg-neutral-900/40 dark:text-neutral-300" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-4 md:flex-row md:items-center md:justify-between" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "text-sm font-medium text-neutral-700 dark:text-neutral-200" },
+    });
+    (__VLS_ctx.pageRangeStart);
+    (__VLS_ctx.pageRangeEnd);
+    (__VLS_ctx.totalRegistrations);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-wrap items-center gap-3" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.selectedPageSize),
+        ...{ class: "rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-primary-500 dark:focus:ring-primary-900/40" },
+        disabled: (__VLS_ctx.isApplying),
+    });
+    for (const [size] of __VLS_getVForSourceType((__VLS_ctx.pageSizeOptions))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (size),
+            value: (size),
+        });
+        (size);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.registrationPermissions.canList))
+                    return;
+                __VLS_ctx.goToPage(__VLS_ctx.registrationsPage - 1);
+            } },
+        type: "button",
+        ...{ class: "rounded-full border border-neutral-200 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-600 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-neutral-200 dark:hover:bg-white/10" },
+        disabled: (__VLS_ctx.isApplying || __VLS_ctx.isFirstPage),
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center gap-1" },
+    });
+    for (const [page, index] of __VLS_getVForSourceType((__VLS_ctx.paginationPages))) {
+        (`page-${page}-${index}`);
+        if (page !== '...') {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!(__VLS_ctx.registrationPermissions.canList))
+                            return;
+                        if (!(page !== '...'))
+                            return;
+                        __VLS_ctx.goToPage(Number(page));
+                    } },
+                type: "button",
+                ...{ class: "min-w-[32px] rounded-full border px-2.5 py-1 text-[11px] font-semibold transition" },
+                ...{ class: (page === __VLS_ctx.registrationsPage ? 'border-primary-500 bg-primary-500 text-white shadow-sm' : 'border-neutral-200 text-neutral-600 hover:bg-white/80 dark:border-white/20 dark:text-neutral-200 dark:hover:bg-white/10') },
+                disabled: (__VLS_ctx.isApplying),
+            });
+            (page);
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "px-2 text-[11px] font-semibold text-neutral-400" },
+            });
+        }
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (...[$event]) => {
+                if (!(__VLS_ctx.registrationPermissions.canList))
+                    return;
+                __VLS_ctx.goToPage(__VLS_ctx.registrationsPage + 1);
+            } },
+        type: "button",
+        ...{ class: "rounded-full border border-neutral-200 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-600 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-neutral-200 dark:hover:bg-white/10" },
+        disabled: (__VLS_ctx.isApplying || __VLS_ctx.isLastPage),
+    });
     var __VLS_19;
     if (__VLS_ctx.manualConfirmDialog.open) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -4046,40 +4162,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['shadow-primary-500/50']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:translate-y-0.5']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-t']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-t-transparent']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:hidden']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
@@ -5132,6 +5214,113 @@ else {
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-red-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-t']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-primary-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-primary-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-[32px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
 /** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['z-50']} */ ;
@@ -6157,12 +6346,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             genderOptions: genderOptions,
             isApplying: isApplying,
             listPdfState: listPdfState,
-            isLoadingMore: isLoadingMore,
-            canLoadMore: canLoadMore,
+            registrationsPage: registrationsPage,
+            pageSizeOptions: pageSizeOptions,
+            selectedPageSize: selectedPageSize,
             errorDialog: errorDialog,
             applyFilters: applyFilters,
             resetFilters: resetFilters,
-            loadMoreRegistrations: loadMoreRegistrations,
             churchesByDistrict: churchesByDistrict,
             findEventTitle: findEventTitle,
             findEventPriceCents: findEventPriceCents,
@@ -6178,6 +6367,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             statusPillClass: statusPillClass,
             statusAccentClass: statusAccentClass,
             displayedRegistrations: displayedRegistrations,
+            totalRegistrations: totalRegistrations,
+            isFirstPage: isFirstPage,
+            isLastPage: isLastPage,
+            pageRangeStart: pageRangeStart,
+            pageRangeEnd: pageRangeEnd,
+            paginationPages: paginationPages,
+            goToPage: goToPage,
             registrationCount: registrationCount,
             isRegistrationSelectable: isRegistrationSelectable,
             openedActions: openedActions,

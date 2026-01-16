@@ -7,6 +7,10 @@ export const useAdminStore = defineStore("admin", () => {
         const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_TIMEOUT_MS);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
     })();
+    const registrationsPdfTimeoutMs = (() => {
+        const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_PDF_TIMEOUT_MS);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 60000;
+    })();
     const events = ref([]);
     const eventLots = ref({});
     const registrations = ref([]);
@@ -123,20 +127,17 @@ export const useAdminStore = defineStore("admin", () => {
         registrations.value = options.append ? [...registrations.value, ...items] : items;
         const total = typeof data?.total === "number" && Number.isFinite(data.total) ? data.total : null;
         registrationsTotal.value = total;
-        const resolvedLimit =
-            typeof data?.limit === "number" && Number.isFinite(data.limit)
-                ? data.limit
-                : typeof data?.pageSize === "number" && Number.isFinite(data.pageSize)
-                    ? data.pageSize
-                    : requestedLimit;
-        const resolvedPage =
-            typeof data?.page === "number" && Number.isFinite(data.page) ? data.page : (requestedPage ?? 1);
-        const totalPages =
-            typeof data?.totalPages === "number" && Number.isFinite(data.totalPages)
-                ? data.totalPages
-                : total !== null && resolvedLimit
-                    ? Math.max(1, Math.ceil(total / resolvedLimit))
-                    : null;
+        const resolvedLimit = typeof data?.limit === "number" && Number.isFinite(data.limit)
+            ? data.limit
+            : typeof data?.pageSize === "number" && Number.isFinite(data.pageSize)
+                ? data.pageSize
+                : requestedLimit;
+        const resolvedPage = typeof data?.page === "number" && Number.isFinite(data.page) ? data.page : (requestedPage ?? 1);
+        const totalPages = typeof data?.totalPages === "number" && Number.isFinite(data.totalPages)
+            ? data.totalPages
+            : total !== null && resolvedLimit
+                ? Math.max(1, Math.ceil(total / resolvedLimit))
+                : null;
         registrationsHasMore.value =
             typeof data?.hasMore === "boolean"
                 ? data.hasMore
@@ -169,7 +170,8 @@ export const useAdminStore = defineStore("admin", () => {
         const params = normalizeFilters(filters);
         return api.get("/admin/registrations/list.pdf", {
             params,
-            responseType: "arraybuffer"
+            responseType: "arraybuffer",
+            timeout: registrationsPdfTimeoutMs
         });
     };
     const downloadFinancialReport = async (eventId) => {

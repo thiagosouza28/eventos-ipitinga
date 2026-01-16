@@ -385,6 +385,10 @@ const formatBirthDate = (value) => {
 const findEventTitle = (eventId) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
 const findDistrictName = (districtId) => catalog.districts.find((district) => district.id === districtId)?.name ?? "Não informado";
 const findChurchName = (churchId) => catalog.churches.find((church) => church.id === churchId)?.name ?? "Não informado";
+const findRegistrationLotName = (participant) => {
+    const name = participant.order?.pricingLot?.name ?? participant.order?.lotName ?? "";
+    return name && name.trim().length > 0 ? name : "-";
+};
 const resolvePhotoUrl = (photoUrl) => {
     if (photoUrl && photoUrl.trim().length > 0) {
         return photoUrl;
@@ -809,6 +813,9 @@ if (__VLS_ctx.reportsPermissions.canView) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
                 ...{ class: "px-4 py-3 text-left" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+                ...{ class: "px-4 py-3 text-left" },
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({});
             for (const [participant] of __VLS_getVForSourceType((__VLS_ctx.eventParticipants))) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
@@ -847,6 +854,10 @@ if (__VLS_ctx.reportsPermissions.canView) {
                     ...{ class: "px-4 py-3 text-neutral-700 dark:text-neutral-200" },
                 });
                 (__VLS_ctx.findEventTitle(participant.eventId));
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                    ...{ class: "px-4 py-3 text-neutral-600 dark:text-neutral-300" },
+                });
+                (__VLS_ctx.findRegistrationLotName(participant));
             }
         }
     }
@@ -1617,6 +1628,9 @@ else {
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-b']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-100/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
@@ -1662,6 +1676,10 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
@@ -2322,6 +2340,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             findEventTitle: findEventTitle,
             findDistrictName: findDistrictName,
             findChurchName: findChurchName,
+            findRegistrationLotName: findRegistrationLotName,
             resolvePhotoUrl: resolvePhotoUrl,
             translateStatus: translateStatus,
             statusBadgeClass: statusBadgeClass,
