@@ -186,6 +186,7 @@ const shouldTriggerRouteLoader = (to, from) => {
 router.beforeEach((to, from, next) => {
     const auth = useAuthStore();
     const loader = useLoaderStore();
+    auth.ensureValidSession();
     if (shouldTriggerRouteLoader(to, from)) {
         loader.show("Carregando pagina...");
     }

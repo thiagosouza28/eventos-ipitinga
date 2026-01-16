@@ -103,6 +103,7 @@
                   <th class="px-4 py-3 text-left">Idade</th>
                   <th class="px-4 py-3 text-left">Status</th>
                   <th class="px-4 py-3 text-left">Evento</th>
+                  <th class="px-4 py-3 text-left">Lote</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,6 +123,7 @@
                     </span>
                   </td>
                   <td class="px-4 py-3 text-neutral-700 dark:text-neutral-200">{{ findEventTitle(participant.eventId) }}</td>
+                  <td class="px-4 py-3 text-neutral-600 dark:text-neutral-300">{{ findRegistrationLotName(participant) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -833,7 +835,10 @@ const formatBirthDate = (value?: string | Date | null) => {
 const findEventTitle = (eventId: string) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
 const findDistrictName = (districtId: string) => catalog.districts.find((district) => district.id === districtId)?.name ?? "Não informado";
 const findChurchName = (churchId: string) => catalog.churches.find((church) => church.id === churchId)?.name ?? "Não informado";
-
+const findRegistrationLotName = (participant: Registration) => {
+  const name = participant.order?.pricingLot?.name ?? participant.order?.lotName ?? "";
+  return name && name.trim().length > 0 ? name : "-";
+};
 const resolvePhotoUrl = (photoUrl?: string | null) => {
   if (photoUrl && photoUrl.trim().length > 0) {
     return photoUrl;

@@ -364,7 +364,7 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElement
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
     ...{ class: "mt-3 text-xs text-neutral-500" },
 });
-(__VLS_ctx.admin.registrations.length);
+(__VLS_ctx.admin.registrationsTotal ?? __VLS_ctx.admin.registrations.length);
 (__VLS_ctx.displayedRegistrations.length);
 var __VLS_22;
 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;

@@ -66,21 +66,7 @@
           </div>
         </div>
       </div>
-      <div v-if="canLoadMore" class="flex justify-center border-t border-white/40 px-4 py-4 dark:border-white/10">
-        <button
-          type="button"
-          class="inline-flex items-center gap-2 rounded-full border border-neutral-200/70 px-6 py-2.5 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
-          :disabled="isLoadingMore || isApplying"
-          @click="loadMoreRegistrations"
-        >
-          <span
-            v-if="isLoadingMore"
-            class="h-4 w-4 animate-spin rounded-full border-2 border-neutral-500 border-t-transparent dark:border-neutral-200"
-          />
-          {{ isLoadingMore ? 'Carregando...' : 'Carregar mais' }}
-        </button>
-      </div>
-    </BaseCard>
+</BaseCard>
     <div class="md:hidden flex items-center justify-between gap-3 px-1">
       <span class="rounded-full border border-slate-300 bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
         {{ registrationCount.displayed }} Carregada{{ registrationCount.displayed === 1 ? '' : 's' }}
@@ -770,6 +756,62 @@
                 </div>
               </div>
             </article>
+          </div>
+        </div>
+      </div>
+      <div
+        class="border-t border-white/40 bg-white/70 px-4 py-4 text-xs text-neutral-600 dark:border-white/10 dark:bg-neutral-900/40 dark:text-neutral-300"
+      >
+        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div class="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+            Mostrando {{ pageRangeStart }}-{{ pageRangeEnd }} de {{ totalRegistrations }} inscricoes</div>
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              <span>Por pagina</span>
+              <select
+                v-model.number="selectedPageSize"
+                class="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+                :disabled="isApplying"
+              >
+                <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }}</option>
+              </select>
+            </label>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="rounded-full border border-neutral-200 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-600 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-neutral-200 dark:hover:bg-white/10"
+                :disabled="isApplying || isFirstPage"
+                @click="goToPage(registrationsPage - 1)"
+              >
+                Anterior
+              </button>
+              <div class="flex items-center gap-1">
+                <template v-for="(page, index) in paginationPages" :key="`page-${page}-${index}`">
+                  <button
+                    v-if="page !== '...'"
+                    type="button"
+                    class="min-w-[32px] rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+                    :class="page === registrationsPage ? 'border-primary-500 bg-primary-500 text-white shadow-sm' : 'border-neutral-200 text-neutral-600 hover:bg-white/80 dark:border-white/20 dark:text-neutral-200 dark:hover:bg-white/10'"
+                    :disabled="isApplying"
+                    @click="goToPage(Number(page))"
+                  >
+                    {{ page }}
+                  </button>
+                  <span
+                    v-else
+                    class="px-2 text-[11px] font-semibold text-neutral-400"
+                  >
+                    ...
+                  </span>
+                </template>
+              </div>
+              <button
+                type="button"
+                class="rounded-full border border-neutral-200 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-600 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/20 dark:text-neutral-200 dark:hover:bg-white/10"
+                :disabled="isApplying || isLastPage"
+                @click="goToPage(registrationsPage + 1)"
+              >Proxima</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1482,13 +1524,13 @@ const updateMobileState = () => {
 const shouldAutoApply = computed(() => hideFilters.value || !isMobile.value)
 const listPdfState = reactive({ loading: false })
 const registrationsPage = ref(1)
-const registrationsPageSize = computed(() => {
+const pageSizeOptions = [10, 25, 50, 100]
+const defaultPageSize = computed(() => {
   const parsed = Number(import.meta.env.VITE_REGISTRATIONS_PAGE_SIZE)
-  if (!Number.isFinite(parsed) || parsed <= 0) return 200
-  return Math.min(500, Math.floor(parsed))
+  if (!Number.isFinite(parsed) || parsed <= 0) return 25
+  return pageSizeOptions.includes(parsed) ? parsed : 25
 })
-const isLoadingMore = ref(false)
-const canLoadMore = computed(() => admin.registrationsHasMore)
+const selectedPageSize = ref(defaultPageSize.value)
 
 const errorDialog = reactive({ open: false, title: 'Ocorreu um erro', message: '', details: '' })
 
@@ -1560,7 +1602,7 @@ const applyFilters = async () => {
     registrationsPage.value = 1
     await admin.loadRegistrations(buildFilterParams(), {
       page: registrationsPage.value,
-      pageSize: registrationsPageSize.value
+      limit: selectedPageSize.value
     })
   } catch (error) {
     showError('Falha ao carregar inscrições', error)
@@ -1594,23 +1636,7 @@ const resetFilters = () => {
   }
 }
 
-const loadMoreRegistrations = async () => {
-  if (!canLoadMore.value || isApplying.value || isLoadingMore.value) return
-  isLoadingMore.value = true
-  const nextPage = registrationsPage.value + 1
-  try {
-    await admin.loadRegistrations(buildFilterParams(), {
-      page: nextPage,
-      pageSize: registrationsPageSize.value,
-      append: true
-    })
-    registrationsPage.value = nextPage
-  } catch (error) {
-    showError('Falha ao carregar mais inscricoes', error)
-  } finally {
-    isLoadingMore.value = false
-  }
-}
+
 
 watch(() => filters.districtId, async (value) => {
   if (isDistrictFilterLocked.value && lockedDistrictId.value && value !== lockedDistrictId.value) {
@@ -1646,6 +1672,11 @@ watch(() => filters.churchId, (value) => {
 })
 watch(() => filters.status, () => { if (filtersReady.value) scheduleApply() })
 watch(() => filters.lotId, () => { if (filtersReady.value) scheduleApply() })
+watch(selectedPageSize, (value, previous) => {
+  if (!filtersReady.value || value === previous) return
+  registrationsPage.value = 1
+  scheduleApply(true)
+})
 watch(
   () => filters.search,
   (value) => {
@@ -1940,6 +1971,60 @@ const displayedRegistrations = computed(() => {
     return nameMatch || cpfMatch
   })
 })
+
+const totalRegistrations = computed(() => admin.registrationsTotal ?? displayedRegistrations.value.length)
+const totalPages = computed(() => {
+  const total = admin.registrationsTotal
+  if (typeof total !== 'number') return 1
+  if (total <= 0) return 1
+  return Math.ceil(total / selectedPageSize.value)
+})
+const isFirstPage = computed(() => registrationsPage.value <= 1)
+const isLastPage = computed(() => registrationsPage.value >= totalPages.value)
+const pageRangeStart = computed(() => {
+  const total = totalRegistrations.value
+  if (!total) return 0
+  return (registrationsPage.value - 1) * selectedPageSize.value + 1
+})
+const pageRangeEnd = computed(() => {
+  const total = totalRegistrations.value
+  if (!total) return 0
+  return Math.min(registrationsPage.value * selectedPageSize.value, total)
+})
+const paginationPages = computed(() => {
+  const total = totalPages.value
+  const current = registrationsPage.value
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => index + 1)
+  }
+  const pages = [1]
+  const start = Math.max(2, current - 2)
+  const end = Math.min(total - 1, current + 2)
+  if (start > 2) pages.push('...')
+  for (let page = start; page <= end; page += 1) pages.push(page)
+  if (end < total - 1) pages.push('...')
+  pages.push(total)
+  return pages
+})
+
+const goToPage = async (page: number) => {
+  if (!registrationPermissions.canList.value) { return }
+  if (isApplying.value) { return }
+  const target = Math.min(Math.max(1, page), totalPages.value)
+  if (target === registrationsPage.value) return
+  isApplying.value = true
+  try {
+    registrationsPage.value = target
+    await admin.loadRegistrations(buildFilterParams(), {
+      page: target,
+      limit: selectedPageSize.value
+    })
+  } catch (error) {
+    showError('Falha ao carregar inscricoes', error)
+  } finally {
+    isApplying.value = false
+  }
+}
 
 const isFilterActive = computed(() => {
   if (hideFilters.value) return true

@@ -21,6 +21,10 @@ export const useAdminStore = defineStore("admin", () => {
     const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_TIMEOUT_MS);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
   })();
+  const registrationsPdfTimeoutMs = (() => {
+    const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_PDF_TIMEOUT_MS);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60000;
+  })();
   const events = ref<Event[]>([]);
   const eventLots = ref<Record<string, EventLot[]>>({});
   const registrations = ref<Registration[]>([]);
@@ -127,6 +131,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   type RegistrationsLoadOptions = {
     page?: number;
+    limit?: number;
     pageSize?: number;
     append?: boolean;
   };
@@ -137,11 +142,13 @@ export const useAdminStore = defineStore("admin", () => {
   ) => {
     const params = normalizeFilters(filters);
     registrationFilters.value = params;
-    if (options.page || options.pageSize) {
-      const page = Math.max(1, Math.floor(options.page ?? 1));
-      const pageSize = Math.max(1, Math.floor(options.pageSize ?? 200));
-      params.page = page;
-      params.pageSize = pageSize;
+    let requestedPage: number | null = null;
+    let requestedLimit: number | null = null;
+    if (options.page || options.pageSize || options.limit) {
+      requestedPage = Math.max(1, Math.floor(options.page ?? 1));
+      requestedLimit = Math.max(1, Math.floor(options.limit ?? options.pageSize ?? 200));
+      params.page = requestedPage;
+      params.limit = requestedLimit;
     }
     const response = await api.get("/admin/registrations", {
       params,
@@ -156,33 +163,49 @@ export const useAdminStore = defineStore("admin", () => {
       registrationsPageSize.value = null;
       return;
     }
-    const items = Array.isArray(data?.items) ? data.items : [];
+    const items = Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data?.items)
+        ? data.items
+        : [];
     registrations.value = options.append ? [...registrations.value, ...items] : items;
     const total = typeof data?.total === "number" && Number.isFinite(data.total) ? data.total : null;
     registrationsTotal.value = total;
+    const resolvedLimit =
+      typeof data?.limit === "number" && Number.isFinite(data.limit)
+        ? data.limit
+        : typeof data?.pageSize === "number" && Number.isFinite(data.pageSize)
+          ? data.pageSize
+          : requestedLimit;
+    const resolvedPage =
+      typeof data?.page === "number" && Number.isFinite(data.page) ? data.page : (requestedPage ?? 1);
+    const totalPages =
+      typeof data?.totalPages === "number" && Number.isFinite(data.totalPages)
+        ? data.totalPages
+        : total !== null && resolvedLimit
+          ? Math.max(1, Math.ceil(total / resolvedLimit))
+          : null;
     registrationsHasMore.value =
       typeof data?.hasMore === "boolean"
         ? data.hasMore
-        : total !== null
-          ? registrations.value.length < total
-          : false;
-    registrationsPage.value =
-      typeof data?.page === "number" && Number.isFinite(data.page) ? data.page : (params.page as number) ?? 1;
-    registrationsPageSize.value =
-      typeof data?.pageSize === "number" && Number.isFinite(data.pageSize)
-        ? data.pageSize
-        : (params.pageSize as number) ?? null;
+        : totalPages !== null
+          ? resolvedPage < totalPages
+          : total !== null
+            ? registrations.value.length < total
+            : false;
+    registrationsPage.value = resolvedPage;
+    registrationsPageSize.value = resolvedLimit;
   };
 
   const reloadRegistrations = async () => {
     if (registrationsPageSize.value) {
       await loadRegistrations(registrationFilters.value, {
         page: registrationsPage.value,
-        pageSize: registrationsPageSize.value
+        limit: registrationsPageSize.value
       });
       return;
     }
-    await reloadRegistrations();
+    await loadRegistrations(registrationFilters.value);
   };
 
   const downloadRegistrationReport = async (
@@ -201,7 +224,8 @@ export const useAdminStore = defineStore("admin", () => {
     const params = normalizeFilters(filters);
     return api.get<ArrayBuffer>("/admin/registrations/list.pdf", {
       params,
-      responseType: "arraybuffer"
+      responseType: "arraybuffer",
+      timeout: registrationsPdfTimeoutMs
     });
   };
 

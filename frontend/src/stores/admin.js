@@ -3,10 +3,18 @@ import { ref } from "vue";
 import { useApi } from "../composables/useApi";
 export const useAdminStore = defineStore("admin", () => {
     const { api } = useApi();
+    const registrationsTimeoutMs = (() => {
+        const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_TIMEOUT_MS);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
+    })();
     const events = ref([]);
     const eventLots = ref({});
     const registrations = ref([]);
     const registrationFilters = ref({});
+    const registrationsTotal = ref(null);
+    const registrationsHasMore = ref(false);
+    const registrationsPage = ref(1);
+    const registrationsPageSize = ref(null);
     const orders = ref([]);
     const dashboard = ref(null);
     const users = ref([]);
@@ -83,11 +91,72 @@ export const useAdminStore = defineStore("admin", () => {
         return eventLots.value[eventId] ?? [];
     };
     const normalizeFilters = (input) => Object.fromEntries(Object.entries(input ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== ""));
-    const loadRegistrations = async (filters = {}) => {
+    const loadRegistrations = async (filters = {}, options = {}) => {
         const params = normalizeFilters(filters);
         registrationFilters.value = params;
-        const response = await api.get("/admin/registrations", { params });
-        registrations.value = response.data;
+        let requestedPage = null;
+        let requestedLimit = null;
+        if (options.page || options.pageSize || options.limit) {
+            requestedPage = Math.max(1, Math.floor(options.page ?? 1));
+            requestedLimit = Math.max(1, Math.floor(options.limit ?? options.pageSize ?? 200));
+            params.page = requestedPage;
+            params.limit = requestedLimit;
+        }
+        const response = await api.get("/admin/registrations", {
+            params,
+            timeout: registrationsTimeoutMs
+        });
+        const data = response.data;
+        if (Array.isArray(data)) {
+            registrations.value = data;
+            registrationsTotal.value = data.length;
+            registrationsHasMore.value = false;
+            registrationsPage.value = 1;
+            registrationsPageSize.value = null;
+            return;
+        }
+        const items = Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data?.items)
+                ? data.items
+                : [];
+        registrations.value = options.append ? [...registrations.value, ...items] : items;
+        const total = typeof data?.total === "number" && Number.isFinite(data.total) ? data.total : null;
+        registrationsTotal.value = total;
+        const resolvedLimit =
+            typeof data?.limit === "number" && Number.isFinite(data.limit)
+                ? data.limit
+                : typeof data?.pageSize === "number" && Number.isFinite(data.pageSize)
+                    ? data.pageSize
+                    : requestedLimit;
+        const resolvedPage =
+            typeof data?.page === "number" && Number.isFinite(data.page) ? data.page : (requestedPage ?? 1);
+        const totalPages =
+            typeof data?.totalPages === "number" && Number.isFinite(data.totalPages)
+                ? data.totalPages
+                : total !== null && resolvedLimit
+                    ? Math.max(1, Math.ceil(total / resolvedLimit))
+                    : null;
+        registrationsHasMore.value =
+            typeof data?.hasMore === "boolean"
+                ? data.hasMore
+                : totalPages !== null
+                    ? resolvedPage < totalPages
+                    : total !== null
+                        ? registrations.value.length < total
+                        : false;
+        registrationsPage.value = resolvedPage;
+        registrationsPageSize.value = resolvedLimit;
+    };
+    const reloadRegistrations = async () => {
+        if (registrationsPageSize.value) {
+            await loadRegistrations(registrationFilters.value, {
+                page: registrationsPage.value,
+                limit: registrationsPageSize.value
+            });
+            return;
+        }
+        await loadRegistrations(registrationFilters.value);
     };
     const downloadRegistrationReport = async (filters, groupBy, template = "standard") => {
         const params = normalizeFilters({ ...filters, groupBy, template });
@@ -134,36 +203,36 @@ export const useAdminStore = defineStore("admin", () => {
     };
     const updateRegistration = async (id, payload) => {
         await api.patch(`/admin/registrations/${id}`, payload);
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
     };
     const cancelRegistration = async (id) => {
         await api.post(`/admin/registrations/${id}/cancel`);
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
     };
     const reactivateRegistration = async (id) => {
         const response = await api.post(`/admin/registrations/${id}/reactivate`);
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
         return response.data;
     };
     const refundRegistration = async (id, payload) => {
         await api.post(`/admin/registrations/${id}/refund`, payload);
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
     };
     const markRegistrationsPaid = async (registrationIds, payload) => {
         await api.post(`/admin/registrations/mark-paid`, {
             registrationIds,
             ...(payload ?? {})
         });
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
     };
     const createPaymentOrderForRegistrations = async (payload) => {
         const response = await api.post(`/admin/registrations/payment-order`, payload);
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
         return response.data;
     };
     const deleteRegistration = async (id) => {
         await api.delete(`/admin/registrations/${id}`);
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
     };
     const createAdminRegistration = async (payload) => {
         const resp = await api.post(`/admin/inscriptions/batch`, {
@@ -192,7 +261,7 @@ export const useAdminStore = defineStore("admin", () => {
                 });
             }
         }
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
         return resp.data;
     };
     const confirmOrderPayment = async (orderId, payload) => {
@@ -233,7 +302,7 @@ export const useAdminStore = defineStore("admin", () => {
         else {
             await api.post(`/admin/orders/${orderId}/mark-paid`, payload ?? {});
         }
-        await loadRegistrations(registrationFilters.value);
+        await reloadRegistrations();
     };
     // Consulta status do pagamento de um pedido (PIX/Manual)
     const getOrderPayment = async (orderId) => {
@@ -336,6 +405,10 @@ export const useAdminStore = defineStore("admin", () => {
         events,
         eventLots,
         registrations,
+        registrationsTotal,
+        registrationsHasMore,
+        registrationsPage,
+        registrationsPageSize,
         orders,
         dashboard,
         users,

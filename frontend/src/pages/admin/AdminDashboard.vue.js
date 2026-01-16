@@ -1,5 +1,5 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { computed, onMounted, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 import { CalendarDaysIcon, ClipboardDocumentListIcon, UsersIcon } from "@heroicons/vue/24/outline";
 import BaseCard from "../../components/ui/BaseCard.vue";
@@ -10,6 +10,7 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 const admin = useAdminStore();
 const auth = useAuthStore();
 const loadingDashboard = ref(true);
+const hasRequested = ref(false);
 const canViewEvents = computed(() => auth.hasPermission("events", "view"));
 const canViewOrders = computed(() => auth.hasPermission("orders", "view"));
 const canViewRegistrations = computed(() => auth.hasPermission("registrations", "view"));
@@ -45,7 +46,14 @@ const visibleEvents = computed(() => {
     }
     return admin.events;
 });
-onMounted(async () => {
+const loadDashboardData = async () => {
+    if (hasRequested.value)
+        return;
+    if (!auth.ensureValidSession()) {
+        console.warn("[dashboard] Session invalid. Skipping dashboard load.");
+        loadingDashboard.value = false;
+        return;
+    }
     const tasks = [];
     if (canViewEvents.value)
         tasks.push(admin.loadEvents());
@@ -53,7 +61,10 @@ onMounted(async () => {
         tasks.push(admin.loadOrders(localDirectorFilters.value));
     if (canViewRegistrations.value)
         tasks.push(admin.loadRegistrations(localDirectorFilters.value));
+    hasRequested.value = true;
+    loadingDashboard.value = true;
     try {
+        console.info("[dashboard] Loading admin dashboard data");
         await Promise.all(tasks);
     }
     catch (error) {
@@ -62,7 +73,15 @@ onMounted(async () => {
     finally {
         loadingDashboard.value = false;
     }
-});
+};
+watch(() => auth.isReady && auth.isAuthenticated && auth.hasValidSession, (ready) => {
+    if (!ready) {
+        hasRequested.value = false;
+        loadingDashboard.value = false;
+        return;
+    }
+    loadDashboardData();
+}, { immediate: true });
 const activeEvents = computed(() => visibleEvents.value.filter((event) => event.isActive).length);
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
@@ -180,7 +199,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: "text-4xl font-semibold" },
     });
-    (__VLS_ctx.admin.registrations.length);
+    (__VLS_ctx.admin.registrationsTotal ?? __VLS_ctx.admin.registrations.length);
     var __VLS_5;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore

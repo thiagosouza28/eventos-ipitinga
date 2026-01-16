@@ -182,8 +182,9 @@ export const useSystemConfigStore = defineStore("systemConfig", {
         async saveConfig(payload) {
             const auth = useAuthStore();
             const headers = {};
-            if (auth.token) {
-                headers.Authorization = `Bearer ${auth.token}`;
+            const authHeader = auth.getAuthorizationHeader();
+            if (authHeader) {
+                headers.Authorization = authHeader;
             }
             const normalizedPayload = JSON.parse(JSON.stringify(payload));
             const response = await axios.put(`${API_BASE_URL}/admin/system/config`, normalizedPayload, {
