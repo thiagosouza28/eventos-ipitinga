@@ -74,8 +74,13 @@ const displayedRegistrations = computed(() => {
 });
 const doExportPdf = async () => {
     try {
-        const resp = await admin.downloadRegistrationReport({ eventId }, 'event');
-        const blob = new Blob([resp.data], { type: 'application/pdf' });
+        const jobResponse = await admin.requestRegistrationReportJob({ eventId }, 'event');
+        if (!jobResponse?.jobId) {
+            throw new Error('Relatorio indisponivel.');
+        }
+        const job = await admin.waitForReportJob(jobResponse.jobId);
+        const fileResponse = await admin.downloadReportJobFile(job.id);
+        const blob = new Blob([fileResponse.data], { type: 'application/pdf' });
         await createPreviewSession([
             {
                 id: `event-${eventId}`,

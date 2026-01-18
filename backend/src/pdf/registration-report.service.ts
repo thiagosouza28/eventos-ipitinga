@@ -233,6 +233,7 @@ export const generateRegistrationReportPdf = async ({
     )
     .join("");
 
+  let globalIndex = 0;
   const sectionHtml = groupsWithFallback
     .map((group) => {
       const subtitlePieces = [group.subtitle, group.extraInfo]
@@ -241,10 +242,12 @@ export const generateRegistrationReportPdf = async ({
       const rows = group.participants.length
         ? group.participants
             .map((participant) => {
+              globalIndex += 1;
               const statusLabel = formatStatus(participant.status);
               const age = typeof participant.ageYears === "number" ? participant.ageYears : "-";
               return `
                 <tr>
+                  <td class="col-index">${globalIndex}</td>
                   <td class="col-participant">
                     <span class="cell-title">${formatCellText(participant.fullName)}</span>
                     <small>${formatCellText(participant.churchName)} - ${formatCellText(participant.districtName)}</small>
@@ -258,7 +261,7 @@ export const generateRegistrationReportPdf = async ({
               `;
             })
             .join("")
-        : `<tr class="empty-row"><td colspan="4" class="empty">Nenhum participante neste grupo.</td></tr>`;
+        : `<tr class="empty-row"><td colspan="5" class="empty">Nenhum participante neste grupo.</td></tr>`;
 
       return `
         <section class="group">
@@ -275,6 +278,7 @@ export const generateRegistrationReportPdf = async ({
             <table class="participants">
               <thead>
                 <tr>
+                  <th class="col-index">#</th>
                   <th>Participante</th>
                   <th class="col-birth">Nascimento</th>
                   <th class="col-age">Idade</th>
@@ -303,7 +307,8 @@ export const generateRegistrationReportPdf = async ({
     .replaceAll("{{metaCards}}", metaCards)
     .replaceAll("{{summaryCards}}", summaryCards)
     .replaceAll("{{extraStatusChips}}", extraStatusChips ? `<div class="chips">${extraStatusChips}</div>` : "")
-    .replaceAll("{{sections}}", sectionHtml);
+    .replaceAll("{{sections}}", sectionHtml)
+    .replaceAll("{{generatedAt}}", escapeHtml(generatedAt));
 
   const browserInstance = await ensureBrowser();
   const page = await browserInstance.newPage();

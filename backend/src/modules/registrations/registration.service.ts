@@ -1,4 +1,4 @@
-ï»¿import { createReadStream, promises as fs } from "fs";
+import { createReadStream, promises as fs } from "fs";
 import path from "path";
 
 import type { Prisma } from "@/prisma/generated/client";
@@ -87,7 +87,7 @@ const toPublicPhotoUrl = (value?: string | null) => {
   return `${base}/uploads/${sanitized}`;
 };
 
-// FormataÃ§Ã£o de data sem timezone (para datas de nascimento)
+// Formatação de data sem timezone (para datas de nascimento)
 const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
@@ -95,11 +95,11 @@ const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
 });
 
 const formatDateBr = (date: Date | null | undefined) =>
-  date ? brDateFormatter.format(date) : "NÃ£o informado";
+  date ? brDateFormatter.format(date) : "Não informado";
 
-// FormataÃ§Ã£o de data de nascimento usando o fuso de SÃ£o Paulo (evita queda de 1 dia)
+// Formatação de data de nascimento usando o fuso de São Paulo (evita queda de 1 dia)
 const formatBirthDateBr = (date: Date | null | undefined) => {
-  if (!date) return "NÃ£o informado";
+  if (!date) return "Não informado";
   const iso = date instanceof Date ? date.toISOString().slice(0, 10) : String(date).slice(0, 10);
   const [year, month, day] = iso.split("-");
   if (year && month && day) {
@@ -172,7 +172,7 @@ const ACTIVE_REGISTRATION_STATUSES: RegistrationStatusValue[] = [
   "CHECKED_IN"
 ];
 
-type RegistrationFilters = {
+export type RegistrationFilters = {
   eventId?: string;
   districtId?: string;
   churchId?: string;
@@ -259,6 +259,27 @@ const buildRegistrationListQuery = (
 
 const normalizeRegistrationList = <T>(items: T[]) => items;
 
+const REPORT_BATCH_SIZE = 500;
+const forEachRegistrationBatch = async (
+  baseOptions: Prisma.RegistrationFindManyArgs,
+  handler: (items: any[]) => void | Promise<void>,
+  batchSize = REPORT_BATCH_SIZE
+) => {
+  let skip = 0;
+  while (true) {
+    const batch = await prisma.registration.findMany({
+      ...baseOptions,
+      skip,
+      take: batchSize
+    });
+    if (!batch.length) {
+      break;
+    }
+    await handler(batch);
+    skip += batch.length;
+  }
+};
+
 export class RegistrationService {
   findById(id: string) {
     return prisma.registration.findUnique({
@@ -282,7 +303,7 @@ export class RegistrationService {
       }
     });
     if (exists) {
-      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} jÃ¡ possui inscriÃ§Ã£o para este evento. NÃ£o Ã© possÃ­vel fazer mais de uma inscriÃ§Ã£o com o mesmo CPF no mesmo evento.`);
+      throw new ConflictError(`CPF ${maskCpf(sanitizedCpf)} já possui inscrição para este evento. Não é possível fazer mais de uma inscrição com o mesmo CPF no mesmo evento.`);
     }
   }
 
@@ -386,10 +407,10 @@ export class RegistrationService {
           const period =
             event && event.startDate && event.endDate
               ? `${formatDateBr(event.startDate)} - ${formatDateBr(event.endDate)}`
-              : "NÃ£o informado";
+              : "Não informado";
           resultMap.set(idKey, {
             id: key,
-            name: event?.title ?? "NÃ£o informado",
+            name: event?.title ?? "Não informado",
             period,
             totals: REGISTRATION_STATUSES.reduce(
               (acc, status) => Object.assign(acc, { [status]: 0 }),
@@ -442,8 +463,8 @@ export class RegistrationService {
         const church = key ? churchMap.get(key) : null;
         resultMap.set(idKey, {
           id: key,
-          name: church?.name ?? "NÃ£o informado",
-          districtName: church?.district?.name ?? "NÃ£o informado",
+          name: church?.name ?? "Não informado",
+          districtName: church?.district?.name ?? "Não informado",
           totals: REGISTRATION_STATUSES.reduce(
             (acc, status) => Object.assign(acc, { [status]: 0 }),
             { total: 0 } as Record<typeof REGISTRATION_STATUSES[number] | "total", number>
@@ -465,6 +486,26 @@ export class RegistrationService {
     };
   }
 
+
+  async validateReportAvailability(filters: RegistrationFilters, ministryIds?: string[]) {
+    if (filters.eventId) {
+      const event = await prisma.event.findUnique({
+        where: { id: filters.eventId },
+        select: { id: true }
+      });
+      if (!event) {
+        throw new NotFoundError("Evento nao encontrado");
+      }
+    }
+
+    const count = await prisma.registration.count({
+      where: buildRegistrationWhere(filters, ministryIds)
+    });
+    if (count === 0) {
+      throw new AppError("Nenhuma inscricao encontrada para os filtros informados", 404);
+    }
+    return count;
+  }
   async update(
     id: string,
     data: {
@@ -498,7 +539,7 @@ export class RegistrationService {
       const birthDateParts = data.birthDate.split('-');
       payload.birthDate = new Date(Date.UTC(
         parseInt(birthDateParts[0], 10), // ano
-        parseInt(birthDateParts[1], 10) - 1, // mÃªs (0-indexed)
+        parseInt(birthDateParts[1], 10) - 1, // mês (0-indexed)
         parseInt(birthDateParts[2], 10) // dia
       ));
       payload.ageYears = ageYears;
@@ -560,7 +601,7 @@ export class RegistrationService {
     });
     if (!registration) throw new NotFoundError("Inscricao nao encontrada");
     if (registration.status === "PAID") {
-      throw new AppError("NÃ£o Ã© possÃ­vel cancelar inscriÃ§Ã£o paga (solicite estorno)", 400);
+      throw new AppError("Não é possível cancelar inscrição paga (solicite estorno)", 400);
     }
     await prisma.registration.update({
       where: { id },
@@ -757,8 +798,8 @@ export class RegistrationService {
           : registration.birthDate
             ? calculateAge(registration.birthDate)
             : 0;
-      const districtName = registration.district?.name ?? "NÃ†o informado";
-      const churchName = registration.church?.name ?? "NÃ†o informado";
+      const districtName = registration.district?.name ?? "NÆo informado";
+      const churchName = registration.church?.name ?? "NÆo informado";
       const paymentDate = registration.paidAt ?? registration.createdAt;
       const orderRegistrationCount = registration.orderId
         ? await prisma.registration.count({ where: { orderId: registration.orderId } })
@@ -967,7 +1008,7 @@ export class RegistrationService {
   }
 
   async generateReportPdf(filters: RegistrationFilters, groupBy: "event" | "church", ministryIds?: string[]) {
-    const registrations = await prisma.registration.findMany({
+    const reportQuery: Prisma.RegistrationFindManyArgs = {
       where: buildRegistrationWhere(filters, ministryIds),
       include: {
         event: true,
@@ -980,6 +1021,11 @@ export class RegistrationService {
           : { church: { name: "asc" } },
         { fullName: "asc" }
       ]
+    };
+
+    const registrations: any[] = [];
+    await forEachRegistrationBatch(reportQuery, (batch) => {
+      registrations.push(...batch);
     });
 
     const groupsMap = new Map<string | "UNKNOWN", RegistrationReportGroup>();
@@ -999,7 +1045,7 @@ export class RegistrationService {
         if (groupBy === "event") {
           groupsMap.set(mapKey, {
             id: key,
-            title: params.registrationEventTitle ?? "Evento NÃ£o informado",
+            title: params.registrationEventTitle ?? "Evento Não informado",
             subtitle: params.registrationEventPeriod ?? null,
             extraInfo: params.registrationEventLocation ?? null,
             participants: []
@@ -1038,13 +1084,13 @@ export class RegistrationService {
 
       group.participants.push({
         fullName: registration.fullName,
-        churchName: church?.name ?? "NÃ£o informado",
-        districtName: district?.name ?? "NÃ£o informado",
+        churchName: church?.name ?? "Não informado",
+        districtName: district?.name ?? "Não informado",
         birthDate: registration.birthDate
-          ? formatDateBr(registration.birthDate)
-          : "NÃ£o informado",
+          ? formatBirthDateBr(registration.birthDate)
+          : "Não informado",
         ageYears: registration.ageYears ?? null,
-        eventTitle: event?.title ?? "NÃ£o informado",
+        eventTitle: event?.title ?? "Não informado",
         status: registration.status
       });
     });
@@ -1067,7 +1113,7 @@ export class RegistrationService {
     ministryIds?: string[],
     options?: { includeCpf?: boolean }
   ) {
-    const registrations = await prisma.registration.findMany({
+    const listQuery: Prisma.RegistrationFindManyArgs = {
       where: buildRegistrationWhere(filters, ministryIds),
       include: {
         event: true,
@@ -1080,6 +1126,11 @@ export class RegistrationService {
         }
       },
       orderBy: [{ createdAt: "desc" }]
+    };
+
+    const registrations: any[] = [];
+    await forEachRegistrationBatch(listQuery, (batch) => {
+      registrations.push(...batch);
     });
 
     const items: RegistrationListItem[] = registrations.map((registration) => ({
@@ -1133,7 +1184,7 @@ export class RegistrationService {
     layout: "single" | "two" | "four" = "single",
     ministryIds?: string[]
   ) {
-    const registrations = await prisma.registration.findMany({
+    const eventSheetQuery: Prisma.RegistrationFindManyArgs = {
       where: buildRegistrationWhere(filters, ministryIds),
       include: {
         event: true,
@@ -1144,6 +1195,11 @@ export class RegistrationService {
         groupBy === "event" ? { event: { title: "asc" } } : { church: { name: "asc" } },
         { fullName: "asc" }
       ]
+    };
+
+    const registrations: any[] = [];
+    await forEachRegistrationBatch(eventSheetQuery, (batch) => {
+      registrations.push(...batch);
     });
 
     const participants: EventSheetParticipant[] = registrations.map((r) => {
@@ -1151,7 +1207,7 @@ export class RegistrationService {
       const church = r.church;
       const district = r.district ?? church?.district;
 
-      const birthDateBr = r.birthDate ? formatBirthDateBr(r.birthDate) : "NÃ£o informado";
+      const birthDateBr = r.birthDate ? formatBirthDateBr(r.birthDate) : "Não informado";
       let age: number | null = r.ageYears ?? null;
       if (age == null && r.birthDate) {
         try { age = this.computeAge(r.birthDate.toISOString().slice(0, 10)); } catch {}
@@ -1161,14 +1217,14 @@ export class RegistrationService {
         fullName: r.fullName,
         birthDate: birthDateBr,
         ageYears: age,
-        churchName: church?.name ?? "NÃ£o informado",
-        districtName: district?.name ?? "NÃ£o informado",
+        churchName: church?.name ?? "Não informado",
+        districtName: district?.name ?? "Não informado",
         photoUrl: toPublicPhotoUrl(r.photoUrl) ?? DEFAULT_PHOTO_DATA_URL,
         eventTitle: event?.title ?? undefined
       };
     });
 
-    // Tentar compor um tÃ­tulo de contexto (ex.: por evento ou por igreja)
+    // Tentar compor um título de contexto (ex.: por evento ou por igreja)
     let contextTitle: string | null = null;
     if (groupBy === "event") {
       const uniqueEvent = Array.from(new Set(registrations.map((r) => r.event?.title).filter(Boolean)));
@@ -1177,7 +1233,7 @@ export class RegistrationService {
       const uniqueChurch = Array.from(new Set(registrations.map((r) => r.church?.name).filter(Boolean)));
       const uniqueDistrict = Array.from(new Set((registrations.map((r) => r.district?.name ?? r.church?.district?.name).filter(Boolean)) as string[]));
       if (uniqueChurch.length === 1 && uniqueDistrict.length === 1) {
-        contextTitle = `Distrito: ${uniqueDistrict[0]} Â· Igreja: ${uniqueChurch[0]}`;
+        contextTitle = `Distrito: ${uniqueDistrict[0]} · Igreja: ${uniqueChurch[0]}`;
       }
     }
 
@@ -1194,7 +1250,7 @@ export class RegistrationService {
   }
 
   /**
-   * Retorna histÃ³rico consolidado da inscriÃ§Ã£o (auditoria, pagamentos, estornos, etc.)
+   * Retorna histórico consolidado da inscrição (auditoria, pagamentos, estornos, etc.)
    */
   async getHistory(registrationId: string) {
     const registration = await prisma.registration.findUnique({
@@ -1229,16 +1285,16 @@ export class RegistrationService {
       details?: Record<string, unknown>;
     }> = [];
 
-    // CriaÃ§Ã£o da inscriÃ§Ã£o
-    events.push({ type: "REGISTRATION_CREATED", at: registration.createdAt, label: "InscriÃ§Ã£o criada" });
+    // Criação da inscrição
+    events.push({ type: "REGISTRATION_CREATED", at: registration.createdAt, label: "Inscrição criada" });
 
-    // MÃ©todo de pagamento selecionado (se existir)
+    // Método de pagamento selecionado (se existir)
     const initialMethod = (registration.paymentMethod as any) || (registration.order as any)?.paymentMethod || null;
     if (initialMethod) {
       events.push({ type: "PAYMENT_METHOD_SELECTED", at: registration.createdAt, label: `Forma de pagamento escolhida`, details: { paymentMethod: initialMethod } });
     }
 
-    // Pagamento confirmado na inscriÃ§Ã£o
+    // Pagamento confirmado na inscrição
     if (registration.paidAt) {
       events.push({ type: "PAYMENT_CONFIRMED", at: registration.paidAt, label: "Pagamento confirmado", details: { paymentMethod: (registration.paymentMethod as any) ?? (registration.order as any)?.paymentMethod } });
     }
@@ -1251,9 +1307,9 @@ export class RegistrationService {
       const labelMap: Record<string, string> = {
         ORDER_CREATED: "Pedido criado",
         ORDER_PAID: "Pedido pago",
-        REGISTRATION_UPDATED: "InscriÃ§Ã£o atualizada",
-        REGISTRATION_CANCELED: "InscriÃ§Ã£o cancelada",
-        REGISTRATION_DELETED: "InscriÃ§Ã£o excluÃ­da",
+        REGISTRATION_UPDATED: "Inscrição atualizada",
+        REGISTRATION_CANCELED: "Inscrição cancelada",
+        REGISTRATION_DELETED: "Inscrição excluída",
         REGISTRATION_REFUNDED: "Estorno realizado"
       };
       events.push({
@@ -1292,6 +1348,7 @@ export class RegistrationService {
 }
 
 export const registrationService = new RegistrationService();
+
 
 
 

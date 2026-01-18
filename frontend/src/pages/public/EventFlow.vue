@@ -1178,7 +1178,9 @@ const disableStatePersistence = () => {
     }
     const date = new Date(birthDate);
     if (Number.isNaN(date.getTime())) return "--";
-    return date.toLocaleDateString("pt-BR");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    return `${day}/${month}/${date.getUTCFullYear()}`;
   };
 
   const calculateAgeYears = (birthDate: string): number | null => {

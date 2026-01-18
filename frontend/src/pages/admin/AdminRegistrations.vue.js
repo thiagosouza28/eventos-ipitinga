@@ -1609,14 +1609,22 @@ const sanitizeFilePart = (value) => value
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '')
     .slice(0, 40);
+const requestReportJobBlob = async (jobResponse) => {
+    if (!jobResponse?.jobId) {
+        throw new Error('Relatorio indisponivel.');
+    }
+    const job = await admin.waitForReportJob(jobResponse.jobId);
+    const fileResponse = await admin.downloadReportJobFile(job.id);
+    return new Blob([fileResponse.data], { type: 'application/pdf' });
+};
 const generateRegistrationListPdf = async () => {
     if (!canGenerateListPdf.value || listPdfState.loading)
         return;
     listPdfState.loading = true;
     try {
         const params = buildFilterParams();
-        const response = await admin.downloadRegistrationListPdf(params);
-        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const jobResponse = await admin.requestRegistrationListJob(params);
+        const blob = await requestReportJobBlob(jobResponse);
         const eventLabel = filters.eventId ? findEventTitle(filters.eventId) : 'inscricoes';
         const churchLabel = filters.churchId ? findChurchName(filters.churchId) : '';
         const lotLabel = filters.lotId ? selectedLotName.value : '';

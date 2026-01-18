@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -184,6 +184,12 @@
       border-bottom: 1px solid var(--border);
     }
 
+    table thead th.col-index,
+    table tbody td.col-index {
+      width: 46px;
+      text-align: center;
+    }
+
     table tbody td {
       padding: 10px 12px;
       border-bottom: 1px solid var(--border);
@@ -234,8 +240,9 @@
     </div>
 
     <div class="footer">
-      Gerado automaticamente – {{generatedAt}}
+      Gerado automaticamente - {{generatedAt}}
     </div>
   </div>
 </body>
 </html>
+

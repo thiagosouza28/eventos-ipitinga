@@ -5,8 +5,21 @@ import { generateFinancialEventReportPdf } from "../../pdf/financial-report.serv
 import { ensureEventMinistryAccess } from "../../utils/ministry-access";
 import { getScopedMinistryIds } from "../../utils/user-scope";
 import { z } from "zod";
+import { reportJobService } from "../reports/report-job.service";
 
 const eventIdSchema = z.string().min(6, "eventId invalido");
+const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio. Verifique os dados do evento.";
+const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
+
+const parseAsyncFlag = (value: unknown) => {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off"].includes(normalized)) return false;
+  }
+  if (typeof value === "boolean") return value;
+  return false;
+};
 
 export const getEventSummaryHandler = async (request: Request, response: Response) => {
   try {
@@ -86,7 +99,17 @@ export const downloadEventFinancialReportHandler = async (
     const eventId = eventIdSchema.parse(request.params.eventId);
     const ministryIds = getScopedMinistryIds(request.user);
     await ensureEventMinistryAccess(eventId, ministryIds);
+    if (parseAsyncFlag(request.query?.async)) {
+      const job = reportJobService.createFinancialReportJob(
+        { eventId },
+        request.user?.id ?? null
+      );
+      return response.json({ success: true, jobId: job.id, status: job.status });
+    }
     const reportData = await financialService.getEventFinancialReportData(eventId);
+    if (reportData.paidOrdersCount === 0 && reportData.paidRegistrationsCount === 0) {
+      return response.status(400).json(reportErrorPayload);
+    }
     const generatedAt = new Intl.DateTimeFormat("pt-BR", {
       dateStyle: "medium",
       timeStyle: "short"
@@ -108,12 +131,12 @@ export const downloadEventFinancialReportHandler = async (
     );
     return response.send(pdfBuffer);
   } catch (error: any) {
-    console.error("Erro ao gerar relatИrio financeiro em PDF:", error);
+    if (error instanceof z.ZodError) {
+      return response.status(400).json(reportErrorPayload);
+    }
+    console.error("Erro ao gerar relatorio financeiro em PDF:", error);
     const status = error?.statusCode ?? 500;
-    return response.status(status).json({
-      message: error?.message ?? "Erro ao gerar relatИrio financeiro",
-      error: error?.message,
-      details: error?.details
-    });
+    return response.status(status).json(reportErrorPayload);
   }
 };
+

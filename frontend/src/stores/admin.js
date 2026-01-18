@@ -11,6 +11,14 @@ export const useAdminStore = defineStore("admin", () => {
         const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_PDF_TIMEOUT_MS);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 60000;
     })();
+    const reportJobPollDelayMs = (() => {
+        const parsed = Number(import.meta.env.VITE_API_REPORT_JOB_POLL_MS);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 1500;
+    })();
+    const reportJobMaxWaitMs = (() => {
+        const parsed = Number(import.meta.env.VITE_API_REPORT_JOB_MAX_WAIT_MS);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 180000;
+    })();
     const events = ref([]);
     const eventLots = ref({});
     const registrations = ref([]);
@@ -163,9 +171,46 @@ export const useAdminStore = defineStore("admin", () => {
         const params = normalizeFilters({ ...filters, groupBy, template });
         return api.get("/admin/registrations/report.pdf", {
             params,
-            responseType: "arraybuffer"
+            responseType: "arraybuffer",
+            timeout: registrationsPdfTimeoutMs
         });
     };
+    const requestRegistrationReportJob = async (filters, groupBy, template = "standard", layout) => {
+        const params = normalizeFilters({ ...filters, groupBy, template, layout, async: true });
+        const response = await api.get("/admin/registrations/report.pdf", { params });
+        return response.data;
+    };
+    const requestRegistrationListJob = async (filters = {}) => {
+        const params = normalizeFilters({ ...filters, async: true });
+        const response = await api.get("/admin/registrations/list.pdf", { params });
+        return response.data;
+    };
+    const getReportJobStatus = async (jobId) => {
+        const response = await api.get(`/admin/reports/jobs/${jobId}`);
+        return response.data.job;
+    };
+    const waitForReportJob = async (jobId, options) => {
+        const startedAt = Date.now();
+        const maxWaitMs = options?.maxWaitMs ?? reportJobMaxWaitMs;
+        const pollDelayMs = options?.pollDelayMs ?? reportJobPollDelayMs;
+        while (true) {
+            const job = await getReportJobStatus(jobId);
+            if (job.status === "DONE")
+                return job;
+            if (job.status === "FAILED") {
+                const message = job.errorMessage ?? "Falha ao gerar relatorio.";
+                throw new Error(message);
+            }
+            if (Date.now() - startedAt >= maxWaitMs) {
+                throw new Error("Tempo limite para gerar relatorio.");
+            }
+            await new Promise((resolve) => setTimeout(resolve, pollDelayMs));
+        }
+    };
+    const downloadReportJobFile = async (jobId) => api.get(`/admin/reports/jobs/${jobId}/file`, {
+        responseType: "arraybuffer",
+        timeout: registrationsPdfTimeoutMs
+    });
     const downloadRegistrationListPdf = async (filters = {}) => {
         const params = normalizeFilters(filters);
         return api.get("/admin/registrations/list.pdf", {
@@ -176,8 +221,15 @@ export const useAdminStore = defineStore("admin", () => {
     };
     const downloadFinancialReport = async (eventId) => {
         return api.get(`/admin/financial/events/${eventId}/report.pdf`, {
-            responseType: "arraybuffer"
+            responseType: "arraybuffer",
+            timeout: registrationsPdfTimeoutMs
         });
+    };
+    const requestFinancialReportJob = async (eventId) => {
+        const response = await api.get(`/admin/financial/events/${eventId}/report.pdf`, {
+            params: { async: true }
+        });
+        return response.data;
     };
     const loadResponsibleFinance = async () => {
         const response = await api.get("/admin/finance/responsibles");
@@ -426,6 +478,12 @@ export const useAdminStore = defineStore("admin", () => {
         downloadRegistrationReport,
         downloadRegistrationListPdf,
         downloadFinancialReport,
+        requestRegistrationReportJob,
+        requestRegistrationListJob,
+        requestFinancialReportJob,
+        getReportJobStatus,
+        waitForReportJob,
+        downloadReportJobFile,
         responsibleFinance,
         responsiblePending,
         responsibleTransfers,

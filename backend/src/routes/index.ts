@@ -72,6 +72,10 @@ import {
   getRegistrationReceiptLinkHandler
 } from "../controllers/registration.controller";
 import {
+  getReportJobStatusHandler,
+  downloadReportJobFileHandler
+} from "../modules/reports/report-job.controller";
+import {
   downloadReceiptHandler,
   lookupReceiptsHandler
 } from "../controllers/receipt.controller";
@@ -305,6 +309,16 @@ router.get(
   authorizePermission("registrations", "reports"),
   downloadRegistrationsReportHandler
 );
+router.get(
+  "/admin/reports/jobs/:jobId",
+  authorizePermission("reports", "reports"),
+  getReportJobStatusHandler
+);
+router.get(
+  "/admin/reports/jobs/:jobId/file",
+  authorizePermission("reports", "reports"),
+  downloadReportJobFileHandler
+);
 router.patch("/admin/registrations/:id", authorizePermission("registrations", "edit"), updateRegistrationHandler);
 router.delete("/admin/registrations/:id", authorizePermission("registrations", "delete"), deleteRegistrationHandler);
 router.post(
@@ -435,7 +449,5 @@ router.post(
 );
 
 export default router;
-
-
 
 

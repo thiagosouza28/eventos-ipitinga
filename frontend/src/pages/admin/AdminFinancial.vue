@@ -565,8 +565,13 @@ const downloadEventReport = async () => {
   if (!selectedEventId.value) return;
   try {
     downloadingReport.value = true;
-    const response = await admin.downloadFinancialReport(selectedEventId.value);
-    const blob = new Blob([response.data], { type: "application/pdf" });
+    const jobResponse = await admin.requestFinancialReportJob(selectedEventId.value);
+    if (!jobResponse?.jobId) {
+      throw new Error("Relatorio indisponivel.");
+    }
+    const job = await admin.waitForReportJob(jobResponse.jobId);
+    const fileResponse = await admin.downloadReportJobFile(job.id);
+    const blob = new Blob([fileResponse.data], { type: "application/pdf" });
     const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
     await createPreviewSession(
       [

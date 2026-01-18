@@ -127,6 +127,14 @@ const normalizeParticipants = (list) => list.map((participant) => ({
     ...participant,
     status: normalizeRegistrationStatus(participant.status)
 }));
+const requestReportJobBlob = async (jobResponse) => {
+    if (!jobResponse?.jobId) {
+        throw new Error("Relatorio indisponivel.");
+    }
+    const job = await admin.waitForReportJob(jobResponse.jobId);
+    const fileResponse = await admin.downloadReportJobFile(job.id);
+    return new Blob([fileResponse.data], { type: "application/pdf" });
+};
 const fetchParticipantsForEvent = async (eventId) => {
     const params = { eventId };
     if (!isGeneralAdmin.value && scopedDistrictId.value) {
@@ -162,8 +170,8 @@ const downloadEventReport = async () => {
         return;
     eventDownloadState.value = true;
     try {
-        const response = await admin.downloadRegistrationReport({ eventId: eventReport.eventId }, "event", "standard");
-        const blob = new Blob([response.data], { type: "application/pdf" });
+        const jobResponse = await admin.requestRegistrationReportJob({ eventId: eventReport.eventId }, "event", "standard");
+        const blob = await requestReportJobBlob(jobResponse);
         const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
         await createPreviewSession([
             {
@@ -236,8 +244,8 @@ const downloadChurchReport = async () => {
         if (churchReport.template === "event") {
             baseFilters.layout = churchReport.layout;
         }
-        const response = await admin.downloadRegistrationReport(baseFilters, "church", churchReport.template);
-        const blob = new Blob([response.data], { type: "application/pdf" });
+        const jobResponse = await admin.requestRegistrationReportJob(baseFilters, "church", churchReport.template, churchReport.template === "event" ? churchReport.layout : undefined);
+        const blob = await requestReportJobBlob(jobResponse);
         const churchName = findChurchName(churchReport.churchId);
         await createPreviewSession([
             {
@@ -300,8 +308,8 @@ const downloadFinancialPdf = async () => {
         return;
     financialDownloadState.value = true;
     try {
-        const response = await admin.downloadFinancialReport(selectedFinancialEventId.value);
-        const blob = new Blob([response.data], { type: "application/pdf" });
+        const jobResponse = await admin.requestFinancialReportJob(selectedFinancialEventId.value);
+        const blob = await requestReportJobBlob(jobResponse);
         const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
         await createPreviewSession([
             {

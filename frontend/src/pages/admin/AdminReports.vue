@@ -573,6 +573,15 @@ const normalizeParticipants = (list: Registration[]) =>
     status: normalizeRegistrationStatus(participant.status)
   })) as Registration[];
 
+const requestReportJobBlob = async (jobResponse: { jobId?: string | null }) => {
+  if (!jobResponse?.jobId) {
+    throw new Error("Relatorio indisponivel.");
+  }
+  const job = await admin.waitForReportJob(jobResponse.jobId);
+  const fileResponse = await admin.downloadReportJobFile(job.id);
+  return new Blob([fileResponse.data], { type: "application/pdf" });
+};
+
 const fetchParticipantsForEvent = async (eventId: string) => {
   const params: Record<string, string> = { eventId };
   if (!isGeneralAdmin.value && scopedDistrictId.value) {
@@ -605,8 +614,12 @@ const downloadEventReport = async () => {
   if (!eventReport.eventId) return;
   eventDownloadState.value = true;
   try {
-    const response = await admin.downloadRegistrationReport({ eventId: eventReport.eventId }, "event", "standard");
-    const blob = new Blob([response.data], { type: "application/pdf" });
+    const jobResponse = await admin.requestRegistrationReportJob(
+      { eventId: eventReport.eventId },
+      "event",
+      "standard"
+    );
+    const blob = await requestReportJobBlob(jobResponse);
     const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
     await createPreviewSession(
       [
@@ -630,7 +643,7 @@ const churchReport = reactive({
   eventId: "",
   districtId: "",
   churchId: "",
-  layout: "single",
+  layout: "single" as "single" | "two" | "four",
   template: "event" as "event" | "standard",
   loading: false
 });
@@ -679,12 +692,13 @@ const downloadChurchReport = async () => {
     if (churchReport.template === "event") {
       baseFilters.layout = churchReport.layout;
     }
-    const response = await admin.downloadRegistrationReport(
+    const jobResponse = await admin.requestRegistrationReportJob(
       baseFilters,
       "church",
-      churchReport.template
+      churchReport.template,
+      churchReport.template === "event" ? churchReport.layout : undefined
     );
-    const blob = new Blob([response.data], { type: "application/pdf" });
+    const blob = await requestReportJobBlob(jobResponse);
     const churchName = findChurchName(churchReport.churchId);
     await createPreviewSession(
       [
@@ -748,8 +762,8 @@ const downloadFinancialPdf = async () => {
   if (!selectedFinancialEventId.value) return;
   financialDownloadState.value = true;
   try {
-    const response = await admin.downloadFinancialReport(selectedFinancialEventId.value);
-    const blob = new Blob([response.data], { type: "application/pdf" });
+    const jobResponse = await admin.requestFinancialReportJob(selectedFinancialEventId.value);
+    const blob = await requestReportJobBlob(jobResponse);
     const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
     await createPreviewSession(
       [
@@ -826,10 +840,18 @@ const formatEventPeriod = (event: Event) => {
 };
 
 const formatBirthDate = (value?: string | Date | null) => {
-  if (!value) return "Não informado";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Não informado";
-  return date.toLocaleDateString("pt-BR");
+  if (!value) return "Nao informado";
+  if (typeof value === "string") {
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Nao informado";
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getUTCFullYear()}`;
 };
 
 const findEventTitle = (eventId: string) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";

@@ -12,6 +12,16 @@ import { logger } from "../../utils/logger";
 import { env } from "../../config/env";
 import { getScopedMinistryIds } from "../../utils/user-scope";
 import { hasPermission } from "../../utils/permissions";
+import { reportJobService } from "../reports/report-job.service";
+
+const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio. Verifique os dados do evento.";
+const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
+
+const respondReportError = (response: Response, error: unknown, context: string) => {
+  logger.error({ error }, context);
+  const status = error instanceof AppError ? error.statusCode : 500;
+  return response.status(status).json(reportErrorPayload);
+};
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 // Aceitar IDs vazios como undefined e ignorar valores inválidos em filtros
@@ -47,12 +57,25 @@ const listWithPaginationSchema = listSchema.extend({
   pageSize: z.coerce.number().int().min(1).max(500).optional(),
   limit: z.coerce.number().int().min(1).max(500).optional()
 });
+const asyncFlagSchema = z.preprocess((value) => {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off"].includes(normalized)) return false;
+  }
+  if (typeof value === "boolean") return value;
+  return undefined;
+}, z.boolean().optional());
 const reportSchema = listSchema.extend({
   groupBy: z.enum(["event", "church"])
 });
 const reportDownloadSchema = reportSchema.extend({
   template: z.enum(["standard", "event"]).optional().default("standard"),
-  layout: z.enum(["single", "two", "four"]).optional()
+  layout: z.enum(["single", "two", "four"]).optional(),
+  async: asyncFlagSchema
+});
+const listPdfSchema = listSchema.extend({
+  async: asyncFlagSchema
 });
 
 const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "") : v);
@@ -153,20 +176,15 @@ export const registrationsReportHandler = async (request: Request, response: Res
     const { groupBy, ...filters } = reportSchema.parse(request.query);
     const scopedFilters = applyScopedLocationFilters(filters, request.user);
     const ministryIds = getScopedMinistryIds(request.user);
+    await registrationService.validateReportAvailability(scopedFilters, ministryIds);
     const report = await registrationService.report(scopedFilters, groupBy, ministryIds);
     return response.json(report);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return response.status(400).json({
-        message: "Parametros invalidos",
-        issues: error.flatten()
-      });
+      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      return response.status(400).json(reportErrorPayload);
     }
-    logger.error({ error }, "Erro ao carregar relatorio de inscricoes");
-    return response.status(500).json({
-      message: "Erro ao carregar relatorio",
-      error: error.message
-    });
+    return respondReportError(response, error, "Erro ao carregar relatorio de inscricoes");
   }
 };
 
@@ -179,10 +197,24 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
   }
 
   try {
-    const { groupBy, template, layout, ...filters } = reportDownloadSchema.parse(request.query);
+    const { groupBy, template, layout, async: asyncMode, ...filters } = reportDownloadSchema.parse(request.query);
 
     const ministryIds = getScopedMinistryIds(request.user);
     const scopedFilters = applyScopedLocationFilters(filters, request.user);
+    if (asyncMode) {
+      const job = reportJobService.createRegistrationReportJob(
+        {
+          filters: scopedFilters,
+          groupBy,
+          template,
+          layout: (layout as any) ?? undefined,
+          ministryIds
+        },
+        request.user?.id ?? null
+      );
+      return response.json({ success: true, jobId: job.id, status: job.status });
+    }
+    await registrationService.validateReportAvailability(scopedFilters, ministryIds);
     const pdfBuffer =
       template === "event"
         ? await registrationService.generateEventSheetPdf(
@@ -197,17 +229,11 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
     response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     return response.send(pdfBuffer);
   } catch (error: any) {
-    console.error("Erro ao gerar relatorio de inscricoes:", error);
     if (error instanceof z.ZodError) {
-      return response.status(400).json({
-        success: false,
-        message: "Erro ao gerar relatório. Verifique os dados do evento."
-      });
+      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      return response.status(400).json(reportErrorPayload);
     }
-    return response.status(500).json({
-      success: false,
-      message: "Erro ao gerar relatório. Verifique os dados do evento."
-    });
+    return respondReportError(response, error, "Erro ao gerar relatorio de inscricoes");
   }
 };
 
@@ -220,9 +246,22 @@ export const downloadRegistrationsListPdfHandler = async (request: Request, resp
   }
 
   try {
-    const filters = listSchema.parse(request.query);
+    const { async: asyncMode, ...filters } = listPdfSchema.parse(request.query);
     const ministryIds = getScopedMinistryIds(request.user);
     const scopedFilters = applyScopedLocationFilters(filters, request.user);
+    if (asyncMode) {
+      const includeCpf = hasPermission(request.user?.permissions, "registrations", "reports");
+      const job = reportJobService.createRegistrationListJob(
+        {
+          filters: scopedFilters,
+          includeCpf,
+          ministryIds
+        },
+        request.user?.id ?? null
+      );
+      return response.json({ success: true, jobId: job.id, status: job.status });
+    }
+    await registrationService.validateReportAvailability(scopedFilters, ministryIds);
     const includeCpf = hasPermission(request.user?.permissions, "registrations", "reports");
 
     const pdfBuffer = await registrationService.generateListPdf(scopedFilters, ministryIds, {
@@ -233,17 +272,11 @@ export const downloadRegistrationsListPdfHandler = async (request: Request, resp
     response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     return response.send(pdfBuffer);
   } catch (error: any) {
-    console.error("Erro ao gerar lista de inscricoes em PDF:", error);
     if (error instanceof z.ZodError) {
-      return response.status(400).json({
-        success: false,
-        message: "Erro ao gerar relatório. Verifique os dados do evento."
-      });
+      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      return response.status(400).json(reportErrorPayload);
     }
-    return response.status(500).json({
-      success: false,
-      message: "Erro ao gerar relatório. Verifique os dados do evento."
-    });
+    return respondReportError(response, error, "Erro ao gerar lista de inscricoes em PDF");
   }
 };
 

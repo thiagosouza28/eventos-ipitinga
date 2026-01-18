@@ -25,6 +25,30 @@ export const useAdminStore = defineStore("admin", () => {
     const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_PDF_TIMEOUT_MS);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 60000;
   })();
+  const reportJobPollDelayMs = (() => {
+    const parsed = Number(import.meta.env.VITE_API_REPORT_JOB_POLL_MS);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1500;
+  })();
+  const reportJobMaxWaitMs = (() => {
+    const parsed = Number(import.meta.env.VITE_API_REPORT_JOB_MAX_WAIT_MS);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 180000;
+  })();
+
+  type ReportJobStatus = "PENDING" | "PROCESSING" | "DONE" | "FAILED";
+  type ReportJobSummary = {
+    id: string;
+    status: ReportJobStatus;
+    type?: string;
+    fileName?: string | null;
+    errorMessage?: string | null;
+  };
+  type ReportJobResponse = {
+    success?: boolean;
+    jobId?: string;
+    status?: ReportJobStatus;
+    job?: ReportJobSummary;
+    message?: string;
+  };
   const events = ref<Event[]>([]);
   const eventLots = ref<Record<string, EventLot[]>>({});
   const registrations = ref<Registration[]>([]);
@@ -230,9 +254,59 @@ export const useAdminStore = defineStore("admin", () => {
     const params = normalizeFilters({ ...filters, groupBy, template });
     return api.get<ArrayBuffer>("/admin/registrations/report.pdf", {
       params,
-      responseType: "arraybuffer"
+      responseType: "arraybuffer",
+      timeout: registrationsPdfTimeoutMs
     });
   };
+
+  const requestRegistrationReportJob = async (
+    filters: Record<string, unknown>,
+    groupBy: "event" | "church",
+    template: "standard" | "event" = "standard",
+    layout?: "single" | "two" | "four"
+  ) => {
+    const params = normalizeFilters({ ...filters, groupBy, template, layout, async: true });
+    const response = await api.get<ReportJobResponse>("/admin/registrations/report.pdf", { params });
+    return response.data;
+  };
+
+  const requestRegistrationListJob = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters({ ...filters, async: true });
+    const response = await api.get<ReportJobResponse>("/admin/registrations/list.pdf", { params });
+    return response.data;
+  };
+
+  const getReportJobStatus = async (jobId: string) => {
+    const response = await api.get<{ job: ReportJobSummary }>(`/admin/reports/jobs/${jobId}`);
+    return response.data.job;
+  };
+
+  const waitForReportJob = async (
+    jobId: string,
+    options?: { maxWaitMs?: number; pollDelayMs?: number }
+  ) => {
+    const startedAt = Date.now();
+    const maxWaitMs = options?.maxWaitMs ?? reportJobMaxWaitMs;
+    const pollDelayMs = options?.pollDelayMs ?? reportJobPollDelayMs;
+    while (true) {
+      const job = await getReportJobStatus(jobId);
+      if (job.status === "DONE") return job;
+      if (job.status === "FAILED") {
+        const message = job.errorMessage ?? "Falha ao gerar relatorio.";
+        throw new Error(message);
+      }
+      if (Date.now() - startedAt >= maxWaitMs) {
+        throw new Error("Tempo limite para gerar relatorio.");
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollDelayMs));
+    }
+  };
+
+  const downloadReportJobFile = async (jobId: string) =>
+    api.get<ArrayBuffer>(`/admin/reports/jobs/${jobId}/file`, {
+      responseType: "arraybuffer",
+      timeout: registrationsPdfTimeoutMs
+    });
 
   const downloadRegistrationListPdf = async (filters: Record<string, unknown> = {}) => {
     const params = normalizeFilters(filters);
@@ -245,8 +319,19 @@ export const useAdminStore = defineStore("admin", () => {
 
   const downloadFinancialReport = async (eventId: string) => {
     return api.get<ArrayBuffer>(`/admin/financial/events/${eventId}/report.pdf`, {
-      responseType: "arraybuffer"
+      responseType: "arraybuffer",
+      timeout: registrationsPdfTimeoutMs
     });
+  };
+
+  const requestFinancialReportJob = async (eventId: string) => {
+    const response = await api.get<ReportJobResponse>(
+      `/admin/financial/events/${eventId}/report.pdf`,
+      {
+        params: { async: true }
+      }
+    );
+    return response.data;
   };
 
   const loadResponsibleFinance = async () => {
@@ -613,6 +698,12 @@ export const useAdminStore = defineStore("admin", () => {
     downloadRegistrationReport,
     downloadRegistrationListPdf,
     downloadFinancialReport,
+    requestRegistrationReportJob,
+    requestRegistrationListJob,
+    requestFinancialReportJob,
+    getReportJobStatus,
+    waitForReportJob,
+    downloadReportJobFile,
     responsibleFinance,
     responsiblePending,
     responsibleTransfers,
