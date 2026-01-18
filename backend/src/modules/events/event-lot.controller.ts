@@ -27,7 +27,8 @@ const createSchema = z.object({
   priceCents: z.number().int().min(0),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime().nullable().optional(),
-  type: lotTypeSchema.optional()
+  type: lotTypeSchema.optional(),
+  tipo_lote: lotTypeSchema.optional()
 });
 
 const updateSchema = createSchema.partial();
@@ -41,6 +42,7 @@ export const listEventLotsHandler = async (request: Request, response: Response)
 export const createEventLotHandler = async (request: Request, response: Response) => {
   const { eventId } = eventParamSchema.parse(request.params);
   const payload = createSchema.parse(request.body);
+  const resolvedType = payload.type ?? payload.tipo_lote;
   const lot = await eventLotService.create(
     eventId,
     {
@@ -48,7 +50,7 @@ export const createEventLotHandler = async (request: Request, response: Response
       priceCents: payload.priceCents,
       startsAt: new Date(payload.startsAt),
       endsAt: payload.endsAt == null ? null : new Date(payload.endsAt),
-      type: payload.type
+      type: resolvedType
     },
     request.user
   );
@@ -59,6 +61,7 @@ export const updateEventLotHandler = async (request: Request, response: Response
   lotParamSchema.parse(request.params);
   const lotId = request.params.lotId;
   const payload = updateSchema.parse(request.body);
+  const resolvedType = payload.type ?? payload.tipo_lote;
   const lot = await eventLotService.update(
     lotId,
     {
@@ -71,7 +74,7 @@ export const updateEventLotHandler = async (request: Request, response: Response
           : payload.endsAt === null
             ? null
             : new Date(payload.endsAt),
-      type: payload.type
+      type: resolvedType
     },
     request.user
   );
