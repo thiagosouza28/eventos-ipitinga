@@ -384,11 +384,19 @@ const formatEventPeriod = (event) => {
 };
 const formatBirthDate = (value) => {
     if (!value)
-        return "Não informado";
-    const date = new Date(value);
+        return "Nao informado";
+    if (typeof value === "string") {
+        const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) {
+            return `${match[3]}/${match[2]}/${match[1]}`;
+        }
+    }
+    const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime()))
-        return "Não informado";
-    return date.toLocaleDateString("pt-BR");
+        return "Nao informado";
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    return `${day}/${month}/${date.getUTCFullYear()}`;
 };
 const findEventTitle = (eventId) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
 const findDistrictName = (districtId) => catalog.districts.find((district) => district.id === districtId)?.name ?? "Não informado";

@@ -66,126 +66,286 @@
           </div>
         </div>
       </div>
-</BaseCard>
-    <div class="md:hidden flex items-center justify-between gap-3 px-1">
-      <span class="rounded-full border border-slate-300 bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-        {{ registrationCount.displayed }} Carregada{{ registrationCount.displayed === 1 ? '' : 's' }}
-      </span>
-      <button
-        v-if="registrationPermissions.canCreate"
-        type="button"
-        class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-primary-500/30 transition active:scale-95"
-        @click="openAddDialog"
-      >
-        + Nova inscrição
-      </button>
-    </div>
+    </BaseCard>
+    <div class="md:hidden">
+      <div class="relative overflow-hidden rounded-[28px] bg-[radial-gradient(120%_120%_at_50%_0%,#eef2ff_0%,#dbeafe_45%,#bfdbfe_100%)] px-4 pb-8 pt-6 text-slate-900 shadow-[0_35px_80px_rgba(15,23,42,0.18)] dark:bg-[radial-gradient(120%_120%_at_50%_0%,#1c2b53_0%,#0b1328_55%,#0a0f1f_100%)] dark:text-white dark:shadow-[0_35px_80px_rgba(0,0,0,0.45)]">
+        <div class="pointer-events-none absolute -top-24 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-sky-200/60 blur-3xl dark:bg-sky-500/20"></div>
+        <div class="pointer-events-none absolute -bottom-16 right-6 h-36 w-36 rounded-full bg-blue-200/50 blur-3xl dark:bg-blue-500/10"></div>
+        <div class="relative z-10 space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="leading-tight">
+                <p class="text-xs uppercase tracking-[0.35em] text-blue-600 dark:text-blue-300">
+                  Gestão de inscritos
+                </p>
+                <h1 class="text-2xl font-semibold text-slate-900 dark:text-white">Inscrições</h1>
+                <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  {{ hideFilters ? 'Visualize apenas as inscrições da sua igreja.' : 'Filtre e gerencie inscrições por evento, distrito, igreja ou status.' }}
+                </p>
+              </div>
+            </div>
+          </div>
 
-    
-    <div
-      v-if="!hideFilters"
-      class="md:hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 overflow-hidden"
-    >
-      <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3 dark:border-slate-700/50 dark:bg-slate-800/30">
-        <h2 class="text-sm font-semibold text-slate-800 dark:text-white">Filtros</h2>
-        <span class="text-xs text-slate-500 dark:text-slate-400">Refine sua busca</span>
-      </div>
-      <form @submit.prevent="applyFilters" class="p-4 space-y-4">
-        <div>
-          <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Busca</label>
-          <div class="relative">
-            <span class="pointer-events-none absolute left-3 top-2.5 text-slate-400">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
+          <div class="flex items-center justify-between gap-3">
+            <span class="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-200">
+              {{ registrationCount.displayed }} carregada{{ registrationCount.displayed === 1 ? '' : 's' }}
             </span>
-            <input
-              v-model="filters.search"
-              type="text"
-              placeholder="Nome ou CPF"
-              autocomplete="off"
-              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-9 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-600"
-            />
+            <button
+              v-if="registrationPermissions.canCreate"
+              type="button"
+              class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-blue-500/20 transition active:scale-95 dark:shadow-blue-500/40"
+              @click="openAddDialog"
+            >
+              <span class="text-sm">+</span>
+              Nova inscrição
+            </button>
           </div>
-        </div>
 
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Evento</label>
-            <select
-              v-model="filters.eventId"
-              :disabled="isEventFilterLocked"
-              class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
-              <option value="">{{ isEventFilterLocked ? 'Evento vinculado' : 'Todos os eventos' }}</option>
-              <option v-for="event in admin.events" :key="event.id" :value="event.id">{{ event.title }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Lote</label>
-            <select
-              v-model="filters.lotId"
-              :disabled="!filters.eventId || !lotsForSelectedEvent.length"
-              class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
-              <option value="">{{ !filters.eventId ? 'Selecione o evento' : 'Todos os lotes' }}</option>
-              <option v-for="lot in lotsForSelectedEvent" :key="lot.id" :value="lot.id">{{ lot.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Distrito</label>
-            <select
-              v-model="filters.districtId"
-              :disabled="isDistrictFilterLocked"
-              class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
-              <option value="">{{ isDistrictFilterLocked ? 'Distrito vinculado' : 'Todos' }}</option>
-              <option v-for="district in catalog.districts" :key="district.id" :value="district.id">{{ district.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Igreja</label>
-            <select
-              v-model="filters.churchId"
-              :disabled="isChurchFilterLocked || !filters.districtId"
-              class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
-              <option value="">{{ isChurchFilterLocked ? 'Igreja vinculada' : (filters.districtId ? 'Todas' : 'Selecione o distrito') }}</option>
-              <option v-for="church in churchesByDistrict(filters.districtId)" :key="church.id" :value="church.id">{{ church.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Status</label>
-            <select
-              v-model="filters.status"
-              class="w-full appearance-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-            >
-              <option value="">Todos</option>
-              <option v-for="option in registrationStatusOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
-          </div>
-        </div>
+          <section class="rounded-[14px] border border-slate-200/70 bg-white/80 p-4 text-slate-700 shadow-[0_14px_28px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:shadow-[0_14px_28px_rgba(5,10,20,0.55)]">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-200">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
+                i
+              </span>
+              <span>Selecione inscrições para ações em massa:</span>
+            </div>
+            <div class="mt-4 grid grid-cols-2 gap-3">
+              <div class="rounded-[12px] border border-slate-200/70 bg-white/80 px-3 py-2 dark:border-white/10 dark:bg-white/5">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Selecionadas</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{{ selectedRegistrations.length }}</p>
+              </div>
+              <div class="rounded-[12px] border border-slate-200/70 bg-white/80 px-3 py-2 dark:border-white/10 dark:bg-white/5">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Total</p>
+                <p class="mt-1 text-lg font-semibold text-slate-900 dark:text-white">{{ formatCurrency(selectionTotalCents) }}</p>
+              </div>
+            </div>
+            <div v-if="registrationPermissions.canFinancial" class="mt-4 space-y-2">
+              <button
+                type="button"
+                class="w-full rounded-full bg-blue-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-500/20 transition disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none dark:shadow-blue-500/30"
+                :disabled="selectedRegistrations.length === 0"
+                @click="openPaymentDialog"
+              >
+                Gerar pagamento
+              </button>
+              <button
+                type="button"
+                class="w-full rounded-full border border-slate-300/70 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600 transition disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                :disabled="selectedRegistrations.length === 0"
+                @click="openManualConfirmDialog(selectedRegistrations)"
+              >
+                Confirmar manualmente
+              </button>
+            </div>
+          </section>
 
-        <div class="flex items-center gap-3 pt-2">
-          <button
-            type="button"
-            class="flex-1 rounded-lg border border-slate-300 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-            @click="resetFilters"
-          >
-            Limpar
-          </button>
-          <button
-            type="submit"
-            class="flex-1 rounded-lg bg-primary-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="isApplying"
-          >
-            {{ isApplying ? 'Aplicando...' : 'Aplicar filtro' }}
-          </button>
+          <section>
+            <div
+              v-if="isApplying && admin.registrations.length === 0"
+              class="rounded-[14px] border border-slate-200/70 bg-white/80 p-4 text-center text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+            >
+              Buscando inscrições...
+            </div>
+            <div
+              v-else-if="displayedRegistrations.length === 0"
+              class="rounded-[14px] border border-slate-200/70 bg-white/80 p-4 text-center text-xs text-slate-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+            >
+              Nenhuma inscrição encontrada.
+            </div>
+            <div v-else class="space-y-4">
+              <article
+                v-for="registration in displayedRegistrations"
+                :key="registration.id"
+                class="relative overflow-hidden rounded-[14px] border border-slate-200/70 bg-white/90 text-slate-900 shadow-[0_18px_35px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-[#141c2e]/80 dark:text-white dark:shadow-[0_18px_35px_rgba(2,6,23,0.55)]"
+              >
+                <div class="absolute left-0 top-0 h-full w-1" :class="statusAccentClass(registration.status)"></div>
+                <div class="space-y-4 p-4">
+                  <div class="flex items-start gap-3">
+                    <div class="pt-1">
+                      <input
+                        type="checkbox"
+                        class="h-5 w-5 rounded border-slate-300 bg-white text-blue-600 focus:ring-blue-500 disabled:opacity-40 dark:border-white/20 dark:bg-white/5 dark:text-blue-500"
+                        :disabled="!isRegistrationSelectable(registration)"
+                        :checked="isRegistrationSelected(registration.id)"
+                        @change="toggleRegistrationSelection(registration, ($event.target as HTMLInputElement)?.checked ?? false)"
+                        :aria-label="`Selecionar inscrição ${registration.fullName}`"
+                      />
+                    </div>
+                    <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200/70 bg-white/80 dark:border-white/10 dark:bg-white/5">
+                      <img
+                        :src="resolvePhotoUrl(registration.photoUrl)"
+                        class="h-full w-full object-cover"
+                        :alt="`Foto de ${registration.fullName}`"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                          <h3 class="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                            {{ registration.fullName }}
+                          </h3>
+                          <p class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            CPF {{ formatCPF(registration.cpf) }}
+                          </p>
+                        </div>
+                      </div>
+                      <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <span
+                          class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em]"
+                          :class="statusPillClass(registration.status)"
+                        >
+                          {{ translateStatus(registration.status) }}
+                        </span>
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                          {{ paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '') }} •
+                          {{ formatDateShort(registration.paidAt || registration.createdAt) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="space-y-3 rounded-[14px] border border-slate-200/70 bg-slate-50 px-3 py-3 dark:border-white/10 dark:bg-white/5">
+                    <div>
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Evento</p>
+                      <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                        {{ findEventTitle(registration.eventId) }}
+                      </p>
+                      <p class="text-xs text-slate-500 dark:text-slate-400">
+                        <span v-if="registration.status === 'CANCELED'">Inscrição anulada pelo administrador</span>
+                        <span v-else-if="findRegistrationLotLabel(registration)">
+                          Lote: {{ findRegistrationLotLabel(registration) }} -
+                          {{ formatCurrency(registration.priceCents ?? findEventPriceCents(registration.eventId)) }}
+                        </span>
+                        <span v-else>
+                          {{ formatCurrency(registration.priceCents ?? findEventPriceCents(registration.eventId)) }}
+                        </span>
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Igreja / Distrito</p>
+                      <p class="text-xs text-slate-700 dark:text-slate-200">
+                        {{ findChurchName(registration.churchId) }} - {{ findDistrictName(registration.districtId) }}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Data do pagamento</p>
+                      <p class="text-xs text-slate-700 dark:text-slate-200">
+                        {{ paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '') }} •
+                        {{ formatDateShort(registration.paidAt || registration.createdAt) }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button
+                      v-if="registrationPermissions.canEdit"
+                      class="flex-1 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700 transition dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                      @click="openEdit(registration)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="flex-1 rounded-full border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-700 transition dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                      @click="toggleActions(registration.id)"
+                    >
+                      Ações
+                    </button>
+                    <button
+                      v-if="registration.status === 'CANCELED' && registrationPermissions.canApprove"
+                      class="flex-1 rounded-full bg-emerald-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white shadow-lg shadow-emerald-500/20 transition"
+                      @click="openConfirm('reactivate', registration)"
+                    >
+                      Reativar
+                    </button>
+                  </div>
+
+                  <div
+                    v-if="openedActions === registration.id"
+                    class="rounded-[14px] border border-white/10 bg-[#0c1326]/95 p-2 shadow-[0_10px_24px_rgba(0,0,0,0.35)]"
+                  >
+                    <button
+                      v-if="canEmitReceipt(registration)"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; downloadReceipt(registration)"
+                    >
+                      Comprovante
+                    </button>
+                    <button
+                      v-if="isPaymentLinkVisible(registration) && registrationPermissions.canEdit"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; copyPaymentLink(registration)"
+                    >
+                      Link pagamento
+                    </button>
+                    <button
+                      v-if="registration.status === 'PENDING_PAYMENT' && registrationPermissions.canFinancial"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; openPaymentDialog([registration])"
+                    >
+                      Alterar pagamento
+                    </button>
+                    <button
+                      v-if="registration.status === 'PENDING_PAYMENT' && registrationPermissions.canFinancial"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; openManualConfirmDialog([registration])"
+                    >
+                      Confirmar manual
+                    </button>
+                    <button
+                      v-if="canConfirmManualPix(registration)"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; openManualPaymentDialog(registration)"
+                    >
+                      Confirmar PIX
+                    </button>
+                    <button
+                      v-if="canViewManualProof(registration)"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; viewManualProof(registration)"
+                    >
+                      Ver anexo
+                    </button>
+                    <button
+                      v-if="
+                        canCancelRegistration(registration.status) &&
+                        registration.status === 'PENDING_PAYMENT' &&
+                        registrationPermissions.canDeactivate
+                      "
+                      class="dropdown-item w-full text-red-400 hover:text-red-300"
+                      @click="openedActions = null; openConfirm('cancel', registration)"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      v-if="registration.status === 'PAID' && registrationPermissions.canFinancial"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; openConfirm('refund', registration)"
+                    >
+                      Estornar
+                    </button>
+                    <button
+                      v-if="registration.status === 'CANCELED' && registrationPermissions.canApprove"
+                      class="dropdown-item w-full"
+                      @click="openedActions = null; openConfirm('reactivate', registration)"
+                    >
+                      Reativar
+                    </button>
+                    <button
+                      v-if="canDeleteRegistration(registration.status) && registrationPermissions.canDelete"
+                      class="dropdown-item w-full text-red-400 hover:text-red-300"
+                      @click="openedActions = null; openConfirm('delete', registration)"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
         </div>
-      </form>
+      </div>
     </div>
-
     <BaseCard
       class="hidden md:block border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
       v-if="!hideFilters"
@@ -286,7 +446,7 @@
 
     <!-- Lista de inscrições -->
     <BaseCard
-      class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+      class="hidden md:block border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
     >
       <div class="hidden md:flex md:flex-row md:items-center md:justify-between md:gap-4 px-5 py-4">
         <div class="text-sm text-neutral-600 dark:text-neutral-400">
@@ -1758,9 +1918,7 @@ onMounted(async () => {
   }
   try {
     await Promise.all([admin.loadEvents(), catalog.loadDistricts()])
-    if (!isMobile.value) {
-      catalog.loadChurches().catch((error) => showError('Falha ao carregar igrejas', error))
-    }
+    catalog.loadChurches().catch((error) => showError('Falha ao carregar igrejas', error))
   } catch (error) {
     showError('Falha ao carregar dados iniciais', error)
   }
