@@ -88,7 +88,10 @@
             class="flex flex-col gap-3 rounded-2xl border border-white/30 bg-white/80 px-4 py-3 text-sm transition hover:border-primary-200 hover:bg-primary-50/60 dark:border-white/5 dark:bg-neutral-900/60 dark:hover:border-primary-400/60 dark:hover:bg-primary-500/10 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <p class="font-medium text-neutral-700 dark:text-neutral-100">
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">
+                {{ receipt.fullName || "Participante nao informado" }}
+              </p>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
                 {{ receipt.eventTitle }}
               </p>
               <p class="text-xs text-neutral-500 dark:text-neutral-400">
@@ -115,7 +118,7 @@
         </p>
 
         <p
-          v-else
+          v-else-if="!hasResults && hasSearched && !loading"
           class="text-sm text-neutral-600 dark:text-neutral-300"
         >
           {{ emptyMessage || "Nenhum comprovante encontrado para os dados informados." }}
@@ -137,6 +140,7 @@ import { createPreviewSession } from "../../utils/documentPreview";
 
 type ReceiptSummary = {
   registrationId: string;
+  fullName: string;
   eventTitle: string;
   status: string;
   issuedAt: string;
@@ -208,10 +212,12 @@ const apiBase = (() => {
   }
 })();
 
+const normalizeReceiptPath = (path: string) => path.replace(/\/api\/api\//g, "/api/");
 const resolveReceiptUrl = (url: string) => {
   try {
     const target = new URL(url, apiBase);
-    return `${apiBase.origin}${target.pathname}${target.search}`;
+    const normalizedPath = normalizeReceiptPath(target.pathname);
+    return `${apiBase.origin}${normalizedPath}${target.search}`;
   } catch {
     return url;
   }

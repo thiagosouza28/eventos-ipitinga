@@ -292,6 +292,8 @@ exports.Prisma.EventLotScalarFieldEnum = {
   eventId: 'eventId',
   name: 'name',
   priceCents: 'priceCents',
+  type: 'type',
+  status: 'status',
   startsAt: 'startsAt',
   endsAt: 'endsAt',
   createdAt: 'createdAt'
@@ -475,6 +477,17 @@ exports.PixType = exports.$Enums.PixType = {
 exports.PixStatus = exports.$Enums.PixStatus = {
   VALIDATED: 'VALIDATED',
   PENDING: 'PENDING'
+};
+
+exports.EventLotType = exports.$Enums.EventLotType = {
+  PADRAO: 'PADRAO',
+  PROMOCIONAL: 'PROMOCIONAL'
+};
+
+exports.EventLotStatus = exports.$Enums.EventLotStatus = {
+  ATIVO: 'ATIVO',
+  INATIVO: 'INATIVO',
+  ENCERRADO: 'ENCERRADO'
 };
 
 exports.OrderItemStatus = exports.$Enums.OrderItemStatus = {

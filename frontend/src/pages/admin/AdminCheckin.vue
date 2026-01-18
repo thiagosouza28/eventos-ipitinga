@@ -1,81 +1,80 @@
 <template>
   <div v-if="checkinPermissions.canList" class="space-y-6">
-    <TableSkeleton
-      v-if="loadingDashboard"
-      helperText="📡 Carregando painel de check-in..."
-    />
     <BaseCard
-      v-else
-      class="bg-gradient-to-br from-white via-primary-50/40 to-primary-100/30 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+      class="border border-white/40 bg-gradient-to-br from-white via-sky-50/60 to-primary-100/40 shadow-sm dark:border-white/10 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
     >
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div class="max-w-2xl">
-          <p class="text-xs uppercase tracking-[0.35em] text-primary-500 dark:text-primary-300">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.45em] text-primary-500 dark:text-primary-300">
             Check-in de participantes
           </p>
-          <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">
+          <h1 class="text-3xl font-semibold uppercase tracking-tight text-neutral-900 dark:text-white">
             {{ currentEventTitle }}
           </h1>
           <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Use o leitor de QR Code ou busque manualmente para confirmar presença.
+            Use o leitor de QR Code ou busque manualmente para confirmar presenca.
           </p>
-          <p v-if="currentEventDetails" class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+          <p v-if="currentEventDetails" class="mt-2 text-xs uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-400">
             {{ currentEventDetails }}
           </p>
         </div>
         <RouterLink
           to="/admin/dashboard"
-          class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+          class="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-200/70 bg-white/70 px-5 py-2.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
         >
           Voltar ao painel
         </RouterLink>
       </div>
-      <div v-if="summaryCards.length" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div
           v-for="card in summaryCards"
           :key="card.key"
-          class="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-inner shadow-primary-100/30 dark:border-white/10 dark:bg-white/5"
+          class="rounded-3xl border border-neutral-200/70 bg-white/90 p-4 shadow-sm shadow-primary-100/30 dark:border-white/10 dark:bg-neutral-900/60"
         >
           <div class="flex items-center justify-between">
             <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">
               {{ card.title }}
             </p>
             <span
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white"
+              class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white shadow-sm"
               :class="card.accent"
             >
               {{ card.icon }}
             </span>
           </div>
-          <p class="mt-2 text-2xl font-bold" :class="card.emphasisClass">
+          <p class="mt-2 text-3xl font-semibold" :class="card.emphasisClass">
             {{ card.value }}
           </p>
           <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ card.label }}</p>
         </div>
       </div>
     </BaseCard>
+    <TableSkeleton
+      v-if="loadingDashboard"
+      helperText="Carregando painel de check-in..."
+    />
 
     <BaseCard
       v-if="!loadingDashboard"
-      class="border border-white/40 bg-gradient-to-br from-neutral-50/60 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40"
+      class="border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
     >
-      <div class="grid gap-6 lg:grid-cols-12">
-        <div class="space-y-4 lg:col-span-7">
+      <div class="grid gap-8 lg:grid-cols-12">
+        <div class="order-2 space-y-4 lg:order-1 lg:col-span-5">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Leitor de QR Code</h2>
-            <span class="text-xs text-neutral-500 dark:text-neutral-400">Aponte para o QR do comprovante</span>
+            <span class="text-xs text-neutral-500 dark:text-neutral-400">Aponte para o QR Code do comprovante</span>
           </div>
-          <div class="rounded-2xl border border-dashed border-neutral-300/70 bg-white/70 p-3 shadow-inner dark:border-white/20 dark:bg-white/5">
-            <div class="relative w-full overflow-hidden rounded-2xl bg-black/40">
+          <div class="w-full max-w-[350px] rounded-3xl border border-dashed border-neutral-200 bg-white p-3 shadow-inner dark:border-white/10 dark:bg-neutral-900/40">
+            <div class="relative h-[220px] w-full overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800">
               <QrcodeStream
-                class="h-[200px] w-full sm:h-[260px]"
+                class="h-[220px] w-full"
                 :key="streamKey"
                 @decode="onDecode"
                 @init="onInit"
                 :constraints="cameraConstraints"
                 :paused="cameraPaused"
               >
-                <div v-if="cameraStatus" class="flex h-full min-h-[180px] items-center justify-center text-sm text-neutral-500 dark:text-neutral-400 sm:min-h-[220px]">
+                <div v-if="cameraStatus" class="flex h-full items-center justify-center text-sm text-neutral-500 dark:text-neutral-300">
                   {{ cameraStatus }}
                 </div>
               </QrcodeStream>
@@ -84,23 +83,23 @@
           <div class="flex flex-wrap items-center gap-3 text-sm text-neutral-500 dark:text-neutral-400">
             <button
               type="button"
-              class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5"
+              class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 bg-white/80 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5"
               @click="restartCamera"
               :disabled="isRestarting"
             >
-              {{ isRestarting ? "Reiniciando..." : "Recarregar câmera" }}
+              {{ isRestarting ? "Reiniciando..." : "Recarregar camera" }}
             </button>
             <button
               type="button"
-              class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5"
+              class="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 bg-white/80 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5"
               @click="toggleFacingMode"
               :disabled="isProcessing"
             >
-              Usar câmera {{ facingMode === "environment" ? "frontal" : "traseira" }}
+              Usar camera {{ facingMode === "environment" ? "frontal" : "traseira" }}
             </button>
           </div>
         </div>
-        <div class="space-y-4 lg:col-span-5">
+        <div class="order-1 space-y-4 lg:order-2 lg:col-span-7">
           <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Busca manual</h2>
           <form @submit.prevent="manualLookup" class="grid gap-4">
             <div>
@@ -112,31 +111,31 @@
                 inputmode="numeric"
                 maxlength="14"
                 autocomplete="off"
-                class="mt-2 w-full rounded-2xl border border-neutral-200/80 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
+                class="mt-2 w-full rounded-full border border-neutral-200/80 bg-white px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900/40 dark:text-white dark:placeholder-white/40 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
                 required
                 @input="handleCpfInputChange"
               />
             </div>
             <div>
               <label class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Data de nascimento</label>
-              <DateField v-model="birthDate" required class="mt-2" />
+              <DateField v-model="birthDate" required class="mt-2 w-full rounded-full" />
             </div>
             <button
               type="submit"
-              class="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              class="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/40 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               :disabled="manualLoading || isProcessing || confirming"
             >
               {{ manualLoading ? "Buscando..." : "Buscar participante" }}
             </button>
           </form>
-          <div v-if="feedback" class="rounded-2xl px-4 py-3 text-sm" :class="feedbackClass">
+          <div v-if="feedback" class="rounded-2xl border px-4 py-3 text-sm" :class="feedbackClass">
             {{ feedback }}
           </div>
         </div>
       </div>
     </BaseCard>
 
-    <BaseCard v-if="pendingCheckin" class="space-y-4 border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
+    <BaseCard v-if="pendingCheckin" class="space-y-4 border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60">
       <div class="flex flex-col gap-4 md:flex-row md:items-start">
         <div class="flex w-full max-w-[160px] items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800">
           <img
@@ -146,7 +145,7 @@
             class="h-40 w-full object-cover"
           />
           <span v-else class="px-3 text-center text-xs text-neutral-500 dark:text-neutral-300">
-            Foto não enviada
+            Foto nao enviada
           </span>
         </div>
         <div class="flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -170,7 +169,13 @@
             </span>
           </p>
           <p>Evento: {{ pendingCheckin.registration.eventTitle }}</p>
-          <p>Período: {{ pendingCheckin.registration.eventPeriod }}</p>
+          <p>Periodo: {{ pendingCheckin.registration.eventPeriod }}</p>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">
+            Status:
+            <span class="font-semibold text-neutral-700 dark:text-neutral-100">
+              {{ pendingCheckin.status === "READY" ? "Pago" : "Check-in realizado" }}
+            </span>
+          </p>
           <p>
             Igreja/Distrito: {{ pendingCheckin.registration.churchName }} -
             {{ pendingCheckin.registration.districtName }}
@@ -211,7 +216,7 @@
           :disabled="confirming"
           @click="confirmPending"
         >
-          {{ confirming ? "Confirmando..." : "Confirmar presenca" }}
+          {{ confirming ? "Confirmando..." : "Confirmar check-in" }}
         </button>
         <button
           type="button"
@@ -224,7 +229,7 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="admin.dashboard && !loadingDashboard" class="border border-white/40 bg-gradient-to-br from-neutral-50/70 to-white/80 dark:border-white/10 dark:from-neutral-900/70 dark:to-neutral-900/40">
+    <BaseCard v-if="admin.dashboard && !loadingDashboard" class="border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60">
       <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
         Ultimos check-ins
       </h2>
@@ -352,8 +357,8 @@ const fallbackEventInfo = computed(() => {
   const registration = pendingCheckin.value?.registration;
   if (!registration) return null;
   const details = [registration.eventLocation, registration.eventPeriod]
-    .filter((value) => value && value !== "Não informado")
-    .join(" - ");
+    .filter((value) => value && value !== "Nao informado")
+    .join(" \u2022 ");
   return {
     title: registration.eventTitle || "Evento",
     details
@@ -374,20 +379,24 @@ const currentEventDetails = computed(() => {
       : null;
     const period = start && end ? `${start} - ${end}` : start ?? end;
     const location = currentEvent.value.location ?? null;
-    return [location, period].filter(Boolean).join(" - ");
+    return [location, period].filter(Boolean).join(" \u2022 ");
   }
   return fallbackEventInfo.value?.details ?? "";
 });
 const summaryCards = computed(() => {
   const totals = admin.dashboard?.totals as Record<string, number> | undefined;
-  if (!totals) return [];
-  const total = (totals.CHECKED_IN ?? 0) + (totals.PAID ?? 0) + (totals.PENDING_PAYMENT ?? 0);
+  const resolved = {
+    checkedIn: totals?.CHECKED_IN ?? 0,
+    paid: totals?.PAID ?? 0,
+    pending: totals?.PENDING_PAYMENT ?? 0
+  };
+  const total = resolved.checkedIn + resolved.paid + resolved.pending;
   return [
     {
       key: "CHECKED_IN",
       title: "Check-ins confirmados",
       label: "Presencas registradas",
-      value: totals.CHECKED_IN ?? 0,
+      value: resolved.checkedIn,
       accent: "from-emerald-500 to-teal-500",
       icon: "?",
       emphasisClass: "text-emerald-600 dark:text-emerald-300"
@@ -396,7 +405,7 @@ const summaryCards = computed(() => {
       key: "PAID",
       title: "Pagos",
       label: "Prontos para check-in",
-      value: totals.PAID ?? 0,
+      value: resolved.paid,
       accent: "from-sky-500 to-blue-600",
       icon: "?",
       emphasisClass: "text-primary-600 dark:text-primary-300"
@@ -405,14 +414,14 @@ const summaryCards = computed(() => {
       key: "PENDING_PAYMENT",
       title: "Pendentes",
       label: "Aguardando pagamento",
-      value: totals.PENDING_PAYMENT ?? 0,
+      value: resolved.pending,
       accent: "from-amber-400 to-orange-500",
       icon: ".",
       emphasisClass: "text-amber-600 dark:text-amber-300"
     },
     {
       key: "TOTAL",
-      title: "Inscrições",
+      title: "Inscricoes",
       label: "Total encontradas",
       value: total,
       accent: "from-neutral-600 to-neutral-800",
@@ -436,7 +445,7 @@ const pendingStatusInfo = computed(() => {
   if (pendingCheckin.value.status === "READY") {
     return {
       label: "Pronto para confirmar",
-      description: "Revise os dados abaixo e confirme a presenca do participante.",
+      description: "Revise os dados abaixo e confirme o check-in do participante.",
       className: "bg-primary-50 text-primary-800 dark:bg-primary-500/20 dark:text-primary-100"
     };
   }
@@ -551,6 +560,7 @@ const loadDashboard = async (eventIdParam?: string | null) => {
   if (eventIdParam === null) {
     activeEventId.value = null;
     admin.dashboard = null;
+    loadingDashboard.value = false;
     return;
   }
   const routeEvent =
@@ -561,6 +571,7 @@ const loadDashboard = async (eventIdParam?: string | null) => {
   if (!resolved) {
     activeEventId.value = null;
     admin.dashboard = null;
+    loadingDashboard.value = false;
     return;
   }
   activeEventId.value = resolved;
@@ -569,6 +580,7 @@ const loadDashboard = async (eventIdParam?: string | null) => {
     await admin.loadDashboard(resolved);
   } catch (error) {
     console.error("Erro ao carregar painel de check-in", error);
+    admin.dashboard = null;
   } finally {
     loadingDashboard.value = false;
   }
@@ -578,7 +590,7 @@ const restartCamera = () => {
   if (isRestarting.value) return;
   isRestarting.value = true;
   cameraReady.value = false;
-  cameraError.value = "";
+  cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
   window.setTimeout(() => {
     streamKey.value += 1;
     isRestarting.value = false;
@@ -629,7 +641,7 @@ const onDecode = async (decoded: string) => {
     })) as AdminCheckinResponse;
     applyPendingResult(result, "scan", signature);
     if (result.status === "READY") {
-      showFeedback("Confirme os dados antes de registrar a presenca.", "success");
+      showFeedback("Confirme os dados antes de registrar o check-in.", "success");
     } else {
       showFeedback("Este participante ja realizou check-in anteriormente.", "success");
     }
@@ -647,11 +659,10 @@ const onInit = async (promise: Promise<MediaStream>) => {
   try {
     await promise;
     cameraReady.value = true;
-    cameraError.value = "";
+    cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
   } catch (error) {
     cameraReady.value = false;
-    cameraError.value =
-      "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
+    cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
   }
 };
 
@@ -685,7 +696,7 @@ const manualLookup = async () => {
     await loadDashboard(result.registration.eventId ?? undefined);
   } catch (error: any) {
     showFeedback(
-      error.response?.data?.message ?? "Não foi possível localizar a inscrição.",
+      error.response?.data?.message ?? "Nao foi possivel localizar a inscricao.",
       "error"
     );
     cancelPending();
@@ -739,7 +750,7 @@ const confirmPending = async () => {
     lastScanned.value = null;
   } catch (error: any) {
     showFeedback(
-      error.response?.data?.message ?? "Não foi possível confirmar o check-in.",
+      error.response?.data?.message ?? "Nao foi possivel confirmar o check-in.",
       "error"
     );
   } finally {

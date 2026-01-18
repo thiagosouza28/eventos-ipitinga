@@ -168,6 +168,23 @@ export const PixStatus: {
 export type PixStatus = (typeof PixStatus)[keyof typeof PixStatus]
 
 
+export const EventLotType: {
+  PADRAO: 'PADRAO',
+  PROMOCIONAL: 'PROMOCIONAL'
+};
+
+export type EventLotType = (typeof EventLotType)[keyof typeof EventLotType]
+
+
+export const EventLotStatus: {
+  ATIVO: 'ATIVO',
+  INATIVO: 'INATIVO',
+  ENCERRADO: 'ENCERRADO'
+};
+
+export type EventLotStatus = (typeof EventLotStatus)[keyof typeof EventLotStatus]
+
+
 export const OrderItemStatus: {
   PENDING: 'PENDING',
   CONFIRMED: 'CONFIRMED',
@@ -206,6 +223,14 @@ export const PixType: typeof $Enums.PixType
 export type PixStatus = $Enums.PixStatus
 
 export const PixStatus: typeof $Enums.PixStatus
+
+export type EventLotType = $Enums.EventLotType
+
+export const EventLotType: typeof $Enums.EventLotType
+
+export type EventLotStatus = $Enums.EventLotStatus
+
+export const EventLotStatus: typeof $Enums.EventLotStatus
 
 export type OrderItemStatus = $Enums.OrderItemStatus
 
@@ -14248,6 +14273,8 @@ export namespace Prisma {
     eventId: string | null
     name: string | null
     priceCents: number | null
+    type: $Enums.EventLotType | null
+    status: $Enums.EventLotStatus | null
     startsAt: Date | null
     endsAt: Date | null
     createdAt: Date | null
@@ -14258,6 +14285,8 @@ export namespace Prisma {
     eventId: string | null
     name: string | null
     priceCents: number | null
+    type: $Enums.EventLotType | null
+    status: $Enums.EventLotStatus | null
     startsAt: Date | null
     endsAt: Date | null
     createdAt: Date | null
@@ -14268,6 +14297,8 @@ export namespace Prisma {
     eventId: number
     name: number
     priceCents: number
+    type: number
+    status: number
     startsAt: number
     endsAt: number
     createdAt: number
@@ -14288,6 +14319,8 @@ export namespace Prisma {
     eventId?: true
     name?: true
     priceCents?: true
+    type?: true
+    status?: true
     startsAt?: true
     endsAt?: true
     createdAt?: true
@@ -14298,6 +14331,8 @@ export namespace Prisma {
     eventId?: true
     name?: true
     priceCents?: true
+    type?: true
+    status?: true
     startsAt?: true
     endsAt?: true
     createdAt?: true
@@ -14308,6 +14343,8 @@ export namespace Prisma {
     eventId?: true
     name?: true
     priceCents?: true
+    type?: true
+    status?: true
     startsAt?: true
     endsAt?: true
     createdAt?: true
@@ -14405,6 +14442,8 @@ export namespace Prisma {
     eventId: string
     name: string
     priceCents: number
+    type: $Enums.EventLotType
+    status: $Enums.EventLotStatus
     startsAt: Date
     endsAt: Date | null
     createdAt: Date
@@ -14434,6 +14473,8 @@ export namespace Prisma {
     eventId?: boolean
     name?: boolean
     priceCents?: boolean
+    type?: boolean
+    status?: boolean
     startsAt?: boolean
     endsAt?: boolean
     createdAt?: boolean
@@ -14448,6 +14489,8 @@ export namespace Prisma {
     eventId?: boolean
     name?: boolean
     priceCents?: boolean
+    type?: boolean
+    status?: boolean
     startsAt?: boolean
     endsAt?: boolean
     createdAt?: boolean
@@ -14470,6 +14513,8 @@ export namespace Prisma {
       eventId: string
       name: string
       priceCents: number
+      type: $Enums.EventLotType
+      status: $Enums.EventLotStatus
       startsAt: Date
       endsAt: Date | null
       createdAt: Date
@@ -14848,6 +14893,8 @@ export namespace Prisma {
     readonly eventId: FieldRef<"EventLot", 'String'>
     readonly name: FieldRef<"EventLot", 'String'>
     readonly priceCents: FieldRef<"EventLot", 'Int'>
+    readonly type: FieldRef<"EventLot", 'EventLotType'>
+    readonly status: FieldRef<"EventLot", 'EventLotStatus'>
     readonly startsAt: FieldRef<"EventLot", 'DateTime'>
     readonly endsAt: FieldRef<"EventLot", 'DateTime'>
     readonly createdAt: FieldRef<"EventLot", 'DateTime'>
@@ -25097,6 +25144,8 @@ export namespace Prisma {
     eventId: 'eventId',
     name: 'name',
     priceCents: 'priceCents',
+    type: 'type',
+    status: 'status',
     startsAt: 'startsAt',
     endsAt: 'endsAt',
     createdAt: 'createdAt'
@@ -25373,6 +25422,20 @@ export namespace Prisma {
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'EventLotType'
+   */
+  export type EnumEventLotTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventLotType'>
+    
+
+
+  /**
+   * Reference to a field of type 'EventLotStatus'
+   */
+  export type EnumEventLotStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventLotStatus'>
     
 
 
@@ -26546,6 +26609,8 @@ export namespace Prisma {
     eventId?: StringFilter<"EventLot"> | string
     name?: StringFilter<"EventLot"> | string
     priceCents?: IntFilter<"EventLot"> | number
+    type?: EnumEventLotTypeFilter<"EventLot"> | $Enums.EventLotType
+    status?: EnumEventLotStatusFilter<"EventLot"> | $Enums.EventLotStatus
     startsAt?: DateTimeFilter<"EventLot"> | Date | string
     endsAt?: DateTimeNullableFilter<"EventLot"> | Date | string | null
     createdAt?: DateTimeFilter<"EventLot"> | Date | string
@@ -26558,6 +26623,8 @@ export namespace Prisma {
     eventId?: SortOrder
     name?: SortOrder
     priceCents?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -26574,6 +26641,8 @@ export namespace Prisma {
     eventId?: StringFilter<"EventLot"> | string
     name?: StringFilter<"EventLot"> | string
     priceCents?: IntFilter<"EventLot"> | number
+    type?: EnumEventLotTypeFilter<"EventLot"> | $Enums.EventLotType
+    status?: EnumEventLotStatusFilter<"EventLot"> | $Enums.EventLotStatus
     startsAt?: DateTimeFilter<"EventLot"> | Date | string
     endsAt?: DateTimeNullableFilter<"EventLot"> | Date | string | null
     createdAt?: DateTimeFilter<"EventLot"> | Date | string
@@ -26586,6 +26655,8 @@ export namespace Prisma {
     eventId?: SortOrder
     name?: SortOrder
     priceCents?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -26604,6 +26675,8 @@ export namespace Prisma {
     eventId?: StringWithAggregatesFilter<"EventLot"> | string
     name?: StringWithAggregatesFilter<"EventLot"> | string
     priceCents?: IntWithAggregatesFilter<"EventLot"> | number
+    type?: EnumEventLotTypeWithAggregatesFilter<"EventLot"> | $Enums.EventLotType
+    status?: EnumEventLotStatusWithAggregatesFilter<"EventLot"> | $Enums.EventLotStatus
     startsAt?: DateTimeWithAggregatesFilter<"EventLot"> | Date | string
     endsAt?: DateTimeNullableWithAggregatesFilter<"EventLot"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"EventLot"> | Date | string
@@ -28705,6 +28778,8 @@ export namespace Prisma {
     id?: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -28717,6 +28792,8 @@ export namespace Prisma {
     eventId: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -28727,6 +28804,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28739,6 +28818,8 @@ export namespace Prisma {
     eventId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28750,6 +28831,8 @@ export namespace Prisma {
     eventId: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -28759,6 +28842,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28769,6 +28854,8 @@ export namespace Prisma {
     eventId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -30757,6 +30844,20 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
+  export type EnumEventLotTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotType | EnumEventLotTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotType[]
+    notIn?: $Enums.EventLotType[]
+    not?: NestedEnumEventLotTypeFilter<$PrismaModel> | $Enums.EventLotType
+  }
+
+  export type EnumEventLotStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotStatus | EnumEventLotStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotStatus[]
+    notIn?: $Enums.EventLotStatus[]
+    not?: NestedEnumEventLotStatusFilter<$PrismaModel> | $Enums.EventLotStatus
+  }
+
   export type EventLotEventIdNameCompoundUniqueInput = {
     eventId: string
     name: string
@@ -30767,6 +30868,8 @@ export namespace Prisma {
     eventId?: SortOrder
     name?: SortOrder
     priceCents?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     createdAt?: SortOrder
@@ -30781,6 +30884,8 @@ export namespace Prisma {
     eventId?: SortOrder
     name?: SortOrder
     priceCents?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     createdAt?: SortOrder
@@ -30791,6 +30896,8 @@ export namespace Prisma {
     eventId?: SortOrder
     name?: SortOrder
     priceCents?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
     startsAt?: SortOrder
     endsAt?: SortOrder
     createdAt?: SortOrder
@@ -30798,6 +30905,26 @@ export namespace Prisma {
 
   export type EventLotSumOrderByAggregateInput = {
     priceCents?: SortOrder
+  }
+
+  export type EnumEventLotTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotType | EnumEventLotTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotType[]
+    notIn?: $Enums.EventLotType[]
+    not?: NestedEnumEventLotTypeWithAggregatesFilter<$PrismaModel> | $Enums.EventLotType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEventLotTypeFilter<$PrismaModel>
+    _max?: NestedEnumEventLotTypeFilter<$PrismaModel>
+  }
+
+  export type EnumEventLotStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotStatus | EnumEventLotStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotStatus[]
+    notIn?: $Enums.EventLotStatus[]
+    not?: NestedEnumEventLotStatusWithAggregatesFilter<$PrismaModel> | $Enums.EventLotStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEventLotStatusFilter<$PrismaModel>
+    _max?: NestedEnumEventLotStatusFilter<$PrismaModel>
   }
 
   export type ExpenseCountOrderByAggregateInput = {
@@ -33265,6 +33392,14 @@ export namespace Prisma {
     connect?: OrderWhereUniqueInput | OrderWhereUniqueInput[]
   }
 
+  export type EnumEventLotTypeFieldUpdateOperationsInput = {
+    set?: $Enums.EventLotType
+  }
+
+  export type EnumEventLotStatusFieldUpdateOperationsInput = {
+    set?: $Enums.EventLotStatus
+  }
+
   export type EventUpdateOneRequiredWithoutLotsNestedInput = {
     create?: XOR<EventCreateWithoutLotsInput, EventUncheckedCreateWithoutLotsInput>
     connectOrCreate?: EventCreateOrConnectWithoutLotsInput
@@ -34117,6 +34252,40 @@ export namespace Prisma {
     gt?: InputJsonValue
     gte?: InputJsonValue
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumEventLotTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotType | EnumEventLotTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotType[]
+    notIn?: $Enums.EventLotType[]
+    not?: NestedEnumEventLotTypeFilter<$PrismaModel> | $Enums.EventLotType
+  }
+
+  export type NestedEnumEventLotStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotStatus | EnumEventLotStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotStatus[]
+    notIn?: $Enums.EventLotStatus[]
+    not?: NestedEnumEventLotStatusFilter<$PrismaModel> | $Enums.EventLotStatus
+  }
+
+  export type NestedEnumEventLotTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotType | EnumEventLotTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotType[]
+    notIn?: $Enums.EventLotType[]
+    not?: NestedEnumEventLotTypeWithAggregatesFilter<$PrismaModel> | $Enums.EventLotType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEventLotTypeFilter<$PrismaModel>
+    _max?: NestedEnumEventLotTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEventLotStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EventLotStatus | EnumEventLotStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.EventLotStatus[]
+    notIn?: $Enums.EventLotStatus[]
+    not?: NestedEnumEventLotStatusWithAggregatesFilter<$PrismaModel> | $Enums.EventLotStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEventLotStatusFilter<$PrismaModel>
+    _max?: NestedEnumEventLotStatusFilter<$PrismaModel>
   }
 
   export type NestedEnumOrderItemStatusFilter<$PrismaModel = never> = {
@@ -35303,6 +35472,8 @@ export namespace Prisma {
     id?: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -35313,6 +35484,8 @@ export namespace Prisma {
     id?: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -35733,6 +35906,8 @@ export namespace Prisma {
     eventId?: StringFilter<"EventLot"> | string
     name?: StringFilter<"EventLot"> | string
     priceCents?: IntFilter<"EventLot"> | number
+    type?: EnumEventLotTypeFilter<"EventLot"> | $Enums.EventLotType
+    status?: EnumEventLotStatusFilter<"EventLot"> | $Enums.EventLotStatus
     startsAt?: DateTimeFilter<"EventLot"> | Date | string
     endsAt?: DateTimeNullableFilter<"EventLot"> | Date | string | null
     createdAt?: DateTimeFilter<"EventLot"> | Date | string
@@ -35861,6 +36036,8 @@ export namespace Prisma {
     id?: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -35872,6 +36049,8 @@ export namespace Prisma {
     eventId: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -36455,6 +36634,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36466,6 +36647,8 @@ export namespace Prisma {
     eventId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43387,6 +43570,8 @@ export namespace Prisma {
     id?: string
     name: string
     priceCents: number
+    type?: $Enums.EventLotType
+    status?: $Enums.EventLotStatus
     startsAt: Date | string
     endsAt?: Date | string | null
     createdAt?: Date | string
@@ -43465,6 +43650,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43475,6 +43662,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -43485,6 +43674,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     priceCents?: IntFieldUpdateOperationsInput | number
+    type?: EnumEventLotTypeFieldUpdateOperationsInput | $Enums.EventLotType
+    status?: EnumEventLotStatusFieldUpdateOperationsInput | $Enums.EventLotStatus
     startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endsAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

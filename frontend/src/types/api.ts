@@ -111,6 +111,8 @@ export interface EventLot {
   id: string;
   name: string;
   priceCents: number;
+  type?: "PADRAO" | "PROMOCIONAL";
+  status?: "ATIVO" | "INATIVO" | "ENCERRADO";
   startsAt: string;
   endsAt: string | null;
 }

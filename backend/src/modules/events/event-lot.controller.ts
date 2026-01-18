@@ -13,11 +13,14 @@ const lotParamSchema = z.object({
   lotId: cuidOrUuid
 });
 
+const lotTypeSchema = z.enum(["PADRAO", "PROMOCIONAL"]);
+
 const createSchema = z.object({
   name: z.string().min(2),
   priceCents: z.number().int().min(0),
   startsAt: z.string().datetime(),
-  endsAt: z.string().datetime().nullable().optional()
+  endsAt: z.string().datetime().nullable().optional(),
+  type: lotTypeSchema.optional()
 });
 
 const updateSchema = createSchema.partial();
@@ -37,7 +40,8 @@ export const createEventLotHandler = async (request: Request, response: Response
       name: payload.name,
       priceCents: payload.priceCents,
       startsAt: new Date(payload.startsAt),
-      endsAt: payload.endsAt == null ? null : new Date(payload.endsAt)
+      endsAt: payload.endsAt == null ? null : new Date(payload.endsAt),
+      type: payload.type
     },
     request.user
   );
@@ -59,7 +63,8 @@ export const updateEventLotHandler = async (request: Request, response: Response
           ? undefined
           : payload.endsAt === null
             ? null
-            : new Date(payload.endsAt)
+            : new Date(payload.endsAt),
+      type: payload.type
     },
     request.user
   );

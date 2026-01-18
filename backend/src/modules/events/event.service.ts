@@ -59,6 +59,8 @@ const serializeLot = (lot: EventLotEntity | null | undefined) => {
     id: lot.id,
     name: lot.name,
     priceCents: lot.priceCents,
+    type: (lot as any).type ?? "PADRAO",
+    status: (lot as any).status ?? "INATIVO",
     startsAt: lot.startsAt,
     endsAt: lot.endsAt
   };

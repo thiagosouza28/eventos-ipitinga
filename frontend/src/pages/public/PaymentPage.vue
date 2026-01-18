@@ -1,9 +1,9 @@
 ﻿ï»¿<template>
   <div class="space-y-6">
     <BaseCard>
-      <div class="space-y-3">
+      <div class="space-y-2 sm:space-y-3">
         <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">Pagamento do pedido</h1>
-        <p class="text-neutral-500 dark:text-neutral-400">
+        <p class="max-w-2xl text-sm leading-relaxed text-neutral-500 dark:text-neutral-400 sm:text-base">
           {{
             isFreeEvent
               ? "Este evento é gratuito. As inscrições foram confirmadas automaticamente e nenhum pagamento é necessário."
@@ -16,52 +16,100 @@
     <BaseCard v-if="payment">
       <div class="flex flex-col gap-6 md:flex-row md:items-start">
         <div class="flex-1 space-y-4">
-          <div class="flex items-start gap-3 rounded-xl border px-4 py-3" :class="statusStyles.container">
-            <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full text-white" :class="statusStyles.badge">
-              {{ statusIcon }}
+          <div
+            class="flex flex-col gap-3 rounded-2xl border px-4 py-3 text-center sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-4 sm:text-left"
+            :class="statusStyles.container"
+          >
+            <span
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full text-white sm:h-11 sm:w-11"
+              :class="statusStyles.badge"
+            >
+              <svg
+                v-if="statusIcon === 'check'"
+                class="h-4 w-4 sm:h-5 sm:w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+              <svg
+                v-else-if="statusIcon === 'x'"
+                class="h-4 w-4 sm:h-5 sm:w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 6l12 12M6 18L18 6" />
+              </svg>
+              <svg
+                v-else
+                class="h-4 w-4 sm:h-5 sm:w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
             </span>
-            <div>
-              <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">{{ statusTitle }}</h2>
-              <p class="text-sm text-neutral-500 dark:text-neutral-400">
+            <div class="space-y-1">
+              <h2 class="text-base font-semibold text-neutral-800 dark:text-neutral-100 sm:text-lg">
+                {{ statusTitle }}
+              </h2>
+              <p class="text-xs text-neutral-600 dark:text-neutral-300 sm:text-sm">
                 {{ statusMessage }}
               </p>
-              <p v-if="payment.statusDetail" class="mt-1 text-xs text-neutral-400">
+              <p v-if="payment.statusDetail" class="text-xs text-neutral-400 dark:text-neutral-500">
                 Detalhe do provedor: {{ payment.statusDetail }}
               </p>
             </div>
           </div>
 
-          <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60">
-            <div class="flex items-center justify-between gap-3 text-sm text-neutral-600 dark:text-neutral-300">
-              <span>ID do pedido</span>
-              <code class="rounded bg-neutral-100 px-2 py-1 text-xs dark:bg-neutral-800">{{ props.orderId }}</code>
+          <div class="rounded-2xl border border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-700 dark:bg-neutral-900/60 sm:p-6">
+            <div class="flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-300 sm:flex-row sm:items-center sm:justify-between">
+              <span class="text-xs uppercase tracking-wide text-neutral-500">ID do pedido</span>
+              <code class="rounded bg-white px-2 py-1 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
+                {{ props.orderId }}
+              </code>
             </div>
-          <div class="mt-4 grid gap-3 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2">
-            <div>
-              <span class="block text-xs uppercase tracking-wide text-neutral-400">Evento</span>
-              <span>{{ eventStore.event?.title ?? "Carregando..." }}</span>
-            </div>
-              <div>
-                <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscrição</span>
+            <div class="mt-5 grid gap-4 text-sm text-neutral-700 dark:text-neutral-200 md:grid-cols-2">
+              <div class="flex flex-col gap-1">
+                <span class="text-xs uppercase tracking-wide text-neutral-500">Evento</span>
+                <span class="font-medium text-neutral-800 dark:text-neutral-100">
+                  {{ eventStore.event?.title ?? "Carregando..." }}
+                </span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-xs uppercase tracking-wide text-neutral-500">Valor por inscrição</span>
                 <span>{{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents) }}</span>
               </div>
-              <div>
-                <span class="block text-xs uppercase tracking-wide text-neutral-400">Total</span>
-              <span>{{ totalFormatted }}</span>
+              <div class="flex flex-col gap-1">
+                <span class="text-xs uppercase tracking-wide text-neutral-500">Total</span>
+                <span class="font-medium">{{ totalFormatted }}</span>
+              </div>
+              <div v-if="currentLotName" class="flex flex-col gap-1">
+                <span class="text-xs uppercase tracking-wide text-neutral-500">Lote vigente</span>
+                <span>{{ currentLotName }}</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <span class="text-xs uppercase tracking-wide text-neutral-500">Forma de pagamento</span>
+                <span>{{ paymentMethodName }}</span>
+              </div>
+              <div v-if="payment?.paidAt" class="flex flex-col gap-1">
+                <span class="text-xs uppercase tracking-wide text-neutral-500">Data do pagamento</span>
+                <span>{{ formatDate(payment.paidAt) }}</span>
+              </div>
             </div>
-            <div v-if="currentLotName">
-              <span class="block text-xs uppercase tracking-wide text-neutral-400">Lote vigente</span>
-              <span>{{ currentLotName }}</span>
-            </div>
-            <div>
-              <span class="block text-xs uppercase tracking-wide text-neutral-400">Forma de pagamento</span>
-              <span>{{ paymentMethodName }}</span>
-            </div>
-            <div v-if="payment?.paidAt">
-              <span class="block text-xs uppercase tracking-wide text-neutral-400">Pagamento registrado em</span>
-              <span>{{ formatDate(payment.paidAt) }}</span>
-            </div>
-          </div>
             <div
               v-if="pendingParticipants.length"
               class="mt-4 border-t border-neutral-200 pt-4 text-sm text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"
@@ -86,18 +134,18 @@
             </div>
             <div
               v-if="receiptsReady"
-              class="mt-4 space-y-5 rounded-2xl border border-emerald-200/70 bg-emerald-50/80 p-5 text-sm text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-50"
+              class="mt-4 space-y-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-50 sm:p-6"
             >
               <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p class="text-base font-semibold">Comprovantes disponiveis</p>
+                  <p class="text-base font-semibold">Comprovantes disponíveis</p>
                   <p class="text-sm text-emerald-800 dark:text-emerald-100/80">
                     Visualize antes de baixar: abrimos os PDFs em nova aba com opções para exportar ou apenas checar o conteúdo.
                   </p>
                 </div>
                 <button
                   type="button"
-                  class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+                  class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400 sm:w-auto"
                   :disabled="receiptPreviewLoading"
                   @click="handleOpenAllReceipts"
                 >
@@ -112,13 +160,13 @@
                 <article
                   v-for="receipt in receiptLinks"
                   :key="receipt.registrationId"
-                  class="rounded-2xl border border-white/70 bg-white/90 p-4 text-neutral-700 shadow dark:border-emerald-500/20 dark:bg-emerald-900/40 dark:text-emerald-50"
+                  class="rounded-2xl border border-emerald-100 bg-white p-4 text-neutral-700 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-900/30 dark:text-emerald-50"
                 >
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <p class="text-sm font-semibold text-neutral-900 dark:text-white">{{ receipt.fullName }}</p>
                       <p class="text-xs text-neutral-500 dark:text-emerald-100/70">
-                        Inscricao {{ receipt.registrationId.slice(0, 8).toUpperCase() }}
+                        Código da inscrição {{ receipt.registrationId.slice(0, 8).toUpperCase() }}
                       </p>
                     </div>
                     <span
@@ -129,15 +177,18 @@
                     </span>
                   </div>
                   <p class="mt-3 text-xs text-neutral-500 dark:text-emerald-100/70">
-                    Gere o PDF deste participante para apresentar no check-in ou compartilhar por mensagem.
+                    Gere o PDF deste participante para apresentar no check-in ou compartilhar.
                   </p>
                   <button
                     type="button"
-                    class="mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-emerald-500/40 dark:text-emerald-50"
+                    class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800 sm:w-auto dark:border-emerald-500/40 dark:bg-transparent dark:text-emerald-50"
                     :disabled="receiptPreviewLoading && previewingReceiptId === receipt.registrationId"
                     @click="handleOpenSingleReceipt(receipt.registrationId)"
                   >
-                    <span class="h-4 w-4" aria-hidden="true">ï¿½?"</span>
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M4 7h9l3 3h4v7H4z" />
+                      <path d="M13 7v3h3" />
+                    </svg>
                     <span v-if="previewingReceiptId === receipt.registrationId && receiptPreviewLoading" class="flex items-center gap-2">
                       <span class="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
                       Abrindo...
@@ -154,7 +205,7 @@
               v-else-if="receiptsGenerating"
               class="mt-4 rounded-xl border border-neutral-200 bg-white p-4 text-sm text-neutral-600 dark:border-neutral-700 dark:bg-neutral-900/60 dark:text-neutral-200"
             >
-              Estamos finalizando os comprovantes deste pedido. Assim que ficarem prontos voce podera visualiza-los em uma nova aba.
+              Estamos finalizando os comprovantes deste pedido. Assim que ficarem prontos você poderá visualizá-los em uma nova aba.
             </div>
           </div>
         </div>
@@ -193,7 +244,7 @@
                   :disabled="!payment.pixQrData"
                   @click="copyPixCode"
                 >
-                  Copiar codigo
+                  Copiar código
                 </button>
               </header>
               <p
@@ -214,7 +265,7 @@
                   <span class="text-sm">Gerando QR Code do Pix...</span>
                 </div>
                 <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                  Escaneie com o aplicativo do seu banco ou cole o codigo Pix abaixo.
+                  Escaneie com o aplicativo do seu banco ou cole o código Pix abaixo.
                 </p>
                 <textarea
                   v-if="payment.pixQrData?.qr_code"
@@ -229,7 +280,8 @@
               </div>
             </section>
 
-            <section v-if="!isPixPayment && !isManualPayment" class="space-y-3">`n              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
+            <section v-if="!isPixPayment && !isManualPayment" class="space-y-3">
+              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
               <p class="text-sm text-neutral-500 dark:text-neutral-400">
                 Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.
               </p>
@@ -386,9 +438,12 @@ const apiBase = (() => {
   }
 })();
 
+const normalizeReceiptPath = (path: string) => path.replace(/\/api\/api\//g, "/api/");
 const resolveReceiptUrl = (target: string) => {
   try {
-    return new URL(target, apiBase).toString();
+    const resolved = new URL(target, apiBase);
+    const normalizedPath = normalizeReceiptPath(resolved.pathname);
+    return `${apiBase.origin}${normalizedPath}${resolved.search}`;
   } catch {
     return target;
   }
@@ -557,7 +612,7 @@ const statusMessage = computed(() => {
     return "Apresente este comprovante na tesouraria para concluir o pagamento. Assim que o recebimento for registrado, atualizaremos automaticamente.";
   }
   if (isPaid.value) {
-    return "Tudo certo! As inscrições foram confirmadas e os recibos serão disponibilizados em instantes.";
+    return "Tudo certo! As inscrições foram confirmadas e os recibos estarão disponíveis em instantes.";
   }
   if (payment.value?.status === "CANCELED") {
     return "O pagamento foi cancelado pelo Mercado Pago. Gere um novo checkout para tentar novamente.";
@@ -569,34 +624,27 @@ const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
 const pixWasReactivated = computed(() => Boolean(payment.value?.pixReactivated));
 
 const statusIcon = computed(() => {
-  if (isFreeEvent.value || isPaid.value) return "OK";
-  if (isManualPayment.value) return "..";
-  if (payment.value?.status === "CANCELED") return "X";
-  return "..";
+  if (isFreeEvent.value || isPaid.value) return "check";
+  if (payment.value?.status === "CANCELED") return "x";
+  return "clock";
 });
 
 const statusStyles = computed(() => {
   if (isFreeEvent.value || isPaid.value) {
     return {
-      container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
-      badge: "bg-primary-600"
-    };
-  }
-  if (isManualPayment.value) {
-    return {
-      container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
-      badge: "bg-neutral-900"
+      container: "border-emerald-200 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10",
+      badge: "bg-emerald-500"
     };
   }
   if (payment.value?.status === "CANCELED") {
     return {
-      container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
-      badge: "bg-black"
+      container: "border-red-200 bg-red-50 text-red-900 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-100",
+      badge: "bg-red-500"
     };
   }
   return {
-    container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
-    badge: "bg-primary-500"
+    container: "border-blue-200 bg-blue-50/70 dark:border-blue-500/40 dark:bg-blue-500/10",
+    badge: "bg-blue-500"
   };
 });
 
@@ -631,7 +679,7 @@ const loadPayment = async (force = false) => {
 const copyPixCode = async () => {
   if (!payment.value?.pixQrData?.qr_code) return;
   await navigator.clipboard.writeText(payment.value.pixQrData.qr_code);
-  alert("Codigo Pix copiado!");
+  alert("Código Pix copiado!");
 };
 
 // Função para abrir checkout - garante que apenas este pedido seja processado

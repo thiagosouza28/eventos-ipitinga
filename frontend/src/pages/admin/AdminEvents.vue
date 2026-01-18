@@ -973,6 +973,21 @@
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+              Tipo do lote
+            </label>
+            <select
+              v-model="lotForm.type"
+              class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+            >
+              <option value="PADRAO">Padrao</option>
+              <option value="PROMOCIONAL">Promocional</option>
+            </select>
+            <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+              Promocional exige data final e desativa os demais lotes no periodo.
+            </p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
               Valor
             </label>
             <input
@@ -995,11 +1010,12 @@
           </div>
           <div>
             <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
-              Fim (opcional)
+              Fim {{ lotForm.type === "PROMOCIONAL" ? "(obrigatorio)" : "(opcional)" }}
             </label>
             <input
               v-model="lotForm.endsAt"
               type="datetime-local"
+              :required="lotForm.type === 'PROMOCIONAL'"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
             />
           </div>
@@ -1282,7 +1298,8 @@ const lotForm = reactive({
   name: "",
   price: "",
   startsAt: "",
-  endsAt: ""
+  endsAt: "",
+  type: "PADRAO" as "PADRAO" | "PROMOCIONAL"
 });
 const lotSaving = ref(false);
 const lotDeletingId = ref<string | null>(null);
@@ -1373,6 +1390,9 @@ const formatDateTimeBr = (value: string) => {
 };
 
 const isLotActive = (lot: EventLot) => {
+  if (lot.status) {
+    return lot.status === "ATIVO";
+  }
   const now = Date.now();
   const start = new Date(lot.startsAt).getTime();
   const end = lot.endsAt ? new Date(lot.endsAt).getTime() : null;
@@ -1381,21 +1401,41 @@ const isLotActive = (lot: EventLot) => {
   return start <= now && (end === null || end >= now);
 };
 
+const isLotClosed = (lot: EventLot) => {
+  if (lot.status === "ENCERRADO") return true;
+  if (!lot.endsAt) return false;
+  const end = new Date(lot.endsAt).getTime();
+  if (Number.isNaN(end)) return false;
+  return end < Date.now();
+};
+
 const isLotFuture = (lot: EventLot) => {
   const start = new Date(lot.startsAt).getTime();
   if (Number.isNaN(start)) return false;
+  if (lot.status) {
+    return lot.status === "INATIVO" && start > Date.now();
+  }
   return start > Date.now();
+};
+
+const isLotInactive = (lot: EventLot) => {
+  if (!lot.status) return false;
+  if (lot.status !== "INATIVO") return false;
+  return !isLotFuture(lot) && !isLotClosed(lot);
 };
 
 const lotStatusLabel = (lot: EventLot) => {
   if (isLotActive(lot)) return "Vigente";
+  if (isLotClosed(lot)) return "Encerrado";
   if (isLotFuture(lot)) return "Agendado";
-  return "Encerrado";
+  if (isLotInactive(lot)) return "Inativo";
+  return "Inativo";
 };
 
 const lotBadgeClass = (lot: EventLot) => {
   if (isLotActive(lot)) return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
   if (isLotFuture(lot)) return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+  if (isLotInactive(lot)) return "bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-100";
   return "bg-black/80 text-white dark:bg-neutral-900 dark:text-white";
 };
 
@@ -1544,6 +1584,7 @@ const resetLotForm = () => {
     details.event?.currentLot?.startsAt ?? details.event?.startDate ?? new Date().toISOString();
   lotForm.startsAt = toLocalInputSafe(referenceStart);
   lotForm.endsAt = "";
+  lotForm.type = "PADRAO";
 };
 
 const startLotEdit = (lot: EventLot) => {
@@ -1555,6 +1596,7 @@ const startLotEdit = (lot: EventLot) => {
   lotForm.price = formatPriceDisplay(lot.priceCents);
   lotForm.startsAt = toLocalInput(lot.startsAt);
   lotForm.endsAt = lot.endsAt ? toLocalInput(lot.endsAt) : "";
+  lotForm.type = lot.type ?? "PADRAO";
   lotModalOpen.value = true;
 };
 
@@ -1658,6 +1700,11 @@ const submitLot = async () => {
     return;
   }
 
+  if (lotForm.type === "PROMOCIONAL" && !lotForm.endsAt) {
+    showError("Falha ao salvar lote", { message: "Informe a data final para o lote promocional." });
+    return;
+  }
+
   const priceCents = toPriceCents(lotForm.price);
   const startDate = new Date(lotForm.startsAt);
   if (Number.isNaN(startDate.getTime())) {
@@ -1687,7 +1734,8 @@ const submitLot = async () => {
         name: lotForm.name.trim(),
         priceCents,
         startsAt: startDate.toISOString(),
-        endsAt: endsAtIso
+        endsAt: endsAtIso,
+        type: lotForm.type
       });
     } else {
       // Criar novo lote
@@ -1695,7 +1743,8 @@ const submitLot = async () => {
         name: lotForm.name.trim(),
         priceCents,
         startsAt: startDate.toISOString(),
-        endsAt: endsAtIso
+        endsAt: endsAtIso,
+        type: lotForm.type
       });
     }
     refreshDetailsEvent();

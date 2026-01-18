@@ -288,6 +288,8 @@ model EventLot {
   eventId    String
   name       String
   priceCents Int
+  type       EventLotType   @default(PADRAO)
+  status     EventLotStatus @default(INATIVO)
   startsAt   DateTime
   endsAt     DateTime?
   createdAt  DateTime  @default(now())
@@ -412,6 +414,17 @@ enum PixType {
 enum PixStatus {
   VALIDATED
   PENDING
+}
+
+enum EventLotType {
+  PADRAO
+  PROMOCIONAL
+}
+
+enum EventLotStatus {
+  ATIVO
+  INATIVO
+  ENCERRADO
 }
 
 enum OrderItemStatus {
