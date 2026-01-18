@@ -335,6 +335,9 @@ const ensureDocUrl = async (doc?: PreviewDocument) => {
     }
     if (doc.sourceUrl) {
       const sourceUrl = normalizeDocumentUrl(doc.sourceUrl);
+      if (!sourceUrl) {
+        throw new Error("Origem do documento nao informada.");
+      }
       const response = await fetch(sourceUrl, { credentials: "include" });
       if (!response.ok) {
         const message = await resolveResponseMessage(

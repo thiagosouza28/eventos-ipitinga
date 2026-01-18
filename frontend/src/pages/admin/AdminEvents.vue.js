@@ -183,7 +183,8 @@ const lotForm = reactive({
     name: "",
     price: "",
     startsAt: "",
-    endsAt: ""
+    endsAt: "",
+    type: "PADRAO"
 });
 const lotSaving = ref(false);
 const lotDeletingId = ref(null);
@@ -248,6 +249,9 @@ const formatDateTimeBr = (value) => {
     });
 };
 const isLotActive = (lot) => {
+    if (lot.status) {
+        return lot.status === "ATIVO";
+    }
     const now = Date.now();
     const start = new Date(lot.startsAt).getTime();
     const end = lot.endsAt ? new Date(lot.endsAt).getTime() : null;
@@ -257,24 +261,50 @@ const isLotActive = (lot) => {
         return false;
     return start <= now && (end === null || end >= now);
 };
+const isLotClosed = (lot) => {
+    if (lot.status === "ENCERRADO")
+        return true;
+    if (!lot.endsAt)
+        return false;
+    const end = new Date(lot.endsAt).getTime();
+    if (Number.isNaN(end))
+        return false;
+    return end < Date.now();
+};
 const isLotFuture = (lot) => {
     const start = new Date(lot.startsAt).getTime();
     if (Number.isNaN(start))
         return false;
+    if (lot.status) {
+        return lot.status === "INATIVO" && start > Date.now();
+    }
     return start > Date.now();
+};
+const isLotInactive = (lot) => {
+    if (!lot.status)
+        return false;
+    if (lot.status !== "INATIVO")
+        return false;
+    return !isLotFuture(lot) && !isLotClosed(lot);
 };
 const lotStatusLabel = (lot) => {
     if (isLotActive(lot))
         return "Vigente";
+    if (isLotClosed(lot))
+        return "Encerrado";
     if (isLotFuture(lot))
         return "Agendado";
-    return "Encerrado";
+    if (isLotInactive(lot))
+        return "Inativo";
+    return "Inativo";
 };
 const lotBadgeClass = (lot) => {
     if (isLotActive(lot))
         return "bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-100";
     if (isLotFuture(lot))
         return "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-100";
+    if (isLotInactive(lot))
+        return "bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-100";
     return "bg-black/80 text-white dark:bg-neutral-900 dark:text-white";
 };
 const isCurrentLot = (lot) => details.event?.currentLot?.id === lot.id;
@@ -404,6 +434,7 @@ const resetLotForm = () => {
     const referenceStart = details.event?.currentLot?.startsAt ?? details.event?.startDate ?? new Date().toISOString();
     lotForm.startsAt = toLocalInputSafe(referenceStart);
     lotForm.endsAt = "";
+    lotForm.type = "PADRAO";
 };
 const startLotEdit = (lot) => {
     if (!assertPermission(eventPermissions.canEdit.value, "Você não possui permissão para editar lotes.")) {
@@ -414,6 +445,7 @@ const startLotEdit = (lot) => {
     lotForm.price = formatPriceDisplay(lot.priceCents);
     lotForm.startsAt = toLocalInput(lot.startsAt);
     lotForm.endsAt = lot.endsAt ? toLocalInput(lot.endsAt) : "";
+    lotForm.type = lot.type ?? "PADRAO";
     lotModalOpen.value = true;
 };
 const cancelLotEdit = () => {
@@ -511,6 +543,10 @@ const submitLot = async () => {
         showError("Falha ao salvar lote", { message: "Informe a data de início do lote." });
         return;
     }
+    if (lotForm.type === "PROMOCIONAL" && !lotForm.endsAt) {
+        showError("Falha ao salvar lote", { message: "Informe a data final para o lote promocional." });
+        return;
+    }
     const priceCents = toPriceCents(lotForm.price);
     const startDate = new Date(lotForm.startsAt);
     if (Number.isNaN(startDate.getTime())) {
@@ -538,7 +574,8 @@ const submitLot = async () => {
                 name: lotForm.name.trim(),
                 priceCents,
                 startsAt: startDate.toISOString(),
-                endsAt: endsAtIso
+                endsAt: endsAtIso,
+                type: lotForm.type
             });
         }
         else {
@@ -547,7 +584,8 @@ const submitLot = async () => {
                 name: lotForm.name.trim(),
                 priceCents,
                 startsAt: startDate.toISOString(),
-                endsAt: endsAtIso
+                endsAt: endsAtIso,
+                type: lotForm.type
             });
         }
         refreshDetailsEvent();
@@ -2285,6 +2323,23 @@ if (__VLS_ctx.eventPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.lotForm.type),
+        ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "PADRAO",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "PROMOCIONAL",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "mt-1 text-xs text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         value: (__VLS_ctx.lotForm.price),
         type: "text",
@@ -2305,8 +2360,10 @@ if (__VLS_ctx.eventPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400" },
     });
+    (__VLS_ctx.lotForm.type === "PROMOCIONAL" ? "(obrigatorio)" : "(opcional)");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
         type: "datetime-local",
+        required: (__VLS_ctx.lotForm.type === 'PROMOCIONAL'),
         ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" },
     });
     (__VLS_ctx.lotForm.endsAt);
@@ -3686,6 +3743,26 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;

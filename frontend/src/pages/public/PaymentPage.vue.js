@@ -40,9 +40,12 @@ const apiBase = (() => {
         throw new Error("Failed to resolve API base URL. Configure VITE_API_URL or VITE_APP_URL in the frontend .env.");
     }
 })();
+const normalizeReceiptPath = (path) => path.replace(/\/api\/api\//g, "/api/");
 const resolveReceiptUrl = (target) => {
     try {
-        return new URL(target, apiBase).toString();
+        const resolved = new URL(target, apiBase);
+        const normalizedPath = normalizeReceiptPath(resolved.pathname);
+        return `${apiBase.origin}${normalizedPath}${resolved.search}`;
     }
     catch {
         return target;
@@ -191,7 +194,7 @@ const statusMessage = computed(() => {
         return "Apresente este comprovante na tesouraria para concluir o pagamento. Assim que o recebimento for registrado, atualizaremos automaticamente.";
     }
     if (isPaid.value) {
-        return "Tudo certo! As inscrições foram confirmadas e os recibos serão disponibilizados em instantes.";
+        return "Tudo certo! As inscrições foram confirmadas e os recibos estarão disponíveis em instantes.";
     }
     if (payment.value?.status === "CANCELED") {
         return "O pagamento foi cancelado pelo Mercado Pago. Gere um novo checkout para tentar novamente.";
@@ -202,35 +205,27 @@ const isPixPayment = computed(() => payment.value?.paymentMethod === "PIX_MP");
 const pixWasReactivated = computed(() => Boolean(payment.value?.pixReactivated));
 const statusIcon = computed(() => {
     if (isFreeEvent.value || isPaid.value)
-        return "OK";
-    if (isManualPayment.value)
-        return "..";
+        return "check";
     if (payment.value?.status === "CANCELED")
-        return "X";
-    return "..";
+        return "x";
+    return "clock";
 });
 const statusStyles = computed(() => {
     if (isFreeEvent.value || isPaid.value) {
         return {
-            container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
-            badge: "bg-primary-600"
-        };
-    }
-    if (isManualPayment.value) {
-        return {
-            container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
-            badge: "bg-neutral-900"
+            container: "border-emerald-200 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-500/10",
+            badge: "bg-emerald-500"
         };
     }
     if (payment.value?.status === "CANCELED") {
         return {
-            container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
-            badge: "bg-black"
+            container: "border-red-200 bg-red-50 text-red-900 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-100",
+            badge: "bg-red-500"
         };
     }
     return {
-        container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
-        badge: "bg-primary-500"
+        container: "border-blue-200 bg-blue-50/70 dark:border-blue-500/40 dark:bg-blue-500/10",
+        badge: "bg-blue-500"
     };
 });
 const totalFormatted = computed(() => {
@@ -265,7 +260,7 @@ const copyPixCode = async () => {
     if (!payment.value?.pixQrData?.qr_code)
         return;
     await navigator.clipboard.writeText(payment.value.pixQrData.qr_code);
-    alert("Codigo Pix copiado!");
+    alert("Código Pix copiado!");
 };
 // Função para abrir checkout - garante que apenas este pedido seja processado
 const handleOpenCheckout = () => {
@@ -330,13 +325,13 @@ const __VLS_0 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
 const __VLS_1 = __VLS_0({}, ...__VLS_functionalComponentArgsRest(__VLS_0));
 __VLS_2.slots.default;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "space-y-3" },
+    ...{ class: "space-y-2 sm:space-y-3" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
     ...{ class: "text-2xl font-semibold text-neutral-800 dark:text-neutral-50" },
 });
 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-    ...{ class: "text-neutral-500 dark:text-neutral-400" },
+    ...{ class: "max-w-2xl text-sm leading-relaxed text-neutral-500 dark:text-neutral-400 sm:text-base" },
 });
 (__VLS_ctx.isFreeEvent
     ? "Este evento é gratuito. As inscrições foram confirmadas automaticamente e nenhum pagamento é necessário."
@@ -355,79 +350,145 @@ if (__VLS_ctx.payment) {
         ...{ class: "flex-1 space-y-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex items-start gap-3 rounded-xl border px-4 py-3" },
+        ...{ class: "flex flex-col gap-3 rounded-2xl border px-4 py-3 text-center sm:flex-row sm:items-center sm:gap-4 sm:px-5 sm:py-4 sm:text-left" },
         ...{ class: (__VLS_ctx.statusStyles.container) },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full text-white" },
+        ...{ class: "inline-flex h-9 w-9 items-center justify-center rounded-full text-white sm:h-11 sm:w-11" },
         ...{ class: (__VLS_ctx.statusStyles.badge) },
     });
-    (__VLS_ctx.statusIcon);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    if (__VLS_ctx.statusIcon === 'check') {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+            ...{ class: "h-4 w-4 sm:h-5 sm:w-5" },
+            viewBox: "0 0 24 24",
+            fill: "none",
+            stroke: "currentColor",
+            'stroke-width': "2",
+            'stroke-linecap': "round",
+            'stroke-linejoin': "round",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+            d: "M5 13l4 4L19 7",
+        });
+    }
+    else if (__VLS_ctx.statusIcon === 'x') {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+            ...{ class: "h-4 w-4 sm:h-5 sm:w-5" },
+            viewBox: "0 0 24 24",
+            fill: "none",
+            stroke: "currentColor",
+            'stroke-width': "2",
+            'stroke-linecap': "round",
+            'stroke-linejoin': "round",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+            d: "M6 6l12 12M6 18L18 6",
+        });
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+            ...{ class: "h-4 w-4 sm:h-5 sm:w-5" },
+            viewBox: "0 0 24 24",
+            fill: "none",
+            stroke: "currentColor",
+            'stroke-width': "2",
+            'stroke-linecap': "round",
+            'stroke-linejoin': "round",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.circle)({
+            cx: "12",
+            cy: "12",
+            r: "9",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+            d: "M12 7v5l3 2",
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-1" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-        ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+        ...{ class: "text-base font-semibold text-neutral-800 dark:text-neutral-100 sm:text-lg" },
     });
     (__VLS_ctx.statusTitle);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+        ...{ class: "text-xs text-neutral-600 dark:text-neutral-300 sm:text-sm" },
     });
     (__VLS_ctx.statusMessage);
     if (__VLS_ctx.payment.statusDetail) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "mt-1 text-xs text-neutral-400" },
+            ...{ class: "text-xs text-neutral-400 dark:text-neutral-500" },
         });
         (__VLS_ctx.payment.statusDetail);
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60" },
+        ...{ class: "rounded-2xl border border-neutral-200 bg-neutral-50 p-5 dark:border-neutral-700 dark:bg-neutral-900/60 sm:p-6" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex items-center justify-between gap-3 text-sm text-neutral-600 dark:text-neutral-300" },
+        ...{ class: "flex flex-col gap-1 text-sm text-neutral-600 dark:text-neutral-300 sm:flex-row sm:items-center sm:justify-between" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.code, __VLS_intrinsicElements.code)({
-        ...{ class: "rounded bg-neutral-100 px-2 py-1 text-xs dark:bg-neutral-800" },
+        ...{ class: "rounded bg-white px-2 py-1 text-xs text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200" },
     });
     (props.orderId);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "mt-4 grid gap-3 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2" },
+        ...{ class: "mt-5 grid gap-4 text-sm text-neutral-700 dark:text-neutral-200 md:grid-cols-2" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-1" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
+        ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "font-medium text-neutral-800 dark:text-neutral-100" },
+    });
     (__VLS_ctx.eventStore.event?.title ?? "Carregando...");
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-1" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
+        ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.isFreeEvent ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.ticketPriceCents));
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-1" },
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "font-medium" },
+    });
     (__VLS_ctx.totalFormatted);
     if (__VLS_ctx.currentLotName) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-col gap-1" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
+            ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         (__VLS_ctx.currentLotName);
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-col gap-1" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
+        ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.paymentMethodName);
     if (__VLS_ctx.payment?.paidAt) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex flex-col gap-1" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
+            ...{ class: "text-xs uppercase tracking-wide text-neutral-500" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         (__VLS_ctx.formatDate(__VLS_ctx.payment.paidAt));
@@ -459,7 +520,7 @@ if (__VLS_ctx.payment) {
     }
     if (__VLS_ctx.receiptsReady) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "mt-4 space-y-5 rounded-2xl border border-emerald-200/70 bg-emerald-50/80 p-5 text-sm text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-50" },
+            ...{ class: "mt-4 space-y-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900 shadow-sm dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-50 sm:p-6" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex flex-col gap-3 md:flex-row md:items-center md:justify-between" },
@@ -474,7 +535,7 @@ if (__VLS_ctx.payment) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.handleOpenAllReceipts) },
             type: "button",
-            ...{ class: "inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400" },
+            ...{ class: "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-emerald-500 dark:hover:bg-emerald-400 sm:w-auto" },
             disabled: (__VLS_ctx.receiptPreviewLoading),
         });
         if (__VLS_ctx.receiptPreviewLoading && !__VLS_ctx.previewingReceiptId) {
@@ -494,7 +555,7 @@ if (__VLS_ctx.payment) {
         for (const [receipt] of __VLS_getVForSourceType((__VLS_ctx.receiptLinks))) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.article, __VLS_intrinsicElements.article)({
                 key: (receipt.registrationId),
-                ...{ class: "rounded-2xl border border-white/70 bg-white/90 p-4 text-neutral-700 shadow dark:border-emerald-500/20 dark:bg-emerald-900/40 dark:text-emerald-50" },
+                ...{ class: "rounded-2xl border border-emerald-100 bg-white p-4 text-neutral-700 shadow-sm dark:border-emerald-500/30 dark:bg-emerald-900/30 dark:text-emerald-50" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "flex items-start justify-between gap-3" },
@@ -525,12 +586,24 @@ if (__VLS_ctx.payment) {
                         __VLS_ctx.handleOpenSingleReceipt(receipt.registrationId);
                     } },
                 type: "button",
-                ...{ class: "mt-4 inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-700 transition hover:border-primary-200 hover:text-primary-600 dark:border-emerald-500/40 dark:text-emerald-50" },
+                ...{ class: "mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800 sm:w-auto dark:border-emerald-500/40 dark:bg-transparent dark:text-emerald-50" },
                 disabled: (__VLS_ctx.receiptPreviewLoading && __VLS_ctx.previewingReceiptId === receipt.registrationId),
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
                 ...{ class: "h-4 w-4" },
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                'stroke-width': "2",
+                'stroke-linecap': "round",
+                'stroke-linejoin': "round",
                 'aria-hidden': "true",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M4 7h9l3 3h4v7H4z",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M13 7v3h3",
             });
             if (__VLS_ctx.previewingReceiptId === receipt.registrationId && __VLS_ctx.receiptPreviewLoading) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
@@ -795,13 +868,18 @@ if (__VLS_ctx.payment) {
     var __VLS_19;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:space-y-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['leading-relaxed']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-base']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-6']} */ ;
@@ -810,87 +888,135 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:py-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-left']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-9']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-11']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-11']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-base']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:p-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-t']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -934,8 +1060,8 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['space-y-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-emerald-200/70']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-emerald-50/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-emerald-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-emerald-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-emerald-900']} */ ;
@@ -943,6 +1069,7 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-emerald-500/10']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-emerald-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:p-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -955,6 +1082,7 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['text-emerald-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-emerald-100/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -971,6 +1099,7 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-emerald-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:hover:bg-emerald-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -986,13 +1115,13 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white/70']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-emerald-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/20']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-emerald-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-emerald-900/30']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-emerald-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-start']} */ ;
@@ -1018,21 +1147,25 @@ if (__VLS_ctx.payment) {
 /** @type {__VLS_StyleScopedClasses['dark:text-emerald-100/70']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-emerald-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:border-primary-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:border-emerald-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-emerald-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-transparent']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-emerald-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;

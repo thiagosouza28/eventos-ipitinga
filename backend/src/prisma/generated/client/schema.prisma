@@ -284,14 +284,16 @@ model SystemConfig {
 }
 
 model EventLot {
-  id         String    @id @default(cuid())
+  id         String         @id @default(cuid())
   eventId    String
   name       String
   priceCents Int
+  type       EventLotType   @default(PADRAO)
+  status     EventLotStatus @default(INATIVO)
   startsAt   DateTime
   endsAt     DateTime?
-  createdAt  DateTime  @default(now())
-  event      Event     @relation(fields: [eventId], references: [id])
+  createdAt  DateTime       @default(now())
+  event      Event          @relation(fields: [eventId], references: [id])
   orders     Order[]
 
   @@unique([eventId, name])
@@ -412,6 +414,17 @@ enum PixType {
 enum PixStatus {
   VALIDATED
   PENDING
+}
+
+enum EventLotType {
+  PADRAO
+  PROMOCIONAL
+}
+
+enum EventLotStatus {
+  ATIVO
+  INATIVO
+  ENCERRADO
 }
 
 enum OrderItemStatus {

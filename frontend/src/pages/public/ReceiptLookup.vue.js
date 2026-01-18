@@ -61,10 +61,12 @@ const apiBase = (() => {
         return new URL(window.location.origin);
     }
 })();
+const normalizeReceiptPath = (path) => path.replace(/\/api\/api\//g, "/api/");
 const resolveReceiptUrl = (url) => {
     try {
         const target = new URL(url, apiBase);
-        return `${apiBase.origin}${target.pathname}${target.search}`;
+        const normalizedPath = normalizeReceiptPath(target.pathname);
+        return `${apiBase.origin}${normalizedPath}${target.search}`;
     }
     catch {
         return url;
@@ -251,7 +253,11 @@ if (__VLS_ctx.showFeedbackCard) {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
+                ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
+            });
+            (receipt.fullName || "Participante nao informado");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
             });
             (receipt.eventTitle);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -292,7 +298,7 @@ if (__VLS_ctx.showFeedbackCard) {
         });
         (__VLS_ctx.previewError);
     }
-    else {
+    else if (!__VLS_ctx.hasResults && __VLS_ctx.hasSearched && !__VLS_ctx.loading) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-sm text-neutral-600 dark:text-neutral-300" },
         });
@@ -457,9 +463,12 @@ if (__VLS_ctx.showFeedbackCard) {
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
