@@ -575,7 +575,8 @@ const submitLot = async () => {
                 priceCents,
                 startsAt: startDate.toISOString(),
                 endsAt: endsAtIso,
-                type: lotForm.type
+                type: lotForm.type,
+                tipo_lote: lotForm.type
             });
         }
         else {
@@ -585,7 +586,8 @@ const submitLot = async () => {
                 priceCents,
                 startsAt: startDate.toISOString(),
                 endsAt: endsAtIso,
-                type: lotForm.type
+                type: lotForm.type,
+                tipo_lote: lotForm.type
             });
         }
         refreshDetailsEvent();
