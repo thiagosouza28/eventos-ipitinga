@@ -19,6 +19,16 @@
                 class="flex flex-wrap items-center justify-between gap-3 rounded-[32px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-4 py-4 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_25px_60px_rgba(0,0,0,0.5)]"
               >
                 <div class="flex min-w-0 flex-1 items-center gap-3">
+                  <button
+                    type="button"
+                    class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white md:hidden dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25"
+                    :aria-pressed="isSidebarOpen"
+                    @click="toggleSidebar"
+                  >
+                    <Bars3Icon v-if="!isSidebarOpen" class="h-6 w-6" aria-hidden="true" />
+                    <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
+                    <span class="sr-only">Alternar menu administrativo</span>
+                  </button>
                   <RouterLink to="/" class="flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white">
                     <div
                       class="inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-[rgba(255,255,255,0.1)] dark:from-[#1b2140] dark:to-[#11152A]"
@@ -55,7 +65,7 @@
                   >
                     Configurações
                   </RouterLink>
-                  <div v-if="auth.isAuthenticated" class="relative hidden lg:flex" ref="profileMenuRef">
+                  <div v-if="auth.isAuthenticated" class="relative flex" ref="profileMenuRef">
                     <button
                       type="button"
                       class="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30"
@@ -119,16 +129,6 @@
                       </div>
                     </transition>
                   </div>
-                  <button
-                    type="button"
-                    class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white md:hidden dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25"
-                    :aria-pressed="isSidebarOpen"
-                    @click="toggleSidebar"
-                  >
-                    <Bars3Icon v-if="!isSidebarOpen" class="h-6 w-6" aria-hidden="true" />
-                    <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
-                    <span class="sr-only">Alternar menu administrativo</span>
-                  </button>
                 </div>
               </div>
             </header>
@@ -145,6 +145,15 @@
           <div class="mx-auto w-full max-w-[1900px] px-3 py-4 sm:px-6">
             <div class="flex items-center justify-between rounded-[32px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_18px_60px_rgba(0,0,0,0.55)]">
               <div class="flex items-center gap-4">
+                <button
+                  type="button"
+                  class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-neutral-700 shadow-sm transition hover:bg-[#f7f8ff] dark:border-[color:var(--border-card)] dark:bg-[color:var(--surface-card-alt)] dark:text-[color:var(--text)] sm:hidden"
+                  @click="toggleMobileMenu"
+                >
+                  <Bars3Icon v-if="!mobileMenuOpen" class="h-6 w-6" aria-hidden="true" />
+                  <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
+                  <span class="sr-only">Abrir menu</span>
+                </button>
                 <RouterLink to="/" class="flex items-center gap-3 text-lg font-semibold text-[color:var(--text)]">
                   <div class="inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)]">
                     <img v-if="activeBrandLogo" :src="activeBrandLogo" alt="Logotipo CATRE" class="h-full w-full object-contain p-1.5" />
@@ -179,7 +188,7 @@
                   >
                     Configurações
                   </RouterLink>
-                  <div v-if="auth.isAuthenticated" class="relative hidden lg:flex" ref="profileMenuRef">
+                  <div v-if="auth.isAuthenticated" class="relative flex" ref="profileMenuRef">
                     <button
                       type="button"
                       class="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/90 px-3 py-2 text-sm font-semibold text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30"
@@ -243,15 +252,6 @@
                       </div>
                     </transition>
                   </div>
-                <button
-                  type="button"
-                  class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-neutral-700 shadow-sm transition hover:bg-[#f7f8ff] dark:border-[color:var(--border-card)] dark:bg-[color:var(--surface-card-alt)] dark:text-[color:var(--text)] sm:hidden"
-                  @click="toggleMobileMenu"
-                >
-                  <Bars3Icon v-if="!mobileMenuOpen" class="h-6 w-6" aria-hidden="true" />
-                  <XMarkIcon v-else class="h-6 w-6" aria-hidden="true" />
-                  <span class="sr-only">Abrir menu</span>
-                </button>
               </div>
             </div>
           </div>
