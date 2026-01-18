@@ -98,7 +98,14 @@ export const useAdminStore = defineStore("admin", () => {
 
   const createEventLot = async (
     eventId: string,
-    payload: { name: string; priceCents: number; startsAt: string; endsAt?: string | null; type?: EventLot["type"] }
+    payload: {
+      name: string;
+      priceCents: number;
+      startsAt: string;
+      endsAt?: string | null;
+      type?: EventLot["type"];
+      tipo_lote?: EventLot["type"];
+    }
   ) => {
     await api.post(`/admin/events/${eventId}/lots`, payload);
     await loadEventLots(eventId);
@@ -109,7 +116,14 @@ export const useAdminStore = defineStore("admin", () => {
   const updateEventLot = async (
     eventId: string,
     lotId: string,
-    payload: Partial<{ name: string; priceCents: number; startsAt: string; endsAt: string | null; type: EventLot["type"] }>
+    payload: Partial<{
+      name: string;
+      priceCents: number;
+      startsAt: string;
+      endsAt: string | null;
+      type: EventLot["type"];
+      tipo_lote: EventLot["type"];
+    }>
   ) => {
     await api.patch(`/admin/events/${eventId}/lots/${lotId}`, payload);
     await loadEventLots(eventId);
