@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "build": "vue-tsc && cross-env NO_COLOR=1 vite build",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx,vue}\"",
     "test": "vitest",
@@ -34,6 +34,7 @@
     "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.20",
     "baseline-browser-mapping": "^2.9.15",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-vue": "^9.28.0",

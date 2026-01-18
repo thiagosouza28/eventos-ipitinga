@@ -171,8 +171,6 @@ export const registrationsReportHandler = async (request: Request, response: Res
 };
 
 export const downloadRegistrationsReportHandler = async (request: Request, response: Response) => {
-  const { groupBy, template, layout, ...filters } = reportDownloadSchema.parse(request.query);
-
   const origin = request.headers.origin;
   if (origin && env.corsOrigins.includes(origin)) {
     response.setHeader("Access-Control-Allow-Origin", origin);
@@ -180,26 +178,40 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
     response.setHeader("Access-Control-Allow-Credentials", "true");
   }
 
-  const ministryIds = getScopedMinistryIds(request.user);
-  const scopedFilters = applyScopedLocationFilters(filters, request.user);
-  const pdfBuffer =
-    template === "event"
-      ? await registrationService.generateEventSheetPdf(
-          scopedFilters,
-          groupBy,
-          (layout as any) ?? "single",
-          ministryIds
-        )
-      : await registrationService.generateReportPdf(scopedFilters, groupBy, ministryIds);
-  const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
-  response.setHeader("Content-Type", "application/pdf");
-  response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-  return response.send(pdfBuffer);
+  try {
+    const { groupBy, template, layout, ...filters } = reportDownloadSchema.parse(request.query);
+
+    const ministryIds = getScopedMinistryIds(request.user);
+    const scopedFilters = applyScopedLocationFilters(filters, request.user);
+    const pdfBuffer =
+      template === "event"
+        ? await registrationService.generateEventSheetPdf(
+            scopedFilters,
+            groupBy,
+            (layout as any) ?? "single",
+            ministryIds
+          )
+        : await registrationService.generateReportPdf(scopedFilters, groupBy, ministryIds);
+    const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return response.send(pdfBuffer);
+  } catch (error: any) {
+    console.error("Erro ao gerar relatorio de inscricoes:", error);
+    if (error instanceof z.ZodError) {
+      return response.status(400).json({
+        success: false,
+        message: "Erro ao gerar relatório. Verifique os dados do evento."
+      });
+    }
+    return response.status(500).json({
+      success: false,
+      message: "Erro ao gerar relatório. Verifique os dados do evento."
+    });
+  }
 };
 
 export const downloadRegistrationsListPdfHandler = async (request: Request, response: Response) => {
-  const filters = listSchema.parse(request.query);
-
   const origin = request.headers.origin;
   if (origin && env.corsOrigins.includes(origin)) {
     response.setHeader("Access-Control-Allow-Origin", origin);
@@ -207,17 +219,32 @@ export const downloadRegistrationsListPdfHandler = async (request: Request, resp
     response.setHeader("Access-Control-Allow-Credentials", "true");
   }
 
-  const ministryIds = getScopedMinistryIds(request.user);
-  const scopedFilters = applyScopedLocationFilters(filters, request.user);
-  const includeCpf = hasPermission(request.user?.permissions, "registrations", "reports");
+  try {
+    const filters = listSchema.parse(request.query);
+    const ministryIds = getScopedMinistryIds(request.user);
+    const scopedFilters = applyScopedLocationFilters(filters, request.user);
+    const includeCpf = hasPermission(request.user?.permissions, "registrations", "reports");
 
-  const pdfBuffer = await registrationService.generateListPdf(scopedFilters, ministryIds, {
-    includeCpf
-  });
-  const filename = `lista-inscricoes-${Date.now()}.pdf`;
-  response.setHeader("Content-Type", "application/pdf");
-  response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-  return response.send(pdfBuffer);
+    const pdfBuffer = await registrationService.generateListPdf(scopedFilters, ministryIds, {
+      includeCpf
+    });
+    const filename = `lista-inscricoes-${Date.now()}.pdf`;
+    response.setHeader("Content-Type", "application/pdf");
+    response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return response.send(pdfBuffer);
+  } catch (error: any) {
+    console.error("Erro ao gerar lista de inscricoes em PDF:", error);
+    if (error instanceof z.ZodError) {
+      return response.status(400).json({
+        success: false,
+        message: "Erro ao gerar relatório. Verifique os dados do evento."
+      });
+    }
+    return response.status(500).json({
+      success: false,
+      message: "Erro ao gerar relatório. Verifique os dados do evento."
+    });
+  }
 };
 
 export const updateRegistrationHandler = async (request: Request, response: Response) => {

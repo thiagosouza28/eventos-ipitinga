@@ -1,7 +1,7 @@
 <template>
   <div v-if="checkinPermissions.canList" class="space-y-6">
     <BaseCard
-      class="border border-white/40 bg-gradient-to-br from-white via-sky-50/60 to-primary-100/40 shadow-sm dark:border-white/10 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
+      class="!rounded-lg border border-white/40 bg-gradient-to-br from-white via-sky-50/60 to-primary-100/40 shadow-sm dark:border-white/10 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/30"
     >
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div class="max-w-2xl">
@@ -29,7 +29,7 @@
         <div
           v-for="card in summaryCards"
           :key="card.key"
-          class="rounded-3xl border border-neutral-200/70 bg-white/90 p-4 shadow-sm shadow-primary-100/30 dark:border-white/10 dark:bg-neutral-900/60"
+          class="rounded-lg border border-neutral-200/70 bg-white/90 p-4 shadow-sm shadow-primary-100/30 dark:border-white/10 dark:bg-neutral-900/60"
         >
           <div class="flex items-center justify-between">
             <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">
@@ -56,7 +56,7 @@
 
     <BaseCard
       v-if="!loadingDashboard"
-      class="border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
+      class="!rounded-lg border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
     >
       <div class="grid gap-8 lg:grid-cols-12">
         <div class="order-2 space-y-4 lg:order-1 lg:col-span-5">
@@ -64,8 +64,8 @@
             <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">Leitor de QR Code</h2>
             <span class="text-xs text-neutral-500 dark:text-neutral-400">Aponte para o QR Code do comprovante</span>
           </div>
-          <div class="w-full max-w-[350px] rounded-3xl border border-dashed border-neutral-200 bg-white p-3 shadow-inner dark:border-white/10 dark:bg-neutral-900/40">
-            <div class="relative h-[220px] w-full overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800">
+          <div class="w-full max-w-[350px] rounded-lg border border-dashed border-neutral-200 bg-white p-3 shadow-inner dark:border-white/10 dark:bg-neutral-900/40">
+            <div class="relative h-[220px] w-full overflow-hidden rounded-md bg-neutral-100 dark:bg-neutral-800">
               <QrcodeStream
                 class="h-[220px] w-full"
                 :key="streamKey"
@@ -128,14 +128,17 @@
               {{ manualLoading ? "Buscando..." : "Buscar participante" }}
             </button>
           </form>
-          <div v-if="feedback" class="rounded-2xl border px-4 py-3 text-sm" :class="feedbackClass">
+          <div v-if="feedback" class="rounded-lg border px-4 py-3 text-sm" :class="feedbackClass">
             {{ feedback }}
           </div>
         </div>
       </div>
     </BaseCard>
 
-    <BaseCard v-if="pendingCheckin" class="space-y-4 border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60">
+    <BaseCard
+      v-if="pendingCheckin"
+      class="!rounded-lg space-y-4 border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
+    >
       <div class="flex flex-col gap-4 md:flex-row md:items-start">
         <div class="flex w-full max-w-[160px] items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800">
           <img
@@ -186,7 +189,7 @@
         </div>
       </div>
       <div
-        class="rounded-xl border border-neutral-200 bg-white/80 p-4 dark:border-neutral-700 dark:bg-neutral-900/40"
+        class="rounded-lg border border-neutral-200 bg-white/80 p-4 dark:border-neutral-700 dark:bg-neutral-900/40"
       >
         <div class="flex items-center justify-between">
           <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">Historico recente</p>
@@ -229,7 +232,10 @@
       </div>
     </BaseCard>
 
-    <BaseCard v-if="admin.dashboard && !loadingDashboard" class="border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60">
+    <BaseCard
+      v-if="admin.dashboard && !loadingDashboard"
+      class="!rounded-lg border border-white/40 bg-white/90 shadow-sm dark:border-white/10 dark:bg-neutral-900/60"
+    >
       <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">
         Ultimos check-ins
       </h2>

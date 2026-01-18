@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue()],
+    logLevel: "info",
     server: {
       host: "0.0.0.0",
       port: Number(env.VITE_DEV_SERVER_PORT || process.env.VITE_DEV_SERVER_PORT) || 5173,
@@ -71,7 +72,7 @@ export default defineConfig(({ mode }) => {
       },
       chunkSizeWarningLimit: 1000,
       assetsInlineLimit: 4096,
-      reportCompressedSize: true
+      reportCompressedSize: false
     }
   };
 });
