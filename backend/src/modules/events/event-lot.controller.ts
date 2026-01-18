@@ -13,7 +13,14 @@ const lotParamSchema = z.object({
   lotId: cuidOrUuid
 });
 
-const lotTypeSchema = z.enum(["PADRAO", "PROMOCIONAL"]);
+const lotTypeSchema = z.preprocess((value) => {
+  if (typeof value !== "string") return value;
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "NORMAL") return "PADRAO";
+  if (normalized === "PROMOCIONAL") return "PROMOCIONAL";
+  if (normalized === "PADRAO") return "PADRAO";
+  return value;
+}, z.enum(["PADRAO", "PROMOCIONAL"]));
 
 const createSchema = z.object({
   name: z.string().min(2),

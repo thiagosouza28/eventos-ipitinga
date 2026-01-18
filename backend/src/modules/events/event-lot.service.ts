@@ -73,8 +73,16 @@ const ensureNoOverlap = async (
   }
 };
 
-const resolveLotType = (value?: string | null): LotType =>
-  value === PROMOTIONAL_LOT_TYPE ? PROMOTIONAL_LOT_TYPE : DEFAULT_LOT_TYPE;
+const resolveLotType = (value?: string | null): LotType => {
+  const normalized = typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (normalized === "PROMOCIONAL") {
+    return PROMOTIONAL_LOT_TYPE;
+  }
+  if (normalized === "NORMAL" || normalized === "PADRAO") {
+    return DEFAULT_LOT_TYPE;
+  }
+  return DEFAULT_LOT_TYPE;
+};
 
 const resolveLotStatus = (value?: string | null): LotStatus | null => {
   switch (value) {
@@ -232,7 +240,9 @@ class EventLotService {
     const range = normalizeRange(input.startsAt, input.endsAt, {
       requireEnd: type === PROMOTIONAL_LOT_TYPE
     });
-    await ensureNoOverlap(eventId, range, type);
+    if (type === DEFAULT_LOT_TYPE) {
+      await ensureNoOverlap(eventId, range, type);
+    }
 
     const lot = await prisma.eventLot.create({
       data: {
@@ -283,7 +293,9 @@ class EventLotService {
       );
       startsAt = normalized.start;
       endsAt = normalized.end ?? null;
-      await ensureNoOverlap(lot.eventId, { start: startsAt, end: endsAt }, nextType, lotId);
+      if (nextType === DEFAULT_LOT_TYPE) {
+        await ensureNoOverlap(lot.eventId, { start: startsAt, end: endsAt }, nextType, lotId);
+      }
     }
     if (nextType === PROMOTIONAL_LOT_TYPE && !endsAt) {
       throw new AppError("Data final obrigatoria para lote promocional", 400);
