@@ -979,7 +979,7 @@
               v-model="lotForm.type"
               class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
             >
-              <option value="PADRAO">Padrao</option>
+              <option value="PADRAO">Normal</option>
               <option value="PROMOCIONAL">Promocional</option>
             </select>
             <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">

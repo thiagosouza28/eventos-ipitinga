@@ -75,6 +75,21 @@ const priceInfo = computed(() => {
         pending: true
     };
 });
+const isPromoLotActive = computed(() => {
+    if (isFreeEvent.value)
+        return false;
+    const lotType = eventStore.event?.currentLot?.type;
+    return typeof lotType === "string" && lotType.toLowerCase() === "promocional";
+});
+const priceValueClass = computed(() => {
+    if (priceInfo.value.pending) {
+        return "text-neutral-500 dark:text-neutral-400";
+    }
+    if (isPromoLotActive.value) {
+        return "text-rose-600 dark:text-rose-400";
+    }
+    return "text-primary-600 dark:text-primary-400";
+});
 const currentLotName = computed(() => isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null);
 const nextLotInfo = computed(() => {
     if (!nextLot.value)
@@ -116,6 +131,24 @@ const diffInDaysFromNow = (value) => {
     const diff = Math.ceil(diffMs / MS_PER_DAY);
     return diff < 0 ? 0 : diff;
 };
+const promoCountdownText = computed(() => {
+    if (!isPromoLotActive.value)
+        return "";
+    const endsAt = eventStore.event?.currentLot?.endsAt ?? null;
+    const diffMs = diffInMsFromNow(endsAt);
+    if (diffMs === null || diffMs <= 0)
+        return "";
+    if (diffMs < MS_PER_HOUR) {
+        const minutes = Math.max(1, Math.ceil(diffMs / MS_PER_MIN));
+        return minutes === 1 ? "1 minuto" : `${minutes} minutos`;
+    }
+    if (diffMs < MS_PER_DAY) {
+        const hours = Math.max(1, Math.ceil(diffMs / MS_PER_HOUR));
+        return hours === 1 ? "1 hora" : `${hours} horas`;
+    }
+    const days = Math.max(1, Math.ceil(diffMs / MS_PER_DAY));
+    return days === 1 ? "1 dia" : `${days} dias`;
+});
 const sortedLots = computed(() => {
     const lots = eventStore.event?.lots ?? [];
     return lots
@@ -1102,7 +1135,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
         ...{ class: ([
                 'text-xl font-semibold',
-                __VLS_ctx.priceInfo.pending ? 'text-neutral-500 dark:text-neutral-400' : 'text-primary-600 dark:text-primary-400'
+                __VLS_ctx.priceValueClass
             ]) },
     });
     (__VLS_ctx.priceInfo.value);
@@ -1111,6 +1144,23 @@ else {
             ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
         });
         (__VLS_ctx.priceInfo.helper);
+    }
+    if (__VLS_ctx.isPromoLotActive) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "mt-2 flex flex-wrap items-center gap-2 sm:justify-end" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700 ring-1 ring-rose-200 shadow-sm dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 motion-safe:animate-pulse" },
+        });
+    }
+    if (__VLS_ctx.promoCountdownText) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs font-medium text-rose-600 dark:text-rose-300 sm:text-right" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold" },
+        });
+        (__VLS_ctx.promoCountdownText);
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400" },
@@ -2146,6 +2196,37 @@ else {
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-end']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-rose-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-rose-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['ring-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['ring-rose-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-rose-500/15']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-rose-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:ring-rose-500/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['motion-safe:animate-pulse']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-rose-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-rose-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
@@ -2921,8 +3002,11 @@ const __VLS_self = (await import('vue')).defineComponent({
             isFreeEvent: isFreeEvent,
             ticketPriceCents: ticketPriceCents,
             priceInfo: priceInfo,
+            isPromoLotActive: isPromoLotActive,
+            priceValueClass: priceValueClass,
             currentLotName: currentLotName,
             nextLotInfo: nextLotInfo,
+            promoCountdownText: promoCountdownText,
             daysToLastLotEnd: daysToLastLotEnd,
             nextLotCountdownText: nextLotCountdownText,
             formatDayCount: formatDayCount,

@@ -44,7 +44,7 @@
             <p
               :class="[
                 'text-xl font-semibold',
-                priceInfo.pending ? 'text-neutral-500 dark:text-neutral-400' : 'text-primary-600 dark:text-primary-400'
+                priceValueClass
               ]"
             >
               {{ priceInfo.value }}
@@ -54,6 +54,16 @@
               class="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
             >
               {{ priceInfo.helper }}
+            </p>
+            <div v-if="isPromoLotActive" class="mt-2 flex flex-wrap items-center gap-2 sm:justify-end">
+              <span
+                class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700 ring-1 ring-rose-200 shadow-sm dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 motion-safe:animate-pulse"
+              >
+                &#128293; PROMOÇÃO ATIVA
+              </span>
+            </div>
+            <p v-if="promoCountdownText" class="text-xs font-medium text-rose-600 dark:text-rose-300 sm:text-right">
+              &#9203; Promoção termina em: <span class="font-semibold">{{ promoCountdownText }}</span>
             </p>
             <div class="mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400">
               <p v-if="nextLotCountdownText">
@@ -819,6 +829,20 @@ const priceInfo = computed(() => {
     pending: true
   };
 });
+const isPromoLotActive = computed(() => {
+  if (isFreeEvent.value) return false;
+  const lotType = eventStore.event?.currentLot?.type;
+  return typeof lotType === "string" && lotType.toLowerCase() === "promocional";
+});
+const priceValueClass = computed(() => {
+  if (priceInfo.value.pending) {
+    return "text-neutral-500 dark:text-neutral-400";
+  }
+  if (isPromoLotActive.value) {
+    return "text-rose-600 dark:text-rose-400";
+  }
+  return "text-primary-600 dark:text-primary-400";
+});
 const currentLotName = computed(() =>
   isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null
 );
@@ -859,6 +883,25 @@ const diffInDaysFromNow = (value?: string | null) => {
   const diff = Math.ceil(diffMs / MS_PER_DAY);
   return diff < 0 ? 0 : diff;
 };
+const promoCountdownText = computed(() => {
+  if (!isPromoLotActive.value) return "";
+  const endsAt = eventStore.event?.currentLot?.endsAt ?? null;
+  const diffMs = diffInMsFromNow(endsAt);
+  if (diffMs === null || diffMs <= 0) return "";
+
+  if (diffMs < MS_PER_HOUR) {
+    const minutes = Math.max(1, Math.ceil(diffMs / MS_PER_MIN));
+    return minutes === 1 ? "1 minuto" : `${minutes} minutos`;
+  }
+
+  if (diffMs < MS_PER_DAY) {
+    const hours = Math.max(1, Math.ceil(diffMs / MS_PER_HOUR));
+    return hours === 1 ? "1 hora" : `${hours} horas`;
+  }
+
+  const days = Math.max(1, Math.ceil(diffMs / MS_PER_DAY));
+  return days === 1 ? "1 dia" : `${days} dias`;
+});
 const sortedLots = computed(() => {
   const lots = eventStore.event?.lots ?? [];
   return lots
@@ -1882,5 +1925,3 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
-
-
