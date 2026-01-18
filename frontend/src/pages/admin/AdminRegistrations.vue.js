@@ -364,9 +364,7 @@ onMounted(async () => {
     }
     try {
         await Promise.all([admin.loadEvents(), catalog.loadDistricts()]);
-        if (!isMobile.value) {
-            catalog.loadChurches().catch((error) => showError('Falha ao carregar igrejas', error));
-        }
+        catalog.loadChurches().catch((error) => showError('Falha ao carregar igrejas', error));
     }
     catch (error) {
         showError('Falha ao carregar dados iniciais', error);
@@ -1954,21 +1952,6 @@ if (__VLS_ctx.registrationPermissions.canList) {
                 ...{ class: "mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400" },
             });
             (__VLS_ctx.formatCPF(registration.cpf));
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                ...{ onClick: (...[$event]) => {
-                        if (!(__VLS_ctx.registrationPermissions.canList))
-                            return;
-                        if (!!(__VLS_ctx.isApplying && __VLS_ctx.admin.registrations.length === 0))
-                            return;
-                        if (!!(__VLS_ctx.displayedRegistrations.length === 0))
-                            return;
-                        __VLS_ctx.toggleActions(registration.id);
-                    } },
-                type: "button",
-                ...{ class: "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:text-slate-800 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-white" },
-                'aria-expanded': (__VLS_ctx.openedActions === registration.id),
-                'aria-label': "Mais ações",
-            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-2 flex flex-wrap items-center gap-2" },
             });
@@ -4777,22 +4760,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-mono']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-slate-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-slate-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-slate-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-slate-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-slate-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-slate-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:text-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;

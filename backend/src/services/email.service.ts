@@ -28,7 +28,7 @@ const buildTemporaryPasswordHtml = (name: string, password: string) => {
             <tr>
               <td align="center" style="padding-bottom: 16px;">
                 <div style="font-size: 18px; letter-spacing: 0.4em; text-transform: uppercase; color: #8ba8ff;">
-                  CATRE Ipitanga
+                  CATRE Ipitinga
                 </div>
                 <h1 style="margin: 12px 0 0; font-size: 28px;">Recuperação de acesso</h1>
               </td>
@@ -49,7 +49,7 @@ const buildTemporaryPasswordHtml = (name: string, password: string) => {
             <tr>
               <td style="padding-top: 24px; font-size: 13px; color: #94a3f7;">
                 <p style="margin: 0;">Se você não solicitou essa alteração, entre em contato imediatamente com a equipe responsável.</p>
-                <p style="margin: 12px 0 0;">CATRE Ipitanga &middot; Sistema de inscrições e check-in</p>
+                <p style="margin: 12px 0 0;">CATRE Ipitinga &middot; Sistema de inscrições e check-in</p>
               </td>
             </tr>
           </table>
@@ -65,7 +65,7 @@ export const emailService = {
     await transporter.sendMail({
       from: env.EMAIL_FROM,
       to: payload.to,
-      subject: "Sua nova senha temporária - CATRE Ipitanga",
+      subject: "Sua nova senha temporária - CATRE Ipitinga",
       html,
       text: `Olá ${payload.name},\n\nSua nova senha temporária é: ${payload.temporaryPassword}\nFaça login e troque a senha imediatamente.\n\nEquipe CATRE Ipitanga`
     });

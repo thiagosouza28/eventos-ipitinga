@@ -1951,7 +1951,7 @@ const toggleActive = async (event: ApiEvent) => {
 };
 
 const openDelete = (event: ApiEvent) => {
-  if (!assertPermission(eventPermissions.canDelete.value, "VocÃª não possui permissão para excluir eventos.")) {
+  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
     return;
   }
   confirmDelete.target = event;
@@ -1965,7 +1965,7 @@ const closeDeleteDialog = () => {
 
 const handleDelete = async () => {
   if (!confirmDelete.target) return;
-  if (!assertPermission(eventPermissions.canDelete.value, "VocÃª não possui permissão para excluir eventos.")) {
+  if (!assertPermission(eventPermissions.canDelete.value, "Você não possui permissão para excluir eventos.")) {
     closeDeleteDialog();
     return;
   }
@@ -1973,7 +1973,7 @@ const handleDelete = async () => {
     await admin.deleteEvent(confirmDelete.target.id);
     closeDeleteDialog();
   } catch (error) {
-    showError("NÃ£o foi possÃ­vel excluir o evento", error);
+    showError("Não foi possível excluir o evento", error);
   }
 };
 
