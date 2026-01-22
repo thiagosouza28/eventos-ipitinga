@@ -7,57 +7,33 @@ import { NextFunction, Request, Response } from "express";
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const normalizeValue = (value: unknown): unknown => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeValue(item));
+  }
+
+  if (isRecord(value)) {
+    const normalized: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      normalized[key] = normalizeValue(entry);
+    }
+    return normalized;
+  }
+
+  return value;
+};
+
 export const normalizeBody = (request: Request, _response: Response, next: NextFunction) => {
   if (request.body && typeof request.body === "object") {
-    const normalized: Record<string, unknown> = {};
-
-    for (const [key, value] of Object.entries(request.body)) {
-      if (value === null || value === undefined) {
-        normalized[key] = value;
-        continue;
-      }
-
-      if (typeof value === "string") {
-        normalized[key] = String(value);
-        continue;
-      }
-
-      if (Array.isArray(value)) {
-        normalized[key] = value.map((item) => {
-          if (typeof item === "string") {
-            return String(item);
-          }
-
-          if (typeof item === "object" && item !== null && "value" in item) {
-            return String((item as Record<string, unknown>).value);
-          }
-
-          return item;
-        });
-        continue;
-      }
-
-      if (isRecord(value)) {
-        if (key in value && typeof value[key] === "string") {
-          normalized[key] = String(value[key]);
-        } else if ("value" in value && typeof value.value === "string") {
-          normalized[key] = String(value.value);
-        } else {
-          const values = Object.values(value);
-          const firstString = values.find((v: unknown) => typeof v === "string");
-          if (firstString) {
-            normalized[key] = String(firstString);
-          } else {
-            normalized[key] = String(value);
-          }
-        }
-        continue;
-      }
-
-      normalized[key] = value;
-    }
-
-    request.body = normalized;
+    request.body = normalizeValue(request.body) as Record<string, unknown>;
   }
 
   next();

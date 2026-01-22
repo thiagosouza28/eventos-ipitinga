@@ -29,6 +29,7 @@ import {
 import { Gender, parseGender } from "../../config/gender";
 import { calculateMercadoPagoFees } from "../../utils/mercado-pago-fees";
 import { resolveEffectiveExpirationDate, resolveOrderExpirationDate } from "../../utils/order-expiration";
+import { buildPixMeta } from "../../utils/pix";
 import { getActivePixProvider } from "../payments/pix-gateway";
 import { pixPaymentService } from "../payments/pix.service";
 import { getTableColumns } from "../../utils/schema-cache";
@@ -46,8 +47,47 @@ type BatchPerson = {
 };
 
 const isManualPayment = (paymentId: string) => paymentId.startsWith("MANUAL-");
+const INTERACTIVE_TX_TIMEOUT_MS = 15000;
 
 type ActorUser = Request["user"];
+
+const parseDateParts = (value?: string | null) => {
+  if (!value) return null;
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+  return { year, month, day };
+};
+
+const calculateAgeAtDate = (birthDate: string, referenceDate?: Date | null) => {
+  const birthParts = parseDateParts(birthDate);
+  if (!birthParts || !referenceDate || Number.isNaN(referenceDate.getTime())) {
+    return null;
+  }
+  const refYear = referenceDate.getUTCFullYear();
+  const refMonth = referenceDate.getUTCMonth() + 1;
+  const refDay = referenceDate.getUTCDate();
+  let age = refYear - birthParts.year;
+  if (refMonth < birthParts.month || (refMonth === birthParts.month && refDay < birthParts.day)) {
+    age -= 1;
+  }
+  return age >= 0 ? age : null;
+};
+
+const resolvePriceCentsForAge = (
+  ageYears: number | null | undefined,
+  minAgeYears: number | null,
+  unitPriceCents: number
+) => {
+  if (minAgeYears === null) return unitPriceCents;
+  if (typeof ageYears === "number" && ageYears <= minAgeYears) return 0;
+  return unitPriceCents;
+};
 
 const resolveOrderDistrictId = (
   registrations: Array<{ districtId?: string | null }>,
@@ -104,7 +144,8 @@ export class OrderService {
             id: true,
             title: true,
             priceCents: true,
-            pendingPaymentValueRule: true
+            pendingPaymentValueRule: true,
+            minAgeYears: true
           }
         }
       }
@@ -139,13 +180,16 @@ export class OrderService {
           order.event?.priceCents ?? order.totalCents / Math.max(order.registrations.length, 1)
         );
 
+        const minAgeLimit = typeof order.event?.minAgeYears === "number" ? order.event.minAgeYears : null;
+        const registrationsWithPricing = order.registrations.map((registration) => ({
+          ...registration,
+          priceCents: resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents)
+        }));
+        const totalCents = registrationsWithPricing.reduce((acc, reg) => acc + (reg.priceCents ?? 0), 0);
         return {
           ...order,
-          totalCents: unitPriceCents * order.registrations.length,
-          registrations: order.registrations.map((registration) => ({
-            ...registration,
-            priceCents: unitPriceCents
-          })),
+          totalCents,
+          registrations: registrationsWithPricing,
           pendingPricingRule: pricingRule
         };
       })
@@ -166,7 +210,8 @@ export class OrderService {
             id: true,
             title: true,
             priceCents: true,
-            pendingPaymentValueRule: true
+            pendingPaymentValueRule: true,
+            minAgeYears: true
           }
         }
       }
@@ -201,13 +246,16 @@ export class OrderService {
           order.event?.priceCents ?? order.totalCents / Math.max(order.registrations.length, 1)
         );
 
+        const minAgeLimit = typeof order.event?.minAgeYears === "number" ? order.event.minAgeYears : null;
+        const registrationsWithPricing = order.registrations.map((registration) => ({
+          ...registration,
+          priceCents: resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents)
+        }));
+        const totalCents = registrationsWithPricing.reduce((acc, reg) => acc + (reg.priceCents ?? 0), 0);
         return {
           ...order,
-          totalCents: unitPriceCents * order.registrations.length,
-          registrations: order.registrations.map((registration) => ({
-            ...registration,
-            priceCents: unitPriceCents
-          })),
+          totalCents,
+          registrations: registrationsWithPricing,
           pendingPricingRule: pricingRule
         };
       })
@@ -236,6 +284,9 @@ export class OrderService {
     people: BatchPerson[];
     paymentMethod?: PaymentMethod;
   }, actor?: ActorUser | undefined) {
+    const handlerStart = Date.now();
+    const participantCount = payload.people.length;
+    try {
     const actorId = actor?.id;
     const actorRole = actor?.role;
     const actorDistrictId = actor?.districtScopeId ?? null;
@@ -266,12 +317,12 @@ export class OrderService {
     let resolvedMethod =
       requestedMethod && (allowedMethods.includes(requestedMethod) || ((actorRole === "AdminGeral" || actorRole === "AdminDistrital") && AdminOnlyPaymentMethods.includes(requestedMethod as any))) ? requestedMethod : fallbackMethod;
 
-    // Verificar se m�todo � exclusivo de admin
+    // Verificar se método é exclusivo de admin
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
       if (!actorId || !actorRole) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
       }
-      // Verificar se o usu�rio � admin (AdminGeral ou AdminDistrital)
+      // Verificar se o usuário é admin (AdminGeral ou AdminDistrital)
       const isAdmin = actorRole === "AdminGeral" || actorRole === "AdminDistrital";
       if (!isAdmin) {
         throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
@@ -282,9 +333,9 @@ export class OrderService {
     const isFreePaymentMethod = FreePaymentMethods.includes(resolvedMethod as PaymentMethod);
     const sanitizedBuyerCpf = sanitizeCpf(payload.buyerCpf);
     
-    // Se for m�todo gratuito, n�o usar PIX_MP mesmo para eventos gratuitos
+    // Se for método gratuito, não usar PIX_MP mesmo para eventos gratuitos
     if (isFreePaymentMethod) {
-      // M�todo gratuito j� est� definido
+      // Método gratuito já está definido
     } else if (isFreeEvent) {
       resolvedMethod = PaymentMethod.PIX_MP;
     }
@@ -297,7 +348,7 @@ export class OrderService {
       throw new AppError("Nenhum lote disponivel para inscricao no momento", 400);
     }
 
-    // Se for m�todo de pagamento gratuito, o valor � sempre 0
+    // Se for método de pagamento gratuito, o valor é sempre 0
     const unitPriceCents = (isFreeEvent || isFreePaymentMethod)
       ? 0
       : Math.max(activeLot?.priceCents ?? 0, 0);
@@ -327,12 +378,58 @@ export class OrderService {
       })
     );
 
+    const minAgeLimit = typeof event.minAgeYears === "number" ? event.minAgeYears : null;
+    const peopleWithPricing = peoplePrepared.map((person) => {
+      const ageYears = calculateAgeAtDate(person.birthDate, event.startDate);
+      if (ageYears === null) {
+        throw new AppError("Data de nascimento invalida.", 400);
+      }
+      const basePriceCents = resolvePriceCentsForAge(ageYears, minAgeLimit, unitPriceCents);
+      const priceCents = (isFreeEvent || isFreePaymentMethod) ? 0 : basePriceCents;
+      return { ...person, ageYears, priceCents };
+    });
+
+    const totalCents = peopleWithPricing.reduce((acc, person) => acc + person.priceCents, 0);
+    const isFreeOrder = isFreeEvent || isFreePaymentMethod || totalCents === 0;
+    const paidAtValue = isFreeOrder ? new Date() : null;
+
     const orderDistrictId = event.districtId;
     const districtAdminId = await this.resolveDistrictAdminId(orderDistrictId);
     const orderId = randomUUID();
     const expiresAt = resolveOrderExpirationDate(resolvedMethod);
 
-    const registrations = await prisma.$transaction(async (tx) => {
+    const registrationData: Prisma.RegistrationUncheckedCreateInput[] = peopleWithPricing.map(
+      (person) => {
+        const birthDateParts = person.birthDate.split("-");
+        const birthDateUTC = new Date(Date.UTC(
+          parseInt(birthDateParts[0], 10),
+          parseInt(birthDateParts[1], 10) - 1,
+          parseInt(birthDateParts[2], 10)
+        ));
+
+        return {
+          orderId,
+          eventId: payload.eventId,
+          fullName: person.fullName,
+          cpf: person.cpf,
+          birthDate: birthDateUTC,
+          ageYears: person.ageYears,
+          districtId: person.districtId,
+          churchId: person.churchId,
+          photoUrl: person.storedPhoto,
+          gender: person.gender,
+          paymentMethod: resolvedMethod,
+          ministryId: event.ministryId,
+          status: isFreeOrder ? RegistrationStatus.PAID : RegistrationStatus.PENDING_PAYMENT,
+          responsibleUserId: event.createdById ?? null,
+          priceCents: person.priceCents,
+          paidAt: paidAtValue
+        };
+      }
+    );
+
+    const txStart = Date.now();
+    const order = await prisma.$transaction(async (tx) => {
       // Limpar inscricoes e pedidos anteriores (pendentes/cancelados/expirados) para os CPFs informados
       const existingRegistrations = peoplePrepared.length
         ? await tx.registration.findMany({
@@ -395,97 +492,78 @@ export class OrderService {
         }
       }
 
-      // Se for metodo gratuito, marcar como pago automaticamente
-      const orderStatus = (isFreeEvent || isFreePaymentMethod) ? OrderStatus.PAID : OrderStatus.PENDING;
-      const paidAtValue = (isFreeEvent || isFreePaymentMethod) ? new Date() : null;
+      // Se for gratuito/isento, marcar como pago automaticamente
+      const orderStatus = isFreeOrder ? OrderStatus.PAID : OrderStatus.PENDING;
       const order = await tx.order.create({
         data: {
           id: orderId,
           eventId: payload.eventId,
           buyerCpf: sanitizedBuyerCpf,
-          totalCents: unitPriceCents * payload.people.length,
+          totalCents,
           status: orderStatus,
           paymentMethod: resolvedMethod,
           externalReference: orderId,
           expiresAt,
           pricingLotId: activeLot?.id ?? null,
-          mpPaymentId: (isFreeEvent || isFreePaymentMethod) ? `MANUAL-FREE-${Date.now()}` : null,
+          mpPaymentId: isFreeOrder ? `MANUAL-FREE-${Date.now()}` : null,
           paidAt: paidAtValue,
           districtId: orderDistrictId,
           districtAdminId,
           responsibleUserId: event.createdById ?? null,
-          amountToTransfer: orderStatus === OrderStatus.PAID ? unitPriceCents * payload.people.length : 0,
+          amountToTransfer: orderStatus === OrderStatus.PAID ? totalCents : 0,
           transferStatus: orderStatus === OrderStatus.PAID ? OrderTransferStatus.PENDING : null
         }
       });
+      await tx.registration.createMany({ data: registrationData });
 
-      const regs = [];
-      for (const person of peoplePrepared) {
-        const ageYears = registrationService.computeAge(person.birthDate);
-        if (event.minAgeYears && ageYears < event.minAgeYears) {
-          throw new AppError(`Participante ${person.fullName} nao atende idade minima`, 400);
-        }
+      return order;
+    }, { timeout: INTERACTIVE_TX_TIMEOUT_MS });
+    const txMs = Date.now() - txStart;
 
-        // Garantir que a data de nascimento seja salva como UTC midnight do dia correto
-        // Quando recebemos "1998-11-05", queremos salvar como "1998-11-05T00:00:00.000Z"
-        // Isso garante que ao formatar usando UTC, a data ser� exibida corretamente
-        const birthDateParts = person.birthDate.split('-');
-        const birthDateUTC = new Date(Date.UTC(
-          parseInt(birthDateParts[0], 10), // ano
-          parseInt(birthDateParts[1], 10) - 1, // m�s (0-indexed)
-          parseInt(birthDateParts[2], 10) // dia
-        ));
-
-        const registration = await tx.registration.create({
-          data: {
-            orderId: order.id,
-            eventId: payload.eventId,
-            fullName: person.fullName,
-            cpf: person.cpf,
-            birthDate: birthDateUTC,
-            ageYears,
-            districtId: person.districtId,
-            churchId: person.churchId,
-            photoUrl: person.storedPhoto,
-            gender: person.gender,
-            paymentMethod: resolvedMethod,
-            ministryId: event.ministryId,
-            status: (isFreeEvent || isFreePaymentMethod)
-              ? RegistrationStatus.PAID
-              : RegistrationStatus.PENDING_PAYMENT,
-            responsibleUserId: event.createdById ?? null,
-            priceCents: unitPriceCents,
-            paidAt: paidAtValue
-          }
-        });
-        regs.push(registration);
-      }
-
-      return { order, registrations: regs };
+    const registrationRows = await prisma.registration.findMany({
+      where: { orderId: order.id },
+      select: { id: true }
     });
+    const registrationIds = registrationRows.map((row) => row.id);
+
+    logger.info(
+      {
+        orderId: order.id,
+        participantCount,
+        totalCents,
+        paymentMethod: resolvedMethod,
+        handlerMs: Date.now() - handlerStart,
+        txMs
+      },
+      "ORDER_CREATE_BATCH_TIMING"
+    );
 
     await auditService.log({
       action: "ORDER_CREATED",
       entity: "order",
-      entityId: registrations.order.id,
+      entityId: order.id,
       metadata: {
-        count: registrations.registrations.length,
+        count: registrationIds.length,
         eventId: payload.eventId,
         buyerCpf: sanitizedBuyerCpf,
         paymentMethod: resolvedMethod
       }
     });
 
-    if (isFreeEvent || isFreePaymentMethod) {
-      await registrationService.generateReceiptsForOrder(registrations.order.id);
+    if (isFreeOrder) {
+      try {
+        await registrationService.generateReceiptsForOrder(order.id);
+      } catch (error) {
+        logger.warn({ orderId: order.id, error }, "Falha ao gerar comprovantes de inscricao gratuita");
+      }
       return {
-        orderId: registrations.order.id,
-        registrationIds: registrations.registrations.map((r) => r.id),
+        orderId: order.id,
+        registrationIds,
         payment: {
           status: OrderStatus.PAID,
           paymentMethod: resolvedMethod,
-          participantCount: payload.people.length,
-          totalCents: 0,
+          participantCount: registrationIds.length,
+          totalCents,
           isFree: true
         }
       };
@@ -493,13 +571,13 @@ export class OrderService {
 
     if (isManualMethod) {
       return {
-        orderId: registrations.order.id,
-        registrationIds: registrations.registrations.map((r) => r.id),
+        orderId: order.id,
+        registrationIds,
         payment: {
           status: OrderStatus.PENDING,
           paymentMethod: resolvedMethod,
-          participantCount: payload.people.length,
-          totalCents: unitPriceCents * payload.people.length,
+          participantCount: registrationIds.length,
+          totalCents,
           isManual: true
         }
       };
@@ -507,27 +585,40 @@ export class OrderService {
 
     let payment;
     try {
-      payment = await paymentService.createPreference(registrations.order.id);
+      payment = await paymentService.createPreference(order.id);
     } catch (error) {
       logger.error(
-        { orderId: registrations.order.id, error },
+        { orderId: order.id, error },
         "Falha ao gerar preferencia de pagamento"
       );
-      await prisma.registration.deleteMany({ where: { orderId: registrations.order.id } });
-      await prisma.order.delete({ where: { id: registrations.order.id } });
+      await prisma.registration.deleteMany({ where: { orderId: order.id } });
+      await prisma.order.delete({ where: { id: order.id } });
       throw new AppError("Nao foi possivel gerar o pagamento. Tente novamente.", 502);
     }
 
     return {
-      orderId: registrations.order.id,
-      registrationIds: registrations.registrations.map((r) => r.id),
+      orderId: order.id,
+      registrationIds,
       payment: {
         ...payment,
         paymentMethod: resolvedMethod,
-        participantCount: payload.people.length,
-        totalCents: unitPriceCents * payload.people.length
+        participantCount: registrationIds.length,
+        totalCents
       }
     };
+    } catch (error: any) {
+      logger.error(
+        {
+          handlerMs: Date.now() - handlerStart,
+          participantCount,
+          prismaCode: error?.code,
+          modelName: error?.meta?.modelName,
+          message: error?.message
+        },
+        "ORDER_CREATE_BATCH_FAILED"
+      );
+      throw error;
+    }
   }
 
   async getPayment(orderId: string) {
@@ -568,34 +659,60 @@ export class OrderService {
       receipts = await registrationService.listReceiptLinksByOrder(orderId);
     }
     const fallbackPriceCents = order.event?.priceCents ?? 0;
+    const minAgeLimit = typeof order.event?.minAgeYears === "number" ? order.event.minAgeYears : null;
     const paymentRule = isPendingPaymentValueRule(order.event?.pendingPaymentValueRule)
       ? (order.event?.pendingPaymentValueRule as PendingPaymentValueRule)
       : DEFAULT_PENDING_PAYMENT_VALUE_RULE;
     let totalCents = order.totalCents;
     let needsPriceUpdate = false;
     let recalculatedUnitPrice: number | null = null;
+    let recalculatedPrices: number[] | null = null;
     if (paymentRule === "UPDATE_TO_ACTIVE_LOT" && participantCount > 0) {
       const unitPriceCents = await resolveCurrentLotPriceCents(order.eventId, fallbackPriceCents);
-      totalCents = unitPriceCents * participantCount;
       recalculatedUnitPrice = unitPriceCents;
-      needsPriceUpdate = totalCents !== order.totalCents;
+      recalculatedPrices = order.registrations.map((registration) =>
+        resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents)
+      );
+      totalCents = recalculatedPrices.reduce((acc, price) => acc + price, 0);
+      needsPriceUpdate =
+        totalCents !== order.totalCents ||
+        recalculatedPrices.some((price, index) => price !== (order.registrations[index].priceCents ?? 0));
     }
 
     if (needsPriceUpdate && recalculatedUnitPrice !== null) {
-      await prisma.$transaction([
+      const updates: Prisma.PrismaPromise<any>[] = [
         prisma.order.update({
           where: { id: order.id },
           data: { totalCents }
-        }),
-        prisma.registration.updateMany({
-          where: { orderId: order.id },
-          data: { priceCents: recalculatedUnitPrice }
         })
-      ]);
+      ];
+      if (minAgeLimit !== null) {
+        updates.push(
+          prisma.registration.updateMany({
+            where: { orderId: order.id, ageYears: { lte: minAgeLimit } },
+            data: { priceCents: 0 }
+          }),
+          prisma.registration.updateMany({
+            where: { orderId: order.id, ageYears: { gt: minAgeLimit } },
+            data: { priceCents: recalculatedUnitPrice }
+          })
+        );
+      } else {
+        updates.push(
+          prisma.registration.updateMany({
+            where: { orderId: order.id },
+            data: { priceCents: recalculatedUnitPrice }
+          })
+        );
+      }
+      await prisma.$transaction(updates);
       order.totalCents = totalCents;
-      order.registrations.forEach((registration) => {
-        registration.priceCents = recalculatedUnitPrice as number;
-      });
+      if (recalculatedPrices) {
+        order.registrations = order.registrations.map((registration, index) => ({
+          ...registration,
+          priceCents: recalculatedPrices?.[index] ?? registration.priceCents
+        }));
+      }
     }
 
     const isManualMethod = ManualPaymentMethods.includes(paymentMethod);
@@ -608,7 +725,8 @@ export class OrderService {
     const manualPaymentProofUrl = order.manualPaymentProofUrl ?? undefined;
 
     const isFreeEvent = Boolean((order.event as any)?.isFree);
-    if (isFreeEvent) {
+    const isFreeOrder = isFreeEvent || totalCents === 0;
+    if (isFreeOrder) {
       return {
         status: order.status,
         paymentId: order.mpPaymentId,
@@ -646,6 +764,7 @@ export class OrderService {
 
     if (useUniversalPix) {
       const pixPayment = await pixPaymentService.createCharge(orderId);
+      const pixMeta = buildPixMeta(pixPayment.pixQrData ?? undefined);
       return {
         status: order.status,
         paymentId: pixPayment.chargeId ?? order.mpPaymentId,
@@ -654,6 +773,7 @@ export class OrderService {
         participants,
         totalCents,
         pixQrData: pixPayment.pixQrData ?? undefined,
+        ...pixMeta,
         paidAt: order.paidAt,
         receipts: order.status === OrderStatus.PAID ? receipts : [],
         provider: pixPayment.provider,
@@ -767,7 +887,7 @@ export class OrderService {
       }
     }
 
-    // Como fallback final, gerar um pagamento PIX especifico para obter o QR
+    // Como fallback final, gerar um pagamento PIX específico para obter o QR
     if (!pixQrData && paymentMethod === PaymentMethod.PIX_MP) {
       try {
       const pix = await paymentService.createPixPaymentForOrder(orderId);
@@ -777,9 +897,24 @@ export class OrderService {
       }
     }
 
+    if (latestPayment?.statusDetail && invalidPaymentStatus) {
+      logger.warn(
+        {
+          orderId,
+          paymentId: latestPayment.id,
+          status: latestPayment.status,
+          statusDetail: latestPayment.statusDetail
+        },
+        "PIX_PAYMENT_REJECTED"
+      );
+    }
+
+    const pixMeta = buildPixMeta(pixQrData);
+
     return {
       ...payment,
       pixQrData,
+      ...pixMeta,
       status: latestStatus ?? order.status,
       statusDetail: latestPayment?.statusDetail,
       paymentMethod,
@@ -795,7 +930,7 @@ export class OrderService {
   async list(filters: { eventId?: string; status?: OrderStatusValue; churchId?: string; districtId?: string; ministryIds?: string[] }) {
     const { hasFeeCents, hasNetAmountCents } = await resolveOrderColumns();
 
-    // Usar select para evitar problemas com colunas que podem n�o existir
+    // Usar select para evitar problemas com colunas que podem não existir
     const registrationFilter: Record<string, string> = {};
     if (filters.churchId) registrationFilter.churchId = filters.churchId;
     if (filters.districtId) registrationFilter.districtId = filters.districtId;
@@ -863,9 +998,9 @@ export class OrderService {
     });
   }
 
-  // Gera um pagamento exclusivo para uma inscri��o espec�fica.
-  // Se a inscri��o pertencer a um pedido com outras inscri��es, move-a para um novo pedido (split)
-  // e invalida a prefer�ncia antiga do pedido original. Se j� estiver sozinha, apenas gera nova prefer�ncia.
+  // Gera um pagamento exclusivo para uma inscrição específica.
+  // Se a inscrição pertencer a um pedido com outras inscrições, move-a para um novo pedido (split)
+  // e invalida a preferência antiga do pedido original. Se já estiver sozinha, apenas gera nova preferência.
   async createIndividualPaymentForRegistration(registrationId: string) {
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
@@ -944,7 +1079,7 @@ export class OrderService {
 
     const oldOrderId = registration.orderId;
     const priceCents =
-      registration.priceCents && registration.priceCents > 0
+      typeof registration.priceCents === "number"
         ? registration.priceCents
         : registration.event.priceCents ?? 0;
     const expiresAt = resolveOrderExpirationDate(paymentMethod);
@@ -1004,7 +1139,7 @@ export class OrderService {
           }
         });
       }
-    });
+    }, { timeout: INTERACTIVE_TX_TIMEOUT_MS });
 
     const payment = await paymentService.createPreference(newOrderId);
     return { orderId: newOrderId, payment };
@@ -1094,7 +1229,7 @@ export class OrderService {
     }
 
     const prices = registrations.map((reg) =>
-      reg.priceCents && reg.priceCents > 0 ? reg.priceCents : reg.event?.priceCents ?? 0
+      typeof reg.priceCents === "number" ? reg.priceCents : reg.event?.priceCents ?? 0
     );
     const totalCents = prices.reduce((acc, price) => acc + (price ?? 0), 0);
 
@@ -1208,7 +1343,7 @@ export class OrderService {
       }
 
       return createdOrder;
-    }, { timeout: 15000 });
+    }, { timeout: INTERACTIVE_TX_TIMEOUT_MS });
 
     let payment: any = null;
     if (
@@ -1339,7 +1474,7 @@ export class OrderService {
           where: { id: orderId },
           data: updateData
         });
-      });
+      }, { timeout: INTERACTIVE_TX_TIMEOUT_MS });
 
       if (shouldUpdateProof && order.manualPaymentProofUrl && order.manualPaymentProofUrl !== newProofUrl) {
         await storageService.deleteByUrl(order.manualPaymentProofUrl).catch(() => undefined);
@@ -1390,9 +1525,9 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId, paymentId, error },
-          "Falha ao calcular taxas do Mercado Pago. Usando valores padr�o."
+          "Falha ao calcular taxas do Mercado Pago. Usando valores padrão."
         );
-        // Em caso de erro, n�o aplicar taxas (assumir 0)
+        // Em caso de erro, não aplicar taxas (assumir 0)
       }
     }
 
@@ -1485,7 +1620,7 @@ export class OrderService {
         }
       });
       return updatedOrder;
-    });
+    }, { timeout: INTERACTIVE_TX_TIMEOUT_MS });
 
     if (shouldUpdateProof && order.manualPaymentProofUrl && order.manualPaymentProofUrl !== newProofUrl) {
       await storageService.deleteByUrl(order.manualPaymentProofUrl).catch(() => undefined);
@@ -1643,4 +1778,5 @@ export class OrderService {
 }
 
 export const orderService = new OrderService();
+
 

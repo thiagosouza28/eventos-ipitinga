@@ -20,6 +20,15 @@ const slugFieldSchema = z
   .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/i, "Slug deve conter apenas letras, números e hífens");
 
 const pendingPaymentValueRuleSchema = z.enum(PendingPaymentValueRuleValues);
+const noticeObjectSchema = z.object({
+  enabled: z.boolean(),
+  title: z.string().trim().optional(),
+  bullets: z.array(z.string().trim()).optional(),
+  footerText: z.string().trim().optional(),
+  showOnce: z.boolean().optional()
+});
+
+const noticeSchema = z.union([noticeObjectSchema, z.string()]).nullable().optional();
 
 const createSchema = z.object({
   title: z.string().min(3),
@@ -35,6 +44,7 @@ const createSchema = z.object({
   isActive: z.boolean().optional(),
   paymentMethods: z.array(paymentMethodSchema).min(1).optional(),
   pendingPaymentValueRule: pendingPaymentValueRuleSchema.optional(),
+  notice: noticeSchema,
   ministryId: z.string().cuid(),
   districtId: z.string().cuid(),
   churchId: z.string().cuid().optional()

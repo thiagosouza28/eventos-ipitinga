@@ -139,8 +139,5 @@ export const deleteChurchHandler = async (request: Request, response: Response) 
 export const findChurchByDirectorCpfHandler = async (request: Request, response: Response) => {
   const { cpf } = directorLookupSchema.parse(request.query);
   const result = await churchService.findByDirectorCpf(cpf);
-  if (!result) {
-    return response.status(404).json({ message: "Igreja nao encontrada para este CPF." });
-  }
-  return response.json(result);
+  return response.json(result ?? null);
 };

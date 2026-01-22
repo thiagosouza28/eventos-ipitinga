@@ -198,7 +198,7 @@
                           {{ translateStatus(registration.status) }}
                         </span>
                         <span class="text-[10px] text-slate-500 dark:text-slate-400">
-                          {{ paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '') }} •
+                          {{ resolvePaymentLabel(registration) }} •
                           {{ formatDateShort(registration.paidAt || registration.createdAt) }}
                         </span>
                       </div>
@@ -231,7 +231,7 @@
                     <div>
                       <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Data do pagamento</p>
                       <p class="text-xs text-slate-700 dark:text-slate-200">
-                        {{ paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '') }} •
+                        {{ resolvePaymentLabel(registration) }} •
                         {{ formatDateShort(registration.paidAt || registration.createdAt) }}
                       </p>
                     </div>
@@ -555,7 +555,7 @@
                   <span v-if="findRegistrationLotLabel(registration)">Lote: {{ findRegistrationLotLabel(registration) }}</span>
                   <span>{{ formatCurrency(registration.priceCents ?? findEventPriceCents(registration.eventId)) }}</span>
                   <span class="hidden sm:inline">•</span>
-                  <span>Pagamento: {{ paymentMethodShort(registration.paymentMethod) }}</span>
+                  <span>Pagamento: {{ resolvePaymentLabel(registration) }}</span>
                 </div>
               </td>
               <td class="px-5 py-2.5 align-top">
@@ -581,7 +581,7 @@
                 </span>
                 <div class="mt-1 text-[11px] text-neutral-500 dark:text-neutral-500 leading-tight space-y-0.5">
                   <div v-if="registration.paymentMethod || registration.paidAt" class="flex flex-wrap items-center gap-2">
-                    <span v-if="registration.paymentMethod">Forma: {{ paymentMethodShort(registration.paymentMethod) }}</span>
+                    <span v-if="registration.paymentMethod">Forma: {{ resolvePaymentLabel(registration) }}</span>
                     <span v-if="registration.paymentMethod && registration.paidAt" class="hidden sm:inline">•</span>
                     <span v-if="registration.paidAt">Pago em {{ new Date(registration.paidAt).toLocaleString("pt-BR") }}</span>
                   </div>
@@ -780,7 +780,7 @@
                         {{ translateStatus(registration.status) }}
                       </span>
                       <span class="text-[10px] text-slate-400 dark:text-slate-500">
-                        {{ paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '') }} -
+                        {{ resolvePaymentLabel(registration) }} -
                         {{ formatDateShort(registration.paidAt || registration.createdAt) }}
                       </span>
                     </div>
@@ -924,10 +924,10 @@
       >
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div class="text-sm font-medium text-neutral-700 dark:text-neutral-200">
-            Mostrando {{ pageRangeStart }}-{{ pageRangeEnd }} de {{ totalRegistrations }} inscricoes</div>
+            Mostrando {{ pageRangeStart }}-{{ pageRangeEnd }} de {{ totalRegistrations }} inscrições</div>
           <div class="flex flex-wrap items-center gap-3">
             <label class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              <span>Por pagina</span>
+              <span>Por página</span>
               <select
                 v-model.number="selectedPageSize"
                 class="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200 dark:border-white/10 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:border-primary-500 dark:focus:ring-primary-900/40"
@@ -990,7 +990,7 @@
             type="button"
             class="text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white"
             @click="closeManualConfirmDialog"
-            aria-label="Fechar confirmacao manual"
+            aria-label="Fechar confirmação manual"
           >
             X
           </button>
@@ -998,7 +998,7 @@
 
         <div class="mt-4 space-y-3">
           <div class="flex flex-wrap items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200">
-            <span>Inscricoes selecionadas: <strong>{{ manualConfirmDialog.items.length }}</strong></span>
+            <span>Inscrições selecionadas: <strong>{{ manualConfirmDialog.items.length }}</strong></span>
             <span>Evento: <strong>{{ findEventTitle(manualConfirmDialog.items[0]?.eventId ?? '') }}</strong></span>
           </div>
           <div class="space-y-2">
@@ -1559,10 +1559,12 @@ import { paymentMethodLabel, PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS } from 
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto'
 import { useModulePermissions } from '../../composables/usePermissions'
 import { createPreviewSession } from '../../utils/documentPreview'
+import { useFileDownload } from '../../composables/useFileDownload'
 
 const admin = useAdminStore()
 const catalog = useCatalogStore()
 const auth = useAuthStore()
+const { downloadFromResponse, handleDownloadError } = useFileDownload()
 const registrationPermissions = useModulePermissions('registrations')
 const reportsPermissions = useModulePermissions('reports')
 const canGenerateListPdf = computed(() => reportsPermissions.canReports.value)
@@ -1988,9 +1990,9 @@ const findRegistrationLotLabel = (registration: Registration) => {
   return lot?.name || ''
 }
 const findDistrictName = (id: string) =>
-  districtMap.value.get(id)?.name ?? registrationDistrictMap.value.get(id) ?? 'Nao informado'
+  districtMap.value.get(id)?.name ?? registrationDistrictMap.value.get(id) ?? "Não informado"
 const findChurchName = (id: string) =>
-  churchMap.value.get(id)?.name ?? registrationChurchMap.value.get(id) ?? 'Nao informado'
+  churchMap.value.get(id)?.name ?? registrationChurchMap.value.get(id) ?? "Não informado"
 
 type DateParts = { year: number; month: number; day: number }
 const parseDateParts = (value: string | Date | null | undefined): DateParts | null => {
@@ -2178,7 +2180,7 @@ const goToPage = async (page: number) => {
       limit: selectedPageSize.value
     })
   } catch (error) {
-    showError('Falha ao carregar inscricoes', error)
+    showError('Falha ao carregar inscrições', error)
   } finally {
     isApplying.value = false
   }
@@ -2318,17 +2320,23 @@ const closePaymentDialog = () => {
 const openPaymentDialog = (itemsInput?: Registration[] | Event) => {
   const items = (Array.isArray(itemsInput) && itemsInput.length ? itemsInput : selectedRegistrations.value).filter(isRegistrationSelectable)
   if (!items.length) {
-    showError('Selecione ao menos uma inscricao', new Error('Selecione ao menos uma inscricao para gerar o pagamento.'))
+    showError('Selecione ao menos uma inscrição', new Error('Selecione ao menos uma inscrição para gerar o pagamento.'))
     return
   }
   const uniqueEvents = new Set(items.map((item) => item.eventId))
   if (uniqueEvents.size > 1) {
-    showError('Selecione apenas inscricoes do mesmo evento', new Error('Selecione inscricoes de um unico evento para gerar o pagamento.'))
+    showError(
+      'Selecione apenas inscrições do mesmo evento',
+      new Error('Selecione inscrições de um único evento para gerar o pagamento.')
+    )
     return
   }
   const allowed = resolveAllowedPaymentMethods(items[0].eventId)
   if (!allowed.length) {
-    showError('Evento sem formas de pagamento', new Error('Nenhuma forma de pagamento disponivel para este evento.'))
+    showError(
+      "Evento sem formas de pagamento",
+      new Error("Nenhuma forma de pagamento disponível para este evento.")
+    )
     return
   }
   paymentDialog.items = items
@@ -2350,7 +2358,7 @@ const removeFromPaymentDialog = (registrationId: string) => {
 
 const confirmPaymentGeneration = async () => {
   if (!paymentDialog.items.length) {
-    paymentDialog.error = 'Selecione ao menos uma inscricao para continuar.'
+    paymentDialog.error = 'Selecione ao menos uma inscrição para continuar.'
     return
   }
   if (!paymentDialog.paymentMethod) {
@@ -2383,7 +2391,7 @@ const confirmPaymentGeneration = async () => {
     paymentDialog.successOrderId = result?.orderId ?? null
     selectedRegistrationIds.value = new Set()
     if (!paymentDialog.successLink) {
-      paymentDialog.error = 'Pagamento criado. Nao foi possivel gerar link automatico (pagamento manual).'
+      paymentDialog.error = 'Pagamento criado. Não foi possível gerar link automático (pagamento manual).'
     }
   } catch (error: any) {
     const message = error?.response?.data?.message ?? error?.message ?? 'Erro ao gerar pagamento'
@@ -2432,7 +2440,7 @@ const closeManualConfirmDialog = () => {
 
 const confirmManualPayment = async () => {
   if (!manualConfirmDialog.items.length) {
-    manualConfirmDialog.error = 'Selecione ao menos uma inscricao.';
+    manualConfirmDialog.error = 'Selecione ao menos uma inscrição.';
     return;
   }
   const allowedOptions = manualConfirmPaymentOptions.value;
@@ -2441,7 +2449,7 @@ const confirmManualPayment = async () => {
     return;
   }
   if (allowedOptions.length && !allowedOptions.some((opt) => opt.value === manualConfirmDialog.paymentMethod)) {
-    manualConfirmDialog.error = 'Forma de pagamento nao disponivel para este evento.';
+    manualConfirmDialog.error = "Forma de pagamento não disponível para este evento.";
     return;
   }
   manualConfirmDialog.loading = true;
@@ -2691,6 +2699,16 @@ const paymentMethodShort = (method?: string | null) => {
   if (method === 'CARD_FULL') return 'Cartão (à vista)'
   if (method === 'CARD_INSTALLMENTS') return 'Cartão (parcelado)'
   return paymentMethodLabel(method)
+}
+const resolveRegistrationPriceCents = (registration: Registration) => {
+  if (typeof registration.priceCents === 'number') return registration.priceCents
+  return findEventPriceCents(registration.eventId)
+}
+
+const resolvePaymentLabel = (registration: Registration) => {
+  const priceCents = resolveRegistrationPriceCents(registration)
+  if (priceCents === 0) return 'Gratuito'
+  return paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '')
 }
 
 const editDialog = reactive({ open: false, original: null as Registration | null })
@@ -3072,20 +3090,20 @@ const downloadReceipt = async (registration: Registration) => {
     const response = await admin.getRegistrationReceiptLink(registration.id)
     const url = response?.url
     if (!url) {
-      showError('Comprovante indisponivel', new Error('Nao foi possivel gerar o link do comprovante.'))
+      showError('Comprovante indisponível', new Error('Não foi possível gerar o link do comprovante.'))
       return
     }
     await createPreviewSession(
       [
         {
           id: registration.id,
-          title: registration.fullName || "Inscricao " + registration.id,
+          title: registration.fullName || "Inscrição " + registration.id,
           fileName: "comprovante-" + registration.id + ".pdf",
           sourceUrl: url,
           mimeType: 'application/pdf'
         }
       ],
-      { context: 'Comprovante de inscricao' }
+      { context: 'Comprovante de inscrição' }
     )
   } catch (error) {
     showError('Falha ao gerar comprovante', error)
@@ -3101,45 +3119,33 @@ const sanitizeFilePart = (value: string) =>
     .replace(/(^-|-$)+/g, '')
     .slice(0, 40)
 
-const requestReportJobBlob = async (jobResponse: { jobId?: string | null }) => {
+const requestReportJobResponse = async (jobResponse: { jobId?: string | null }) => {
   if (!jobResponse?.jobId) {
     throw new Error('Relatorio indisponivel.')
   }
   const job = await admin.waitForReportJob(jobResponse.jobId)
-  const fileResponse = await admin.downloadReportJobFile(job.id)
-  return new Blob([fileResponse.data], { type: 'application/pdf' })
+  return admin.downloadReportJobFile(job.id)
 }
-
 const generateRegistrationListPdf = async () => {
   if (!canGenerateListPdf.value || listPdfState.loading) return
   listPdfState.loading = true
   try {
     const params = buildFilterParams()
     const jobResponse = await admin.requestRegistrationListJob(params)
-    const blob = await requestReportJobBlob(jobResponse)
+    const fileResponse = await requestReportJobResponse(jobResponse)
     const eventLabel = filters.eventId ? findEventTitle(filters.eventId) : 'inscricoes'
     const churchLabel = filters.churchId ? findChurchName(filters.churchId) : ''
     const lotLabel = filters.lotId ? selectedLotName.value : ''
     const parts = ['lista', eventLabel, churchLabel, lotLabel].filter(Boolean).map(sanitizeFilePart)
     const fileName = `${parts.filter(Boolean).join('-') || 'lista-inscricoes'}.pdf`
-    await createPreviewSession(
-      [
-        {
-          title: 'Lista de inscricoes',
-          fileName,
-          blob,
-          mimeType: 'application/pdf'
-        }
-      ],
-      { context: 'Lista de inscricoes' }
-    )
+    downloadFromResponse(fileResponse, fileName)
   } catch (error) {
-    showError('Falha ao gerar lista em PDF', error)
+    const info = handleDownloadError(error, 'download do relatorio')
+    showError('Falha ao gerar lista em PDF', new Error(info.message))
   } finally {
     listPdfState.loading = false
   }
 }
-
 </script>
 
 <style scoped>
@@ -3203,4 +3209,12 @@ const generateRegistrationListPdf = async () => {
   background: rgba(255, 255, 255, 0.08);
 }
 </style>
+
+
+
+
+
+
+
+
 

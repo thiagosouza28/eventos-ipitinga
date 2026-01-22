@@ -9,9 +9,10 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
-import { createPreviewSession } from "../../utils/documentPreview";
+import { useFileDownload } from "../../composables/useFileDownload";
 const admin = useAdminStore();
 const { api } = useApi();
+const { downloadFromResponse, handleDownloadError } = useFileDownload();
 const loading = ref(true);
 const generalSummary = ref(null);
 const eventSummary = ref(null);
@@ -168,20 +169,13 @@ const downloadEventReport = async () => {
         }
         const job = await admin.waitForReportJob(jobResponse.jobId);
         const fileResponse = await admin.downloadReportJobFile(job.id);
-        const blob = new Blob([fileResponse.data], { type: "application/pdf" });
         const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
-        await createPreviewSession([
-            {
-                id: `financial-${selectedEventId.value}`,
-                title: `Relatorio financeiro - ${eventSummary.value?.event?.title || "Evento"}`,
-                fileName: `relatorio-financeiro-${filenameBase}.pdf`,
-                blob,
-                mimeType: "application/pdf"
-            }
-        ], { context: "Relatorios administrativos" });
+        const safeBase = String(filenameBase).replace(/\s+/g, "-").toLowerCase();
+        downloadFromResponse(fileResponse, `relatorio-financeiro-${safeBase}.pdf`);
     }
     catch (error) {
-        showError("Erro ao gerar relatorio financeiro", error);
+        const info = handleDownloadError(error, "download do relatorio financeiro");
+        showError("Erro ao gerar relatorio financeiro", new Error(info.message));
     }
     finally {
         downloadingReport.value = false;
@@ -587,7 +581,7 @@ if (!__VLS_ctx.loading && __VLS_ctx.eventSummary && __VLS_ctx.selectedEventId) {
         ...{ class: "inline-flex items-center justify-center rounded-full border border-neutral-200/70 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
         disabled: (__VLS_ctx.downloadingReport),
     });
-    (__VLS_ctx.downloadingReport ? "Preparando..." : "Visualizar PDF");
+    (__VLS_ctx.downloadingReport ? "Preparando..." : "Baixar PDF");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" },
     });

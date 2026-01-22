@@ -147,7 +147,7 @@
           >
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-1">
-                <p class="text-sm font-semibold">Nao foi possivel carregar o documento</p>
+                <p class="text-sm font-semibold">Não foi possível carregar o documento</p>
                 <p>{{ previewError }}</p>
               </div>
               <button
@@ -205,7 +205,7 @@
               {{
                 loadingDoc
                   ? "Carregando documento..."
-                  : "Documento ainda nao carregado. Tente novamente em instantes."
+                  : "Documento ainda não carregado. Tente novamente em instantes."
               }}
             </div>
           </div>
@@ -336,13 +336,13 @@ const ensureDocUrl = async (doc?: PreviewDocument) => {
     if (doc.sourceUrl) {
       const sourceUrl = normalizeDocumentUrl(doc.sourceUrl);
       if (!sourceUrl) {
-        throw new Error("Origem do documento nao informada.");
+        throw new Error("Origem do documento não informada.");
       }
       const response = await fetch(sourceUrl, { credentials: "include" });
       if (!response.ok) {
         const message = await resolveResponseMessage(
           response,
-          "Nao foi possivel carregar o documento."
+          "Não foi possível carregar o documento."
         );
         throw new Error(message);
       }
@@ -355,11 +355,11 @@ const ensureDocUrl = async (doc?: PreviewDocument) => {
       doc.sourceUrl = sourceUrl;
       previewStatus.value = "success";
     } else {
-      throw new Error("Origem do documento nao informada.");
+      throw new Error("Origem do documento não informada.");
     }
   } catch (error: any) {
     console.error("Falha ao preparar visualizacao", error);
-    previewError.value = error?.message ?? "Nao foi possivel carregar o documento.";
+    previewError.value = error?.message ?? "Não foi possível carregar o documento.";
     previewStatus.value = "error";
     viewerSrc.value = "";
   } finally {
@@ -467,7 +467,7 @@ const fetchDocumentBlob = async (doc: PreviewDocument) => {
   if (!response.ok) {
     const message = await resolveResponseMessage(
       response,
-      "Nao foi possivel baixar o documento."
+      "Não foi possível baixar o documento."
     );
     throw new Error(message);
   }
@@ -494,7 +494,7 @@ const handleDownloadPdf = async () => {
       : `${baseName(currentDoc.value.fileName)}.pdf`;
     triggerDownload(blob, fileName);
   } catch (error: any) {
-    actionError.value = error?.message ?? "Nao foi possivel baixar o PDF.";
+    actionError.value = error?.message ?? "Não foi possível baixar o PDF.";
   }
 };
 
@@ -526,7 +526,7 @@ const downloadPdfAsImages = async (blob: Blob, name: string) => {
   } catch (error: any) {
     console.error("Erro ao converter PDF para imagem", error);
     imageDownloadState.value = "error";
-    actionError.value = error?.message ?? "Nao foi possivel gerar a imagem do documento.";
+    actionError.value = error?.message ?? "Não foi possível gerar a imagem do documento.";
   }
 };
 
@@ -545,7 +545,7 @@ const handleDownloadImage = async () => {
     }
     triggerDownload(blob, currentDoc.value.fileName);
   } catch (error: any) {
-    actionError.value = error?.message ?? "Nao foi possivel baixar como imagem.";
+    actionError.value = error?.message ?? "Não foi possível baixar como imagem.";
     imageDownloadState.value = "error";
   } finally {
     if (imageDownloadState.value === "processing") {

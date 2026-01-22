@@ -1,7 +1,7 @@
 import "tsconfig-paths/register";
 
 import { spawn } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import path from "path";
 
 import { Prisma } from "@/prisma/generated/client";
@@ -28,20 +28,54 @@ const REQUIRED_TABLES = [
 ];
 
 const backendRoot = path.resolve(__dirname, "..");
-const schemaPath = "src/prisma/schema.prisma";
+const resolvePrismaSchemaPath = () => {
+  const fallback = "prisma/schema.prisma";
+  try {
+    const packageJsonPath = path.resolve(backendRoot, "package.json");
+    const raw = readFileSync(packageJsonPath, "utf-8");
+    const pkg = JSON.parse(raw) as { prisma?: { schema?: string } };
+    if (pkg?.prisma?.schema && pkg.prisma.schema.trim().length > 0) {
+      return pkg.prisma.schema;
+    }
+  } catch {
+    // ignore and fall back to default
+  }
+  return fallback;
+};
+
+const resolveSchemaPath = () => {
+  const relativeSchemaPath = resolvePrismaSchemaPath();
+  const distCandidate = path.resolve(backendRoot, "dist", relativeSchemaPath);
+  if (existsSync(distCandidate)) {
+    return distCandidate;
+  }
+  return path.resolve(backendRoot, relativeSchemaPath);
+};
+
+const schemaPath = resolveSchemaPath();
 
 const resolvePrismaBinary = () => {
-  const binaryName = process.platform === "win32" ? "prisma.cmd" : "prisma";
+  const isWindows = process.platform === "win32";
+  const binaryName = isWindows ? "prisma.cmd" : "prisma";
   const candidate = path.resolve(backendRoot, "node_modules", ".bin", binaryName);
+  const baseArgs = ["migrate", "deploy", "--schema", schemaPath];
   if (existsSync(candidate)) {
-    return { command: candidate, args: ["migrate", "deploy", "--schema", schemaPath], shell: false };
+    return { command: candidate, args: baseArgs, shell: isWindows };
   }
-  const fallback = process.platform === "win32" ? "npx.cmd" : "npx";
+  const fallback = isWindows ? "npx.cmd" : "npx";
   return {
     command: fallback,
-    args: ["prisma", "migrate", "deploy", "--schema", schemaPath],
-    shell: process.platform === "win32"
+    args: ["prisma", ...baseArgs],
+    shell: isWindows
   };
+};
+
+const shouldAutoMigrate = () => {
+  const flag = env.AUTO_MIGRATE?.trim().toLowerCase();
+  if (flag === "1" || flag === "true" || flag === "yes") {
+    return true;
+  }
+  return env.NODE_ENV !== "production";
 };
 
 const runMigrations = () =>
@@ -67,6 +101,12 @@ const runMigrations = () =>
   });
 
 const ensureDatabaseSchema = async () => {
+  if (shouldAutoMigrate()) {
+    logger.info("Aplicando migrations do Prisma...");
+    await runMigrations();
+    return;
+  }
+
   try {
     const existingTables = await prisma.$queryRaw<{ name: string }[]>`
       SELECT table_name AS name

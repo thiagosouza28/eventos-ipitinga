@@ -18,8 +18,8 @@
             class="flex flex-col gap-3 rounded-[26px] bg-gradient-to-br from-white via-[#f5f7ff] to-[#eaf1ff] p-5 text-[#111827] shadow-[0_25px_60px_rgba(15,23,42,0.08)] dark:from-[#161d36] dark:via-[#111a2d] dark:to-[#0d1426] dark:text-[color:var(--text)] dark:shadow-[0_25px_70px_rgba(0,0,0,0.55)] dark:border dark:border-[rgba(255,255,255,0.06)]"
           >
             <div class="flex items-center justify-between">
-              <span class="text-xs uppercase tracking-[0.3em] text-white/70">Eventos ativos</span>
-              <CalendarDaysIcon class="h-10 w-10 text-white/80" aria-hidden="true" />
+              <span class="text-xs uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[color:var(--text-muted)]">Eventos ativos</span>
+              <CalendarDaysIcon class="h-10 w-10 text-[#4b61ff] dark:text-[#9eb5ff]" aria-hidden="true" />
             </div>
             <p class="text-4xl font-semibold">{{ activeEvents }}</p>
           </div>

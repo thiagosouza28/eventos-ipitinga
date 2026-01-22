@@ -273,7 +273,7 @@ const toggleOrder = (orderId: string) => {
 };
 
 // Função para pagamento individual - processa APENAS o pedido específico
-// N�fO usa selectedOrders, processa diretamente o orderId passado
+// NAO usa selectedOrders, processa diretamente o orderId passado
 const handleIndividualPayment = async (orderId: string, eventSlug?: string, domEvent?: Event) => {
   // Prevenir qualquer propagação de evento que possa interferir
   if (domEvent) {
@@ -286,7 +286,7 @@ const handleIndividualPayment = async (orderId: string, eventSlug?: string, domE
   selectedOrders.value = [];
   
   // Usar apenas o orderId passado como parâmetro
-  // N�fO usar selectedOrders.value de forma alguma
+  // NAO usar selectedOrders.value de forma alguma
   const singleOrderId = String(orderId); // Garantir que usamos apenas este ID como string
   
   // Aguardar nextTick para garantir que a limpeza de selectedOrders seja processada

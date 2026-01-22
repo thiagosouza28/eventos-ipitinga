@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div v-if="eventPermissions.canList" class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -54,7 +54,7 @@
       </div>
       <TableSkeleton
         v-if="loadingEvents"
-        helperText="ð Carregando eventos..."
+        helperText="Carregando eventos..."
       />
       <div
         v-else
@@ -83,7 +83,7 @@
               </td>
               <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
                 <div class="font-semibold text-neutral-900 dark:text-neutral-100">
-                  {{ event.district?.name ?? "Nao informado" }}
+                  {{ event.district?.name ?? "Não informado" }}
                 </div>
               </td>
               <td class="px-4 py-4 text-sm text-neutral-600 dark:text-neutral-300">
@@ -147,7 +147,7 @@
             </tr>
             <tr v-if="!admin.events.length">
               <td class="px-4 py-6 text-sm text-neutral-500" colspan="8">
-                Nenhum evento cadastrado ate o momento.
+                Nenhum evento cadastrado até o momento.
               </td>
             </tr>
           </tbody>
@@ -161,7 +161,7 @@
         >
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">TÃ­tulo</p>
+              <p class="text-xs uppercase tracking-[0.35em] text-neutral-500">Título</p>
               <p class="text-base font-semibold text-neutral-900 dark:text-white">{{ event.title }}</p>
               <p class="text-xs text-neutral-500 dark:text-neutral-400">Slug: {{ event.slug }}</p>
             </div>
@@ -178,7 +178,7 @@
           </div>
           <div class="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-500 dark:text-neutral-400">
             <div>
-              <p class="font-semibold text-neutral-800 dark:text-neutral-100">InÃ­cio</p>
+              <p class="font-semibold text-neutral-800 dark:text-neutral-100">Início</p>
               <p>{{ formatDate(event.startDate) }}</p>
             </div>
             <div>
@@ -195,7 +195,7 @@
             </div>
             <div>
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">Distrito</p>
-              <p>{{ event.district?.name ?? "Nao informado" }}</p>
+              <p>{{ event.district?.name ?? "Não informado" }}</p>
             </div>
             <div class="col-span-2">
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">Regra de valor pendente</p>
@@ -258,7 +258,7 @@
       <form class="mt-2 grid gap-4 md:grid-cols-2" @submit.prevent="submitCreate">
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            TÃ­tulo
+            Título
           </label>
           <input
             v-model="createForm.title"
@@ -300,6 +300,69 @@
             required
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
+        </div>
+        <div class="md:col-span-2 rounded-2xl border border-neutral-200/70 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                Aviso da inscrição
+              </p>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                Exibido antes do fluxo de inscrição na página pública.
+              </p>
+            </div>
+            <label class="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-300">
+              <input
+                v-model="createForm.notice.enabled"
+                type="checkbox"
+                class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+              />
+              Aviso ativo
+            </label>
+          </div>
+          <div class="mt-4 grid gap-3 md:grid-cols-2">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+                Titulo do aviso
+              </label>
+              <input
+                v-model="createForm.notice.title"
+                type="text"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+                Itens do aviso (um por linha)
+              </label>
+              <textarea
+                v-model="createForm.notice.bullets"
+                rows="4"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+                placeholder="Linha 1&#10;Linha 2"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+                Texto de rodape
+              </label>
+              <input
+                v-model="createForm.notice.footerText"
+                type="text"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+                <input
+                  v-model="createForm.notice.showOnce"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                />
+                Mostrar somente uma vez por usuário
+              </label>
+            </div>
+          </div>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
@@ -461,7 +524,7 @@
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-            Ministério responsavel
+            Ministério responsável
           </label>
           <select
             v-model="createForm.ministryId"
@@ -549,6 +612,69 @@
             required
             class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
           />
+        </div>
+        <div class="md:col-span-2 rounded-2xl border border-neutral-200/70 bg-white/70 p-4 dark:border-neutral-800 dark:bg-neutral-900/60">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+                Aviso da inscrição
+              </p>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                Exibido antes do fluxo de inscrição na página pública.
+              </p>
+            </div>
+            <label class="flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-300">
+              <input
+                v-model="editForm.notice.enabled"
+                type="checkbox"
+                class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+              />
+              Aviso ativo
+            </label>
+          </div>
+          <div class="mt-4 grid gap-3 md:grid-cols-2">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+                Titulo do aviso
+              </label>
+              <input
+                v-model="editForm.notice.title"
+                type="text"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+                Itens do aviso (um por linha)
+              </label>
+              <textarea
+                v-model="editForm.notice.bullets"
+                rows="4"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+                placeholder="Linha 1&#10;Linha 2"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold uppercase text-neutral-500 dark:text-neutral-400">
+                Texto de rodape
+              </label>
+              <input
+                v-model="editForm.notice.footerText"
+                type="text"
+                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-300">
+                <input
+                  v-model="editForm.notice.showOnce"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                />
+                Mostrar somente uma vez por usuário
+              </label>
+            </div>
+          </div>
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
@@ -655,7 +781,7 @@
             </option>
           </select>
           <p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Mantemos o distrito obrigatÃ³rio para garantir repasses corretos.
+            Mantemos o distrito obrigatório para garantir repasses corretos.
           </p>
         </div>
         <div class="md:col-span-2">
@@ -801,11 +927,11 @@
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Ministerio</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? 'Nao vinculado' }}</dd>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.ministry?.name ?? "Não vinculado" }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Distrito</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.district?.name ?? 'Nao informado' }}</dd>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.district?.name ?? "Não informado" }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Valor atual</dt>
@@ -827,8 +953,8 @@
               </dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Idade minima</dt>
-              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? 'Nao informada' }}</dd>
+              <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Idade mínima</dt>
+              <dd class="mt-1 font-semibold text-white">{{ details.event?.minAgeYears ?? "Não informada" }}</dd>
             </div>
             <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:col-span-2">
               <dt class="text-xs uppercase tracking-[0.3em] text-white/60">Descricao</dt>
@@ -1042,7 +1168,7 @@
             class="rounded-lg bg-primary-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-70"
             :disabled="lotSaving"
           >
-            {{ lotSaving ? 'Salvando...' : editingLotId ? 'Salvar alteraÃ§Ãµes' : 'Adicionar lote' }}
+            {{ lotSaving ? 'Salvando...' : editingLotId ? 'Salvar alterações' : 'Adicionar lote' }}
           </button>
         </div>
       </form>
@@ -1069,6 +1195,7 @@ import { useApi } from "../../composables/useApi";
 import type {
   District,
   Event as ApiEvent,
+  EventNotice,
   EventLot,
   PaymentMethod,
   Ministry,
@@ -1189,6 +1316,14 @@ const handleDistrictChange = async (
 
 type FormMode = "create" | "edit";
 
+type EventNoticeForm = {
+  enabled: boolean;
+  title: string;
+  bullets: string;
+  footerText: string;
+  showOnce: boolean;
+};
+
 type EventForm = {
   title: string;
   slug: string;
@@ -1204,6 +1339,7 @@ type EventForm = {
   ministryId: string;
   districtId: string;
   churchId: string;
+  notice: EventNoticeForm;
 };
 
 const slugifyValue = (value: string) =>
@@ -1234,6 +1370,36 @@ const applySlugSuggestion = (mode: FormMode) => {
   form.slug = suggestSlugFromForm(form);
 };
 
+const buildNoticeForm = (notice?: EventNotice | null): EventNoticeForm => ({
+  enabled: Boolean(notice?.enabled),
+  title: notice?.title ?? "",
+  bullets: (notice?.bullets ?? []).join("\n"),
+  footerText: notice?.footerText ?? "",
+  showOnce: notice?.showOnce ?? true
+});
+
+const buildNoticePayload = (notice: EventNoticeForm): EventNotice | null => {
+  const title = notice.title.trim();
+  const bullets = notice.bullets
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const footerText = notice.footerText.trim();
+  const hasContent = Boolean(title || bullets.length || footerText);
+
+  if (!notice.enabled && !hasContent) {
+    return null;
+  }
+
+  return {
+    enabled: notice.enabled,
+    title,
+    bullets,
+    footerText: footerText || undefined,
+    showOnce: notice.showOnce
+  };
+};
+
 const createForm = reactive<EventForm>({
   title: "",
   slug: "",
@@ -1248,7 +1414,8 @@ const createForm = reactive<EventForm>({
   pendingPaymentValueRule: defaultPendingPaymentValueRule,
   ministryId: "",
   districtId: "",
-  churchId: ""
+  churchId: "",
+  notice: buildNoticeForm(null)
 });
 
 const editForm = reactive<EventForm>({
@@ -1265,7 +1432,8 @@ const editForm = reactive<EventForm>({
   pendingPaymentValueRule: defaultPendingPaymentValueRule,
   ministryId: "",
   districtId: "",
-  churchId: ""
+  churchId: "",
+  notice: buildNoticeForm(null)
 });
 
 const editingEventId = ref<string | null>(null);
@@ -1637,6 +1805,7 @@ const resetCreateForm = () => {
   createForm.ministryId = pickDefaultMinistryId();
   createForm.districtId = userDistrictId.value || "";
   createForm.churchId = userDistrictId.value ? userChurchId.value || "" : "";
+  createForm.notice = buildNoticeForm(null);
   applyChurchLock("create", createForm.districtId);
   if (createForm.districtId) {
     loadChurchesForDistrict(createForm.districtId, "create");
@@ -1660,6 +1829,7 @@ const resetEditForm = () => {
   editForm.ministryId = pickDefaultMinistryId();
   editForm.districtId = "";
   editForm.churchId = "";
+  editForm.notice = buildNoticeForm(null);
   editChurchLocked.value = false;
 };
 
@@ -1805,7 +1975,7 @@ const submitCreate = async () => {
     return;
   }
   if (!createForm.ministryId) {
-    showError("Falha ao criar evento", { message: "Selecione o ministerio responsavel pelo evento." });
+    showError("Falha ao criar evento", { message: "Selecione o ministério responsável pelo evento." });
     return;
   }
   if (!createForm.districtId) {
@@ -1820,6 +1990,7 @@ const submitCreate = async () => {
     return;
   }
   const normalizedSlug = sanitizeSlugInput(createForm.slug);
+  const noticePayload = buildNoticePayload(createForm.notice);
   savingCreate.value = true;
   try {
     await admin.saveEvent({
@@ -1837,7 +2008,8 @@ const submitCreate = async () => {
       minAgeYears: createForm.minAgeYears ? Number(createForm.minAgeYears) : undefined,
       isActive: true,
       ministryId: createForm.ministryId,
-      districtId: createForm.districtId
+      districtId: createForm.districtId,
+      notice: noticePayload ?? null
     } as Partial<ApiEvent>);
     resetCreateForm();
     createModalOpen.value = false;
@@ -1858,7 +2030,7 @@ const submitEdit = async () => {
     return;
   }
   if (!editForm.ministryId) {
-    showError("Falha ao atualizar evento", { message: "Selecione o ministerio responsavel pelo evento." });
+    showError("Falha ao atualizar evento", { message: "Selecione o ministério responsável pelo evento." });
     return;
   }
   if (!editForm.districtId) {
@@ -1873,6 +2045,7 @@ const submitEdit = async () => {
     return;
   }
   const normalizedSlug = sanitizeSlugInput(editForm.slug);
+  const noticePayload = buildNoticePayload(editForm.notice);
   savingEdit.value = true;
   try {
     await admin.saveEvent({
@@ -1890,7 +2063,8 @@ const submitEdit = async () => {
       paymentMethods: [...editForm.paymentMethods],
       pendingPaymentValueRule: editForm.pendingPaymentValueRule,
       ministryId: editForm.ministryId,
-      districtId: editForm.districtId
+      districtId: editForm.districtId,
+      notice: noticePayload ?? null
     } as Partial<ApiEvent>);
     cancelEdit();
   } catch (error) {
@@ -1923,6 +2097,7 @@ const startEdit = (event: ApiEvent) => {
   editForm.ministryId = event.ministryId ?? "";
   editForm.districtId = event.districtId ?? "";
   editForm.churchId = event.churchId ?? "";
+  editForm.notice = buildNoticeForm(event.notice ?? null);
   applyChurchLock("edit", editForm.districtId);
   if (editForm.districtId) {
     handleDistrictChange("edit", editForm.districtId);

@@ -9,11 +9,12 @@ import { useAdminStore } from '../../stores/admin';
 import { useApi } from '../../composables/useApi';
 import { formatCurrency } from '../../utils/format';
 import { formatCPF } from '../../utils/cpf';
-import { createPreviewSession } from '../../utils/documentPreview';
+import { useFileDownload } from '../../composables/useFileDownload';
 const route = useRoute();
 const eventId = String(route.params.eventId || '');
 const admin = useAdminStore();
 const { api } = useApi();
+const { downloadFromResponse, handleDownloadError } = useFileDownload();
 const loading = ref(true);
 const eventSummary = ref(null);
 const errorDialog = reactive({ open: false, title: 'Erro', message: '', details: '' });
@@ -80,19 +81,11 @@ const doExportPdf = async () => {
         }
         const job = await admin.waitForReportJob(jobResponse.jobId);
         const fileResponse = await admin.downloadReportJobFile(job.id);
-        const blob = new Blob([fileResponse.data], { type: 'application/pdf' });
-        await createPreviewSession([
-            {
-                id: `event-${eventId}`,
-                title: `Inscricoes do evento ${eventId}`,
-                fileName: `relatorio-inscricoes-evento-${eventId}.pdf`,
-                blob,
-                mimeType: 'application/pdf'
-            }
-        ], { context: 'Relatorios administrativos' });
+        downloadFromResponse(fileResponse, `relatorio-inscricoes-evento-${eventId}.pdf`);
     }
     catch (e) {
-        showError('Falha ao gerar PDF', e);
+        const info = handleDownloadError(e, 'download do relatorio');
+        showError('Falha ao gerar PDF', new Error(info.message));
     }
 };
 const doExportCsv = () => {

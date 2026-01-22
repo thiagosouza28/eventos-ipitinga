@@ -1,4 +1,3 @@
-﻿import { pipeline } from "stream/promises";
 import { Request, Response } from "express";
 import { z } from "zod";
 
@@ -7,6 +6,7 @@ import { sanitizeCpf } from "../../utils/mask";
 import { env } from "../../config/env";
 import { AppError, ForbiddenError, NotFoundError, UnauthorizedError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
+import { applyDownloadHeaders, sendDownloadStream } from "../../middlewares/download-headers";
 
 const lookupSchema = z.object({
   cpf: z.string().min(11),
@@ -20,23 +20,6 @@ export const lookupReceiptsHandler = async (request: Request, response: Response
     payload.birthDate
   );
   return response.json(receipts);
-};
-
-const applyReceiptCors = (request: Request, response: Response) => {
-  const origin = request.headers.origin;
-  const allowedOrigins = env.corsOrigins ?? [];
-  const resolvedOrigin =
-    origin && allowedOrigins.includes(origin)
-      ? origin
-      : allowedOrigins.includes("*")
-        ? "*"
-        : origin ?? "*";
-  response.setHeader("Access-Control-Allow-Origin", resolvedOrigin);
-  response.setHeader("Access-Control-Allow-Credentials", "true");
-  response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
-  response.setHeader("Vary", "Origin");
 };
 
 const RECEIPT_ERROR_MESSAGE = "Comprovante nao encontrado ou token invalido.";
@@ -68,10 +51,11 @@ export const downloadReceiptHandler = async (request: Request, response: Respons
   const { registrationId } = request.params;
   const token = typeof request.query.token === "string" ? request.query.token : undefined;
 
-  applyReceiptCors(request, response);
+  // Aplicar headers de CORS
+  applyDownloadHeaders(request, response);
 
   if (request.method === "OPTIONS") {
-    return response.sendStatus(204);
+    return response.status(200).end();
   }
 
   if (!registrationId) {
@@ -83,11 +67,8 @@ export const downloadReceiptHandler = async (request: Request, response: Respons
   }
 
   try {
-    const { stream, size } = await registrationService.streamReceipt(registrationId, token);
-    response.setHeader("Content-Type", "application/pdf");
-    response.setHeader("Content-Disposition", 'inline; filename="comprovante.pdf"');
-    response.setHeader("Content-Length", String(size));
-    await pipeline(stream, response);
+    const { stream, size, fileName } = await registrationService.streamReceipt(registrationId, token);
+    sendDownloadStream(response, { stream, fileName, contentLength: size });
     return;
   } catch (error) {
     const resolved = resolveReceiptError(error);
@@ -101,6 +82,8 @@ export const downloadReceiptHandler = async (request: Request, response: Respons
     }
   }
 };
+
+
 
 
 

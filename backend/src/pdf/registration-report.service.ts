@@ -18,7 +18,8 @@ const ensureBrowser = async () => {
   } catch (error: any) {
     browser = null;
     const message = String(error?.message ?? "");
-    if (message.includes("executable doesn't exist") || message.includes("Failed to launch")) {
+    const normalized = message.toLowerCase();
+    if (normalized.includes("executable doesn't exist") || normalized.includes("failed to launch")) {
       throw new AppError(
         "Motor de PDF indisponivel. Execute `npm run playwright:install` e tente novamente.",
         500
@@ -233,21 +234,24 @@ export const generateRegistrationReportPdf = async ({
     )
     .join("");
 
-  let globalIndex = 0;
+  // Reiniciar numeração por cada grupo (igreja/evento)
   const sectionHtml = groupsWithFallback
     .map((group) => {
       const subtitlePieces = [group.subtitle, group.extraInfo]
         .filter(Boolean)
         .map((piece) => escapeHtml(piece!));
+      
+      // Numeração reinicia em 1 para cada grupo
+      let groupIndex = 0;
       const rows = group.participants.length
         ? group.participants
             .map((participant) => {
-              globalIndex += 1;
+              groupIndex += 1;
               const statusLabel = formatStatus(participant.status);
               const age = typeof participant.ageYears === "number" ? participant.ageYears : "-";
               return `
                 <tr>
-                  <td class="col-index">${globalIndex}</td>
+                  <td class="col-index">${groupIndex}</td>
                   <td class="col-participant">
                     <span class="cell-title">${formatCellText(participant.fullName)}</span>
                     <small>${formatCellText(participant.churchName)} - ${formatCellText(participant.districtName)}</small>
@@ -278,7 +282,7 @@ export const generateRegistrationReportPdf = async ({
             <table class="participants">
               <thead>
                 <tr>
-                  <th class="col-index">#</th>
+                  <th class="col-index">Nº</th>
                   <th>Participante</th>
                   <th class="col-birth">Nascimento</th>
                   <th class="col-age">Idade</th>

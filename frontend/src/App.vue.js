@@ -19,6 +19,7 @@ const currentTime = ref(new Date());
 const isSidebarOpen = ref(true);
 const profileMenuOpen = ref(false);
 const apiOffline = ref(false);
+const shouldShowOfflineBanner = import.meta.env.PROD || import.meta.env.VITE_SHOW_OFFLINE_BANNER === "true";
 const mobileViewportBreakpoint = 768;
 let timer;
 const profileMenuRef = ref(null);
@@ -80,9 +81,13 @@ const toggleSidebar = () => {
     isSidebarOpen.value = !isSidebarOpen.value;
 };
 const handleApiOffline = () => {
+    if (!shouldShowOfflineBanner)
+        return;
     apiOffline.value = true;
 };
 const handleApiOnline = () => {
+    if (!shouldShowOfflineBanner)
+        return;
     apiOffline.value = false;
 };
 const toggleProfileMenu = () => {
@@ -230,7 +235,7 @@ const __VLS_5 = __VLS_4({
     name: "offline-banner",
 }, ...__VLS_functionalComponentArgsRest(__VLS_4));
 __VLS_6.slots.default;
-if (__VLS_ctx.apiOffline) {
+if (__VLS_ctx.apiOffline && __VLS_ctx.shouldShowOfflineBanner) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "sticky top-0 z-[60] w-full bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg" },
     });
@@ -274,18 +279,53 @@ if (__VLS_ctx.isAdminLayout) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex min-w-0 flex-1 items-center gap-3" },
     });
-    const __VLS_14 = {}.RouterLink;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.toggleSidebar) },
+        type: "button",
+        ...{ class: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white md:hidden dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25" },
+        'aria-pressed': (__VLS_ctx.isSidebarOpen),
+    });
+    if (!__VLS_ctx.isSidebarOpen) {
+        const __VLS_14 = {}.Bars3Icon;
+        /** @type {[typeof __VLS_components.Bars3Icon, ]} */ ;
+        // @ts-ignore
+        const __VLS_15 = __VLS_asFunctionalComponent(__VLS_14, new __VLS_14({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }));
+        const __VLS_16 = __VLS_15({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_15));
+    }
+    else {
+        const __VLS_18 = {}.XMarkIcon;
+        /** @type {[typeof __VLS_components.XMarkIcon, ]} */ ;
+        // @ts-ignore
+        const __VLS_19 = __VLS_asFunctionalComponent(__VLS_18, new __VLS_18({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }));
+        const __VLS_20 = __VLS_19({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_19));
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "sr-only" },
+    });
+    const __VLS_22 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_15 = __VLS_asFunctionalComponent(__VLS_14, new __VLS_14({
+    const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white" },
     }));
-    const __VLS_16 = __VLS_15({
+    const __VLS_24 = __VLS_23({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[#111827] dark:text-white" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_15));
-    __VLS_17.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_23));
+    __VLS_25.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)] dark:border-[rgba(255,255,255,0.1)] dark:from-[#1b2140] dark:to-[#11152A]" },
     });
@@ -304,7 +344,7 @@ if (__VLS_ctx.isAdminLayout) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "text-base font-semibold sm:text-lg" },
     });
-    var __VLS_17;
+    var __VLS_25;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-1 items-center justify-end gap-2 sm:gap-3" },
     });
@@ -327,78 +367,78 @@ if (__VLS_ctx.isAdminLayout) {
         'aria-pressed': (__VLS_ctx.isDark),
     });
     if (__VLS_ctx.isDark) {
-        const __VLS_18 = {}.SunIcon;
+        const __VLS_26 = {}.SunIcon;
         /** @type {[typeof __VLS_components.SunIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_19 = __VLS_asFunctionalComponent(__VLS_18, new __VLS_18({
+        const __VLS_27 = __VLS_asFunctionalComponent(__VLS_26, new __VLS_26({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
         }));
-        const __VLS_20 = __VLS_19({
+        const __VLS_28 = __VLS_27({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_19));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_27));
     }
     else {
-        const __VLS_22 = {}.MoonIcon;
+        const __VLS_30 = {}.MoonIcon;
         /** @type {[typeof __VLS_components.MoonIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_23 = __VLS_asFunctionalComponent(__VLS_22, new __VLS_22({
+        const __VLS_31 = __VLS_asFunctionalComponent(__VLS_30, new __VLS_30({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
         }));
-        const __VLS_24 = __VLS_23({
+        const __VLS_32 = __VLS_31({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_23));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_31));
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "sr-only" },
     });
-    const __VLS_26 = {}.RouterLink;
+    const __VLS_34 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_27 = __VLS_asFunctionalComponent(__VLS_26, new __VLS_26({
+    const __VLS_35 = __VLS_asFunctionalComponent(__VLS_34, new __VLS_34({
         to: (__VLS_ctx.adminLink),
         ...{ class: "btn-outline hidden sm:inline-flex" },
     }));
-    const __VLS_28 = __VLS_27({
+    const __VLS_36 = __VLS_35({
         to: (__VLS_ctx.adminLink),
         ...{ class: "btn-outline hidden sm:inline-flex" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_27));
-    __VLS_29.slots.default;
-    const __VLS_30 = {}.ShieldCheckIcon;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_35));
+    __VLS_37.slots.default;
+    const __VLS_38 = {}.ShieldCheckIcon;
     /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
     // @ts-ignore
-    const __VLS_31 = __VLS_asFunctionalComponent(__VLS_30, new __VLS_30({
+    const __VLS_39 = __VLS_asFunctionalComponent(__VLS_38, new __VLS_38({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
     }));
-    const __VLS_32 = __VLS_31({
+    const __VLS_40 = __VLS_39({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_31));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_39));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.adminLinkLabel);
-    var __VLS_29;
+    var __VLS_37;
     if (__VLS_ctx.auth.isAuthenticated && __VLS_ctx.auth.user?.role === 'AdminGeral') {
-        const __VLS_34 = {}.RouterLink;
+        const __VLS_42 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_35 = __VLS_asFunctionalComponent(__VLS_34, new __VLS_34({
+        const __VLS_43 = __VLS_asFunctionalComponent(__VLS_42, new __VLS_42({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
         }));
-        const __VLS_36 = __VLS_35({
+        const __VLS_44 = __VLS_43({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_35));
-        __VLS_37.slots.default;
-        var __VLS_37;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_43));
+        __VLS_45.slots.default;
+        var __VLS_45;
     }
     if (__VLS_ctx.auth.isAuthenticated) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "relative hidden lg:flex" },
+            ...{ class: "relative flex" },
             ref: "profileMenuRef",
         });
         /** @type {typeof __VLS_ctx.profileMenuRef} */ ;
@@ -421,25 +461,25 @@ if (__VLS_ctx.isAdminLayout) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             (__VLS_ctx.userInitials);
         }
-        const __VLS_38 = {}.ChevronDownIcon;
+        const __VLS_46 = {}.ChevronDownIcon;
         /** @type {[typeof __VLS_components.ChevronDownIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_39 = __VLS_asFunctionalComponent(__VLS_38, new __VLS_38({
+        const __VLS_47 = __VLS_asFunctionalComponent(__VLS_46, new __VLS_46({
             ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
         }));
-        const __VLS_40 = __VLS_39({
+        const __VLS_48 = __VLS_47({
             ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_39));
-        const __VLS_42 = {}.transition;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_47));
+        const __VLS_50 = {}.transition;
         /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
         // @ts-ignore
-        const __VLS_43 = __VLS_asFunctionalComponent(__VLS_42, new __VLS_42({
+        const __VLS_51 = __VLS_asFunctionalComponent(__VLS_50, new __VLS_50({
             name: "fade",
         }));
-        const __VLS_44 = __VLS_43({
+        const __VLS_52 = __VLS_51({
             name: "fade",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_43));
-        __VLS_45.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_51));
+        __VLS_53.slots.default;
         if (__VLS_ctx.profileMenuOpen) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur" },
@@ -477,100 +517,100 @@ if (__VLS_ctx.isAdminLayout) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-3 space-y-1 text-sm" },
             });
-            const __VLS_46 = {}.RouterLink;
+            const __VLS_54 = {}.RouterLink;
             /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-            // @ts-ignore
-            const __VLS_47 = __VLS_asFunctionalComponent(__VLS_46, new __VLS_46({
-                ...{ 'onClick': {} },
-                to: (__VLS_ctx.adminLink),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }));
-            const __VLS_48 = __VLS_47({
-                ...{ 'onClick': {} },
-                to: (__VLS_ctx.adminLink),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_47));
-            let __VLS_50;
-            let __VLS_51;
-            let __VLS_52;
-            const __VLS_53 = {
-                onClick: (__VLS_ctx.closeProfileMenu)
-            };
-            __VLS_49.slots.default;
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            const __VLS_54 = {}.ShieldCheckIcon;
-            /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
             // @ts-ignore
             const __VLS_55 = __VLS_asFunctionalComponent(__VLS_54, new __VLS_54({
-                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
             }));
             const __VLS_56 = __VLS_55({
-                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_55));
-            var __VLS_49;
-            const __VLS_58 = {}.RouterLink;
-            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-            // @ts-ignore
-            const __VLS_59 = __VLS_asFunctionalComponent(__VLS_58, new __VLS_58({
-                ...{ 'onClick': {} },
-                to: ({ name: 'admin-profile' }),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }));
-            const __VLS_60 = __VLS_59({
-                ...{ 'onClick': {} },
-                to: ({ name: 'admin-profile' }),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_59));
-            let __VLS_62;
-            let __VLS_63;
-            let __VLS_64;
-            const __VLS_65 = {
+            let __VLS_58;
+            let __VLS_59;
+            let __VLS_60;
+            const __VLS_61 = {
                 onClick: (__VLS_ctx.closeProfileMenu)
             };
-            __VLS_61.slots.default;
+            __VLS_57.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            const __VLS_66 = {}.UserCircleIcon;
-            /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+            const __VLS_62 = {}.ShieldCheckIcon;
+            /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
             // @ts-ignore
-            const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
+            const __VLS_63 = __VLS_asFunctionalComponent(__VLS_62, new __VLS_62({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
             }));
-            const __VLS_68 = __VLS_67({
+            const __VLS_64 = __VLS_63({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_63));
+            var __VLS_57;
+            const __VLS_66 = {}.RouterLink;
+            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+            // @ts-ignore
+            const __VLS_67 = __VLS_asFunctionalComponent(__VLS_66, new __VLS_66({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }));
+            const __VLS_68 = __VLS_67({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_67));
-            var __VLS_61;
+            let __VLS_70;
+            let __VLS_71;
+            let __VLS_72;
+            const __VLS_73 = {
+                onClick: (__VLS_ctx.closeProfileMenu)
+            };
+            __VLS_69.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_74 = {}.UserCircleIcon;
+            /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_75 = __VLS_asFunctionalComponent(__VLS_74, new __VLS_74({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_76 = __VLS_75({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_75));
+            var __VLS_69;
             if (__VLS_ctx.auth.user?.role === 'AdminGeral') {
-                const __VLS_70 = {}.RouterLink;
+                const __VLS_78 = {}.RouterLink;
                 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
                 // @ts-ignore
-                const __VLS_71 = __VLS_asFunctionalComponent(__VLS_70, new __VLS_70({
-                    ...{ 'onClick': {} },
-                    to: "/admin/system-config",
-                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-                }));
-                const __VLS_72 = __VLS_71({
-                    ...{ 'onClick': {} },
-                    to: "/admin/system-config",
-                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_71));
-                let __VLS_74;
-                let __VLS_75;
-                let __VLS_76;
-                const __VLS_77 = {
-                    onClick: (__VLS_ctx.closeProfileMenu)
-                };
-                __VLS_73.slots.default;
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                const __VLS_78 = {}.Cog6ToothIcon;
-                /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
-                // @ts-ignore
                 const __VLS_79 = __VLS_asFunctionalComponent(__VLS_78, new __VLS_78({
-                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
                 }));
                 const __VLS_80 = __VLS_79({
-                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
                 }, ...__VLS_functionalComponentArgsRest(__VLS_79));
-                var __VLS_73;
+                let __VLS_82;
+                let __VLS_83;
+                let __VLS_84;
+                const __VLS_85 = {
+                    onClick: (__VLS_ctx.closeProfileMenu)
+                };
+                __VLS_81.slots.default;
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_86 = {}.Cog6ToothIcon;
+                /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_87 = __VLS_asFunctionalComponent(__VLS_86, new __VLS_86({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_88 = __VLS_87({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_87));
+                var __VLS_81;
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (() => { __VLS_ctx.closeProfileMenu(); __VLS_ctx.handleSignOut(); }) },
@@ -578,53 +618,18 @@ if (__VLS_ctx.isAdminLayout) {
                 ...{ class: "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            const __VLS_82 = {}.ArrowRightOnRectangleIcon;
+            const __VLS_90 = {}.ArrowRightOnRectangleIcon;
             /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
             // @ts-ignore
-            const __VLS_83 = __VLS_asFunctionalComponent(__VLS_82, new __VLS_82({
+            const __VLS_91 = __VLS_asFunctionalComponent(__VLS_90, new __VLS_90({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
             }));
-            const __VLS_84 = __VLS_83({
+            const __VLS_92 = __VLS_91({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_83));
+            }, ...__VLS_functionalComponentArgsRest(__VLS_91));
         }
-        var __VLS_45;
+        var __VLS_53;
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.toggleSidebar) },
-        type: "button",
-        ...{ class: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/60 bg-white/90 text-[#0b1220] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white md:hidden dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25" },
-        'aria-pressed': (__VLS_ctx.isSidebarOpen),
-    });
-    if (!__VLS_ctx.isSidebarOpen) {
-        const __VLS_86 = {}.Bars3Icon;
-        /** @type {[typeof __VLS_components.Bars3Icon, ]} */ ;
-        // @ts-ignore
-        const __VLS_87 = __VLS_asFunctionalComponent(__VLS_86, new __VLS_86({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }));
-        const __VLS_88 = __VLS_87({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_87));
-    }
-    else {
-        const __VLS_90 = {}.XMarkIcon;
-        /** @type {[typeof __VLS_components.XMarkIcon, ]} */ ;
-        // @ts-ignore
-        const __VLS_91 = __VLS_asFunctionalComponent(__VLS_90, new __VLS_90({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }));
-        const __VLS_92 = __VLS_91({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_91));
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "sr-only" },
-    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
         ...{ class: "flex-1 px-4 pb-16 pt-8 sm:px-6 md:px-8 lg:px-10" },
     });
@@ -650,18 +655,52 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex items-center gap-4" },
     });
-    const __VLS_98 = {}.RouterLink;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.toggleMobileMenu) },
+        type: "button",
+        ...{ class: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-neutral-700 shadow-sm transition hover:bg-[#f7f8ff] dark:border-[color:var(--border-card)] dark:bg-[color:var(--surface-card-alt)] dark:text-[color:var(--text)] sm:hidden" },
+    });
+    if (!__VLS_ctx.mobileMenuOpen) {
+        const __VLS_98 = {}.Bars3Icon;
+        /** @type {[typeof __VLS_components.Bars3Icon, ]} */ ;
+        // @ts-ignore
+        const __VLS_99 = __VLS_asFunctionalComponent(__VLS_98, new __VLS_98({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }));
+        const __VLS_100 = __VLS_99({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_99));
+    }
+    else {
+        const __VLS_102 = {}.XMarkIcon;
+        /** @type {[typeof __VLS_components.XMarkIcon, ]} */ ;
+        // @ts-ignore
+        const __VLS_103 = __VLS_asFunctionalComponent(__VLS_102, new __VLS_102({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }));
+        const __VLS_104 = __VLS_103({
+            ...{ class: "h-6 w-6" },
+            'aria-hidden': "true",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_103));
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "sr-only" },
+    });
+    const __VLS_106 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_99 = __VLS_asFunctionalComponent(__VLS_98, new __VLS_98({
+    const __VLS_107 = __VLS_asFunctionalComponent(__VLS_106, new __VLS_106({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[color:var(--text)]" },
     }));
-    const __VLS_100 = __VLS_99({
+    const __VLS_108 = __VLS_107({
         to: "/",
         ...{ class: "flex items-center gap-3 text-lg font-semibold text-[color:var(--text)]" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_99));
-    __VLS_101.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_107));
+    __VLS_109.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/80 bg-gradient-to-br from-[#fdfdff] to-[#eef3ff] shadow-[0_10px_30px_rgba(15,23,42,0.08)]" },
     });
@@ -680,7 +719,7 @@ else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "text-base font-semibold sm:text-lg" },
     });
-    var __VLS_101;
+    var __VLS_109;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-1 items-center justify-end gap-2 sm:gap-3" },
     });
@@ -703,78 +742,78 @@ else {
         'aria-pressed': (__VLS_ctx.isDark),
     });
     if (__VLS_ctx.isDark) {
-        const __VLS_102 = {}.SunIcon;
+        const __VLS_110 = {}.SunIcon;
         /** @type {[typeof __VLS_components.SunIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_103 = __VLS_asFunctionalComponent(__VLS_102, new __VLS_102({
+        const __VLS_111 = __VLS_asFunctionalComponent(__VLS_110, new __VLS_110({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
         }));
-        const __VLS_104 = __VLS_103({
+        const __VLS_112 = __VLS_111({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_103));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_111));
     }
     else {
-        const __VLS_106 = {}.MoonIcon;
+        const __VLS_114 = {}.MoonIcon;
         /** @type {[typeof __VLS_components.MoonIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_107 = __VLS_asFunctionalComponent(__VLS_106, new __VLS_106({
+        const __VLS_115 = __VLS_asFunctionalComponent(__VLS_114, new __VLS_114({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
         }));
-        const __VLS_108 = __VLS_107({
+        const __VLS_116 = __VLS_115({
             ...{ class: "h-5 w-5" },
             'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_107));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_115));
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
         ...{ class: "sr-only" },
     });
-    const __VLS_110 = {}.RouterLink;
+    const __VLS_118 = {}.RouterLink;
     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
     // @ts-ignore
-    const __VLS_111 = __VLS_asFunctionalComponent(__VLS_110, new __VLS_110({
+    const __VLS_119 = __VLS_asFunctionalComponent(__VLS_118, new __VLS_118({
         to: (__VLS_ctx.adminLink),
         ...{ class: "btn-outline hidden sm:inline-flex" },
     }));
-    const __VLS_112 = __VLS_111({
+    const __VLS_120 = __VLS_119({
         to: (__VLS_ctx.adminLink),
         ...{ class: "btn-outline hidden sm:inline-flex" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_111));
-    __VLS_113.slots.default;
-    const __VLS_114 = {}.ShieldCheckIcon;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_119));
+    __VLS_121.slots.default;
+    const __VLS_122 = {}.ShieldCheckIcon;
     /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
     // @ts-ignore
-    const __VLS_115 = __VLS_asFunctionalComponent(__VLS_114, new __VLS_114({
+    const __VLS_123 = __VLS_asFunctionalComponent(__VLS_122, new __VLS_122({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
     }));
-    const __VLS_116 = __VLS_115({
+    const __VLS_124 = __VLS_123({
         ...{ class: "h-5 w-5" },
         'aria-hidden': "true",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_115));
+    }, ...__VLS_functionalComponentArgsRest(__VLS_123));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.adminLinkLabel);
-    var __VLS_113;
+    var __VLS_121;
     if (__VLS_ctx.auth.isAuthenticated && __VLS_ctx.auth.user?.role === 'AdminGeral') {
-        const __VLS_118 = {}.RouterLink;
+        const __VLS_126 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_119 = __VLS_asFunctionalComponent(__VLS_118, new __VLS_118({
+        const __VLS_127 = __VLS_asFunctionalComponent(__VLS_126, new __VLS_126({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
         }));
-        const __VLS_120 = __VLS_119({
+        const __VLS_128 = __VLS_127({
             to: "/admin/system-config",
             ...{ class: "btn-muted hidden font-medium sm:inline-flex" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_119));
-        __VLS_121.slots.default;
-        var __VLS_121;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_127));
+        __VLS_129.slots.default;
+        var __VLS_129;
     }
     if (__VLS_ctx.auth.isAuthenticated) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "relative hidden lg:flex" },
+            ...{ class: "relative flex" },
             ref: "profileMenuRef",
         });
         /** @type {typeof __VLS_ctx.profileMenuRef} */ ;
@@ -797,25 +836,25 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             (__VLS_ctx.userInitials);
         }
-        const __VLS_122 = {}.ChevronDownIcon;
+        const __VLS_130 = {}.ChevronDownIcon;
         /** @type {[typeof __VLS_components.ChevronDownIcon, ]} */ ;
         // @ts-ignore
-        const __VLS_123 = __VLS_asFunctionalComponent(__VLS_122, new __VLS_122({
+        const __VLS_131 = __VLS_asFunctionalComponent(__VLS_130, new __VLS_130({
             ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
         }));
-        const __VLS_124 = __VLS_123({
+        const __VLS_132 = __VLS_131({
             ...{ class: "h-4 w-4 text-[#475569] dark:text-white" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_123));
-        const __VLS_126 = {}.transition;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_131));
+        const __VLS_134 = {}.transition;
         /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
         // @ts-ignore
-        const __VLS_127 = __VLS_asFunctionalComponent(__VLS_126, new __VLS_126({
+        const __VLS_135 = __VLS_asFunctionalComponent(__VLS_134, new __VLS_134({
             name: "fade",
         }));
-        const __VLS_128 = __VLS_127({
+        const __VLS_136 = __VLS_135({
             name: "fade",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_127));
-        __VLS_129.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_135));
+        __VLS_137.slots.default;
         if (__VLS_ctx.profileMenuOpen) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "absolute right-0 top-12 z-50 w-64 rounded-2xl border border-white/10 bg-[color:var(--surface-card)] p-3 shadow-2xl backdrop-blur" },
@@ -853,100 +892,100 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-3 space-y-1 text-sm" },
             });
-            const __VLS_130 = {}.RouterLink;
+            const __VLS_138 = {}.RouterLink;
             /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-            // @ts-ignore
-            const __VLS_131 = __VLS_asFunctionalComponent(__VLS_130, new __VLS_130({
-                ...{ 'onClick': {} },
-                to: (__VLS_ctx.adminLink),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }));
-            const __VLS_132 = __VLS_131({
-                ...{ 'onClick': {} },
-                to: (__VLS_ctx.adminLink),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_131));
-            let __VLS_134;
-            let __VLS_135;
-            let __VLS_136;
-            const __VLS_137 = {
-                onClick: (__VLS_ctx.closeProfileMenu)
-            };
-            __VLS_133.slots.default;
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            const __VLS_138 = {}.ShieldCheckIcon;
-            /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
             // @ts-ignore
             const __VLS_139 = __VLS_asFunctionalComponent(__VLS_138, new __VLS_138({
-                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
             }));
             const __VLS_140 = __VLS_139({
-                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                ...{ 'onClick': {} },
+                to: (__VLS_ctx.adminLink),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_139));
-            var __VLS_133;
-            const __VLS_142 = {}.RouterLink;
-            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-            // @ts-ignore
-            const __VLS_143 = __VLS_asFunctionalComponent(__VLS_142, new __VLS_142({
-                ...{ 'onClick': {} },
-                to: ({ name: 'admin-profile' }),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }));
-            const __VLS_144 = __VLS_143({
-                ...{ 'onClick': {} },
-                to: ({ name: 'admin-profile' }),
-                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_143));
-            let __VLS_146;
-            let __VLS_147;
-            let __VLS_148;
-            const __VLS_149 = {
+            let __VLS_142;
+            let __VLS_143;
+            let __VLS_144;
+            const __VLS_145 = {
                 onClick: (__VLS_ctx.closeProfileMenu)
             };
-            __VLS_145.slots.default;
+            __VLS_141.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            const __VLS_150 = {}.UserCircleIcon;
-            /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+            const __VLS_146 = {}.ShieldCheckIcon;
+            /** @type {[typeof __VLS_components.ShieldCheckIcon, ]} */ ;
             // @ts-ignore
-            const __VLS_151 = __VLS_asFunctionalComponent(__VLS_150, new __VLS_150({
+            const __VLS_147 = __VLS_asFunctionalComponent(__VLS_146, new __VLS_146({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
             }));
-            const __VLS_152 = __VLS_151({
+            const __VLS_148 = __VLS_147({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_147));
+            var __VLS_141;
+            const __VLS_150 = {}.RouterLink;
+            /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
+            // @ts-ignore
+            const __VLS_151 = __VLS_asFunctionalComponent(__VLS_150, new __VLS_150({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
+            }));
+            const __VLS_152 = __VLS_151({
+                ...{ 'onClick': {} },
+                to: ({ name: 'admin-profile' }),
+                ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_151));
-            var __VLS_145;
+            let __VLS_154;
+            let __VLS_155;
+            let __VLS_156;
+            const __VLS_157 = {
+                onClick: (__VLS_ctx.closeProfileMenu)
+            };
+            __VLS_153.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            const __VLS_158 = {}.UserCircleIcon;
+            /** @type {[typeof __VLS_components.UserCircleIcon, ]} */ ;
+            // @ts-ignore
+            const __VLS_159 = __VLS_asFunctionalComponent(__VLS_158, new __VLS_158({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }));
+            const __VLS_160 = __VLS_159({
+                ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_159));
+            var __VLS_153;
             if (__VLS_ctx.auth.user?.role === 'AdminGeral') {
-                const __VLS_154 = {}.RouterLink;
+                const __VLS_162 = {}.RouterLink;
                 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
                 // @ts-ignore
-                const __VLS_155 = __VLS_asFunctionalComponent(__VLS_154, new __VLS_154({
-                    ...{ 'onClick': {} },
-                    to: "/admin/system-config",
-                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-                }));
-                const __VLS_156 = __VLS_155({
-                    ...{ 'onClick': {} },
-                    to: "/admin/system-config",
-                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_155));
-                let __VLS_158;
-                let __VLS_159;
-                let __VLS_160;
-                const __VLS_161 = {
-                    onClick: (__VLS_ctx.closeProfileMenu)
-                };
-                __VLS_157.slots.default;
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                const __VLS_162 = {}.Cog6ToothIcon;
-                /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
-                // @ts-ignore
                 const __VLS_163 = __VLS_asFunctionalComponent(__VLS_162, new __VLS_162({
-                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
                 }));
                 const __VLS_164 = __VLS_163({
-                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                    ...{ 'onClick': {} },
+                    to: "/admin/system-config",
+                    ...{ class: "flex items-center justify-between rounded-lg px-3 py-2 text-[color:var(--text)] transition hover:bg-white/10" },
                 }, ...__VLS_functionalComponentArgsRest(__VLS_163));
-                var __VLS_157;
+                let __VLS_166;
+                let __VLS_167;
+                let __VLS_168;
+                const __VLS_169 = {
+                    onClick: (__VLS_ctx.closeProfileMenu)
+                };
+                __VLS_165.slots.default;
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                const __VLS_170 = {}.Cog6ToothIcon;
+                /** @type {[typeof __VLS_components.Cog6ToothIcon, ]} */ ;
+                // @ts-ignore
+                const __VLS_171 = __VLS_asFunctionalComponent(__VLS_170, new __VLS_170({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }));
+                const __VLS_172 = __VLS_171({
+                    ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_171));
+                var __VLS_165;
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (() => { __VLS_ctx.closeProfileMenu(); __VLS_ctx.handleSignOut(); }) },
@@ -954,52 +993,18 @@ else {
                 ...{ class: "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-[color:var(--text)] transition hover:bg-white/10" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            const __VLS_166 = {}.ArrowRightOnRectangleIcon;
+            const __VLS_174 = {}.ArrowRightOnRectangleIcon;
             /** @type {[typeof __VLS_components.ArrowRightOnRectangleIcon, ]} */ ;
             // @ts-ignore
-            const __VLS_167 = __VLS_asFunctionalComponent(__VLS_166, new __VLS_166({
+            const __VLS_175 = __VLS_asFunctionalComponent(__VLS_174, new __VLS_174({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
             }));
-            const __VLS_168 = __VLS_167({
+            const __VLS_176 = __VLS_175({
                 ...{ class: "h-4 w-4 text-[color:var(--text-muted)]" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_167));
+            }, ...__VLS_functionalComponentArgsRest(__VLS_175));
         }
-        var __VLS_129;
+        var __VLS_137;
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.toggleMobileMenu) },
-        type: "button",
-        ...{ class: "inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white text-neutral-700 shadow-sm transition hover:bg-[#f7f8ff] dark:border-[color:var(--border-card)] dark:bg-[color:var(--surface-card-alt)] dark:text-[color:var(--text)] sm:hidden" },
-    });
-    if (!__VLS_ctx.mobileMenuOpen) {
-        const __VLS_170 = {}.Bars3Icon;
-        /** @type {[typeof __VLS_components.Bars3Icon, ]} */ ;
-        // @ts-ignore
-        const __VLS_171 = __VLS_asFunctionalComponent(__VLS_170, new __VLS_170({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }));
-        const __VLS_172 = __VLS_171({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_171));
-    }
-    else {
-        const __VLS_174 = {}.XMarkIcon;
-        /** @type {[typeof __VLS_components.XMarkIcon, ]} */ ;
-        // @ts-ignore
-        const __VLS_175 = __VLS_asFunctionalComponent(__VLS_174, new __VLS_174({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }));
-        const __VLS_176 = __VLS_175({
-            ...{ class: "h-6 w-6" },
-            'aria-hidden': "true",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_175));
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "sr-only" },
-    });
     const __VLS_178 = {}.transition;
     /** @type {[typeof __VLS_components.Transition, typeof __VLS_components.transition, typeof __VLS_components.Transition, typeof __VLS_components.transition, ]} */ ;
     // @ts-ignore
@@ -1330,6 +1335,32 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-11']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-11']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#0b1220]']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-black/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/15']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/25']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['sr-only']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -1413,8 +1444,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['relative']} */ ;
-/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -1541,32 +1571,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-11']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-11']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-[#0b1220]']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-black/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-white/15']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:shadow-black/30']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/25']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['sr-only']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['pb-16']} */ ;
@@ -1602,6 +1606,28 @@ else {
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-11']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-11']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-[#f7f8ff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-[color:var(--border-card)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-[color:var(--surface-card-alt)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-[color:var(--text)]']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:hidden']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['sr-only']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -1679,8 +1705,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['relative']} */ ;
-/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
@@ -1807,28 +1832,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[color:var(--text-muted)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-11']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-11']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-white/70']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['transition']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:bg-[#f7f8ff]']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-[color:var(--border-card)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-[color:var(--surface-card-alt)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-[color:var(--text)]']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['sr-only']} */ ;
 /** @type {__VLS_StyleScopedClasses['mx-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -2045,6 +2048,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             isSidebarOpen: isSidebarOpen,
             profileMenuOpen: profileMenuOpen,
             apiOffline: apiOffline,
+            shouldShowOfflineBanner: shouldShowOfflineBanner,
             profileMenuRef: profileMenuRef,
             adminMenuItems: adminMenuItems,
             isAdminLayout: isAdminLayout,

@@ -2,7 +2,7 @@
   <form @submit.prevent="handleSubmit" class="space-y-4">
     <div>
       <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-        CPF do responsavel pelo pagamento
+        CPF do responsável pelo pagamento
       </label>
       <input
         ref="cpfInput"
@@ -105,7 +105,7 @@ const onBlur = () => {
 
 const handleSubmit = async () => {
   const digits = normalizeCPF(cpf.value);
-  cpfError.value = digits.length === 0 ? "CPF invalido" : getCpfError(cpf.value);
+  cpfError.value = digits.length === 0 ? "CPF inválido" : getCpfError(cpf.value);
 
   if (cpfError.value) {
     await nextTick();

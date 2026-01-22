@@ -19,6 +19,12 @@ export const useAdminStore = defineStore("admin", () => {
         const parsed = Number(import.meta.env.VITE_API_REPORT_JOB_MAX_WAIT_MS);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 180000;
     })();
+    const normalizeReportJobResponse = (data) => {
+        if (!data)
+            return data;
+        const jobId = data.jobId ?? data.job?.id ?? data.job?.jobId;
+        return jobId ? { ...data, jobId } : data;
+    };
     const events = ref([]);
     const eventLots = ref({});
     const registrations = ref([]);
@@ -171,19 +177,19 @@ export const useAdminStore = defineStore("admin", () => {
         const params = normalizeFilters({ ...filters, groupBy, template });
         return api.get("/admin/registrations/report.pdf", {
             params,
-            responseType: "arraybuffer",
+            responseType: "blob",
             timeout: registrationsPdfTimeoutMs
         });
     };
     const requestRegistrationReportJob = async (filters, groupBy, template = "standard", layout) => {
         const params = normalizeFilters({ ...filters, groupBy, template, layout, async: true });
         const response = await api.get("/admin/registrations/report.pdf", { params });
-        return response.data;
+        return normalizeReportJobResponse(response.data);
     };
     const requestRegistrationListJob = async (filters = {}) => {
         const params = normalizeFilters({ ...filters, async: true });
         const response = await api.get("/admin/registrations/list.pdf", { params });
-        return response.data;
+        return normalizeReportJobResponse(response.data);
     };
     const getReportJobStatus = async (jobId) => {
         const response = await api.get(`/admin/reports/jobs/${jobId}`);
@@ -208,20 +214,20 @@ export const useAdminStore = defineStore("admin", () => {
         }
     };
     const downloadReportJobFile = async (jobId) => api.get(`/admin/reports/jobs/${jobId}/file`, {
-        responseType: "arraybuffer",
+        responseType: "blob",
         timeout: registrationsPdfTimeoutMs
     });
     const downloadRegistrationListPdf = async (filters = {}) => {
         const params = normalizeFilters(filters);
         return api.get("/admin/registrations/list.pdf", {
             params,
-            responseType: "arraybuffer",
+            responseType: "blob",
             timeout: registrationsPdfTimeoutMs
         });
     };
     const downloadFinancialReport = async (eventId) => {
         return api.get(`/admin/financial/events/${eventId}/report.pdf`, {
-            responseType: "arraybuffer",
+            responseType: "blob",
             timeout: registrationsPdfTimeoutMs
         });
     };
@@ -229,7 +235,7 @@ export const useAdminStore = defineStore("admin", () => {
         const response = await api.get(`/admin/financial/events/${eventId}/report.pdf`, {
             params: { async: true }
         });
-        return response.data;
+        return normalizeReportJobResponse(response.data);
     };
     const loadResponsibleFinance = async () => {
         const response = await api.get("/admin/finance/responsibles");

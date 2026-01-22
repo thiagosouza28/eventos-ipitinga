@@ -47,12 +47,14 @@ import {
 import {
   getOrderPaymentHandler,
   getPaymentByPreferenceIdHandler,
+  getMercadoPagoPaymentHandler,
   listOrdersHandler,
   startInscriptionHandler,
   createBatchInscriptionHandler,
   checkParticipantCpfHandler,
   markOrderPaidHandler,
   listPendingOrdersHandler,
+  reportPixIntegrityHandler,
   bulkPaymentHandler
 } from "../controllers/order.controller";
 import {
@@ -149,7 +151,7 @@ export const router = Router();
 
 router.get("/system/config", getPublicSystemConfigHandler);
 
-// PÃºblico
+// Público
 router.get("/events", listPublicEventsHandler);
 router.get("/events/:slug", getEventBySlugHandler);
 router.post("/inscriptions/start", startInscriptionHandler);
@@ -165,6 +167,7 @@ router.post(
 );
 router.get("/payments/order/:orderId", getOrderPaymentHandler);
 router.get("/payments/preference/:preferenceId", getPaymentByPreferenceIdHandler);
+router.post("/payments/pix/integrity", reportPixIntegrityHandler);
 router.post("/payments/pix/create", createPixPaymentHandler);
 router.post("/receipts/lookup", lookupReceiptsHandler);
 router.options("/receipts/:registrationId.pdf", downloadReceiptHandler);
@@ -180,7 +183,7 @@ router.get("/catalog/ministries", listMinistriesHandler);
 router.get("/public/districts", listDistrictsHandler);
 router.get("/public/churches", listChurchesHandler);
 
-// AutenticaÃ§Ã£o
+// Autenticação
 router.post("/admin/login", loginHandler);
 router.post("/admin/password/recover", recoverPasswordHandler);
 router.get("/profile", authenticate, getProfileHandler);
@@ -209,6 +212,11 @@ router.put(
   "/admin/payments/pix-config",
   authorize("AdminGeral"),
   upsertPixConfigHandler
+);
+router.get(
+  "/admin/payments/mercadopago/:paymentId",
+  authorizePermission("orders", "view"),
+  getMercadoPagoPaymentHandler
 );
 
 router.post("/admin/profile/change-password", changePasswordHandler);
@@ -293,6 +301,12 @@ router.get("/admin/orders/pending", authorizePermission("orders", "view"), listP
 router.post("/admin/orders/:id/mark-paid", authorizePermission("orders", "financial"), markOrderPaidHandler);
 
 router.get("/admin/registrations", authorizePermission("registrations", "view"), listRegistrationsHandler);
+router.options(
+  "/admin/registrations/list.pdf",
+  authorizePermission("registrations", "view"),
+  authorizePermission("reports", "reports"),
+  downloadRegistrationsListPdfHandler
+);
 router.get(
   "/admin/registrations/list.pdf",
   authorizePermission("registrations", "view"),
@@ -304,6 +318,11 @@ router.get(
   authorizePermission("registrations", "reports"),
   registrationsReportHandler
 );
+router.options(
+  "/admin/registrations/report.pdf",
+  authorizePermission("registrations", "reports"),
+  downloadRegistrationsReportHandler
+);
 router.get(
   "/admin/registrations/report.pdf",
   authorizePermission("registrations", "reports"),
@@ -313,6 +332,11 @@ router.get(
   "/admin/reports/jobs/:jobId",
   authorizePermission("reports", "reports"),
   getReportJobStatusHandler
+);
+router.options(
+  "/admin/reports/jobs/:jobId/file",
+  authorizePermission("reports", "reports"),
+  downloadReportJobFileHandler
 );
 router.get(
   "/admin/reports/jobs/:jobId/file",
@@ -402,6 +426,11 @@ router.get(
   authorizePermission("financial", "view"),
   getChurchSummaryHandler
 );
+router.options(
+  "/admin/financial/events/:eventId/report.pdf",
+  authorizePermission("financial", "reports"),
+  downloadEventFinancialReportHandler
+);
 router.get(
   "/admin/financial/events/:eventId/report.pdf",
   authorizePermission("financial", "reports"),
@@ -449,5 +478,3 @@ router.post(
 );
 
 export default router;
-
-

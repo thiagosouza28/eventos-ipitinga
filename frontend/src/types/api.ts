@@ -117,6 +117,14 @@ export interface EventLot {
   endsAt: string | null;
 }
 
+export interface EventNotice {
+  enabled: boolean;
+  title: string;
+  bullets: string[];
+  footerText?: string;
+  showOnce?: boolean;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -136,6 +144,7 @@ export interface Event {
   currentLot?: EventLot | null;
   lots?: EventLot[];
   paymentMethods?: PaymentMethod[];
+  notice?: EventNotice | null;
   pendingPaymentValueRule: PendingPaymentValueRule;
   ministryId?: string | null;
   ministry?: Ministry | null;

@@ -12,7 +12,7 @@ import { useAdminStore } from "../../stores/admin";
 import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import { formatCurrency } from "../../utils/format";
-import { createPreviewSession } from "../../utils/documentPreview";
+import { useFileDownload } from "../../composables/useFileDownload";
 const props = defineProps();
 const router = useRouter();
 const route = useRoute();
@@ -20,6 +20,7 @@ const admin = useAdminStore();
 const catalog = useCatalogStore();
 const auth = useAuthStore();
 const { api } = useApi();
+const { downloadFromResponse, handleDownloadError } = useFileDownload();
 const reportsPermissions = useModulePermissions("reports");
 const financialPermissions = useModulePermissions("financial");
 const errorDialog = reactive({
@@ -127,13 +128,17 @@ const normalizeParticipants = (list) => list.map((participant) => ({
     ...participant,
     status: normalizeRegistrationStatus(participant.status)
 }));
-const requestReportJobBlob = async (jobResponse) => {
-    if (!jobResponse?.jobId) {
-        throw new Error("Relatorio indisponivel.");
+const resolveReportJobId = (jobResponse) => jobResponse?.jobId ?? jobResponse?.job?.id ?? jobResponse?.job?.jobId ?? jobResponse?.id ?? null;
+const requestReportJobResponse = async (jobResponse, fallback) => {
+    const jobId = resolveReportJobId(jobResponse);
+    if (!jobId) {
+        if (fallback) {
+            return fallback();
+        }
+        throw new Error("Relat\u00f3rio indispon\u00edvel.");
     }
-    const job = await admin.waitForReportJob(jobResponse.jobId);
-    const fileResponse = await admin.downloadReportJobFile(job.id);
-    return new Blob([fileResponse.data], { type: "application/pdf" });
+    const job = await admin.waitForReportJob(jobId);
+    return admin.downloadReportJobFile(job.id);
 };
 const fetchParticipantsForEvent = async (eventId) => {
     const params = { eventId };
@@ -171,20 +176,14 @@ const downloadEventReport = async () => {
     eventDownloadState.value = true;
     try {
         const jobResponse = await admin.requestRegistrationReportJob({ eventId: eventReport.eventId }, "event", "standard");
-        const blob = await requestReportJobBlob(jobResponse);
+        const fileResponse = await requestReportJobResponse(jobResponse, () => admin.downloadRegistrationReport({ eventId: eventReport.eventId }, "event", "standard"));
         const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
-        await createPreviewSession([
-            {
-                id: `event-${eventReport.eventId}`,
-                title: selectedEvent.value?.title ?? "Relatorio do evento",
-                fileName: `relatorio-evento-${filename}.pdf`,
-                blob,
-                mimeType: "application/pdf"
-            }
-        ], { context: "Relatorios administrativos" });
+        const safeName = String(filename).replace(/\s+/g, "-").toLowerCase();
+        downloadFromResponse(fileResponse, `relatorio-evento-${safeName}.pdf`);
     }
     catch (error) {
-        showError("Erro ao gerar relatorio do evento", error);
+        const info = handleDownloadError(error, "download do relat\u00f3rio do evento");
+        showError("Erro ao gerar relat\u00f3rio do evento", new Error(info.message));
     }
     finally {
         eventDownloadState.value = false;
@@ -209,7 +208,7 @@ const churchesForSelectedDistrict = computed(() => {
 });
 const loadChurchParticipants = async () => {
     if (!churchReport.districtId) {
-        showError("Selecione um distrito", new Error("É necessário informar o distrito para gerar o relatório."));
+        showError("Selecione um distrito", new Error("\u00c9 necess\u00e1rio informar o distrito para gerar o relat\u00f3rio."));
         return;
     }
     churchReport.loading = true;
@@ -245,20 +244,14 @@ const downloadChurchReport = async () => {
             baseFilters.layout = churchReport.layout;
         }
         const jobResponse = await admin.requestRegistrationReportJob(baseFilters, "church", churchReport.template, churchReport.template === "event" ? churchReport.layout : undefined);
-        const blob = await requestReportJobBlob(jobResponse);
+        const fileResponse = await requestReportJobResponse(jobResponse, () => admin.downloadRegistrationReport(baseFilters, "church", churchReport.template));
         const churchName = findChurchName(churchReport.churchId);
-        await createPreviewSession([
-            {
-                id: `church-${churchReport.churchId}`,
-                title: `Confirmacao - ${churchName}`,
-                fileName: `confirmacao-${churchName}.pdf`,
-                blob,
-                mimeType: "application/pdf"
-            }
-        ], { context: "Relatorios administrativos" });
+        const safeName = String(churchName).replace(/\s+/g, "-").toLowerCase();
+        downloadFromResponse(fileResponse, `confirmacao-${safeName}.pdf`);
     }
     catch (error) {
-        showError("Erro ao gerar PDF da igreja", error);
+        const info = handleDownloadError(error, "download do relat\u00f3rio da igreja");
+        showError("Erro ao gerar PDF da igreja", new Error(info.message));
     }
     finally {
         churchReportDownloadState.value = false;
@@ -309,20 +302,13 @@ const downloadFinancialPdf = async () => {
     financialDownloadState.value = true;
     try {
         const jobResponse = await admin.requestFinancialReportJob(selectedFinancialEventId.value);
-        const blob = await requestReportJobBlob(jobResponse);
+        const fileResponse = await requestReportJobResponse(jobResponse, () => admin.downloadFinancialReport(selectedFinancialEventId.value));
         const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
-        await createPreviewSession([
-            {
-                id: `financial-${selectedFinancialEventId.value}`,
-                title: `Relatorio financeiro - ${findEventTitle(selectedFinancialEventId.value)}`,
-                fileName: `relatorio-financeiro-${eventSlug}.pdf`,
-                blob,
-                mimeType: "application/pdf"
-            }
-        ], { context: "Relatorios administrativos" });
+        downloadFromResponse(fileResponse, `relatorio-financeiro-${eventSlug}.pdf`);
     }
     catch (error) {
-        showError("Erro ao gerar PDF financeiro", error);
+        const info = handleDownloadError(error, "download do relat\u00f3rio financeiro");
+        showError("Erro ao gerar PDF financeiro", new Error(info.message));
     }
     finally {
         financialDownloadState.value = false;
@@ -384,7 +370,7 @@ const formatEventPeriod = (event) => {
 };
 const formatBirthDate = (value) => {
     if (!value)
-        return "Nao informado";
+        return "N\u00e3o informado";
     if (typeof value === "string") {
         const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (match) {
@@ -393,14 +379,14 @@ const formatBirthDate = (value) => {
     }
     const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime()))
-        return "Nao informado";
+        return "N\u00e3o informado";
     const day = String(date.getUTCDate()).padStart(2, "0");
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     return `${day}/${month}/${date.getUTCFullYear()}`;
 };
 const findEventTitle = (eventId) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
-const findDistrictName = (districtId) => catalog.districts.find((district) => district.id === districtId)?.name ?? "Não informado";
-const findChurchName = (churchId) => catalog.churches.find((church) => church.id === churchId)?.name ?? "Não informado";
+const findDistrictName = (districtId) => catalog.districts.find((district) => district.id === districtId)?.name ?? "N\u00e3o informado";
+const findChurchName = (churchId) => catalog.churches.find((church) => church.id === churchId)?.name ?? "N\u00e3o informado";
 const findRegistrationLotName = (participant) => {
     const name = participant.order?.pricingLot?.name ?? participant.order?.lotName ?? "";
     return name && name.trim().length > 0 ? name : "-";
@@ -441,7 +427,7 @@ const eventSummaryCards = computed(() => {
     const paidCount = participants.filter((participant) => participant.status === "PAID" || participant.status === "CHECKED_IN").length;
     const pendingCount = participants.filter((participant) => participant.status === "PENDING_PAYMENT").length;
     return [
-        { label: "Gerado em", value: eventReport.generatedAt ? formatDateTime(eventReport.generatedAt) : "—", accent: "text-neutral-900 dark:text-white" },
+        { label: "Gerado em", value: eventReport.generatedAt ? formatDateTime(eventReport.generatedAt) : "?", accent: "text-neutral-900 dark:text-white" },
         { label: "Total de grupos", value: groups.size.toString().padStart(2, "0"), accent: "text-sky-700 dark:text-sky-300" },
         { label: "Participantes", value: participants.length.toString().padStart(2, "0"), accent: "text-neutral-900 dark:text-white" },
         { label: "Pagos", value: paidCount.toString().padStart(2, "0"), accent: "text-emerald-600 dark:text-emerald-300" },
@@ -471,7 +457,7 @@ const financialStatusCards = computed(() => [
     {
         label: "Pagos",
         value: formatCurrency(financialStatusTotals.value.paid.amount),
-        helper: `${financialStatusTotals.value.paid.count} inscrições`,
+        helper: `${financialStatusTotals.value.paid.count} inscri\u00e7\u00f5es`,
         accent: "text-emerald-600 dark:text-emerald-300"
     },
     {
@@ -487,8 +473,8 @@ const financialStatusCards = computed(() => [
         accent: "text-neutral-600 dark:text-neutral-300"
     },
     {
-        label: "Receita líquida do evento",
-        value: financialEventSummary.value ? formatCurrency(financialEventSummary.value.totals?.netCents ?? 0) : "—",
+        label: "Receita l\u00edquida do evento",
+        value: financialEventSummary.value ? formatCurrency(financialEventSummary.value.totals?.netCents ?? 0) : "?",
         helper: financialEventSummary.value ? `${financialEventSummary.value.paidRegistrationsCount ?? 0} confirmados` : "Selecione um evento",
         accent: "text-sky-700 dark:text-sky-300"
     }
@@ -517,7 +503,7 @@ const generalFinancialCards = computed(() => {
     const totals = financialSummary.value.totals ?? {};
     return [
         { label: "Receita bruta", value: formatCurrency(totals.grossCents ?? 0), accent: "text-neutral-900 dark:text-white" },
-        { label: "Receita líquida", value: formatCurrency(totals.netCents ?? 0), accent: "text-sky-700 dark:text-sky-300" },
+        { label: "Receita l\u00edquida", value: formatCurrency(totals.netCents ?? 0), accent: "text-sky-700 dark:text-sky-300" },
         { label: "Taxas", value: `-${formatCurrency(totals.feesCents ?? 0)}`, accent: "text-red-600 dark:text-red-400" },
         { label: "Saldo em caixa", value: formatCurrency(totals.cashBalanceCents ?? 0), accent: "text-emerald-600 dark:text-emerald-300" }
     ];
@@ -734,7 +720,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.eventDownloadState ? "Preparando..." : "Visualizar PDF");
+    (__VLS_ctx.eventDownloadState ? "Preparando..." : "Baixar PDF");
     if (__VLS_ctx.selectedEvent) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5" },
@@ -1015,7 +1001,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.churchReportDownloadState ? "Preparando..." : "Visualizar PDF");
+    (__VLS_ctx.churchReportDownloadState ? "Preparando..." : "Baixar PDF");
     var __VLS_24;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
@@ -1163,7 +1149,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.financialDownloadState ? "Preparando..." : "Visualizar PDF");
+    (__VLS_ctx.financialDownloadState ? "Preparando..." : "Baixar PDF");
     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
         ...{ onClick: (__VLS_ctx.exportFinancialCsv) },
         type: "button",
@@ -1291,7 +1277,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
                 });
-                (__VLS_ctx.financialGeneratedAt ? __VLS_ctx.formatDateTime(__VLS_ctx.financialGeneratedAt) : "—");
+                (__VLS_ctx.financialGeneratedAt ? __VLS_ctx.formatDateTime(__VLS_ctx.financialGeneratedAt) : "?");
                 if (__VLS_ctx.financialDetailLoading) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "py-10" },
@@ -1396,10 +1382,10 @@ else {
     /** @type {[typeof AccessDeniedNotice, ]} */ ;
     // @ts-ignore
     const __VLS_43 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
-        module: "Relatórios",
+        module: "Relatorios",
     }));
     const __VLS_44 = __VLS_43({
-        module: "Relatórios",
+        module: "Relatorios",
     }, ...__VLS_functionalComponentArgsRest(__VLS_43));
     var __VLS_46 = {};
     var __VLS_45;

@@ -9,6 +9,7 @@ import path from "path";
 
 import { env } from "./config/env";
 import { createConcurrencyLimiter } from "./middlewares/concurrency-limit";
+import { downloadCorsMiddleware } from "./middlewares/download-headers";
 import { errorHandler } from "./middlewares/error-handler";
 import { normalizeBody } from "./middlewares/normalize-body";
 import { publicLimiter } from "./middlewares/rate-limit";
@@ -22,16 +23,44 @@ export const createApp = () => {
   // Confiar no proxy reverso (Nginx/ALB) para interpretar X-Forwarded-For corretamente com rate limiting
   // Usamos "1" para um hop de proxy conhecido. Ajuste se houver múltiplos proxies em cadeia.
   app.set("trust proxy", 1);
+  const isProduction = env.NODE_ENV === "production";
+  const appHost = new URL(env.APP_URL).hostname;
+  const apiHost = new URL(env.API_URL).hostname;
+  const isPrivateNetworkHost = (host: string | null) => {
+    if (!host) return false;
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    const match = host.match(/^(\d{1,3}\.){3}\d{1,3}$/);
+    if (!match) return false;
+    const parts = host.split(".").map((part) => Number(part));
+    if (parts.some((part) => Number.isNaN(part) || part < 0 || part > 255)) return false;
+    if (parts[0] === 10) return true;
+    if (parts[0] === 192 && parts[1] === 168) return true;
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+    return false;
+  };
+  const getHost = (origin: string) => {
+    try {
+      return new URL(origin).hostname;
+    } catch {
+      return null;
+    }
+  };
+  const isOriginAllowed = (origin?: string) => {
+    if (!origin) return true;
+    if (env.corsOrigins.includes(origin)) return true;
+    if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
+      return true;
+    }
+    const host = getHost(origin);
+    if (host === appHost || host === apiHost) return true;
+    if (!isProduction && isPrivateNetworkHost(host)) return true;
+    return false;
+  };
   const corsOrigins =
     env.corsOrigins.includes("*") || !env.corsOrigins.length
       ? true
       : (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-          // Permitir chamadas locais mesmo se não estiverem listadas explicitamente
-          if (!origin) return callback(null, true);
-          if (env.corsOrigins.includes(origin)) return callback(null, true);
-          if (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")) {
-            return callback(null, true);
-          }
+          if (isOriginAllowed(origin)) return callback(null, true);
           return callback(null, false);
         };
   const corsAllowedHeaders = ["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"];
@@ -51,9 +80,16 @@ export const createApp = () => {
       origin: corsOrigins,
       credentials: true,
       allowedHeaders: corsAllowedHeaders,
-      exposedHeaders: ["Content-Disposition"]
+      exposedHeaders: ["Content-Disposition"],
+      optionsSuccessStatus: 200
     })
   );
+
+  app.use("/api/receipts/:registrationId.pdf", downloadCorsMiddleware);
+  app.use("/api/admin/registrations/report.pdf", downloadCorsMiddleware);
+  app.use("/api/admin/registrations/list.pdf", downloadCorsMiddleware);
+  app.use("/api/admin/reports/jobs/:jobId/file", downloadCorsMiddleware);
+  app.use("/api/admin/financial/events/:eventId/report.pdf", downloadCorsMiddleware);
 
   const concurrencyLimiter = createConcurrencyLimiter({
     maxConcurrent: env.MAX_CONCURRENT_REQUESTS,

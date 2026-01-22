@@ -4,6 +4,8 @@ import { z } from "zod";
 
 config();
 
+const projectRoot = path.resolve(__dirname, "..", "..");
+
 const isTestRuntime =
   process.env.NODE_ENV === "test" || typeof process.env.JEST_WORKER_ID !== "undefined";
 
@@ -70,6 +72,10 @@ const envSchema = z.object({
   MP_TRANSFER_MAX_RETRIES: z.coerce.number().int().min(0).default(1),
   MP_READ_MAX_RETRIES: z.coerce.number().int().min(0).default(1),
   MP_READ_RETRY_DELAY_MS: z.coerce.number().int().min(0).default(300),
+  ALLOW_INSECURE_AUTO_RETURN: z.coerce.boolean().default(false),
+  PLAYWRIGHT_EXECUTABLE_PATH: z.string().optional(),
+  RECEIPT_STORAGE_DIR: z.string().optional(),
+  AUTO_MIGRATE: z.string().optional(),
   ADMIN_EMAIL: z.string().email(),
   ADMIN_PASSWORD: z.string().min(8),
   CHECKIN_CONFIRM_PASSWORD: z.string().min(4).optional(),
@@ -105,7 +111,7 @@ const resolveSqliteUrl = (url: string) => {
   const [pathPart, queryPart] = url.slice("file:".length).split("?");
   const absolutePath = path.isAbsolute(pathPart)
     ? pathPart
-    : path.resolve(process.cwd(), pathPart);
+    : path.resolve(projectRoot, pathPart);
   return `file:${absolutePath}${queryPart ? `?${queryPart}` : ""}`;
 };
 

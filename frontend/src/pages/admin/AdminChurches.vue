@@ -657,15 +657,15 @@ const submitChurch = async () => {
   const directorWhatsapp = churchForm.directorWhatsapp.trim();
 
   if (!name) {
-    churchError.value = "Nome da igreja � obrigat�rio.";
+    churchError.value = "Nome da igreja é obrigatório.";
     return;
   }
   if (!districtId) {
-    churchError.value = "Distrito � obrigat�rio.";
+    churchError.value = "Distrito é obrigatório.";
     return;
   }
   if (directorCpf && !validateCPF(directorCpf)) {
-    churchError.value = "CPF inv�lido.";
+    churchError.value = "CPF inválido.";
     return;
   }
   churchError.value = "";

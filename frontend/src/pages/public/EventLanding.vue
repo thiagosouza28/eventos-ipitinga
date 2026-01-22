@@ -24,6 +24,11 @@
     <div v-if="loading" class="py-10">
       <LoadingSpinner />
     </div>
+    <div v-else-if="errorMessage" class="py-6">
+      <BaseCard>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ errorMessage }}</p>
+      </BaseCard>
+    </div>
     <div v-else class="grid gap-6 md:grid-cols-2">
       <BaseCard v-for="event in events" :key="event.id">
         <div class="flex h-full flex-col gap-4 md:flex-row">
@@ -100,6 +105,7 @@ const { api } = useApi();
 
 const events = ref<Event[]>([]);
 const loading = ref(false);
+const errorMessage = ref("");
 const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
 
 const resolveBannerUrl = (value?: string | null) => {
@@ -127,9 +133,13 @@ const priceInfo = (event: Event) => {
 
 onMounted(async () => {
   loading.value = true;
+  errorMessage.value = "";
   try {
     const response = await api.get("/events");
     events.value = response.data;
+  } catch (error) {
+    console.error("Falha ao carregar eventos", error);
+    errorMessage.value = "Não foi possível carregar os eventos agora.";
   } finally {
     loading.value = false;
   }

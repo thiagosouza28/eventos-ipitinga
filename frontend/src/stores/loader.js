@@ -6,8 +6,8 @@ const DEFAULT_MESSAGE = {
 const REQUEST_MESSAGES = {
     get: { text: "Carregando dados..." },
     post: { text: "Salvando..." },
-    put: { text: "Atualizando informacoes..." },
-    patch: { text: "Atualizando informacoes..." },
+    put: { text: "Atualizando informações..." },
+    patch: { text: "Atualizando informações..." },
     delete: { text: "Processando exclusao..." }
 };
 const resolveMessage = (payload) => {

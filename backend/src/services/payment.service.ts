@@ -1,5 +1,6 @@
 import { MercadoPagoConfig, Preference, Payment, PaymentRefund, MerchantOrder } from "mercadopago";
 import type { PreferenceCreateData } from "mercadopago/dist/clients/preference/create/types";
+import type { Prisma } from "@/prisma/generated/client";
 
 import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
@@ -17,6 +18,7 @@ import {
   resolveOrderExpirationDate,
   resolvePixExpirationDate
 } from "../utils/order-expiration";
+import { buildPixMeta } from "../utils/pix";
 
 const isPublicHttpsUrl = (url: string | null | undefined) => {
   if (!url) return false;
@@ -30,6 +32,11 @@ const isPublicHttpsUrl = (url: string | null | undefined) => {
     return false;
   }
 };
+
+const allowInsecureAutoReturn = env.NODE_ENV !== "production" && env.ALLOW_INSECURE_AUTO_RETURN;
+const isSuccessUrlHttps = (successUrl: string) => successUrl.toLowerCase().startsWith("https://");
+const shouldWarnAutoReturn = (successUrl: string) =>
+  !isSuccessUrlHttps(successUrl) && (env.NODE_ENV === "production" || !allowInsecureAutoReturn);
 
 const resolveNotificationUrl = () => {
   const base =
@@ -98,30 +105,53 @@ const buildPreferenceItemsForOrder = async (order: any): Promise<PricingResult> 
 
   if (rule === "UPDATE_TO_ACTIVE_LOT") {
     const { priceCents: unitPriceCents, lotId } = await resolveCurrentLotInfo(order.eventId, fallbackPriceCents);
-    const totalCents = unitPriceCents * registrations.length;
-    await prisma.$transaction([
+    const minAgeLimit = typeof order.event?.minAgeYears === "number" ? order.event.minAgeYears : null;
+    const registrationsWithPricing = registrations.map((registration: any) => {
+      const ageYears = typeof registration.ageYears === "number" ? registration.ageYears : null;
+      const priceCents =
+        minAgeLimit !== null && ageYears !== null && ageYears <= minAgeLimit ? 0 : unitPriceCents;
+      return { ...registration, priceCents };
+    });
+    const totalCents = registrationsWithPricing.reduce((acc: number, reg: any) => acc + (reg.priceCents ?? 0), 0);
+    const updates: Prisma.PrismaPromise<any>[] = [
       prisma.order.update({
         where: { id: order.id },
         data: {
           totalCents,
           pricingLotId: lotId ?? null
         }
-      }),
-      prisma.registration.updateMany({
-        where: { orderId: order.id },
-        data: { priceCents: unitPriceCents }
       })
-    ]);
+    ];
+    if (minAgeLimit !== null) {
+      updates.push(
+        prisma.registration.updateMany({
+          where: { orderId: order.id, ageYears: { lte: minAgeLimit } },
+          data: { priceCents: 0 }
+        }),
+        prisma.registration.updateMany({
+          where: { orderId: order.id, ageYears: { gt: minAgeLimit } },
+          data: { priceCents: unitPriceCents }
+        })
+      );
+    } else {
+      updates.push(
+        prisma.registration.updateMany({
+          where: { orderId: order.id },
+          data: { priceCents: unitPriceCents }
+        })
+      );
+    }
+    await prisma.$transaction(updates);
     order.totalCents = totalCents;
     order.pricingLotId = lotId ?? null;
-    registrations.forEach((registration: any) => {
-      registration.priceCents = unitPriceCents;
+    registrationsWithPricing.forEach((registration: any, index: number) => {
+      registrations[index].priceCents = registration.priceCents;
     });
-    const items = registrations.map((registration: any) => ({
+    const items = registrationsWithPricing.map((registration: any) => ({
       id: registration.id,
       title: `${order.event.title} - ${registration.fullName}`,
       quantity: 1,
-      unit_price: unitPriceCents / 100
+      unit_price: (registration.priceCents ?? 0) / 100
     }));
     return { items, totalCents };
   }
@@ -130,7 +160,7 @@ const buildPreferenceItemsForOrder = async (order: any): Promise<PricingResult> 
   let totalCents = 0;
   for (const registration of registrations) {
     const priceCents =
-      registration.priceCents && registration.priceCents > 0
+      typeof registration.priceCents === "number"
         ? registration.priceCents
         : fallbackPriceCents;
     items.push({
@@ -203,12 +233,14 @@ class PaymentService {
     try {
       const preference = await this.withRetry(() => this.preference.get({ preferenceId }));
       const pointOfInteraction = (preference as any).point_of_interaction;
+      const pixMeta = buildPixMeta(pointOfInteraction?.transaction_data);
       return {
         preferenceId: preference.id,
         initPoint: preference.init_point,
         sandboxInitPoint: preference.sandbox_init_point,
         pointOfInteraction,
         pixQrData: pointOfInteraction?.transaction_data,
+        ...pixMeta,
         status: "PENDING"
       };
     } catch (error: any) {
@@ -230,8 +262,8 @@ class PaymentService {
     }
 
     const { totalCents } = await buildPreferenceItemsForOrder(order);
-    // Se o pedido foi criado hÇ muito tempo, a data de expiraÇõÇœ baseada no createdAt pode ficar no passado.
-    // Gera sempre a expiraÇõÇœ de PIX a partir de agora para garantir validade aceita pelo Mercado Pago.
+    // Se o pedido foi criado há muito tempo, a data de expiração baseada no createdAt pode ficar no passado.
+    // Gera sempre a expiração do PIX a partir de agora para garantir validade aceita pelo Mercado Pago.
     const now = new Date();
     const pixExpirationDate = resolvePixExpirationDate(now);
     const participantNames = order.registrations.map((r) => r.fullName).filter(Boolean);
@@ -311,9 +343,23 @@ class PaymentService {
     }
 
     const pointOfInteraction = (payment as any).point_of_interaction;
+    const pixMeta = buildPixMeta(pointOfInteraction?.transaction_data);
+
+    logger.info(
+      {
+        orderId,
+        paymentId: payment.id ? String(payment.id) : undefined,
+        transactionAmount: totalCents / 100,
+        expiresAt: pixExpirationDate.toISOString(),
+        ...pixMeta
+      },
+      "PIX_PAYMENT_CREATED"
+    );
+
     return {
       mpPaymentId: payment.id ? String(payment.id) : undefined,
-      pixQrData: pointOfInteraction?.transaction_data
+      pixQrData: pointOfInteraction?.transaction_data,
+      ...pixMeta
     };
   }
 
@@ -396,10 +442,10 @@ class PaymentService {
     };
     (preferencePayload as any).description = description;
 
-    const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");
+    const successUrlIsHttps = isSuccessUrlHttps(backUrls.success);
     if (successUrlIsHttps) {
       preferencePayload.auto_return = "approved";
-    } else {
+    } else if (shouldWarnAutoReturn(backUrls.success)) {
       logger.warn(
         { successUrl: backUrls.success },
         "Auto return desabilitado: URL de sucesso nao utiliza HTTPS"
@@ -433,6 +479,22 @@ class PaymentService {
     });
 
     const pointOfInteraction = (preference as any).point_of_interaction;
+    const pixMeta = buildPixMeta(pointOfInteraction?.transaction_data);
+
+    logger.info(
+      {
+        orderId,
+        preferenceId: preference.id,
+        transactionAmount: totalCents / 100,
+        expiresAt: resolveEffectiveExpirationDate(
+          order.paymentMethod as PaymentMethod,
+          order.createdAt,
+          order.expiresAt
+        ).toISOString(),
+        ...pixMeta
+      },
+      "MP_PREFERENCE_CREATED"
+    );
 
     return {
       preferenceId: preference.id,
@@ -440,6 +502,7 @@ class PaymentService {
       sandboxInitPoint: preference.sandbox_init_point,
       pointOfInteraction,
       pixQrData: pointOfInteraction?.transaction_data,
+      ...pixMeta,
       status: "PENDING"
     };
   }
@@ -551,9 +614,14 @@ class PaymentService {
     };
     (preferencePayload as any).description = description;
 
-    const successUrlIsHttps = backUrls.success.toLowerCase().startsWith("https://");
+    const successUrlIsHttps = isSuccessUrlHttps(backUrls.success);
     if (successUrlIsHttps) {
       preferencePayload.auto_return = "approved";
+    } else if (shouldWarnAutoReturn(backUrls.success)) {
+      logger.warn(
+        { successUrl: backUrls.success },
+        "Auto return desabilitado: URL de sucesso nao utiliza HTTPS"
+      );
     }
 
     let preference;
@@ -586,6 +654,18 @@ class PaymentService {
     });
 
     const pointOfInteraction = (preference as any).point_of_interaction;
+    const pixMeta = buildPixMeta(pointOfInteraction?.transaction_data);
+
+    logger.info(
+      {
+        preferenceId: preference.id,
+        orderCount: orders.length,
+        transactionAmount: totalCents / 100,
+        expiresAt: expiresAt?.toISOString?.() ?? null,
+        ...pixMeta
+      },
+      "MP_BULK_PREFERENCE_CREATED"
+    );
 
     return {
       preferenceId: preference.id,
@@ -593,6 +673,7 @@ class PaymentService {
       sandboxInitPoint: preference.sandbox_init_point,
       pointOfInteraction,
       pixQrData: pointOfInteraction?.transaction_data,
+      ...pixMeta,
       status: "PENDING",
       orderCount: orders.length,
       totalCents,

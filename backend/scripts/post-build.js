@@ -16,10 +16,20 @@ openApiTargets.forEach((target) => {
   copyFileSync(openApiSource, target);
 });
 
-const prismaClientSource = resolve(rootDir, "src", "prisma", "generated");
-const prismaClientTarget = resolve(rootDir, "dist", "prisma", "generated");
-if (existsSync(prismaClientSource)) {
-  cpSync(prismaClientSource, prismaClientTarget, { recursive: true });
+const prismaSourceDir = resolve(rootDir, "prisma");
+const prismaTargetDir = resolve(rootDir, "dist", "prisma");
+if (existsSync(prismaSourceDir)) {
+  if (!existsSync(prismaTargetDir)) {
+    mkdirSync(prismaTargetDir, { recursive: true });
+  }
+  const schemaSource = resolve(prismaSourceDir, "schema.prisma");
+  if (existsSync(schemaSource)) {
+    copyFileSync(schemaSource, resolve(prismaTargetDir, "schema.prisma"));
+  }
+  const migrationsSource = resolve(prismaSourceDir, "migrations");
+  if (existsSync(migrationsSource)) {
+    cpSync(migrationsSource, resolve(prismaTargetDir, "migrations"), { recursive: true });
+  }
 }
 
 const pdfTemplatesSource = resolve(rootDir, "src", "pdf", "templates");
@@ -28,4 +38,4 @@ if (existsSync(pdfTemplatesSource)) {
   cpSync(pdfTemplatesSource, pdfTemplatesTarget, { recursive: true });
 }
 
-console.log("OpenAPI exportado, Prisma Client e templates de PDF copiados para dist.");
+console.log("OpenAPI exportado, schema/migrations do Prisma e templates de PDF copiados para dist.");

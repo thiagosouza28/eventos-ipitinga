@@ -49,6 +49,12 @@ export const useAdminStore = defineStore("admin", () => {
     job?: ReportJobSummary;
     message?: string;
   };
+
+  const normalizeReportJobResponse = (data: ReportJobResponse) => {
+    if (!data) return data;
+    const jobId = data.jobId ?? data.job?.id ?? (data.job as { jobId?: string | null } | undefined)?.jobId;
+    return jobId ? { ...data, jobId } : data;
+  };
   const events = ref<Event[]>([]);
   const eventLots = ref<Record<string, EventLot[]>>({});
   const registrations = ref<Registration[]>([]);
@@ -252,9 +258,9 @@ export const useAdminStore = defineStore("admin", () => {
     template: "standard" | "event" = "standard"
   ) => {
     const params = normalizeFilters({ ...filters, groupBy, template });
-    return api.get<ArrayBuffer>("/admin/registrations/report.pdf", {
+    return api.get<Blob>("/admin/registrations/report.pdf", {
       params,
-      responseType: "arraybuffer",
+      responseType: "blob",
       timeout: registrationsPdfTimeoutMs
     });
   };
@@ -267,13 +273,13 @@ export const useAdminStore = defineStore("admin", () => {
   ) => {
     const params = normalizeFilters({ ...filters, groupBy, template, layout, async: true });
     const response = await api.get<ReportJobResponse>("/admin/registrations/report.pdf", { params });
-    return response.data;
+    return normalizeReportJobResponse(response.data);
   };
 
   const requestRegistrationListJob = async (filters: Record<string, unknown> = {}) => {
     const params = normalizeFilters({ ...filters, async: true });
     const response = await api.get<ReportJobResponse>("/admin/registrations/list.pdf", { params });
-    return response.data;
+    return normalizeReportJobResponse(response.data);
   };
 
   const getReportJobStatus = async (jobId: string) => {
@@ -303,23 +309,23 @@ export const useAdminStore = defineStore("admin", () => {
   };
 
   const downloadReportJobFile = async (jobId: string) =>
-    api.get<ArrayBuffer>(`/admin/reports/jobs/${jobId}/file`, {
-      responseType: "arraybuffer",
+    api.get<Blob>(`/admin/reports/jobs/${jobId}/file`, {
+      responseType: "blob",
       timeout: registrationsPdfTimeoutMs
     });
 
   const downloadRegistrationListPdf = async (filters: Record<string, unknown> = {}) => {
     const params = normalizeFilters(filters);
-    return api.get<ArrayBuffer>("/admin/registrations/list.pdf", {
+    return api.get<Blob>("/admin/registrations/list.pdf", {
       params,
-      responseType: "arraybuffer",
+      responseType: "blob",
       timeout: registrationsPdfTimeoutMs
     });
   };
 
   const downloadFinancialReport = async (eventId: string) => {
-    return api.get<ArrayBuffer>(`/admin/financial/events/${eventId}/report.pdf`, {
-      responseType: "arraybuffer",
+    return api.get<Blob>(`/admin/financial/events/${eventId}/report.pdf`, {
+      responseType: "blob",
       timeout: registrationsPdfTimeoutMs
     });
   };
@@ -331,7 +337,7 @@ export const useAdminStore = defineStore("admin", () => {
         params: { async: true }
       }
     );
-    return response.data;
+    return normalizeReportJobResponse(response.data);
   };
 
   const loadResponsibleFinance = async () => {

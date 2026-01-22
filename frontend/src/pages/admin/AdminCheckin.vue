@@ -87,7 +87,7 @@
               @click="restartCamera"
               :disabled="isRestarting"
             >
-              {{ isRestarting ? "Reiniciando..." : "Recarregar camera" }}
+              {{ isRestarting ? "Reiniciando..." : "Recarregar câmera" }}
             </button>
             <button
               type="button"
@@ -95,7 +95,7 @@
               @click="toggleFacingMode"
               :disabled="isProcessing"
             >
-              Usar camera {{ facingMode === "environment" ? "frontal" : "traseira" }}
+              Usar câmera {{ facingMode === "environment" ? "frontal" : "traseira" }}
             </button>
           </div>
         </div>
@@ -148,7 +148,7 @@
             class="h-40 w-full object-cover"
           />
           <span v-else class="px-3 text-center text-xs text-neutral-500 dark:text-neutral-300">
-            Foto nao enviada
+            Foto não enviada
           </span>
         </div>
         <div class="flex-1 space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
@@ -208,7 +208,7 @@
           </li>
         </ul>
         <p v-else class="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-          Nenhum evento registrado para esta inscricao.
+          Nenhum evento registrado para esta inscrição.
         </p>
       </div>
       <div class="flex flex-wrap gap-3">
@@ -353,7 +353,7 @@ const cameraPaused = computed(
 );
 const cameraStatus = computed(() => {
   if (cameraError.value) return cameraError.value;
-  if (!cameraReady.value) return "Iniciando camera...";
+  if (!cameraReady.value) return "Iniciando câmera...";
   if (awaitingScanConfirmation.value) return "Confirme os dados do participante.";
   if (isProcessing.value) return "Processando QR Code...";
   return "";
@@ -363,7 +363,7 @@ const fallbackEventInfo = computed(() => {
   const registration = pendingCheckin.value?.registration;
   if (!registration) return null;
   const details = [registration.eventLocation, registration.eventPeriod]
-    .filter((value) => value && value !== "Nao informado")
+    .filter((value) => value && value !== "Não informado")
     .join(" \u2022 ");
   return {
     title: registration.eventTitle || "Evento",
@@ -427,7 +427,7 @@ const summaryCards = computed(() => {
     },
     {
       key: "TOTAL",
-      title: "Inscricoes",
+      title: "Inscrições",
       label: "Total encontradas",
       value: total,
       accent: "from-neutral-600 to-neutral-800",
@@ -468,14 +468,14 @@ const pendingStatusInfo = computed(() => {
 });
 
 const historyLabelMap: Record<string, string> = {
-  REGISTRATION_CREATED: "Inscricao criada",
+  REGISTRATION_CREATED: "Inscrição criada",
   PAYMENT_METHOD_SELECTED: "Forma de pagamento escolhida",
   PAYMENT_CONFIRMED: "Pagamento confirmado",
   ORDER_PAID: "Pedido pago",
   CHECKIN_COMPLETED: "Check-in confirmado",
   REGISTRATION_UPDATED: "Dados atualizados",
-  REGISTRATION_CANCELED: "Inscricao cancelada",
-  REGISTRATION_DELETED: "Inscricao excluida",
+  REGISTRATION_CANCELED: "Inscrição cancelada",
+  REGISTRATION_DELETED: "Inscrição excluída",
   PAYMENT_REFUNDED: "Estorno registrado"
 };
 
@@ -596,7 +596,7 @@ const restartCamera = () => {
   if (isRestarting.value) return;
   isRestarting.value = true;
   cameraReady.value = false;
-  cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+  cameraError.value = "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
   window.setTimeout(() => {
     streamKey.value += 1;
     isRestarting.value = false;
@@ -665,10 +665,10 @@ const onInit = async (promise: Promise<MediaStream>) => {
   try {
     await promise;
     cameraReady.value = true;
-    cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+    cameraError.value = "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
   } catch (error) {
     cameraReady.value = false;
-    cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+    cameraError.value = "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
   }
 };
 
@@ -702,7 +702,7 @@ const manualLookup = async () => {
     await loadDashboard(result.registration.eventId ?? undefined);
   } catch (error: any) {
     showFeedback(
-      error.response?.data?.message ?? "Nao foi possivel localizar a inscricao.",
+      error.response?.data?.message ?? "Não foi possível localizar a inscrição.",
       "error"
     );
     cancelPending();
@@ -756,7 +756,7 @@ const confirmPending = async () => {
     lastScanned.value = null;
   } catch (error: any) {
     showFeedback(
-      error.response?.data?.message ?? "Nao foi possivel confirmar o check-in.",
+      error.response?.data?.message ?? "Não foi possível confirmar o check-in.",
       "error"
     );
   } finally {

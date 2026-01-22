@@ -1,30 +1,87 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import DateField from "../../components/forms/DateField.vue";
 import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
+import EventNoticeModal from "../../components/forms/EventNoticeModal.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
-import StepWizard from "../../components/ui/StepWizard.vue";
 import IconArrowRight from "../../components/ui/IconArrowRight.vue";
 import { useCatalogStore } from "../../stores/catalog";
 import { useEventStore } from "../../stores/event";
 import { useApi } from "../../composables/useApi";
 import { API_BASE_URL } from "../../config/api";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { buildNoticeFingerprint, hasSeenNotice, setSeenNotice } from "../../utils/eventNotice";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
 import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
+import { normalizePixCode, hashPixCode } from "../../utils/pix";
 import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS, FREE_PAYMENT_METHODS } from "../../config/paymentMethods";
 import { useAuthStore } from "../../stores/auth";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
 const props = defineProps();
 const router = useRouter();
+const route = useRoute();
 const eventStore = useEventStore();
 const catalog = useCatalogStore();
 const { api } = useApi();
 const auth = useAuthStore();
+const noticeOpen = ref(false);
+const noticeAccepted = ref(true);
+const resolvedNotice = computed(() => {
+    const notice = eventStore.event?.notice ?? null;
+    if (!notice || !notice.enabled) {
+        return null;
+    }
+    return {
+        ...notice,
+        showOnce: notice.showOnce ?? true
+    };
+});
+const noticeEnabled = computed(() => Boolean(resolvedNotice.value));
+const noticeSlug = computed(() => props.slug ?? "");
+const noticeFingerprint = computed(() => resolvedNotice.value ? buildNoticeFingerprint(resolvedNotice.value) : "");
+const canStartWizard = computed(() => !noticeEnabled.value || noticeAccepted.value);
+const evaluateNotice = () => {
+    if (!noticeEnabled.value) {
+        noticeOpen.value = false;
+        noticeAccepted.value = true;
+        return;
+    }
+    if (resolvedNotice.value?.showOnce === false) {
+        noticeOpen.value = true;
+        noticeAccepted.value = false;
+        return;
+    }
+    const seen = hasSeenNotice(noticeSlug.value, noticeFingerprint.value);
+    noticeOpen.value = !seen;
+    noticeAccepted.value = seen;
+};
+const openNotice = () => {
+    noticeOpen.value = true;
+};
+const handleNoticeAccept = (remember) => {
+    noticeAccepted.value = true;
+    noticeOpen.value = false;
+    if (resolvedNotice.value?.showOnce !== false && remember) {
+        setSeenNotice(noticeSlug.value, noticeFingerprint.value);
+    }
+};
+const handleNoticeCancel = () => {
+    noticeAccepted.value = false;
+    noticeOpen.value = false;
+    if (typeof window !== "undefined" && window.history.length > 1) {
+        router.back();
+        return;
+    }
+    router.push({ name: "home" });
+};
 const isFreeEvent = computed(() => Boolean(eventStore.event?.isFree));
 const ticketPriceCents = computed(() => (isFreeEvent.value ? 0 : eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0));
+const minAgeYears = computed(() => {
+    const value = eventStore.event?.minAgeYears;
+    return typeof value === "number" ? value : null;
+});
 const formatDateTimeBr = (value) => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
@@ -335,9 +392,9 @@ const errorMessage = ref("");
 const inscricaoFormRef = ref(null);
 const cpfAvailabilityCache = new Map();
 const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
-const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento";
+const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento, verifique se já foi confirmado o pagamento.";
 const DUPLICATE_GLOBAL_ERROR = "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
-const REGISTERED_GLOBAL_ERROR = "Um ou mais CPFs já possuem inscricão confirmada neste evento.";
+const REGISTERED_GLOBAL_ERROR = "Um ou mais CPFs já possuem inscricão neste evento, verifique se já foi confirmado o pagamento.";
 const REMOTE_ERROR_MESSAGE = "Não foi possível verificar CPF agora. Tente novamente.";
 const CPF_GLOBAL_MESSAGES = [
     DUPLICATE_GLOBAL_ERROR,
@@ -351,7 +408,7 @@ const generalErrors = reactive({
 });
 const steps = computed(() => {
     const base = [
-        { title: "CPF", description: "Informe o CPF do responsável" },
+        { title: "CPF", description: "Informe o CPF do pagador" },
         { title: "Unidade", description: "Escolha distrito e igreja" },
         { title: "Participantes", description: "Dados individuais" },
         { title: "Revisão", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
@@ -370,12 +427,12 @@ const paymentOptions = computed(() => {
     const allowed = eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    // Filtrar m�f©todos exclusivos de admin se n�f£o for admin
+    // Filtrar metodos exclusivos de admin se nao for admin
     const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
     return PAYMENT_METHODS.filter((option) => {
         if (!allowed.includes(option.value))
             return false;
-        // Se for m�f©todo exclusivo de admin e usu�f¡rio n�f£o for admin, n�f£o mostrar
+        // Se for metodo exclusivo de admin e usuario nao for admin, nao mostrar
         if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
             return false;
         }
@@ -401,6 +458,21 @@ const getPersonChurchOptions = (districtId) => churchesByDistrict.value.get(dist
 const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "Não informado";
 const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
 const getGenderLabel = (value) => genderOptions.find((option) => option.value === value)?.label ?? value;
+const parseDateParts = (value) => {
+    if (!value)
+        return null;
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match)
+        return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+        return null;
+    }
+    return { year, month, day };
+};
+const eventStartDateParts = computed(() => parseDateParts(eventStore.event?.startDate ?? ""));
 const formatBirthDateLabel = (birthDate) => {
     if (!birthDate)
         return "--";
@@ -417,28 +489,35 @@ const formatBirthDateLabel = (birthDate) => {
     return `${day}/${month}/${date.getUTCFullYear()}`;
 };
 const calculateAgeYears = (birthDate) => {
-    if (!birthDate)
+    const birthParts = parseDateParts(birthDate);
+    const eventParts = eventStartDateParts.value;
+    if (!birthParts || !eventParts)
         return null;
-    const parts = birthDate.split("-");
-    if (parts.length !== 3)
-        return null;
-    const [yearStr, monthStr, dayStr] = parts;
-    const year = Number(yearStr);
-    const month = Number(monthStr);
-    const day = Number(dayStr);
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day))
-        return null;
-    const date = new Date(year, month - 1, day);
-    if (Number.isNaN(date.getTime()))
-        return null;
-    const today = new Date();
-    let age = today.getFullYear() - date.getFullYear();
-    const m = today.getMonth() - date.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+    let age = eventParts.year - birthParts.year;
+    if (eventParts.month < birthParts.month ||
+        (eventParts.month === birthParts.month && eventParts.day < birthParts.day)) {
         age -= 1;
     }
     return age >= 0 ? age : null;
 };
+const isAgeExempt = (person) => {
+    const minAge = minAgeYears.value;
+    if (minAge === null)
+        return false;
+    const age = calculateAgeYears(person.birthDate);
+    if (age === null)
+        return false;
+    return age <= minAge;
+};
+const getParticipantPriceCents = (person) => {
+    if (isFreeEvent.value)
+        return 0;
+    if (isAgeExempt(person))
+        return 0;
+    return ticketPriceCents.value;
+};
+const totalPayableCents = computed(() => people.reduce((acc, person) => acc + getParticipantPriceCents(person), 0));
+const shouldSkipPayment = computed(() => isFreeEvent.value || (people.length > 0 && totalPayableCents.value === 0));
 const createEmptyPerson = () => ({
     fullName: "",
     cpf: "",
@@ -708,6 +787,9 @@ onMounted(async () => {
     await catalog.loadChurches();
     loadPersistedState();
 });
+watch(() => [noticeSlug.value, noticeEnabled.value, noticeFingerprint.value, resolvedNotice.value?.showOnce], () => {
+    evaluateNotice();
+}, { immediate: true });
 watch(() => eventStore.event?.bannerUrl, () => {
     eventBannerError.value = false;
 });
@@ -918,9 +1000,9 @@ const submitBatch = async () => {
         }));
         const response = await eventStore.createBatchOrder(normalizeCPF(buyerCpf.value), selectedPaymentMethod.value, payload);
         disableStatePersistence();
-        // Se for m�f©todo gratuito, n�f£o redirecionar para p�f¡gina de pagamento
-        if (isFreePaymentSelected.value && response.payment?.isFree) {
-            // Redirecionar para p�f¡gina de evento com mensagem de sucesso
+        // Se for isento/gratuito, nao redirecionar para pagina de pagamento
+        if (response.payment?.isFree || response.payment?.totalCents === 0) {
+            // Redirecionar para pagina de evento com mensagem de sucesso
             router.push({
                 name: "event",
                 params: { slug: props.slug },
@@ -948,6 +1030,35 @@ const submitBatch = async () => {
 const createdOrderId = ref("");
 const inlinePayment = ref(null);
 const inlinePollHandle = ref(null);
+const inlinePixHash = ref("");
+const inlinePixError = ref("");
+const inlinePixCode = computed(() => normalizePixCode(inlinePayment.value?.pixQrData?.qr_code ?? ""));
+const canCopyInlinePix = computed(() => Boolean(inlinePixCode.value) && !inlinePixError.value);
+watch([inlinePixCode, () => inlinePayment.value?.pixQrHash], async ([code, serverHash]) => {
+    if (!code) {
+        inlinePixHash.value = "";
+        inlinePixError.value = "";
+        return;
+    }
+    const hash = await hashPixCode(code);
+    inlinePixHash.value = hash;
+    if (serverHash && hash && serverHash !== hash) {
+        inlinePixError.value =
+            "Codigo Pix inconsistente. Gere um novo Pix para continuar.";
+        if (createdOrderId.value) {
+            api.post("/payments/pix/integrity", {
+                orderId: createdOrderId.value,
+                qrHashClient: hash,
+                qrHashServer: serverHash,
+                qrLength: code.length,
+                source: "event_flow"
+            }).catch(() => undefined);
+        }
+    }
+    else {
+        inlinePixError.value = "";
+    }
+});
 const inlineIsPixMethod = computed(() => (inlinePayment.value?.paymentMethod ?? selectedPaymentMethod.value) === "PIX_MP");
 const inlineIsPaid = computed(() => inlinePayment.value?.status === "PAID");
 const inlineIsManual = computed(() => Boolean(inlinePayment.value?.isManual));
@@ -1074,38 +1185,107 @@ else if (!__VLS_ctx.eventStore.event) {
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "space-y-6" },
+        ...{ class: "min-h-screen bg-[#F6F8FB] pb-16" },
         'data-uppercase-scope': true,
     });
+    if (__VLS_ctx.noticeEnabled && __VLS_ctx.resolvedNotice) {
+        /** @type {[typeof EventNoticeModal, ]} */ ;
+        // @ts-ignore
+        const __VLS_6 = __VLS_asFunctionalComponent(EventNoticeModal, new EventNoticeModal({
+            ...{ 'onAccept': {} },
+            ...{ 'onCancel': {} },
+            slug: (__VLS_ctx.noticeSlug),
+            open: (__VLS_ctx.noticeOpen),
+            title: (__VLS_ctx.resolvedNotice.title),
+            bullets: (__VLS_ctx.resolvedNotice.bullets),
+            footerText: (__VLS_ctx.resolvedNotice.footerText),
+            showOnce: (__VLS_ctx.resolvedNotice.showOnce),
+        }));
+        const __VLS_7 = __VLS_6({
+            ...{ 'onAccept': {} },
+            ...{ 'onCancel': {} },
+            slug: (__VLS_ctx.noticeSlug),
+            open: (__VLS_ctx.noticeOpen),
+            title: (__VLS_ctx.resolvedNotice.title),
+            bullets: (__VLS_ctx.resolvedNotice.bullets),
+            footerText: (__VLS_ctx.resolvedNotice.footerText),
+            showOnce: (__VLS_ctx.resolvedNotice.showOnce),
+        }, ...__VLS_functionalComponentArgsRest(__VLS_6));
+        let __VLS_9;
+        let __VLS_10;
+        let __VLS_11;
+        const __VLS_12 = {
+            onAccept: (__VLS_ctx.handleNoticeAccept)
+        };
+        const __VLS_13 = {
+            onCancel: (__VLS_ctx.handleNoticeCancel)
+        };
+        var __VLS_8;
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mx-auto w-full max-w-3xl space-y-6 px-4 pb-12 pt-6" },
+    });
+    if (__VLS_ctx.route.query.success === '1') {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-sm" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "flex items-start gap-3" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+            viewBox: "0 0 24 24",
+            ...{ class: "h-4 w-4" },
+            fill: "none",
+            stroke: "currentColor",
+            'stroke-width': "3",
+            'stroke-linecap': "round",
+            'stroke-linejoin': "round",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.polyline)({
+            points: "20 6 9 17 4 12",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm font-semibold" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-xs text-emerald-700" },
+        });
+        if (__VLS_ctx.route.query.orderId) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-emerald-700" },
+            });
+            (__VLS_ctx.route.query.orderId);
+        }
+    }
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_6 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-    const __VLS_7 = __VLS_6({}, ...__VLS_functionalComponentArgsRest(__VLS_6));
-    __VLS_8.slots.default;
+    const __VLS_14 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        ...{ class: "rounded-2xl border border-neutral-200 bg-white/95 shadow-sm" },
+    }));
+    const __VLS_15 = __VLS_14({
+        ...{ class: "rounded-2xl border border-neutral-200 bg-white/95 shadow-sm" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_14));
+    __VLS_16.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "space-y-4" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between" },
+        ...{ class: "flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex-1" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
-        ...{ class: "text-2xl font-semibold text-neutral-800 dark:text-neutral-50" },
-    });
-    (__VLS_ctx.eventStore.event.title);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-neutral-500 dark:text-neutral-400" },
-    });
-    (__VLS_ctx.eventStore.event.description);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "self-start w-full lg:w-auto" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700" },
+        ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-start" },
     });
     if (__VLS_ctx.hasBannerImage) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "w-full shrink-0 sm:mt-1 sm:w-auto" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "overflow-hidden rounded-none border border-neutral-200 bg-white p-1.5 shadow-sm" },
+        });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
             ...{ onError: (...[$event]) => {
                     if (!!(__VLS_ctx.eventStore.loading))
@@ -1118,111 +1298,246 @@ else {
                 } },
             src: (__VLS_ctx.resolvedBannerUrl),
             alt: "Banner do evento",
-            ...{ class: "w-full max-h-60 object-contain" },
+            ...{ class: "h-28 w-full object-contain sm:h-20 sm:w-36" },
             loading: "lazy",
         });
     }
-    else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "flex h-40 w-full items-center justify-center border border-dashed border-neutral-300 px-6 py-4 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500" },
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "min-w-0 space-y-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-wrap items-center gap-2" },
+    });
+    if (__VLS_ctx.currentLotName) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "inline-flex items-center rounded-full bg-primary-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary-700" },
+        });
+        (__VLS_ctx.currentLotName);
+    }
+    if (__VLS_ctx.isPromoLotActive) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "inline-flex items-center rounded-full bg-rose-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700" },
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.h1, __VLS_intrinsicElements.h1)({
+        ...{ class: "text-2xl font-semibold text-neutral-900" },
+    });
+    (__VLS_ctx.eventStore.event.title);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "max-w-full text-sm text-neutral-500 break-all sm:break-words" },
+    });
+    (__VLS_ctx.eventStore.event.description);
+    if (__VLS_ctx.noticeEnabled) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (__VLS_ctx.openNotice) },
+            type: "button",
+            ...{ class: "inline-flex text-xs font-semibold text-primary-600 hover:text-primary-500" },
         });
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "text-left sm:text-right" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: "text-sm text-neutral-500" },
+        ...{ class: "text-xs font-semibold uppercase tracking-wide text-neutral-400" },
     });
-    (__VLS_ctx.priceInfo.title);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: ([
-                'text-xl font-semibold',
-                __VLS_ctx.priceValueClass
-            ]) },
+        ...{ class: (['text-2xl font-semibold', __VLS_ctx.priceValueClass]) },
     });
     (__VLS_ctx.priceInfo.value);
     if (__VLS_ctx.priceInfo.helper) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500" },
+            ...{ class: "text-xs text-neutral-400" },
         });
         (__VLS_ctx.priceInfo.helper);
     }
-    if (__VLS_ctx.isPromoLotActive) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-2 text-sm text-neutral-600" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+        viewBox: "0 0 24 24",
+        ...{ class: "h-4 w-4 text-primary-600" },
+        fill: "none",
+        stroke: "currentColor",
+        'stroke-width': "2",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+        d: "M12 21s7-6.2 7-11.2A7 7 0 0 0 5 9.8C5 14.8 12 21 12 21Z",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.circle)({
+        cx: "12",
+        cy: "9",
+        r: "2.5",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    (__VLS_ctx.eventStore.event.location);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex items-center gap-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+        viewBox: "0 0 24 24",
+        ...{ class: "h-4 w-4 text-primary-600" },
+        fill: "none",
+        stroke: "currentColor",
+        'stroke-width': "2",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.rect)({
+        x: "3",
+        y: "5",
+        width: "18",
+        height: "16",
+        rx: "2",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+        d: "M8 3v4M16 3v4M3 11h18",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+    (__VLS_ctx.formatDate(__VLS_ctx.eventStore.event.startDate));
+    (__VLS_ctx.formatDate(__VLS_ctx.eventStore.event.endDate));
+    if (__VLS_ctx.eventStore.event.minAgeYears) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "mt-2 flex flex-wrap items-center gap-2 sm:justify-end" },
+            ...{ class: "flex items-center gap-2" },
         });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+            viewBox: "0 0 24 24",
+            ...{ class: "h-4 w-4 text-primary-600" },
+            fill: "none",
+            stroke: "currentColor",
+            'stroke-width': "2",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.circle)({
+            cx: "12",
+            cy: "7",
+            r: "3",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+            d: "M5 21a7 7 0 0 1 14 0",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        (__VLS_ctx.eventStore.event.minAgeYears);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-400" },
+    });
+    if (__VLS_ctx.nextLotCountdownText) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700 ring-1 ring-rose-200 shadow-sm dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 motion-safe:animate-pulse" },
+            ...{ class: "font-semibold text-neutral-600" },
         });
+        (__VLS_ctx.nextLotCountdownText);
+    }
+    if (__VLS_ctx.daysToLastLotEnd !== null) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "font-semibold text-neutral-600" },
+        });
+        (__VLS_ctx.formatDayCount(__VLS_ctx.daysToLastLotEnd));
     }
     if (__VLS_ctx.promoCountdownText) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "text-xs font-medium text-rose-600 dark:text-rose-300 sm:text-right" },
+            ...{ class: "text-xs font-semibold text-rose-600" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
             ...{ class: "font-semibold" },
         });
         (__VLS_ctx.promoCountdownText);
     }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400" },
-    });
-    if (__VLS_ctx.nextLotCountdownText) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "font-semibold text-neutral-800 dark:text-white" },
-        });
-        (__VLS_ctx.nextLotCountdownText);
-    }
-    else {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-    }
-    if (__VLS_ctx.daysToLastLotEnd !== null) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "font-semibold text-neutral-800 dark:text-white" },
-        });
-        (__VLS_ctx.formatDayCount(__VLS_ctx.daysToLastLotEnd));
-    }
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.eventStore.event.location);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "hidden sm:inline" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-    (__VLS_ctx.formatDate(__VLS_ctx.eventStore.event.startDate));
-    (__VLS_ctx.formatDate(__VLS_ctx.eventStore.event.endDate));
-    if (__VLS_ctx.eventStore.event.minAgeYears) {
-        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-        (__VLS_ctx.eventStore.event.minAgeYears);
-    }
-    var __VLS_8;
-    if (__VLS_ctx.registrationOpen) {
+    var __VLS_16;
+    if (__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "space-y-6" },
         });
-        /** @type {[typeof StepWizard, ]} */ ;
-        // @ts-ignore
-        const __VLS_9 = __VLS_asFunctionalComponent(StepWizard, new StepWizard({
-            steps: (__VLS_ctx.steps),
-            currentStep: (__VLS_ctx.currentStep),
-        }));
-        const __VLS_10 = __VLS_9({
-            steps: (__VLS_ctx.steps),
-            currentStep: (__VLS_ctx.currentStep),
-        }, ...__VLS_functionalComponentArgsRest(__VLS_9));
+        if (__VLS_ctx.currentStep < 4) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white px-4 py-5 shadow-sm" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-between text-xs font-semibold text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.currentStep + 1);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "uppercase tracking-wide text-neutral-300" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative mt-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "absolute left-6 right-6 top-4 h-px bg-neutral-200" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative grid grid-cols-4 gap-2 text-center" },
+            });
+            for (const [step, index] of __VLS_getVForSourceType((__VLS_ctx.steps.slice(0, 4)))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    key: (step.title),
+                    ...{ class: "flex flex-col items-center gap-2" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: ([
+                            'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold transition',
+                            index < __VLS_ctx.currentStep
+                                ? 'border-emerald-500 bg-emerald-500 text-white'
+                                : index === __VLS_ctx.currentStep
+                                    ? 'border-primary-600 bg-primary-600 text-white'
+                                    : 'border-neutral-200 bg-white text-neutral-400'
+                        ]) },
+                });
+                if (index < __VLS_ctx.currentStep) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                        viewBox: "0 0 24 24",
+                        ...{ class: "h-4 w-4" },
+                        fill: "none",
+                        stroke: "currentColor",
+                        'stroke-width': "3",
+                        'stroke-linecap': "round",
+                        'stroke-linejoin': "round",
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.polyline)({
+                        points: "20 6 9 17 4 12",
+                    });
+                }
+                else {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    (index + 1);
+                }
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "text-xs font-semibold text-neutral-700" },
+                });
+                (step.title);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "text-[10px] text-neutral-400" },
+                });
+                (step.description);
+            }
+        }
         if (__VLS_ctx.currentStep === 0) {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_12 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_13 = __VLS_12({}, ...__VLS_functionalComponentArgsRest(__VLS_12));
-            __VLS_14.slots.default;
+            const __VLS_17 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_18 = __VLS_17({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_17));
+            __VLS_19.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-1" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+                ...{ class: "text-xl font-semibold text-neutral-900" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm text-neutral-500" },
+            });
             /** @type {[typeof ResponsibleCpfForm, ]} */ ;
             // @ts-ignore
-            const __VLS_15 = __VLS_asFunctionalComponent(ResponsibleCpfForm, new ResponsibleCpfForm({
+            const __VLS_20 = __VLS_asFunctionalComponent(ResponsibleCpfForm, new ResponsibleCpfForm({
                 ...{ 'onUpdate:cpf': {} },
                 ...{ 'onSubmit': {} },
                 ref: "inscricaoFormRef",
@@ -1230,44 +1545,58 @@ else {
                 loading: (__VLS_ctx.checkingCpf),
                 error: (__VLS_ctx.errorMessage),
             }));
-            const __VLS_16 = __VLS_15({
+            const __VLS_21 = __VLS_20({
                 ...{ 'onUpdate:cpf': {} },
                 ...{ 'onSubmit': {} },
                 ref: "inscricaoFormRef",
                 modelValue: (__VLS_ctx.responsibleProfile),
                 loading: (__VLS_ctx.checkingCpf),
                 error: (__VLS_ctx.errorMessage),
-            }, ...__VLS_functionalComponentArgsRest(__VLS_15));
-            let __VLS_18;
-            let __VLS_19;
-            let __VLS_20;
-            const __VLS_21 = {
+            }, ...__VLS_functionalComponentArgsRest(__VLS_20));
+            let __VLS_23;
+            let __VLS_24;
+            let __VLS_25;
+            const __VLS_26 = {
                 'onUpdate:cpf': (...[$event]) => {
                     if (!!(__VLS_ctx.eventStore.loading))
                         return;
                     if (!!(!__VLS_ctx.eventStore.event))
                         return;
-                    if (!(__VLS_ctx.registrationOpen))
+                    if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                         return;
                     if (!(__VLS_ctx.currentStep === 0))
                         return;
                     __VLS_ctx.buyerCpf = $event;
                 }
             };
-            const __VLS_22 = {
+            const __VLS_27 = {
                 onSubmit: (__VLS_ctx.handleCpfSubmit)
             };
             /** @type {typeof __VLS_ctx.inscricaoFormRef} */ ;
-            var __VLS_23 = {};
-            var __VLS_17;
-            var __VLS_14;
+            var __VLS_28 = {};
+            var __VLS_22;
+            var __VLS_19;
         }
         if (__VLS_ctx.currentStep === 1) {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_26 = __VLS_25({}, ...__VLS_functionalComponentArgsRest(__VLS_25));
-            __VLS_27.slots.default;
+            const __VLS_30 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_31 = __VLS_30({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_30));
+            __VLS_32.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-6" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+                ...{ class: "text-xl font-semibold text-neutral-900" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm text-neutral-500" },
+            });
             if (false) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
@@ -1300,56 +1629,75 @@ else {
                     });
                     (order.registrations.length);
                     (order.registrations.map(r => r.fullName).join(", "));
-                    const __VLS_28 = {}.RouterLink;
+                    const __VLS_33 = {}.RouterLink;
                     /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
                     // @ts-ignore
-                    const __VLS_29 = __VLS_asFunctionalComponent(__VLS_28, new __VLS_28({
+                    const __VLS_34 = __VLS_asFunctionalComponent(__VLS_33, new __VLS_33({
                         to: ({ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }),
                         ...{ class: "inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100" },
                     }));
-                    const __VLS_30 = __VLS_29({
+                    const __VLS_35 = __VLS_34({
                         to: ({ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }),
                         ...{ class: "inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100" },
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_29));
-                    __VLS_31.slots.default;
-                    var __VLS_31;
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_34));
+                    __VLS_36.slots.default;
+                    var __VLS_36;
                 }
-                const __VLS_32 = {}.RouterLink;
+                const __VLS_37 = {}.RouterLink;
                 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
                 // @ts-ignore
-                const __VLS_33 = __VLS_asFunctionalComponent(__VLS_32, new __VLS_32({
+                const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
                     to: ({ name: 'admin-pending-orders', params: { cpf: __VLS_ctx.buyerCpf } }),
                     ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50" },
                 }));
-                const __VLS_34 = __VLS_33({
+                const __VLS_39 = __VLS_38({
                     to: ({ name: 'admin-pending-orders', params: { cpf: __VLS_ctx.buyerCpf } }),
                     ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_33));
-                __VLS_35.slots.default;
+                }, ...__VLS_functionalComponentArgsRest(__VLS_38));
+                __VLS_40.slots.default;
                 /** @type {[typeof IconArrowRight, ]} */ ;
                 // @ts-ignore
-                const __VLS_36 = __VLS_asFunctionalComponent(IconArrowRight, new IconArrowRight({
+                const __VLS_41 = __VLS_asFunctionalComponent(IconArrowRight, new IconArrowRight({
                     ...{ class: "ml-1 h-3 w-3" },
                 }));
-                const __VLS_37 = __VLS_36({
+                const __VLS_42 = __VLS_41({
                     ...{ class: "ml-1 h-3 w-3" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_36));
-                var __VLS_35;
+                }, ...__VLS_functionalComponentArgsRest(__VLS_41));
+                var __VLS_40;
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
                 ...{ onSubmit: (__VLS_ctx.handleGeneralStep) },
                 ...{ class: "space-y-6" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "grid gap-4 md:grid-cols-2" },
+                ...{ class: "grid gap-4" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                 ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                viewBox: "0 0 24 24",
+                ...{ class: "h-4 w-4" },
+                fill: "none",
+                stroke: "currentColor",
+                'stroke-width': "2",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M9 3v15M15 6v15",
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                 value: (__VLS_ctx.selectedDistrictId),
-                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+                ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800" },
                 'aria-invalid': (__VLS_ctx.generalErrors.district ? 'true' : 'false'),
                 'aria-describedby': "district-error",
                 required: true,
@@ -1377,9 +1725,28 @@ else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                 ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "relative" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                viewBox: "0 0 24 24",
+                ...{ class: "h-4 w-4" },
+                fill: "none",
+                stroke: "currentColor",
+                'stroke-width': "2",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M12 2l4 4v4h4v12H4V10h4V6l4-4z",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M9 22v-6h6v6",
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                 value: (__VLS_ctx.selectedChurchId),
-                ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+                ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800" },
                 'aria-invalid': (__VLS_ctx.generalErrors.church ? 'true' : 'false'),
                 'aria-describedby': "church-error",
                 disabled: (!__VLS_ctx.selectedDistrictId),
@@ -1404,19 +1771,28 @@ else {
                 });
                 (__VLS_ctx.generalErrors.church);
             }
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
-            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "mt-1 flex w-full items-center rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800 sm:w-56" },
+                ...{ class: "rounded-2xl border border-neutral-200 bg-neutral-50 p-4" },
                 'aria-invalid': (__VLS_ctx.generalErrors.quantity ? 'true' : 'false'),
                 'aria-describedby': "quantity-error",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-between gap-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-800" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs text-neutral-500" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center rounded-full border border-neutral-200 bg-white px-2 py-1 shadow-sm" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.decreaseQuantity) },
                 type: "button",
-                ...{ class: "h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900" },
+                ...{ class: "h-9 w-9 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40" },
                 disabled: (!__VLS_ctx.canDecreaseQuantity),
                 'aria-label': "Diminuir quantidade",
             });
@@ -1425,14 +1801,14 @@ else {
                 min: "1",
                 max: "10",
                 'data-quantity-input': true,
-                ...{ class: "h-10 w-full border-0 bg-transparent text-center text-lg font-semibold outline-none" },
+                ...{ class: "h-9 w-12 border-0 bg-transparent text-center text-base font-semibold outline-none" },
                 required: true,
             });
             (__VLS_ctx.quantity);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.increaseQuantity) },
                 type: "button",
-                ...{ class: "h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900" },
+                ...{ class: "h-9 w-9 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40" },
                 disabled: (!__VLS_ctx.canIncreaseQuantity),
                 'aria-label': "Aumentar quantidade",
             });
@@ -1440,7 +1816,7 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     id: "quantity-error",
                     role: "alert",
-                    ...{ class: "mt-2 text-sm text-red-600 dark:text-red-400" },
+                    ...{ class: "mt-2 text-sm text-red-600" },
                 });
                 (__VLS_ctx.generalErrors.quantity);
             }
@@ -1453,7 +1829,7 @@ else {
                             return;
                         if (!!(!__VLS_ctx.eventStore.event))
                             return;
-                        if (!(__VLS_ctx.registrationOpen))
+                        if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                             return;
                         if (!(__VLS_ctx.currentStep === 1))
                             return;
@@ -1466,69 +1842,121 @@ else {
                 type: "submit",
                 ...{ class: "w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto" },
             });
-            var __VLS_27;
+            var __VLS_32;
         }
         if (__VLS_ctx.currentStep === 2) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-6" },
             });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-1" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+                ...{ class: "text-xl font-semibold text-neutral-900" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm text-neutral-500" },
+            });
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_39 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_40 = __VLS_39({}, ...__VLS_functionalComponentArgsRest(__VLS_39));
-            __VLS_41.slots.default;
+            const __VLS_44 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_45 = __VLS_44({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_44));
+            __VLS_46.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "grid gap-2 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2" },
+                ...{ class: "grid gap-3 text-xs text-neutral-500 sm:grid-cols-2" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[10px] font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-700" },
             });
             (__VLS_ctx.buyerCpf);
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[10px] font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-700" },
             });
             (__VLS_ctx.selectedDistrict?.name ?? "Não selecionado");
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[10px] font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-700" },
             });
             (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: "font-semibold text-neutral-700 dark:text-neutral-100" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-[10px] font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-700" },
             });
             (__VLS_ctx.people.length);
-            var __VLS_41;
+            var __VLS_46;
             for (const [person, index] of __VLS_getVForSourceType((__VLS_ctx.people))) {
                 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
                 // @ts-ignore
-                const __VLS_42 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                const __VLS_47 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
                     key: (index),
-                    ...{ class: "rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40" },
+                    ...{ class: "rounded-2xl border border-neutral-200/80 bg-white shadow-sm" },
                 }));
-                const __VLS_43 = __VLS_42({
+                const __VLS_48 = __VLS_47({
                     key: (index),
-                    ...{ class: "rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_42));
-                __VLS_44.slots.default;
+                    ...{ class: "rounded-2xl border border-neutral-200/80 bg-white shadow-sm" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_47));
+                __VLS_49.slots.default;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
+                    ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between" },
                 });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-                    ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex items-center gap-3" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                    viewBox: "0 0 24 24",
+                    ...{ class: "h-4 w-4" },
+                    fill: "none",
+                    stroke: "currentColor",
+                    'stroke-width': "2",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.circle)({
+                    cx: "12",
+                    cy: "8",
+                    r: "3",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                    d: "M4 20a8 8 0 0 1 16 0",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-xs font-semibold uppercase text-neutral-400" },
                 });
                 (index + 1);
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                    ...{ class: "text-sm text-neutral-400" },
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-sm font-semibold text-neutral-800" },
                 });
+                if (index === 0) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                        ...{ class: "inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-2 py-1 text-[10px] font-semibold uppercase text-primary-700" },
+                    });
+                }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "mt-4 grid gap-4 lg:grid-cols-2" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
                     ...{ onInput: (...[$event]) => {
@@ -1536,7 +1964,7 @@ else {
                                 return;
                             if (!!(!__VLS_ctx.eventStore.event))
                                 return;
-                            if (!(__VLS_ctx.registrationOpen))
+                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                                 return;
                             if (!(__VLS_ctx.currentStep === 2))
                                 return;
@@ -1547,7 +1975,7 @@ else {
                                 return;
                             if (!!(!__VLS_ctx.eventStore.event))
                                 return;
-                            if (!(__VLS_ctx.registrationOpen))
+                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                                 return;
                             if (!(__VLS_ctx.currentStep === 2))
                                 return;
@@ -1559,7 +1987,7 @@ else {
                     placeholder: "000.000.000-00",
                     inputmode: "numeric",
                     autocomplete: "off",
-                    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800" },
+                    ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" },
                     'aria-invalid': (__VLS_ctx.participantCpfErrors[index] ? 'true' : 'false'),
                     'aria-describedby': (`participant-cpf-error-${index}`),
                     required: true,
@@ -1568,56 +1996,56 @@ else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                         id: (`participant-cpf-error-${index}`),
                         role: "alert",
-                        ...{ class: "mt-1 text-sm text-red-600 dark:text-red-400" },
+                        ...{ class: "mt-1 text-sm text-red-600" },
                     });
                     (__VLS_ctx.participantCpfErrors[index]);
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
                     value: (person.fullName),
                     type: "text",
                     required: true,
                     disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60" },
+                    ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" },
                 });
                 /** @type {[typeof DateField, ]} */ ;
                 // @ts-ignore
-                const __VLS_45 = __VLS_asFunctionalComponent(DateField, new DateField({
+                const __VLS_50 = __VLS_asFunctionalComponent(DateField, new DateField({
                     modelValue: (person.birthDate),
                     required: true,
                     disabled: (__VLS_ctx.isPersonLocked(index)),
                     ...{ class: "w-full" },
                 }));
-                const __VLS_46 = __VLS_45({
+                const __VLS_51 = __VLS_50({
                     modelValue: (person.birthDate),
                     required: true,
                     disabled: (__VLS_ctx.isPersonLocked(index)),
                     ...{ class: "w-full" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_45));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_50));
                 if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
+                        ...{ class: "text-xs text-neutral-500" },
                     });
                     (__VLS_ctx.calculateAgeYears(person.birthDate));
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                     value: (person.gender),
                     disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60" },
+                    ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60" },
                     required: true,
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
@@ -1633,7 +2061,7 @@ else {
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                     ...{ onChange: (...[$event]) => {
@@ -1641,7 +2069,7 @@ else {
                                 return;
                             if (!!(!__VLS_ctx.eventStore.event))
                                 return;
-                            if (!(__VLS_ctx.registrationOpen))
+                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                                 return;
                             if (!(__VLS_ctx.currentStep === 2))
                                 return;
@@ -1649,7 +2077,7 @@ else {
                         } },
                     value: (person.districtId),
                     disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60" },
+                    ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
                     value: "",
@@ -1664,12 +2092,12 @@ else {
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                     value: (person.churchId),
                     disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60" },
+                    ...{ class: "mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
                     value: "",
@@ -1686,10 +2114,32 @@ else {
                     ...{ class: "lg:col-span-2" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                    ...{ class: "block text-sm font-medium text-neutral-600" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "mt-1 flex flex-wrap items-center gap-4" },
+                    ...{ class: "mt-2 flex flex-col gap-3 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-4" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex items-center gap-3 text-xs text-neutral-500" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                    viewBox: "0 0 24 24",
+                    ...{ class: "h-4 w-4" },
+                    fill: "none",
+                    stroke: "currentColor",
+                    'stroke-width': "2",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                    d: "M12 5a4 4 0 0 1 4 4v2h2a4 4 0 0 1 4 4v4H2v-4a4 4 0 0 1 4-4h2V9a4 4 0 0 1 4-4Z",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                    d: "M12 9v6M9 12h6",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex flex-wrap items-center gap-4" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
                     ...{ onChange: (...[$event]) => {
@@ -1697,7 +2147,7 @@ else {
                                 return;
                             if (!!(!__VLS_ctx.eventStore.event))
                                 return;
-                            if (!(__VLS_ctx.registrationOpen))
+                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                                 return;
                             if (!(__VLS_ctx.currentStep === 2))
                                 return;
@@ -1711,9 +2161,9 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
                     src: (person.photoUrl || __VLS_ctx.DEFAULT_PHOTO_DATA_URL),
                     alt: "Pre-visualizacao",
-                    ...{ class: "h-24 w-24 rounded-lg object-cover" },
+                    ...{ class: "h-20 w-20 rounded-xl object-cover" },
                 });
-                var __VLS_44;
+                var __VLS_49;
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3" },
@@ -1724,7 +2174,7 @@ else {
                             return;
                         if (!!(!__VLS_ctx.eventStore.event))
                             return;
-                        if (!(__VLS_ctx.registrationOpen))
+                        if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                             return;
                         if (!(__VLS_ctx.currentStep === 2))
                             return;
@@ -1746,91 +2196,190 @@ else {
             }
         }
         if (__VLS_ctx.currentStep === 3) {
-            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-            // @ts-ignore
-            const __VLS_48 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_49 = __VLS_48({}, ...__VLS_functionalComponentArgsRest(__VLS_48));
-            __VLS_50.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-6" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-1" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs font-semibold uppercase tracking-wide text-neutral-400" },
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-                ...{ class: "text-xl font-semibold text-neutral-800 dark:text-neutral-100" },
+                ...{ class: "text-xl font-semibold text-neutral-900" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "text-sm text-neutral-500" },
             });
-            (__VLS_ctx.isFreeEvent
+            (__VLS_ctx.shouldSkipPayment
                 ? "Confira as informações antes de confirmar as inscrições."
                 : "Confira as informações antes de prosseguir com o pagamento.");
+            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+            // @ts-ignore
+            const __VLS_53 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_54 = __VLS_53({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_53));
+            __VLS_55.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60" },
+                ...{ class: "flex items-start justify-between gap-4" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-base font-semibold text-neutral-900" },
+            });
+            (__VLS_ctx.responsibleProfile?.fullName || "Responsável financeiro");
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm text-neutral-500" },
+            });
             (__VLS_ctx.buyerCpf);
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (...[$event]) => {
+                        if (!!(__VLS_ctx.eventStore.loading))
+                            return;
+                        if (!!(!__VLS_ctx.eventStore.event))
+                            return;
+                        if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                            return;
+                        if (!(__VLS_ctx.currentStep === 3))
+                            return;
+                        __VLS_ctx.currentStep = 0;
+                    } },
+                type: "button",
+                ...{ class: "text-xs font-semibold text-primary-600 hover:text-primary-500" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-4 grid gap-3 text-sm text-neutral-600 sm:grid-cols-2" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-800" },
+            });
             (__VLS_ctx.selectedDistrict?.name ?? "Não selecionado");
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs font-semibold uppercase text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-sm font-semibold text-neutral-800" },
+            });
             (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
-            if (!__VLS_ctx.isFreeEvent) {
+            var __VLS_55;
+            if (!__VLS_ctx.shouldSkipPayment) {
+                /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+                // @ts-ignore
+                const __VLS_56 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                    ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+                }));
+                const __VLS_57 = __VLS_56({
+                    ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_56));
+                __VLS_58.slots.default;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60" },
+                    ...{ class: "space-y-3" },
                 });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
+                    ...{ class: "text-base font-semibold text-neutral-900" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "grid gap-2 sm:grid-cols-2" },
+                    ...{ class: "grid gap-3" },
                 });
                 for (const [option] of __VLS_getVForSourceType((__VLS_ctx.paymentOptions))) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
                         key: (option.value),
-                        ...{ class: "flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900" },
+                        ...{ class: "flex cursor-pointer items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-sm transition hover:border-primary-400" },
                     });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                        viewBox: "0 0 24 24",
+                        ...{ class: "h-4 w-4" },
+                        fill: "none",
+                        stroke: "currentColor",
+                        'stroke-width': "2",
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.rect)({
+                        x: "3",
+                        y: "4",
+                        width: "18",
+                        height: "16",
+                        rx: "2",
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                        d: "M7 8h10M7 12h4",
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                        ...{ class: "flex-1" },
+                    });
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                        ...{ class: "font-semibold text-neutral-800" },
+                    });
+                    (option.label);
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                        ...{ class: "text-xs text-neutral-500" },
+                    });
+                    (option.description);
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
                         type: "radio",
                         value: (option.value),
-                        ...{ class: "h-4 w-4 text-primary-600 focus:ring-primary-500" },
+                        ...{ class: "h-5 w-5 text-primary-600 focus:ring-primary-500" },
                     });
                     (__VLS_ctx.selectedPaymentMethod);
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "flex flex-col" },
-                    });
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "font-medium text-neutral-700 dark:text-neutral-100" },
-                    });
-                    (option.label);
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
-                    });
-                    (option.description);
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                    ...{ class: "text-xs text-neutral-400 dark:text-neutral-500" },
+                    ...{ class: "text-xs text-neutral-400" },
                 });
                 (__VLS_ctx.selectedPaymentLabel);
                 if (__VLS_ctx.isManualPaymentSelected) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                        ...{ class: "text-xs text-primary-600 dark:text-primary-200" },
+                        ...{ class: "text-xs text-primary-600" },
                     });
                 }
                 if (__VLS_ctx.isFreePaymentSelected) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                        ...{ class: "text-xs text-primary-500 dark:text-primary-200" },
+                        ...{ class: "text-xs text-primary-500" },
                     });
                 }
+                var __VLS_58;
+            }
+            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+            // @ts-ignore
+            const __VLS_59 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_60 = __VLS_59({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_59));
+            __VLS_61.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-between gap-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({
+                ...{ class: "text-base font-semibold text-neutral-900" },
+            });
+            (__VLS_ctx.people.length);
+            if (!__VLS_ctx.shouldSkipPayment) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "text-sm font-semibold text-primary-600" },
+                });
+                (__VLS_ctx.formatCurrency(__VLS_ctx.ticketPriceCents));
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "grid gap-4" },
+                ...{ class: "mt-4 space-y-3" },
             });
             for (const [person, index] of __VLS_getVForSourceType((__VLS_ctx.people))) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     key: (index),
-                    ...{ class: "rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" },
+                    ...{ class: "flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-3 sm:flex-row sm:items-center sm:justify-between" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "flex items-center gap-3" },
@@ -1838,63 +2387,88 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
                     src: (person.photoUrl || __VLS_ctx.DEFAULT_PHOTO_DATA_URL),
                     alt: "Foto do participante",
-                    ...{ class: "h-12 w-12 rounded-lg object-cover" },
+                    ...{ class: "h-12 w-12 rounded-xl object-cover" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                    ...{ class: "text-sm font-semibold text-neutral-700 dark:text-neutral-100" },
+                    ...{ class: "text-sm font-semibold text-neutral-900" },
                 });
                 (person.fullName);
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     ...{ class: "text-xs text-neutral-500" },
                 });
-                (person.cpf);
+                (__VLS_ctx.getGenderLabel(person.gender));
+                if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                    (__VLS_ctx.calculateAgeYears(person.birthDate));
+                }
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex flex-col items-start gap-2 text-left sm:items-end sm:text-right" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                if (__VLS_ctx.isAgeExempt(person) && !__VLS_ctx.isFreeEvent) {
+                    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                        ...{ class: "text-xs font-semibold text-emerald-600" },
+                    });
+                }
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-sm font-semibold text-neutral-700" },
+                });
+                (__VLS_ctx.formatCurrency(__VLS_ctx.getParticipantPriceCents(person)));
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                     ...{ onClick: (...[$event]) => {
                             if (!!(__VLS_ctx.eventStore.loading))
                                 return;
                             if (!!(!__VLS_ctx.eventStore.event))
                                 return;
-                            if (!(__VLS_ctx.registrationOpen))
+                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                                 return;
                             if (!(__VLS_ctx.currentStep === 3))
                                 return;
                             __VLS_ctx.currentStep = 2;
                         } },
-                    ...{ class: "text-sm text-primary-600 hover:underline" },
+                    type: "button",
+                    ...{ class: "text-xs font-semibold text-primary-600 hover:text-primary-500" },
                 });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "mt-3 grid gap-1 text-sm text-neutral-500 sm:grid-cols-2" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-                (__VLS_ctx.formatBirthDateLabel(person.birthDate));
-                if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                    (__VLS_ctx.calculateAgeYears(person.birthDate));
-                }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-                (__VLS_ctx.getGenderLabel(person.gender));
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-                (__VLS_ctx.getDistrictName(person.districtId));
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
-                (__VLS_ctx.getChurchName(person.churchId));
             }
+            var __VLS_61;
+            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+            // @ts-ignore
+            const __VLS_62 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_63 = __VLS_62({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_62));
+            __VLS_64.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-2 text-left sm:text-right" },
+                ...{ class: "space-y-2 text-sm text-neutral-600" },
             });
-            if (!__VLS_ctx.isFreeEvent) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                    ...{ class: "text-sm text-neutral-500" },
-                });
-                (__VLS_ctx.selectedPaymentLabel);
-            }
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-sm text-neutral-500" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-between" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-2xl font-semibold text-primary-600 dark:text-primary-400" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.people.length);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            (__VLS_ctx.shouldSkipPayment ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.totalPayableCents));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-between" },
             });
-            (__VLS_ctx.isFreeEvent ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.ticketPriceCents * __VLS_ctx.people.length));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-emerald-600" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "mt-4 flex items-center justify-between border-t border-neutral-200 pt-4" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-sm font-semibold text-neutral-600" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                ...{ class: "text-2xl font-semibold text-primary-600" },
+            });
+            (__VLS_ctx.shouldSkipPayment ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.totalPayableCents));
+            var __VLS_64;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3" },
             });
@@ -1904,7 +2478,7 @@ else {
                             return;
                         if (!!(!__VLS_ctx.eventStore.event))
                             return;
-                        if (!(__VLS_ctx.registrationOpen))
+                        if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
                             return;
                         if (!(__VLS_ctx.currentStep === 3))
                             return;
@@ -1929,7 +2503,7 @@ else {
             }
             else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                (__VLS_ctx.isFreeEvent ? "Confirmar inscrições" : "Gerar pagamento");
+                (__VLS_ctx.shouldSkipPayment ? "Confirmar inscrições" : "Gerar pagamento");
             }
             if (__VLS_ctx.errorMessage) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1937,52 +2511,144 @@ else {
                 });
                 (__VLS_ctx.errorMessage);
             }
-            var __VLS_50;
         }
         if (__VLS_ctx.currentStep === 4 && __VLS_ctx.inlinePayment) {
-            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
-            // @ts-ignore
-            const __VLS_51 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-            const __VLS_52 = __VLS_51({}, ...__VLS_functionalComponentArgsRest(__VLS_51));
-            __VLS_53.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-6 md:flex-row md:items-start" },
+                ...{ class: "space-y-6" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex-1 space-y-4" },
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex items-start gap-3 rounded-xl border px-4 py-3" },
-                ...{ class: (__VLS_ctx.inlineStatusStyles.container) },
+                ...{ class: "mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600" },
             });
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                ...{ class: "mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full text-white" },
-                ...{ class: (__VLS_ctx.inlineStatusStyles.badge) },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                viewBox: "0 0 24 24",
+                ...{ class: "h-8 w-8" },
+                fill: "none",
+                stroke: "currentColor",
+                'stroke-width': "2.5",
             });
-            (__VLS_ctx.inlineStatusIcon);
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-                ...{ class: "text-lg font-semibold text-neutral-800 dark:text-neutral-100" },
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
+                d: "M20 6 9 17l-5-5",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "mt-4 text-xs font-semibold uppercase tracking-wide text-emerald-600" },
             });
             (__VLS_ctx.inlineStatusTitle);
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
+                ...{ class: "mt-2 text-2xl font-semibold text-neutral-900" },
+            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+                ...{ class: "mt-2 text-sm text-neutral-500" },
             });
             (__VLS_ctx.inlineStatusMessage);
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60" },
+                ...{ class: "grid gap-6 md:grid-cols-2" },
+            });
+            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+            // @ts-ignore
+            const __VLS_65 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_66 = __VLS_65({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_65));
+            __VLS_67.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-4 text-center" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-xs font-semibold uppercase tracking-wide text-neutral-400" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                ...{ class: "text-3xl font-semibold text-primary-600" },
+            });
+            (__VLS_ctx.formatCurrency(__VLS_ctx.inlinePayment?.totalCents ?? __VLS_ctx.totalPayableCents));
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "flex items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-50 p-4" },
+            });
+            if (__VLS_ctx.inlinePayment?.pixQrData?.qr_code_base64) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
+                    src: (`data:image/png;base64,${__VLS_ctx.inlinePayment.pixQrData.qr_code_base64}`),
+                    alt: "QR Code Pix",
+                    ...{ class: "h-48 w-48 rounded-xl border border-neutral-200 bg-white p-2" },
+                });
+            }
+            else {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "flex flex-col items-center justify-center gap-2 py-8 text-neutral-500" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+                    ...{ class: "h-6 w-6 animate-spin text-primary-600" },
+                    xmlns: "http://www.w3.org/2000/svg",
+                    fill: "none",
+                    viewBox: "0 0 24 24",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.circle, __VLS_intrinsicElements.circle)({
+                    ...{ class: "opacity-25" },
+                    cx: "12",
+                    cy: "12",
+                    r: "10",
+                    stroke: "currentColor",
+                    'stroke-width': "4",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.path, __VLS_intrinsicElements.path)({
+                    ...{ class: "opacity-75" },
+                    fill: "currentColor",
+                    d: "M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z",
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                    ...{ class: "text-sm" },
+                });
+            }
+            if (__VLS_ctx.inlineIsPixMethod) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-sm text-neutral-500" },
+                });
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.copyInlinePixCode) },
+                type: "button",
+                ...{ class: "w-full rounded-xl border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 disabled:opacity-50" },
+                disabled: (!__VLS_ctx.canCopyInlinePix),
+            });
+            if (__VLS_ctx.inlinePayment?.pixQrData?.qr_code) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.textarea)({
+                    ...{ class: "w-full rounded-xl border border-neutral-200 bg-white p-3 text-xs text-neutral-600" },
+                    rows: "3",
+                    readonly: true,
+                    value: (__VLS_ctx.inlinePixCode),
+                });
+            }
+            if (__VLS_ctx.inlinePixError) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                    ...{ class: "text-sm font-semibold text-red-600" },
+                });
+                (__VLS_ctx.inlinePixError);
+            }
+            var __VLS_67;
+            /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+            // @ts-ignore
+            const __VLS_68 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }));
+            const __VLS_69 = __VLS_68({
+                ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_68));
+            __VLS_70.slots.default;
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "space-y-4 text-sm text-neutral-600" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex flex-col gap-2 text-sm text-neutral-600 dark:text-neutral-300 sm:flex-row sm:items-center sm:justify-between" },
+                ...{ class: "flex items-center justify-between" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.code, __VLS_intrinsicElements.code)({
-                ...{ class: "rounded bg-neutral-100 px-2 py-1 text-xs dark:bg-neutral-800" },
+                ...{ class: "rounded bg-neutral-100 px-2 py-1 text-xs" },
             });
             (__VLS_ctx.createdOrderId);
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "mt-4 grid gap-3 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2" },
-            });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
@@ -2000,7 +2666,7 @@ else {
                 ...{ class: "block text-xs uppercase tracking-wide text-neutral-400" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            (__VLS_ctx.formatCurrency(__VLS_ctx.inlinePayment?.totalCents ?? __VLS_ctx.ticketPriceCents * (__VLS_ctx.inlinePayment?.participantCount ?? __VLS_ctx.people.length)));
+            (__VLS_ctx.formatCurrency(__VLS_ctx.inlinePayment?.totalCents ?? __VLS_ctx.totalPayableCents));
             if (__VLS_ctx.currentLotName) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
@@ -2023,88 +2689,12 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
                 (__VLS_ctx.formatDate(__VLS_ctx.inlinePayment?.paidAt));
             }
-            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                ...{ class: "flex-1 space-y-6" },
-            });
-            if (__VLS_ctx.inlineIsPixMethod) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
-                    ...{ class: "space-y-3" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.header, __VLS_intrinsicElements.header)({
-                    ...{ class: "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-                    ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-                    ...{ onClick: (__VLS_ctx.copyInlinePixCode) },
-                    type: "button",
-                    ...{ class: "text-sm text-primary-600 hover:text-primary-500 disabled:text-neutral-400" },
-                    disabled: (!__VLS_ctx.inlinePayment?.pixQrData),
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900/80" },
-                });
-                if (__VLS_ctx.inlinePayment?.pixQrData?.qr_code_base64) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
-                        src: (`data:image/png;base64,${__VLS_ctx.inlinePayment.pixQrData.qr_code_base64}`),
-                        alt: "QR Code Pix",
-                        ...{ class: "h-48 w-48 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700" },
-                    });
-                }
-                else {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                        ...{ class: "flex flex-col items-center justify-center gap-2 py-8 text-neutral-500" },
-                    });
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
-                        ...{ class: "h-6 w-6 animate-spin text-primary-600" },
-                        xmlns: "http://www.w3.org/2000/svg",
-                        fill: "none",
-                        viewBox: "0 0 24 24",
-                    });
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.circle, __VLS_intrinsicElements.circle)({
-                        ...{ class: "opacity-25" },
-                        cx: "12",
-                        cy: "12",
-                        r: "10",
-                        stroke: "currentColor",
-                        'stroke-width': "4",
-                    });
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.path, __VLS_intrinsicElements.path)({
-                        ...{ class: "opacity-75" },
-                        fill: "currentColor",
-                        d: "M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z",
-                    });
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "text-sm" },
-                    });
-                }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                    ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
-                });
-                if (__VLS_ctx.inlinePayment?.pixQrData?.qr_code) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.textarea)({
-                        ...{ class: "w-full rounded-lg border border-neutral-300 bg-white p-3 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200" },
-                        rows: "3",
-                        readonly: true,
-                        value: (__VLS_ctx.inlinePayment.pixQrData.qr_code),
-                    });
-                }
-                else {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                        ...{ class: "text-sm text-neutral-400" },
-                    });
-                }
-            }
             if (!__VLS_ctx.inlineIsPixMethod && !__VLS_ctx.inlineIsManual) {
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.section, __VLS_intrinsicElements.section)({
-                    ...{ class: "space-y-3" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
-                    ...{ class: "text-lg font-semibold text-neutral-700 dark:text-neutral-100" },
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                    ...{ class: "mt-5 space-y-2" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                    ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+                    ...{ class: "text-sm text-neutral-500" },
                 });
                 if (__VLS_ctx.inlinePayment?.initPoint) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
@@ -2119,15 +2709,44 @@ else {
                     });
                 }
             }
-            var __VLS_53;
+            var __VLS_70;
         }
+    }
+    else if (__VLS_ctx.registrationOpen) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "space-y-4" },
+        });
+        /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+        // @ts-ignore
+        const __VLS_71 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+        }));
+        const __VLS_72 = __VLS_71({
+            ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_71));
+        __VLS_73.slots.default;
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "text-sm text-neutral-600" },
+        });
+        if (__VLS_ctx.noticeEnabled) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+                ...{ onClick: (__VLS_ctx.openNotice) },
+                type: "button",
+                ...{ class: "mt-3 inline-flex text-xs font-semibold text-primary-600 hover:text-primary-500" },
+            });
+        }
+        var __VLS_73;
     }
     else {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_54 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
-        const __VLS_55 = __VLS_54({}, ...__VLS_functionalComponentArgsRest(__VLS_54));
-        __VLS_56.slots.default;
+        const __VLS_74 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+        }));
+        const __VLS_75 = __VLS_74({
+            ...{ class: "rounded-2xl border border-neutral-200 bg-white shadow-sm" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_74));
+        __VLS_76.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-neutral-500" },
         });
@@ -2142,73 +2761,102 @@ else {
         else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         }
-        var __VLS_56;
+        var __VLS_76;
     }
 }
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-h-screen']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#F6F8FB]']} */ ;
+/** @type {__VLS_StyleScopedClasses['pb-16']} */ ;
+/** @type {__VLS_StyleScopedClasses['mx-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-3xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['pb-12']} */ ;
+/** @type {__VLS_StyleScopedClasses['pt-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-emerald-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-emerald-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-emerald-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/95']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['self-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['lg:w-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['shrink-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['overflow-hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-1.5']} */ ;
 /** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-28']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['max-h-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['object-contain']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-40']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:h-40']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-72']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:h-20']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:w-36']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-0']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:justify-end']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-rose-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-rose-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
@@ -2216,39 +2864,128 @@ else {
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-rose-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['ring-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['ring-rose-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-rose-500/15']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-rose-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:ring-rose-500/30']} */ ;
-/** @type {__VLS_StyleScopedClasses['motion-safe:animate-pulse']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-rose-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-rose-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['max-w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['hidden']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:inline']} */ ;
+/** @type {__VLS_StyleScopedClasses['break-all']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:break-words']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-rose-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['left-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-px']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid-cols-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-md']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
@@ -2308,91 +3045,128 @@ else {
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['pointer-events-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['left-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-1/2']} */ ;
+/** @type {__VLS_StyleScopedClasses['-translate-y-1/2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['pl-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:w-56']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['relative']} */ ;
+/** @type {__VLS_StyleScopedClasses['pointer-events-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['absolute']} */ ;
+/** @type {__VLS_StyleScopedClasses['left-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['top-1/2']} */ ;
+/** @type {__VLS_StyleScopedClasses['-translate-y-1/2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['pl-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-9']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-40']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-12']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-0']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-transparent']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-base']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['outline-none']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-9']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-40']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col-reverse']} */ ;
@@ -2431,42 +3205,93 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[10px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
@@ -2475,40 +3300,42 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
@@ -2519,59 +3346,81 @@ else {
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['px-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
 /** @type {__VLS_StyleScopedClasses['lg:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-9']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
@@ -2590,9 +3439,9 @@ else {
 /** @type {__VLS_StyleScopedClasses['file:text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:file:bg-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-24']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-24']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-20']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-20']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -2634,124 +3483,194 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['cursor-pointer']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-base']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-base']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['cursor-pointer']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:border-primary-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-base']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:items-start']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-12']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-12']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['object-cover']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:underline']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['sm:items-end']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-t']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['pt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col-reverse']} */ ;
@@ -2803,132 +3722,71 @@ else {
 /** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-start']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-0.5']} */ ;
-/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
-/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['p-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/60']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
-/** @type {__VLS_StyleScopedClasses['grid']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
-/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['block']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
-/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
-/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:flex-row']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['sm:justify-between']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
-/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['disabled:text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex']} */ ;
-/** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
-/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
-/** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-dashed']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-center']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['mx-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-16']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-16']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-emerald-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-8']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-emerald-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-3xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-48']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-48']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
@@ -2945,28 +3803,80 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
-/** @type {__VLS_StyleScopedClasses['rounded-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
-/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-primary-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-primary-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-primary-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-between']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-wide']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
@@ -2982,25 +3892,53 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 // @ts-ignore
-var __VLS_24 = __VLS_23;
+var __VLS_29 = __VLS_28;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
             DateField: DateField,
             ResponsibleCpfForm: ResponsibleCpfForm,
+            EventNoticeModal: EventNoticeModal,
             BaseCard: BaseCard,
             LoadingSpinner: LoadingSpinner,
-            StepWizard: StepWizard,
             IconArrowRight: IconArrowRight,
             formatCurrency: formatCurrency,
             formatDate: formatDate,
             DEFAULT_PHOTO_DATA_URL: DEFAULT_PHOTO_DATA_URL,
             paymentMethodLabel: paymentMethodLabel,
+            route: route,
             eventStore: eventStore,
             catalog: catalog,
+            noticeOpen: noticeOpen,
+            resolvedNotice: resolvedNotice,
+            noticeEnabled: noticeEnabled,
+            noticeSlug: noticeSlug,
+            canStartWizard: canStartWizard,
+            openNotice: openNotice,
+            handleNoticeAccept: handleNoticeAccept,
+            handleNoticeCancel: handleNoticeCancel,
             isFreeEvent: isFreeEvent,
             ticketPriceCents: ticketPriceCents,
             priceInfo: priceInfo,
@@ -3045,11 +3983,12 @@ const __VLS_self = (await import('vue')).defineComponent({
             churchOptions: churchOptions,
             selectedChurch: selectedChurch,
             getPersonChurchOptions: getPersonChurchOptions,
-            getDistrictName: getDistrictName,
-            getChurchName: getChurchName,
             getGenderLabel: getGenderLabel,
-            formatBirthDateLabel: formatBirthDateLabel,
             calculateAgeYears: calculateAgeYears,
+            isAgeExempt: isAgeExempt,
+            getParticipantPriceCents: getParticipantPriceCents,
+            totalPayableCents: totalPayableCents,
+            shouldSkipPayment: shouldSkipPayment,
             setParticipantCpfRef: setParticipantCpfRef,
             onPersonDistrictChange: onPersonDistrictChange,
             onParticipantCpfInput: onParticipantCpfInput,
@@ -3062,12 +4001,13 @@ const __VLS_self = (await import('vue')).defineComponent({
             submitBatch: submitBatch,
             createdOrderId: createdOrderId,
             inlinePayment: inlinePayment,
+            inlinePixError: inlinePixError,
+            inlinePixCode: inlinePixCode,
+            canCopyInlinePix: canCopyInlinePix,
             inlineIsPixMethod: inlineIsPixMethod,
             inlineIsManual: inlineIsManual,
             inlineStatusTitle: inlineStatusTitle,
             inlineStatusMessage: inlineStatusMessage,
-            inlineStatusIcon: inlineStatusIcon,
-            inlineStatusStyles: inlineStatusStyles,
             copyInlinePixCode: copyInlinePixCode,
             handleInlineOpenCheckout: handleInlineOpenCheckout,
         };

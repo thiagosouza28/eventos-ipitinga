@@ -92,7 +92,7 @@
           <input v-model="filters.search" type="text" placeholder="Digite nome ou CPF" class="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800" />
         </div>
         <div class="flex items-end gap-2">
-          <button type="button" @click="doExportPdf" class="shrink-0 rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-white">Visualizar PDF</button>
+          <button type="button" @click="doExportPdf" class="shrink-0 rounded-lg bg-neutral-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-white">Baixar PDF</button>
           <button type="button" @click="doExportCsv" class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500">Exportar CSV</button>
         </div>
       </form>
@@ -153,12 +153,13 @@ import { useApi } from '../../composables/useApi'
 import type { Registration } from '../../types/api'
 import { formatCurrency } from '../../utils/format'
 import { formatCPF } from '../../utils/cpf'
-import { createPreviewSession } from '../../utils/documentPreview'
+import { useFileDownload } from '../../composables/useFileDownload'
 
 const route = useRoute()
 const eventId = String(route.params.eventId || '')
 const admin = useAdminStore()
 const { api } = useApi()
+const { downloadFromResponse, handleDownloadError } = useFileDownload()
 
 const loading = ref(true)
 const eventSummary = ref<any>(null)
@@ -231,20 +232,11 @@ const doExportPdf = async () => {
     }
     const job = await admin.waitForReportJob(jobResponse.jobId)
     const fileResponse = await admin.downloadReportJobFile(job.id)
-    const blob = new Blob([fileResponse.data], { type: 'application/pdf' })
-    await createPreviewSession(
-      [
-        {
-          id: `event-${eventId}`,
-          title: `Inscricoes do evento ${eventId}`,
-          fileName: `relatorio-inscricoes-evento-${eventId}.pdf`,
-          blob,
-          mimeType: 'application/pdf'
-        }
-      ],
-      { context: 'Relatorios administrativos' }
-    );
-  } catch (e) { showError('Falha ao gerar PDF', e) }
+    downloadFromResponse(fileResponse, `relatorio-inscricoes-evento-${eventId}.pdf`)
+  } catch (e) {
+    const info = handleDownloadError(e, 'download do relatorio')
+    showError('Falha ao gerar PDF', new Error(info.message))
+  }
 }
 const doExportCsv = () => {
   const rows = [
@@ -285,3 +277,4 @@ onMounted(async () => {
   finally { loading.value = false }
 })
 </script>
+

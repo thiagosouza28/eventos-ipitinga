@@ -4,7 +4,7 @@ const file = path.resolve("src/App.vue");
 let text = fs.readFileSync(file, "utf8");
 text = text.replace(
   /\{ label: \"Configura[\s\S]*?Cog6ToothIcon \}\n  \];/,
-  `  { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon }\n];`
+  `  { label: "ConfiguraÃ§Ãµes", to: "/admin/system-config", icon: Cog6ToothIcon }\n];`
 );
-text = text.replace('Inscri??????es', 'Inscrições');
+text = text.replace('Inscri??????es', 'InscriÃ§Ãµes');
 fs.writeFileSync(file, text);

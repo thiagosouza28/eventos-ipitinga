@@ -5,7 +5,24 @@ import path from "path";
 
 import { prisma } from "../src/lib/prisma";
 
-const migrationFile = path.resolve(__dirname, "..", "src", "prisma", "migrations", "0001_init", "migration.sql");
+const resolvePrismaDir = () => {
+  const fallback = path.resolve(__dirname, "..", "prisma");
+  try {
+    const pkgPath = path.resolve(__dirname, "..", "package.json");
+    const raw = fs.readFileSync(pkgPath, "utf-8");
+    const pkg = JSON.parse(raw) as { prisma?: { schema?: string } };
+    const schemaPath = pkg?.prisma?.schema;
+    if (schemaPath) {
+      return path.resolve(__dirname, "..", path.dirname(schemaPath));
+    }
+  } catch {
+    // ignore and use fallback
+  }
+  return fallback;
+};
+
+const prismaDir = resolvePrismaDir();
+const migrationFile = path.resolve(prismaDir, "migrations", "0001_init", "migration.sql");
 
 const sql = fs
   .readFileSync(migrationFile, "utf-8")

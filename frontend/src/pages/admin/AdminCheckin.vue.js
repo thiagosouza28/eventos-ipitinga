@@ -47,7 +47,7 @@ const cameraStatus = computed(() => {
     if (cameraError.value)
         return cameraError.value;
     if (!cameraReady.value)
-        return "Iniciando camera...";
+        return "Iniciando câmera...";
     if (awaitingScanConfirmation.value)
         return "Confirme os dados do participante.";
     if (isProcessing.value)
@@ -59,7 +59,7 @@ const fallbackEventInfo = computed(() => {
     if (!registration)
         return null;
     const details = [registration.eventLocation, registration.eventPeriod]
-        .filter((value) => value && value !== "Nao informado")
+        .filter((value) => value && value !== "Não informado")
         .join(" \u2022 ");
     return {
         title: registration.eventTitle || "Evento",
@@ -120,7 +120,7 @@ const summaryCards = computed(() => {
         },
         {
             key: "TOTAL",
-            title: "Inscricoes",
+            title: "Inscrições",
             label: "Total encontradas",
             value: total,
             accent: "from-neutral-600 to-neutral-800",
@@ -157,14 +157,14 @@ const pendingStatusInfo = computed(() => {
     };
 });
 const historyLabelMap = {
-    REGISTRATION_CREATED: "Inscricao criada",
+    REGISTRATION_CREATED: "Inscrição criada",
     PAYMENT_METHOD_SELECTED: "Forma de pagamento escolhida",
     PAYMENT_CONFIRMED: "Pagamento confirmado",
     ORDER_PAID: "Pedido pago",
     CHECKIN_COMPLETED: "Check-in confirmado",
     REGISTRATION_UPDATED: "Dados atualizados",
-    REGISTRATION_CANCELED: "Inscricao cancelada",
-    REGISTRATION_DELETED: "Inscricao excluida",
+    REGISTRATION_CANCELED: "Inscrição cancelada",
+    REGISTRATION_DELETED: "Inscrição excluída",
     PAYMENT_REFUNDED: "Estorno registrado"
 };
 const latestHistory = computed(() => pendingHistory.value.slice(0, 5));
@@ -269,7 +269,7 @@ const restartCamera = () => {
         return;
     isRestarting.value = true;
     cameraReady.value = false;
-    cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+    cameraError.value = "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
     window.setTimeout(() => {
         streamKey.value += 1;
         isRestarting.value = false;
@@ -337,11 +337,11 @@ const onInit = async (promise) => {
     try {
         await promise;
         cameraReady.value = true;
-        cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+        cameraError.value = "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
     }
     catch (error) {
         cameraReady.value = false;
-        cameraError.value = "Nao foi possivel acessar a camera. Verifique as permissoes do navegador e tente novamente.";
+        cameraError.value = "Não foi possível acessar a câmera. Verifique as permissões do navegador e tente novamente.";
     }
 };
 const manualLookup = async () => {
@@ -373,7 +373,7 @@ const manualLookup = async () => {
         await loadDashboard(result.registration.eventId ?? undefined);
     }
     catch (error) {
-        showFeedback(error.response?.data?.message ?? "Nao foi possivel localizar a inscricao.", "error");
+        showFeedback(error.response?.data?.message ?? "Não foi possível localizar a inscrição.", "error");
         cancelPending();
     }
     manualLoading.value = false;
@@ -416,7 +416,7 @@ const confirmPending = async () => {
         lastScanned.value = null;
     }
     catch (error) {
-        showFeedback(error.response?.data?.message ?? "Nao foi possivel confirmar o check-in.", "error");
+        showFeedback(error.response?.data?.message ?? "Não foi possível confirmar o check-in.", "error");
     }
     finally {
         confirming.value = false;
@@ -599,7 +599,7 @@ if (__VLS_ctx.checkinPermissions.canList) {
             ...{ class: "inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200/70 bg-white/80 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 sm:flex-none sm:px-5" },
             disabled: (__VLS_ctx.isRestarting),
         });
-        (__VLS_ctx.isRestarting ? "Reiniciando..." : "Recarregar camera");
+        (__VLS_ctx.isRestarting ? "Reiniciando..." : "Recarregar câmera");
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.toggleFacingMode) },
             type: "button",

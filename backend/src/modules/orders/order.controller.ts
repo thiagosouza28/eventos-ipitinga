@@ -4,6 +4,8 @@ import { z } from "zod";
 import { orderService } from "./order.service";
 import { registrationService } from "../registrations/registration.service";
 import { paymentService } from "../../services/payment.service";
+import { logger } from "../../utils/logger";
+import { buildPixMeta } from "../../utils/pix";
 import { PaymentMethod } from "../../config/payment-methods";
 import { Gender } from "../../config/gender";
 import { BulkPaymentDto } from "./dtos/bulk-payment.dto";
@@ -167,6 +169,51 @@ export const getPaymentByPreferenceIdHandler = async (request: Request, response
       message: error.message || "Erro ao buscar pagamento"
     });
   }
+};
+
+const paymentIdSchema = z.object({
+  paymentId: z.string().min(1)
+});
+
+export const getMercadoPagoPaymentHandler = async (request: Request, response: Response) => {
+  const { paymentId } = paymentIdSchema.parse(request.params);
+  const payment = await paymentService.fetchPayment(paymentId);
+  const pointOfInteraction = (payment as any)?.point_of_interaction;
+  const pixMeta = buildPixMeta(pointOfInteraction?.transaction_data ?? null);
+  return response.json({
+    paymentId: payment.id ? String(payment.id) : paymentId,
+    status: (payment as any)?.status ?? null,
+    statusDetail: (payment as any)?.status_detail ?? null,
+    transactionAmount: (payment as any)?.transaction_amount ?? null,
+    dateCreated: (payment as any)?.date_created ?? null,
+    dateOfExpiration: (payment as any)?.date_of_expiration ?? null,
+    externalReference: (payment as any)?.external_reference ?? null,
+    merchantOrderId: (payment as any)?.order?.id ?? (payment as any)?.order_id ?? null,
+    ...pixMeta
+  });
+};
+
+const pixIntegritySchema = z.object({
+  orderId: z.string().min(1),
+  qrHashClient: z.string().min(16).max(128),
+  qrHashServer: z.string().min(16).max(128).optional(),
+  qrLength: z.number().int().min(1).max(4096).optional(),
+  source: z.enum(["event_flow", "payment_page"]).optional()
+});
+
+export const reportPixIntegrityHandler = async (request: Request, response: Response) => {
+  const payload = pixIntegritySchema.parse(request.body);
+  logger.warn(
+    {
+      orderId: payload.orderId,
+      qrHashClient: payload.qrHashClient,
+      qrHashServer: payload.qrHashServer,
+      qrLength: payload.qrLength,
+      source: payload.source
+    },
+    "PIX_INTEGRITY_MISMATCH"
+  );
+  return response.status(204).send();
 };
 
 export const markOrderPaidHandler = async (request: Request, response: Response) => {

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div v-if="reportsPermissions.canView" class="space-y-6" data-uppercase-scope>
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -11,10 +11,10 @@
     <BaseCard class="bg-gradient-to-br from-sky-50 via-blue-100/60 to-blue-200/40 shadow-lg shadow-sky-200/80 dark:from-neutral-900 dark:via-neutral-900/80 dark:to-primary-950/40">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <div class="max-w-3xl">
-          <p class="text-xs font-semibold uppercase tracking-[0.35em] text-sky-700 dark:text-sky-300">Relatórios</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.35em] text-sky-700 dark:text-sky-300">Relatorios</p>
           <h1 class="text-3xl font-semibold text-neutral-900 dark:text-white">Painel completo de inscrições</h1>
           <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Consulte rapidamente relatórios por evento, distrito/igreja e financeiro. O mesmo layout é utilizado nos PDFs oficiais.
+            Consulte rapidamente relatorios por evento, distrito/igreja e financeiro. O mesmo layout e utilizado nos PDFs oficiais.
           </p>
         </div>
       </div>
@@ -35,7 +35,7 @@
       </div>
     </BaseCard>
 
-    <!-- Relatório por evento -->
+    <!-- Relatorio por evento -->
     <div v-show="activeTab === 'event'" class="space-y-5">
       <BaseCard class="border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70 dark:shadow-black/40">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -65,7 +65,7 @@
               @click="downloadEventReport"
             >
               <span v-if="eventDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
-              <span>{{ eventDownloadState ? "Preparando..." : "Visualizar PDF" }}</span>
+              <span>{{ eventDownloadState ? "Preparando..." : "Baixar PDF" }}</span>
             </button>
           </div>
         </div>
@@ -74,7 +74,7 @@
           <div class="rounded-sm border border-neutral-200/90 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <p class="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400">Evento selecionado</p>
             <p class="mt-2 text-lg font-semibold text-neutral-900 dark:text-white">{{ selectedEvent.title }}</p>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatEventPeriod(selectedEvent) }} · {{ selectedEvent.location }}</p>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400">{{ formatEventPeriod(selectedEvent) }} - {{ selectedEvent.location }}</p>
           </div>
           <div
             v-for="card in eventSummaryCards"
@@ -132,7 +132,7 @@
       </BaseCard>
     </div>
 
-    <!-- Relatório por distrito/igreja -->
+    <!-- Relatorio por distrito/igreja -->
     <div v-show="activeTab === 'church'" class="space-y-5">
       <BaseCard class="border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70">
         <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
@@ -207,7 +207,7 @@
             @click="downloadChurchReport"
           >
             <span v-if="churchReportDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
-            <span>{{ churchReportDownloadState ? "Preparando..." : "Visualizar PDF" }}</span>
+            <span>{{ churchReportDownloadState ? "Preparando..." : "Baixar PDF" }}</span>
           </button>
         </div>
       </BaseCard>
@@ -237,7 +237,7 @@
                     {{ participant.fullName }}
                   </p>
                   <p class="text-xs text-neutral-500 dark:text-neutral-400">
-                    {{ formatBirthDate(participant.birthDate) }} · {{ participant.ageYears ?? '-' }} anos
+                    {{ formatBirthDate(participant.birthDate) }} - {{ participant.ageYears ?? '-' }} anos
                   </p>
                   <p class="text-xs text-neutral-500 dark:text-neutral-400">
                     Igreja:
@@ -254,10 +254,10 @@
               </div>
               <div class="rounded-sm border border-neutral-100 bg-neutral-50/80 p-4 text-sm leading-relaxed text-neutral-600 shadow-inner dark:border-white/10 dark:bg-white/5 dark:text-neutral-200">
                 <p class="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">
-                  Termo de participação
+                  Termo de participacao
                 </p>
                 <p class="mt-2 text-sm text-neutral-700 dark:text-neutral-200">
-                  Declaro estar de acordo com as normas do evento, cuidando da minha segurança e do grupo. Autorizo o uso da minha imagem em materiais institucionais.
+                  Declaro estar de acordo com as normas do evento, cuidando da minha seguranca e do grupo. Autorizo o uso da minha imagem em materiais institucionais.
                 </p>
               </div>
             </article>
@@ -265,7 +265,7 @@
         </div>
       </BaseCard>
     </div>
-    <!-- Relatório financeiro -->
+    <!-- Relatorio financeiro -->
     <div v-show="activeTab === 'financial'" class="space-y-5">
       <BaseCard class="border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -295,7 +295,7 @@
               @click="downloadFinancialPdf"
             >
               <span v-if="financialDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
-              <span>{{ financialDownloadState ? "Preparando..." : "Visualizar PDF" }}</span>
+              <span>{{ financialDownloadState ? "Preparando..." : "Baixar PDF" }}</span>
             </button>
             <button
               type="button"
@@ -329,7 +329,7 @@
                     <th class="px-4 py-3 text-left">Evento</th>
                     <th class="px-4 py-3 text-right">Receita bruta</th>
                     <th class="px-4 py-3 text-right">Taxas</th>
-                    <th class="px-4 py-3 text-right">Receita líquida</th>
+                    <th class="px-4 py-3 text-right">Receita liquida</th>
                     <th class="px-4 py-3 text-right">Pedidos pagos</th>
                   </tr>
                 </thead>
@@ -356,7 +356,7 @@
                   <h3 class="text-xl font-semibold text-neutral-900 dark:text-white">{{ findEventTitle(selectedFinancialEventId) }}</h3>
                 </div>
                 <p class="text-xs text-neutral-500 dark:text-neutral-400">
-                  Atualizado em {{ financialGeneratedAt ? formatDateTime(financialGeneratedAt) : "—" }}
+                  Atualizado em {{ financialGeneratedAt ? formatDateTime(financialGeneratedAt) : "?" }}
                 </p>
               </div>
 
@@ -413,7 +413,7 @@
       </BaseCard>
     </div>
   </div>
-  <AccessDeniedNotice v-else module="Relatórios" />
+  <AccessDeniedNotice v-else module="Relatorios" />
 </template>
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
@@ -431,7 +431,7 @@ import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import type { Church, District, Event, Registration } from "../../types/api";
 import { formatCurrency } from "../../utils/format";
-import { createPreviewSession } from "../../utils/documentPreview";
+import { useFileDownload } from "../../composables/useFileDownload";
 
 const props = defineProps<{ tab?: string }>();
 
@@ -442,6 +442,7 @@ const admin = useAdminStore();
 const catalog = useCatalogStore();
 const auth = useAuthStore();
 const { api } = useApi();
+const { downloadFromResponse, handleDownloadError } = useFileDownload();
 
 const reportsPermissions = useModulePermissions("reports");
 const financialPermissions = useModulePermissions("financial");
@@ -573,13 +574,28 @@ const normalizeParticipants = (list: Registration[]) =>
     status: normalizeRegistrationStatus(participant.status)
   })) as Registration[];
 
-const requestReportJobBlob = async (jobResponse: { jobId?: string | null }) => {
-  if (!jobResponse?.jobId) {
-    throw new Error("Relatorio indisponivel.");
+type ReportJobResponseLike = {
+  jobId?: string | null;
+  id?: string | null;
+  job?: { id?: string | null; jobId?: string | null } | null;
+};
+
+const resolveReportJobId = (jobResponse: ReportJobResponseLike | null | undefined) =>
+  jobResponse?.jobId ?? jobResponse?.job?.id ?? jobResponse?.job?.jobId ?? jobResponse?.id ?? null;
+
+const requestReportJobResponse = async (
+  jobResponse: ReportJobResponseLike,
+  fallback?: () => Promise<any>
+) => {
+  const jobId = resolveReportJobId(jobResponse);
+  if (!jobId) {
+    if (fallback) {
+      return fallback();
+    }
+    throw new Error("Relat\u00f3rio indispon\u00edvel.");
   }
-  const job = await admin.waitForReportJob(jobResponse.jobId);
-  const fileResponse = await admin.downloadReportJobFile(job.id);
-  return new Blob([fileResponse.data], { type: "application/pdf" });
+  const job = await admin.waitForReportJob(jobId);
+  return admin.downloadReportJobFile(job.id);
 };
 
 const fetchParticipantsForEvent = async (eventId: string) => {
@@ -619,22 +635,15 @@ const downloadEventReport = async () => {
       "event",
       "standard"
     );
-    const blob = await requestReportJobBlob(jobResponse);
-    const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
-    await createPreviewSession(
-      [
-        {
-          id: `event-${eventReport.eventId}`,
-          title: selectedEvent.value?.title ?? "Relatorio do evento",
-          fileName: `relatorio-evento-${filename}.pdf`,
-          blob,
-          mimeType: "application/pdf"
-        }
-      ],
-      { context: "Relatorios administrativos" }
+    const fileResponse = await requestReportJobResponse(jobResponse, () =>
+      admin.downloadRegistrationReport({ eventId: eventReport.eventId }, "event", "standard")
     );
+    const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
+    const safeName = String(filename).replace(/\s+/g, "-").toLowerCase();
+    downloadFromResponse(fileResponse, `relatorio-evento-${safeName}.pdf`);
   } catch (error) {
-    showError("Erro ao gerar relatorio do evento", error);
+    const info = handleDownloadError(error, "download do relat\u00f3rio do evento");
+    showError("Erro ao gerar relat\u00f3rio do evento", new Error(info.message));
   } finally {
     eventDownloadState.value = false;
   }
@@ -661,7 +670,7 @@ const churchesForSelectedDistrict = computed<Church[]>(() => {
 
 const loadChurchParticipants = async () => {
   if (!churchReport.districtId) {
-    showError("Selecione um distrito", new Error("É necessário informar o distrito para gerar o relatório."));
+    showError("Selecione um distrito", new Error("\u00c9 necess\u00e1rio informar o distrito para gerar o relat\u00f3rio."));
     return;
   }
   churchReport.loading = true;
@@ -698,22 +707,15 @@ const downloadChurchReport = async () => {
       churchReport.template,
       churchReport.template === "event" ? churchReport.layout : undefined
     );
-    const blob = await requestReportJobBlob(jobResponse);
-    const churchName = findChurchName(churchReport.churchId);
-    await createPreviewSession(
-      [
-        {
-          id: `church-${churchReport.churchId}`,
-          title: `Confirmacao - ${churchName}`,
-          fileName: `confirmacao-${churchName}.pdf`,
-          blob,
-          mimeType: "application/pdf"
-        }
-      ],
-      { context: "Relatorios administrativos" }
+    const fileResponse = await requestReportJobResponse(jobResponse, () =>
+      admin.downloadRegistrationReport(baseFilters, "church", churchReport.template)
     );
+    const churchName = findChurchName(churchReport.churchId);
+    const safeName = String(churchName).replace(/\s+/g, "-").toLowerCase();
+    downloadFromResponse(fileResponse, `confirmacao-${safeName}.pdf`);
   } catch (error) {
-    showError("Erro ao gerar PDF da igreja", error);
+    const info = handleDownloadError(error, "download do relat\u00f3rio da igreja");
+    showError("Erro ao gerar PDF da igreja", new Error(info.message));
   } finally {
     churchReportDownloadState.value = false;
   }
@@ -763,22 +765,14 @@ const downloadFinancialPdf = async () => {
   financialDownloadState.value = true;
   try {
     const jobResponse = await admin.requestFinancialReportJob(selectedFinancialEventId.value);
-    const blob = await requestReportJobBlob(jobResponse);
-    const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
-    await createPreviewSession(
-      [
-        {
-          id: `financial-${selectedFinancialEventId.value}`,
-          title: `Relatorio financeiro - ${findEventTitle(selectedFinancialEventId.value)}`,
-          fileName: `relatorio-financeiro-${eventSlug}.pdf`,
-          blob,
-          mimeType: "application/pdf"
-        }
-      ],
-      { context: "Relatorios administrativos" }
+    const fileResponse = await requestReportJobResponse(jobResponse, () =>
+      admin.downloadFinancialReport(selectedFinancialEventId.value)
     );
+    const eventSlug = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
+    downloadFromResponse(fileResponse, `relatorio-financeiro-${eventSlug}.pdf`);
   } catch (error) {
-    showError("Erro ao gerar PDF financeiro", error);
+    const info = handleDownloadError(error, "download do relat\u00f3rio financeiro");
+    showError("Erro ao gerar PDF financeiro", new Error(info.message));
   } finally {
     financialDownloadState.value = false;
   }
@@ -840,7 +834,7 @@ const formatEventPeriod = (event: Event) => {
 };
 
 const formatBirthDate = (value?: string | Date | null) => {
-  if (!value) return "Nao informado";
+  if (!value) return "N\u00e3o informado";
   if (typeof value === "string") {
     const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (match) {
@@ -848,15 +842,17 @@ const formatBirthDate = (value?: string | Date | null) => {
     }
   }
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "Nao informado";
+  if (Number.isNaN(date.getTime())) return "N\u00e3o informado";
   const day = String(date.getUTCDate()).padStart(2, "0");
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${day}/${month}/${date.getUTCFullYear()}`;
 };
 
 const findEventTitle = (eventId: string) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
-const findDistrictName = (districtId: string) => catalog.districts.find((district) => district.id === districtId)?.name ?? "Não informado";
-const findChurchName = (churchId: string) => catalog.churches.find((church) => church.id === churchId)?.name ?? "Não informado";
+const findDistrictName = (districtId: string) =>
+  catalog.districts.find((district) => district.id === districtId)?.name ?? "N\u00e3o informado";
+const findChurchName = (churchId: string) =>
+  catalog.churches.find((church) => church.id === churchId)?.name ?? "N\u00e3o informado";
 const findRegistrationLotName = (participant: Registration) => {
   const name = participant.order?.pricingLot?.name ?? participant.order?.lotName ?? "";
   return name && name.trim().length > 0 ? name : "-";
@@ -901,7 +897,7 @@ const eventSummaryCards = computed(() => {
   const paidCount = participants.filter((participant) => participant.status === "PAID" || participant.status === "CHECKED_IN").length;
   const pendingCount = participants.filter((participant) => participant.status === "PENDING_PAYMENT").length;
   return [
-    { label: "Gerado em", value: eventReport.generatedAt ? formatDateTime(eventReport.generatedAt) : "—", accent: "text-neutral-900 dark:text-white" },
+    { label: "Gerado em", value: eventReport.generatedAt ? formatDateTime(eventReport.generatedAt) : "?", accent: "text-neutral-900 dark:text-white" },
     { label: "Total de grupos", value: groups.size.toString().padStart(2, "0"), accent: "text-sky-700 dark:text-sky-300" },
     { label: "Participantes", value: participants.length.toString().padStart(2, "0"), accent: "text-neutral-900 dark:text-white" },
     { label: "Pagos", value: paidCount.toString().padStart(2, "0"), accent: "text-emerald-600 dark:text-emerald-300" },
@@ -934,7 +930,7 @@ const financialStatusCards = computed(() => [
   {
     label: "Pagos",
     value: formatCurrency(financialStatusTotals.value.paid.amount),
-    helper: `${financialStatusTotals.value.paid.count} inscrições`,
+    helper: `${financialStatusTotals.value.paid.count} inscri\u00e7\u00f5es`,
     accent: "text-emerald-600 dark:text-emerald-300"
   },
   {
@@ -950,8 +946,8 @@ const financialStatusCards = computed(() => [
     accent: "text-neutral-600 dark:text-neutral-300"
   },
   {
-    label: "Receita líquida do evento",
-    value: financialEventSummary.value ? formatCurrency(financialEventSummary.value.totals?.netCents ?? 0) : "—",
+    label: "Receita l\u00edquida do evento",
+    value: financialEventSummary.value ? formatCurrency(financialEventSummary.value.totals?.netCents ?? 0) : "?",
     helper: financialEventSummary.value ? `${financialEventSummary.value.paidRegistrationsCount ?? 0} confirmados` : "Selecione um evento",
     accent: "text-sky-700 dark:text-sky-300"
   }
@@ -990,7 +986,7 @@ const generalFinancialCards = computed(() => {
   const totals = financialSummary.value.totals ?? {};
   return [
     { label: "Receita bruta", value: formatCurrency(totals.grossCents ?? 0), accent: "text-neutral-900 dark:text-white" },
-    { label: "Receita líquida", value: formatCurrency(totals.netCents ?? 0), accent: "text-sky-700 dark:text-sky-300" },
+    { label: "Receita l\u00edquida", value: formatCurrency(totals.netCents ?? 0), accent: "text-sky-700 dark:text-sky-300" },
     { label: "Taxas", value: `-${formatCurrency(totals.feesCents ?? 0)}`, accent: "text-red-600 dark:text-red-400" },
     { label: "Saldo em caixa", value: formatCurrency(totals.cashBalanceCents ?? 0), accent: "text-emerald-600 dark:text-emerald-300" }
   ];
@@ -1075,6 +1071,11 @@ onMounted(async () => {
   }
 });
 </script>
+
+
+
+
+
 
 
 

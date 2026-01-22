@@ -7,6 +7,7 @@ import { AppError, ConflictError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
 import { cacheGetOrSet } from "../../utils/cache";
 import { eventLotService } from "./event-lot.service";
+import { buildNoticeFromFields, type EventNotice, type EventNoticeFields } from "../../config/event-notices";
 import {
   invalidatePublicEventCache,
   publicEventListCacheKey,
@@ -63,6 +64,47 @@ const serializeLot = (lot: EventLotEntity | null | undefined) => {
     status: (lot as any).status ?? "INATIVO",
     startsAt: lot.startsAt,
     endsAt: lot.endsAt
+  };
+};
+
+const extractNoticeFields = (event: any): EventNoticeFields => ({
+  noticeEnabled: event.noticeEnabled ?? null,
+  noticeTitle: event.noticeTitle ?? null,
+  noticeBullets: event.noticeBullets ?? null,
+  noticeFooterText: event.noticeFooterText ?? null,
+  noticeShowOnce: event.noticeShowOnce ?? null
+});
+
+const serializeNoticeForResponse = (event: any) => buildNoticeFromFields(extractNoticeFields(event));
+
+const parseNoticeInput = (notice?: EventNotice | string | null) => {
+  if (!notice) {
+    return null;
+  }
+  if (typeof notice === "string") {
+    try {
+      return JSON.parse(notice) as EventNotice;
+    } catch {
+      return null;
+    }
+  }
+  return notice;
+};
+
+const mapNoticeToFields = (notice?: EventNotice | string | null) => {
+  const normalized = parseNoticeInput(notice);
+  const enabled = Boolean(normalized?.enabled);
+  const title = normalized?.title?.trim() ?? "";
+  const bullets = (normalized?.bullets ?? []).map((item) => item.trim()).filter(Boolean);
+  const footerText = normalized?.footerText?.trim() ?? "";
+  const showOnce = normalized?.showOnce ?? true;
+
+  return {
+    noticeEnabled: enabled,
+    noticeTitle: title || null,
+    noticeBullets: bullets.length ? bullets.join("\n") : null,
+    noticeFooterText: footerText || null,
+    noticeShowOnce: showOnce
   };
 };
 
@@ -125,6 +167,7 @@ export class EventService {
           isFree,
           lots,
           paymentMethods,
+          notice: serializeNoticeForResponse(event),
           publicLink: `${env.APP_URL}/evento/${event.slug}`,
           currentLot: serializeLot(activeLot),
           currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
@@ -185,6 +228,7 @@ export class EventService {
             isFree,
             lots,
             paymentMethods: parsePaymentMethods(event.paymentMethods),
+            notice: serializeNoticeForResponse(event),
             currentLot: serializeLot(activeLot),
             currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
           };
@@ -226,26 +270,27 @@ export class EventService {
     const churchMap = new Map(churches.map((item) => [item.id, item]));
     const ministryMap = new Map(ministries.map((item) => [item.id, item]));
 
-    return events.map((event) => {
-      const isFree = Boolean((event as any).isFree);
-      const lots = isFree
-        ? ([] as EventLotEntity[])
-        : lotsMap.get(event.id) ?? ([] as EventLotEntity[]);
-      const activeLot = isFree
-        ? null
-        : eventLotService.resolveActiveFromList(lots, new Date());
-      return {
-        ...event,
-        isFree,
-        lots,
-        paymentMethods: parsePaymentMethods(event.paymentMethods),
-        currentLot: serializeLot(activeLot),
-        currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
-        ministry: event.ministryId ? ministryMap.get(event.ministryId) ?? null : null,
-        district: districtMap.get(event.districtId) ?? null,
-        church: event.churchId ? churchMap.get(event.churchId) ?? null : null
-      };
-    });
+      return events.map((event) => {
+        const isFree = Boolean((event as any).isFree);
+        const lots = isFree
+          ? ([] as EventLotEntity[])
+          : lotsMap.get(event.id) ?? ([] as EventLotEntity[]);
+        const activeLot = isFree
+          ? null
+          : eventLotService.resolveActiveFromList(lots, new Date());
+        return {
+          ...event,
+          isFree,
+          lots,
+          paymentMethods: parsePaymentMethods(event.paymentMethods),
+          currentLot: serializeLot(activeLot),
+          currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
+          notice: serializeNoticeForResponse(event),
+          ministry: event.ministryId ? ministryMap.get(event.ministryId) ?? null : null,
+          district: districtMap.get(event.districtId) ?? null,
+          church: event.churchId ? churchMap.get(event.churchId) ?? null : null
+        };
+      });
   }
 
   private async resolveUniqueSlug(baseSlug: string, ignoreId?: string) {
@@ -283,6 +328,7 @@ export class EventService {
     ministryId: string;
     districtId: string;
     churchId?: string | null;
+    notice?: EventNotice | string | null;
     },
     actor?: ActorUser
   ) {
@@ -351,12 +397,14 @@ export class EventService {
         ministryId: data.ministryId,
         isFree: data.isFree,
         isActive: data.isActive ?? true,
-        minAgeYears: data.minAgeYears ?? null
+        minAgeYears: data.minAgeYears ?? null,
+        ...mapNoticeToFields(data.notice)
       }
     });
     const serialized = {
       ...event,
-      paymentMethods: parsePaymentMethods(event.paymentMethods)
+      paymentMethods: parsePaymentMethods(event.paymentMethods),
+      notice: serializeNoticeForResponse(event)
     };
     await auditService.log({
       action: "EVENT_CREATED",
@@ -387,6 +435,7 @@ export class EventService {
       ministryId?: string;
       districtId?: string;
       churchId?: string | null;
+      notice?: EventNotice | string | null;
     }>,
     actor?: ActorUser
   ) {
@@ -421,6 +470,9 @@ export class EventService {
 
     if (data.pendingPaymentValueRule !== undefined) {
       payload.pendingPaymentValueRule = data.pendingPaymentValueRule;
+    }
+    if (data.notice !== undefined) {
+      Object.assign(payload, mapNoticeToFields(data.notice));
     }
 
     const targetDistrictId = data.districtId ?? event.districtId;
@@ -504,7 +556,8 @@ export class EventService {
 
     const serialized = {
       ...updated,
-      paymentMethods: parsePaymentMethods(updated.paymentMethods)
+      paymentMethods: parsePaymentMethods(updated.paymentMethods),
+      notice: serializeNoticeForResponse(updated)
     };
     await auditService.log({
       action: "EVENT_UPDATED",

@@ -255,7 +255,7 @@ if (__VLS_ctx.showFeedbackCard) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "font-semibold text-neutral-800 dark:text-neutral-100" },
             });
-            (receipt.fullName || "Participante nao informado");
+            (receipt.fullName || "Participante não informado");
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "text-xs text-neutral-500 dark:text-neutral-400" },
             });

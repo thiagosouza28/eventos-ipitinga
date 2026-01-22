@@ -89,7 +89,7 @@
           >
             <div>
               <p class="font-semibold text-neutral-800 dark:text-neutral-100">
-                {{ receipt.fullName || "Participante nao informado" }}
+                {{ receipt.fullName || "Participante não informado" }}
               </p>
               <p class="text-xs text-neutral-500 dark:text-neutral-400">
                 {{ receipt.eventTitle }}

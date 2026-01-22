@@ -195,7 +195,7 @@ router.beforeEach((to, from, next) => {
   auth.ensureValidSession();
 
   if (shouldTriggerRouteLoader(to, from)) {
-    loader.show("Carregando pagina...");
+    loader.show("Carregando página...");
   }
 
   if (to.name === "admin-login" && auth.isAuthenticated) {

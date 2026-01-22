@@ -188,7 +188,7 @@ router.beforeEach((to, from, next) => {
     const loader = useLoaderStore();
     auth.ensureValidSession();
     if (shouldTriggerRouteLoader(to, from)) {
-        loader.show("Carregando pagina...");
+        loader.show("Carregando página...");
     }
     if (to.name === "admin-login" && auth.isAuthenticated) {
         next({ name: "admin-dashboard" });

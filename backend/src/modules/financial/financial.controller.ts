@@ -6,6 +6,7 @@ import { ensureEventMinistryAccess } from "../../utils/ministry-access";
 import { getScopedMinistryIds } from "../../utils/user-scope";
 import { z } from "zod";
 import { reportJobService } from "../reports/report-job.service";
+import { applyDownloadHeaders, sendDownloadBuffer } from "../../middlewares/download-headers";
 
 const eventIdSchema = z.string().min(6, "eventId invalido");
 const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio. Verifique os dados do evento.";
@@ -95,6 +96,11 @@ export const downloadEventFinancialReportHandler = async (
   request: Request,
   response: Response
 ) => {
+  // Aplicar headers de CORS antes de qualquer resposta
+  applyDownloadHeaders(request, response);
+  if (request.method === "OPTIONS") {
+    return response.status(200).end();
+  }
   try {
     const eventId = eventIdSchema.parse(request.params.eventId);
     const ministryIds = getScopedMinistryIds(request.user);
@@ -124,12 +130,8 @@ export const downloadEventFinancialReportHandler = async (
       expenses: reportData.expenses
     });
 
-    response.setHeader("Content-Type", "application/pdf");
-    response.setHeader(
-      "Content-Disposition",
-      `attachment; filename="relatorio-financeiro-${reportData.event.slug ?? reportData.event.id}.pdf"`
-    );
-    return response.send(pdfBuffer);
+    const fileName = `relatorio-financeiro-${reportData.event.slug ?? reportData.event.id}.pdf`;
+    return sendDownloadBuffer(response, { buffer: pdfBuffer, fileName });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return response.status(400).json(reportErrorPayload);
@@ -139,4 +141,5 @@ export const downloadEventFinancialReportHandler = async (
     return response.status(status).json(reportErrorPayload);
   }
 };
+
 

@@ -107,11 +107,11 @@ const ensureDocUrl = async (doc) => {
         if (doc.sourceUrl) {
             const sourceUrl = normalizeDocumentUrl(doc.sourceUrl);
             if (!sourceUrl) {
-                throw new Error("Origem do documento nao informada.");
+                throw new Error("Origem do documento não informada.");
             }
             const response = await fetch(sourceUrl, { credentials: "include" });
             if (!response.ok) {
-                const message = await resolveResponseMessage(response, "Nao foi possivel carregar o documento.");
+                const message = await resolveResponseMessage(response, "Não foi possível carregar o documento.");
                 throw new Error(message);
             }
             const blob = await response.blob();
@@ -124,12 +124,12 @@ const ensureDocUrl = async (doc) => {
             previewStatus.value = "success";
         }
         else {
-            throw new Error("Origem do documento nao informada.");
+            throw new Error("Origem do documento não informada.");
         }
     }
     catch (error) {
         console.error("Falha ao preparar visualizacao", error);
-        previewError.value = error?.message ?? "Nao foi possivel carregar o documento.";
+        previewError.value = error?.message ?? "Não foi possível carregar o documento.";
         previewStatus.value = "error";
         viewerSrc.value = "";
     }
@@ -234,7 +234,7 @@ const fetchDocumentBlob = async (doc) => {
     }
     const response = await fetch(targetUrl, { credentials: "include" });
     if (!response.ok) {
-        const message = await resolveResponseMessage(response, "Nao foi possivel baixar o documento.");
+        const message = await resolveResponseMessage(response, "Não foi possível baixar o documento.");
         throw new Error(message);
     }
     const blob = await response.blob();
@@ -260,7 +260,7 @@ const handleDownloadPdf = async () => {
         triggerDownload(blob, fileName);
     }
     catch (error) {
-        actionError.value = error?.message ?? "Nao foi possivel baixar o PDF.";
+        actionError.value = error?.message ?? "Não foi possível baixar o PDF.";
     }
 };
 const downloadPdfAsImages = async (blob, name) => {
@@ -292,7 +292,7 @@ const downloadPdfAsImages = async (blob, name) => {
     catch (error) {
         console.error("Erro ao converter PDF para imagem", error);
         imageDownloadState.value = "error";
-        actionError.value = error?.message ?? "Nao foi possivel gerar a imagem do documento.";
+        actionError.value = error?.message ?? "Não foi possível gerar a imagem do documento.";
     }
 };
 const handleDownloadImage = async () => {
@@ -312,7 +312,7 @@ const handleDownloadImage = async () => {
         triggerDownload(blob, currentDoc.value.fileName);
     }
     catch (error) {
-        actionError.value = error?.message ?? "Nao foi possivel baixar como imagem.";
+        actionError.value = error?.message ?? "Não foi possível baixar como imagem.";
         imageDownloadState.value = "error";
     }
     finally {
@@ -619,7 +619,7 @@ else {
         });
         (__VLS_ctx.loadingDoc
             ? "Carregando documento..."
-            : "Documento ainda nao carregado. Tente novamente em instantes.");
+            : "Documento ainda não carregado. Tente novamente em instantes.");
     }
 }
 /** @type {__VLS_StyleScopedClasses['min-h-screen']} */ ;

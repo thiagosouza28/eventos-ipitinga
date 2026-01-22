@@ -34,7 +34,7 @@ const onBlur = () => {
 };
 const handleSubmit = async () => {
     const digits = normalizeCPF(cpf.value);
-    cpfError.value = digits.length === 0 ? "CPF invalido" : getCpfError(cpf.value);
+    cpfError.value = digits.length === 0 ? "CPF inválido" : getCpfError(cpf.value);
     if (cpfError.value) {
         await nextTick();
         cpfInput.value?.focus();

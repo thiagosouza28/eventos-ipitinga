@@ -120,10 +120,15 @@ const persistJobPdf = async (job: ReportJob, buffer: Buffer) => {
   });
 };
 
+const resolveReportErrorMessage = (error: unknown) => {
+  if (error instanceof AppError) return error.message;
+  if (error instanceof Error && error.message) return error.message;
+  return "Nao foi possivel gerar o relatorio agora.";
+};
+
 const failJob = (job: ReportJob, error: unknown) => {
-  const message =
-    error instanceof AppError ? error.message : "Nao foi possivel gerar o relatorio agora.";
-  logger.error({ error, jobId: job.id, jobType: job.type }, "Erro ao processar relatorio");
+  const message = resolveReportErrorMessage(error);
+  logger.error({ err: error, jobId: job.id, jobType: job.type }, "Erro ao processar relatorio");
   return updateJob(job, {
     status: "FAILED",
     errorMessage: message,

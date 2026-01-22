@@ -548,7 +548,7 @@ const buildReceiptDocument = (receipt: PaymentReceiptLink, index: number) => ({
 
 const openReceiptPreview = async (registrationId?: string) => {
   if (!hasReceiptLinks.value) {
-    receiptPreviewError.value = "Nenhum comprovante disponivel no momento.";
+    receiptPreviewError.value = "Nenhum comprovante disponível no momento.";
     return;
   }
   receiptPreviewError.value = "";
@@ -558,7 +558,7 @@ const openReceiptPreview = async (registrationId?: string) => {
       ? receiptLinks.value.filter((receipt) => receipt.registrationId === registrationId)
       : receiptLinks.value;
     if (!selected.length) {
-      throw new Error("Nenhum comprovante dispon?vel no momento.");
+      throw new Error("Nenhum comprovante disponível no momento.");
     }
     const documents = selected.map((receipt) => {
       const index = receiptLinks.value.findIndex((item) => item.registrationId === receipt.registrationId);
@@ -574,7 +574,7 @@ const openReceiptPreview = async (registrationId?: string) => {
     });
   } catch (error) {
     console.error('Erro ao abrir comprovantes', error);
-    receiptPreviewError.value = (error as any)?.message ?? 'Nao foi possivel abrir os comprovantes agora.';
+    receiptPreviewError.value = (error as any)?.message ?? "Não foi possível abrir os comprovantes agora.";
   } finally {
     receiptPreviewLoading.value = false;
     previewingReceiptId.value = null;

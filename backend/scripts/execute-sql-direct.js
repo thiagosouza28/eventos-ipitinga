@@ -3,7 +3,7 @@
  * Uso: node scripts/execute-sql-direct.js
  */
 
-const { PrismaClient } = require('../src/prisma/generated/client');
+const { PrismaClient } = require("./prisma-client");
 const fs = require('fs');
 const path = require('path');
 

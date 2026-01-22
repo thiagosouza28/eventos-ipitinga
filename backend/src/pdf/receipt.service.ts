@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+import { promises as fs, existsSync } from "fs";
 import path from "path";
 
 import QRCode from "qrcode";
@@ -35,6 +35,7 @@ type ReceiptPayload = {
 let browser: Browser | null = null;
 let templateCache: string | null = null;
 const receiptConcurrency = Math.max(1, env.RECEIPT_MAX_CONCURRENCY);
+const backendRoot = path.resolve(__dirname, "..", "..");
 
 const createLimiter = (maxConcurrent: number) => {
   let active = 0;
@@ -74,13 +75,37 @@ const brDateFormatter = new Intl.DateTimeFormat("pt-BR", {
 
 const formatDate = (date: Date) => brDateFormatter.format(date);
 
+const resolveTemplatePath = () => {
+  const candidates = [
+    path.resolve(__dirname, "templates", "receipt.html"),
+    path.resolve(backendRoot, "dist", "pdf", "templates", "receipt.html"),
+    path.resolve(backendRoot, "src", "pdf", "templates", "receipt.html")
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
+};
+
+const resolveExecutablePath = () => {
+  const rawPath = env.PLAYWRIGHT_EXECUTABLE_PATH?.trim();
+  if (!rawPath) return undefined;
+  const resolved = path.isAbsolute(rawPath) ? rawPath : path.resolve(backendRoot, rawPath);
+  if (!existsSync(resolved)) {
+    throw new AppError(
+      `Chromium nao encontrado em ${resolved}. Ajuste PLAYWRIGHT_EXECUTABLE_PATH ou execute \`npm run playwright:install\`.`,
+      500
+    );
+  }
+  return resolved;
+};
+
 const ensureBrowser = async () => {
   if (browser && browser.isConnected()) return browser;
   try {
+    const executablePath = resolveExecutablePath();
     browser = await chromium.launch({
       headless: true,
       // Flags help when running inside containers/servers without sandbox enabled.
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      ...(executablePath ? { executablePath } : {})
     });
     return browser;
   } catch (error: any) {
@@ -88,7 +113,7 @@ const ensureBrowser = async () => {
     const message = String(error?.message ?? "");
     if (message.includes("executable doesn't exist") || message.includes("Failed to launch")) {
       throw new AppError(
-        "Motor de PDF indisponivel. Execute `npm run playwright:install` e tente novamente.",
+        "Motor de PDF indisponivel. Execute `npm run playwright:install` ou configure PLAYWRIGHT_EXECUTABLE_PATH.",
         500
       );
     }
@@ -100,7 +125,7 @@ const loadReceiptTemplate = async () => {
   const shouldBypassCache = env.NODE_ENV !== "production";
   if (!shouldBypassCache && templateCache) return templateCache;
 
-  const templatePath = path.resolve(__dirname, "templates", "receipt.html");
+  const templatePath = resolveTemplatePath();
   try {
     const template = await fs.readFile(templatePath, "utf-8");
     if (!shouldBypassCache) {

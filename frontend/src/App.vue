@@ -3,7 +3,7 @@
     <LoadingOverlay />
     <transition name="offline-banner">
       <div
-        v-if="apiOffline"
+        v-if="apiOffline && shouldShowOfflineBanner"
         class="sticky top-0 z-[60] w-full bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg"
       >
         Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente.
@@ -403,6 +403,8 @@ const currentTime = ref(new Date());
 const isSidebarOpen = ref(true);
 const profileMenuOpen = ref(false);
 const apiOffline = ref(false);
+const shouldShowOfflineBanner =
+  import.meta.env.PROD || import.meta.env.VITE_SHOW_OFFLINE_BANNER === "true";
 const mobileViewportBreakpoint = 768;
 let timer: number | undefined;
 const profileMenuRef = ref<HTMLElement | null>(null);
@@ -483,10 +485,12 @@ const toggleSidebar = () => {
 };
 
 const handleApiOffline = () => {
+  if (!shouldShowOfflineBanner) return;
   apiOffline.value = true;
 };
 
 const handleApiOnline = () => {
+  if (!shouldShowOfflineBanner) return;
   apiOffline.value = false;
 };
 

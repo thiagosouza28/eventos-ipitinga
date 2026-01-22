@@ -162,10 +162,10 @@ const statusPillClass = (status) => status === "ACTIVE"
     : "bg-neutral-200 text-neutral-700 dark:bg-neutral-700/40 dark:text-neutral-100";
 const deleteDialogDescription = computed(() => {
     if (!deleteDialog.target)
-        return "Excluir usuario selecionado?";
-    return `Tem certeza que deseja excluir ${deleteDialog.target.name}? Essa acao nao pode ser desfeita.`;
+        return "Excluir usuário selecionado?";
+    return `Tem certeza que deseja excluir ${deleteDialog.target.name}? Essa ação não pode ser desfeita.`;
 });
-const statusDialogTitle = computed(() => statusDialog.nextStatus === "INACTIVE" ? "Desativar usuario" : "Reativar usuario");
+const statusDialogTitle = computed(() => statusDialog.nextStatus === "INACTIVE" ? "Desativar usuário" : "Reativar usuário");
 const statusDialogDescription = computed(() => {
     if (!statusDialog.target) {
         return "";
@@ -213,7 +213,7 @@ const resetForm = () => {
 };
 const openCreateDialog = () => {
     if (!userPermissions.canCreate.value) {
-        showError("Acesso negado", "Voce nao possui permissao para criar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para criar usuários.");
         return;
     }
     showCreateForm.value = true;
@@ -247,7 +247,7 @@ const fileToBase64 = (file) => new Promise((resolve, reject) => {
 });
 const handleCreateUser = async () => {
     if (!userPermissions.canCreate.value) {
-        showError("Acesso negado", "Voce nao possui permissao para criar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para criar usuários.");
         return;
     }
     if (!validateForm())
@@ -284,8 +284,8 @@ const handleCreateUser = async () => {
         closeCreateDialog();
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Falha ao criar usuario.";
-        showError("Erro ao criar usuario", message);
+        const message = error.response?.data?.message ?? "Falha ao criar usuário.";
+        showError("Erro ao criar usuário", message);
     }
     finally {
         savingUser.value = false;
@@ -293,7 +293,7 @@ const handleCreateUser = async () => {
 };
 const openEditDialog = (user) => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
         return;
     }
     editDialog.userId = user.id;
@@ -338,7 +338,7 @@ const handleEditPhotoChange = async (event) => {
     if (!file)
         return;
     if (file.size > 4 * 1024 * 1024) {
-        showError("Imagem muito grande", "Selecione um arquivo de ate 4 MB.");
+        showError("Imagem muito grande", "Selecione um arquivo de até 4 MB.");
         if (input)
             input.value = "";
         return;
@@ -362,7 +362,7 @@ const clearEditPhoto = () => {
 };
 const handleUpdateUser = async () => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
         return;
     }
     if (!editDialog.userId)
@@ -409,8 +409,8 @@ const handleUpdateUser = async () => {
         closeEditDialog();
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel atualizar o usuario.";
-        showError("Erro ao atualizar usuario", message);
+        const message = error.response?.data?.message ?? "Não foi possível atualizar o usuário.";
+        showError("Erro ao atualizar usuário", message);
     }
     finally {
         editDialog.loading = false;
@@ -418,7 +418,7 @@ const handleUpdateUser = async () => {
 };
 const openResetDialog = (user) => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
         return;
     }
     passwordDialog.target = user;
@@ -426,7 +426,7 @@ const openResetDialog = (user) => {
 };
 const handleConfirmReset = async () => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
         return;
     }
     if (!passwordDialog.target)
@@ -440,7 +440,7 @@ const handleConfirmReset = async () => {
         };
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel resetar a senha.";
+        const message = error.response?.data?.message ?? "Não foi possível resetar a senha.";
         showError("Erro ao resetar senha", message);
     }
     finally {
@@ -451,7 +451,7 @@ const handleConfirmReset = async () => {
 };
 const openStatusDialog = (user) => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
         return;
     }
     statusDialog.target = user;
@@ -460,7 +460,7 @@ const openStatusDialog = (user) => {
 };
 const handleConfirmStatusChange = async () => {
     if (!userPermissions.canEdit.value) {
-        showError("Acesso negado", "Voce nao possui permissao para editar usuarios.");
+        showError("Acesso negado", "Você não possui permissão para editar usuários.");
         return;
     }
     if (!statusDialog.target)
@@ -470,7 +470,7 @@ const handleConfirmStatusChange = async () => {
         await admin.updateUserStatus(statusDialog.target.id, statusDialog.nextStatus);
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel atualizar o status.";
+        const message = error.response?.data?.message ?? "Não foi possível atualizar o status.";
         showError("Erro ao atualizar status", message);
     }
     finally {
@@ -481,7 +481,7 @@ const handleConfirmStatusChange = async () => {
 };
 const openDeleteDialog = (user) => {
     if (!userPermissions.canDelete.value) {
-        showError("Acesso negado", "Voce nao possui permissao para excluir usuarios.");
+        showError("Acesso negado", "Você não possui permissão para excluir usuários.");
         return;
     }
     deleteDialog.target = user;
@@ -489,7 +489,7 @@ const openDeleteDialog = (user) => {
 };
 const handleConfirmDelete = async () => {
     if (!userPermissions.canDelete.value) {
-        showError("Acesso negado", "Voce nao possui permissao para excluir usuarios.");
+        showError("Acesso negado", "Você não possui permissão para excluir usuários.");
         return;
     }
     if (!deleteDialog.target)
@@ -499,8 +499,8 @@ const handleConfirmDelete = async () => {
         await admin.deleteUser(deleteDialog.target.id);
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Nao foi possivel excluir o usuario.";
-        showError("Erro ao excluir usuario", message);
+        const message = error.response?.data?.message ?? "Não foi possível excluir o usuário.";
+        showError("Erro ao excluir usuário", message);
     }
     finally {
         deleteDialog.loading = false;
@@ -516,7 +516,7 @@ const refreshData = async () => {
         await Promise.all([admin.loadUsers(), admin.loadProfiles()]);
     }
     catch (error) {
-        showError("Falha ao carregar usuarios", error.response?.data?.message ?? "Tente novamente mais tarde.");
+        showError("Falha ao carregar usuários", error.response?.data?.message ?? "Tente novamente mais tarde.");
     }
     finally {
         initialLoading.value = false;
@@ -608,7 +608,7 @@ if (__VLS_ctx.userPermissions.canList) {
         ...{ 'onCancel': {} },
         modelValue: (__VLS_ctx.passwordDialog.open),
         title: "Resetar senha",
-        description: "Gerar uma nova senha temporaria para este usuario? A senha atual sera invalidada.",
+        description: "Gerar uma nova senha temporária para este usuário? A senha atual será invalidada.",
         confirmLabel: "Gerar nova senha",
         cancelLabel: "Cancelar",
         loading: (__VLS_ctx.passwordDialog.loading),
@@ -618,7 +618,7 @@ if (__VLS_ctx.userPermissions.canList) {
         ...{ 'onCancel': {} },
         modelValue: (__VLS_ctx.passwordDialog.open),
         title: "Resetar senha",
-        description: "Gerar uma nova senha temporaria para este usuario? A senha atual sera invalidada.",
+        description: "Gerar uma nova senha temporária para este usuário? A senha atual será invalidada.",
         confirmLabel: "Gerar nova senha",
         cancelLabel: "Cancelar",
         loading: (__VLS_ctx.passwordDialog.loading),
@@ -687,7 +687,7 @@ if (__VLS_ctx.userPermissions.canList) {
         ...{ 'onConfirm': {} },
         ...{ 'onCancel': {} },
         modelValue: (__VLS_ctx.deleteDialog.open),
-        title: "Excluir usuario",
+        title: "Excluir usuário",
         description: (__VLS_ctx.deleteDialogDescription),
         confirmLabel: "Excluir",
         cancelLabel: "Cancelar",
@@ -698,7 +698,7 @@ if (__VLS_ctx.userPermissions.canList) {
         ...{ 'onConfirm': {} },
         ...{ 'onCancel': {} },
         modelValue: (__VLS_ctx.deleteDialog.open),
-        title: "Excluir usuario",
+        title: "Excluir usuário",
         description: (__VLS_ctx.deleteDialogDescription),
         confirmLabel: "Excluir",
         cancelLabel: "Cancelar",
@@ -730,12 +730,12 @@ if (__VLS_ctx.userPermissions.canList) {
     const __VLS_33 = __VLS_asFunctionalComponent(Modal, new Modal({
         ...{ 'onUpdate:modelValue': {} },
         modelValue: (__VLS_ctx.editDialog.open),
-        title: "Editar usuario",
+        title: "Editar usuário",
     }));
     const __VLS_34 = __VLS_33({
         ...{ 'onUpdate:modelValue': {} },
         modelValue: (__VLS_ctx.editDialog.open),
-        title: "Editar usuario",
+        title: "Editar usuário",
     }, ...__VLS_functionalComponentArgsRest(__VLS_33));
     let __VLS_36;
     let __VLS_37;
@@ -993,7 +993,7 @@ if (__VLS_ctx.userPermissions.canList) {
     if (__VLS_ctx.editDialog.photoPreview) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
             src: (__VLS_ctx.editDialog.photoPreview),
-            alt: "Foto do usuario",
+            alt: "Foto do usuário",
             ...{ class: "h-full w-full object-cover" },
         });
     }
@@ -1536,7 +1536,7 @@ if (__VLS_ctx.userPermissions.canList) {
             if (user.photoUrl) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
                     src: (user.photoUrl),
-                    alt: "Foto do usuario",
+                    alt: "Foto do usuário",
                     ...{ class: "h-full w-full object-cover" },
                 });
             }
@@ -1680,7 +1680,7 @@ if (__VLS_ctx.userPermissions.canList) {
             if (user.photoUrl) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.img)({
                     src: (user.photoUrl),
-                    alt: "Foto do usuario",
+                    alt: "Foto do usuário",
                     ...{ class: "h-full w-full object-cover" },
                 });
             }

@@ -1,35 +1,39 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "Backend do sistema de inscriÃ§Ãµes CATRE Ipitinga com Express, Prisma e Mercado Pago.",
+  "description": "Backend do sistema de inscrições CATRE Ipitinga com Express, Prisma e Mercado Pago.",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
   "scripts": {
-    "prebuild": "npm run prisma:generate && npm run prisma:deploy",
+    "prebuild": "node scripts/prebuild.js",
     "build": "tsc -p tsconfig.build.json",
     "postbuild": "node scripts/post-build.js",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules --require tsconfig-paths/register src/main.ts",
     "dev:win": "chcp 65001>nul && ts-node-dev --transpile-only --ignore-watch node_modules --require tsconfig-paths/register src/main.ts",
     "playwright:install": "playwright install chromium",
-    "postinstall": "npm run playwright:install && npm run prisma:generate",
+    "postinstall": "node scripts/postinstall.js --mode=prod",
+    "postinstall:prod": "node scripts/postinstall.js --mode=prod",
+    "postinstall:dev": "node scripts/postinstall.js --mode=dev",
     "start": "node dist/main.js",
     "start:prod": "NODE_ENV=production node dist/main.js",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
-    "prisma:generate": "prisma generate --schema src/prisma/schema.prisma",
-    "prisma:migrate": "prisma migrate dev --schema src/prisma/schema.prisma",
-    "prisma:deploy": "prisma migrate deploy --schema src/prisma/schema.prisma",
-    "prisma:seed": "ts-node -r tsconfig-paths/register src/prisma/seed.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed": "ts-node -r tsconfig-paths/register prisma/seed.ts",
     "db:setup": "ts-node scripts/setup-sqlite.ts",
-    "openapi": "ts-node scripts/generate-openapi.ts"
+    "openapi": "ts-node scripts/generate-openapi.ts",
+    "doctor": "node scripts/doctor.js"
   },
   "prisma": {
-    "schema": "src/prisma/schema.prisma",
-    "seed": "ts-node -r tsconfig-paths/register src/prisma/seed.ts"
+    "schema": "prisma/schema.prisma",
+    "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.19.0",
+    "prisma": "^5.19.0",
     "@supabase/supabase-js": "^2.45.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
@@ -42,7 +46,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mercadopago": "^2.2.0",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.0",
     "node-cron": "^3.0.3",
     "nodemailer": "^7.0.10",
     "pino": "^9.3.0",
@@ -59,7 +63,6 @@
     "@types/compression": "^1.7.5",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/express-rate-limit": "^6.0.2",
     "@swc/core": "^1.15.8",
     "@swc/jest": "^0.2.39",
     "@types/jest": "^30.0.0",
@@ -72,17 +75,24 @@
     "@types/uuid": "^9.0.6",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^8.57.0",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^5.2.1",
     "jest": "^30.2.0",
     "pg-mem": "^3.0.5",
     "prettier": "^3.3.3",
-    "prisma": "^5.19.0",
-    "supertest": "^6.3.4",
+    "supertest": "^7.0.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4"
+  },
+  "overrides": {
+    "glob": "^8.1.0",
+    "rimraf": "^4.4.1",
+    "superagent": "^9.0.2"
+  },
+  "engines": {
+    "node": ">=20 <23"
   }
 }

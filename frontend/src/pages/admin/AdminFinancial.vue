@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <ErrorDialog
       :model-value="errorDialog.open"
@@ -162,7 +162,7 @@
             :disabled="downloadingReport"
             @click="downloadEventReport"
           >
-            {{ downloadingReport ? "Preparando..." : "Visualizar PDF" }}
+            {{ downloadingReport ? "Preparando..." : "Baixar PDF" }}
           </button>
         </div>
       </div>
@@ -398,10 +398,11 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useApi } from "../../composables/useApi";
 import { formatCurrency, formatDate } from "../../utils/format";
-import { createPreviewSession } from "../../utils/documentPreview";
+import { useFileDownload } from "../../composables/useFileDownload";
 
 const admin = useAdminStore();
 const { api } = useApi();
+const { downloadFromResponse, handleDownloadError } = useFileDownload();
 
 const loading = ref(true);
 const generalSummary = ref<any>(null);
@@ -571,22 +572,12 @@ const downloadEventReport = async () => {
     }
     const job = await admin.waitForReportJob(jobResponse.jobId);
     const fileResponse = await admin.downloadReportJobFile(job.id);
-    const blob = new Blob([fileResponse.data], { type: "application/pdf" });
     const filenameBase = eventSummary.value?.event?.slug || eventSummary.value?.event?.title || "evento";
-    await createPreviewSession(
-      [
-        {
-          id: `financial-${selectedEventId.value}`,
-          title: `Relatorio financeiro - ${eventSummary.value?.event?.title || "Evento"}`,
-          fileName: `relatorio-financeiro-${filenameBase}.pdf`,
-          blob,
-          mimeType: "application/pdf"
-        }
-      ],
-      { context: "Relatorios administrativos" }
-    );
+    const safeBase = String(filenameBase).replace(/\s+/g, "-").toLowerCase();
+    downloadFromResponse(fileResponse, `relatorio-financeiro-${safeBase}.pdf`);
   } catch (error) {
-    showError("Erro ao gerar relatorio financeiro", error);
+    const info = handleDownloadError(error, "download do relatorio financeiro");
+    showError("Erro ao gerar relatorio financeiro", new Error(info.message));
   } finally {
     downloadingReport.value = false;
   }
@@ -708,6 +699,7 @@ onMounted(async () => {
   }
 });
 </script>
+
 
 
 

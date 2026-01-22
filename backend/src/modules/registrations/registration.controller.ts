@@ -13,6 +13,7 @@ import { env } from "../../config/env";
 import { getScopedMinistryIds } from "../../utils/user-scope";
 import { hasPermission } from "../../utils/permissions";
 import { reportJobService } from "../reports/report-job.service";
+import { applyDownloadHeaders, sendDownloadBuffer } from "../../middlewares/download-headers";
 
 const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio. Verifique os dados do evento.";
 const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
@@ -189,13 +190,11 @@ export const registrationsReportHandler = async (request: Request, response: Res
 };
 
 export const downloadRegistrationsReportHandler = async (request: Request, response: Response) => {
-  const origin = request.headers.origin;
-  if (origin && env.corsOrigins.includes(origin)) {
-    response.setHeader("Access-Control-Allow-Origin", origin);
-    response.setHeader("Vary", "Origin");
-    response.setHeader("Access-Control-Allow-Credentials", "true");
+  // Aplicar headers de CORS antes de qualquer resposta
+  applyDownloadHeaders(request, response);
+  if (request.method === "OPTIONS") {
+    return response.status(200).end();
   }
-
   try {
     const { groupBy, template, layout, async: asyncMode, ...filters } = reportDownloadSchema.parse(request.query);
 
@@ -225,9 +224,7 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
           )
         : await registrationService.generateReportPdf(scopedFilters, groupBy, ministryIds);
     const filename = `relatorio-inscricoes-${groupBy}-${Date.now()}.pdf`;
-    response.setHeader("Content-Type", "application/pdf");
-    response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    return response.send(pdfBuffer);
+    return sendDownloadBuffer(response, { buffer: pdfBuffer, fileName: filename });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       logger.warn({ error: error.flatten() }, "Parametros invalidos");
@@ -238,13 +235,11 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
 };
 
 export const downloadRegistrationsListPdfHandler = async (request: Request, response: Response) => {
-  const origin = request.headers.origin;
-  if (origin && env.corsOrigins.includes(origin)) {
-    response.setHeader("Access-Control-Allow-Origin", origin);
-    response.setHeader("Vary", "Origin");
-    response.setHeader("Access-Control-Allow-Credentials", "true");
+  // Aplicar headers de CORS antes de qualquer resposta
+  applyDownloadHeaders(request, response);
+  if (request.method === "OPTIONS") {
+    return response.status(200).end();
   }
-
   try {
     const { async: asyncMode, ...filters } = listPdfSchema.parse(request.query);
     const ministryIds = getScopedMinistryIds(request.user);
@@ -268,9 +263,7 @@ export const downloadRegistrationsListPdfHandler = async (request: Request, resp
       includeCpf
     });
     const filename = `lista-inscricoes-${Date.now()}.pdf`;
-    response.setHeader("Content-Type", "application/pdf");
-    response.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
-    return response.send(pdfBuffer);
+    return sendDownloadBuffer(response, { buffer: pdfBuffer, fileName: filename });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       logger.warn({ error: error.flatten() }, "Parametros invalidos");
@@ -426,3 +419,4 @@ export const getRegistrationHistoryHandler = async (request: Request, response: 
   const history = await registrationService.getHistory(id);
   return response.json(history);
 };
+

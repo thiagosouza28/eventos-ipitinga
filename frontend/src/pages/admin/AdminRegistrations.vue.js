@@ -16,9 +16,11 @@ import { paymentMethodLabel, PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS } from 
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto';
 import { useModulePermissions } from '../../composables/usePermissions';
 import { createPreviewSession } from '../../utils/documentPreview';
+import { useFileDownload } from '../../composables/useFileDownload';
 const admin = useAdminStore();
 const catalog = useCatalogStore();
 const auth = useAuthStore();
+const { downloadFromResponse, handleDownloadError } = useFileDownload();
 const registrationPermissions = useModulePermissions('registrations');
 const reportsPermissions = useModulePermissions('reports');
 const canGenerateListPdf = computed(() => reportsPermissions.canReports.value);
@@ -435,8 +437,8 @@ const findRegistrationLotLabel = (registration) => {
     const lot = lots.find((item) => item.id === lotId);
     return lot?.name || '';
 };
-const findDistrictName = (id) => districtMap.value.get(id)?.name ?? registrationDistrictMap.value.get(id) ?? 'Nao informado';
-const findChurchName = (id) => churchMap.value.get(id)?.name ?? registrationChurchMap.value.get(id) ?? 'Nao informado';
+const findDistrictName = (id) => districtMap.value.get(id)?.name ?? registrationDistrictMap.value.get(id) ?? "Não informado";
+const findChurchName = (id) => churchMap.value.get(id)?.name ?? registrationChurchMap.value.get(id) ?? "Não informado";
 const parseDateParts = (value) => {
     if (!value)
         return null;
@@ -639,7 +641,7 @@ const goToPage = async (page) => {
         });
     }
     catch (error) {
-        showError('Falha ao carregar inscricoes', error);
+        showError('Falha ao carregar inscrições', error);
     }
     finally {
         isApplying.value = false;
@@ -761,17 +763,17 @@ const closePaymentDialog = () => {
 const openPaymentDialog = (itemsInput) => {
     const items = (Array.isArray(itemsInput) && itemsInput.length ? itemsInput : selectedRegistrations.value).filter(isRegistrationSelectable);
     if (!items.length) {
-        showError('Selecione ao menos uma inscricao', new Error('Selecione ao menos uma inscricao para gerar o pagamento.'));
+        showError('Selecione ao menos uma inscrição', new Error('Selecione ao menos uma inscrição para gerar o pagamento.'));
         return;
     }
     const uniqueEvents = new Set(items.map((item) => item.eventId));
     if (uniqueEvents.size > 1) {
-        showError('Selecione apenas inscricoes do mesmo evento', new Error('Selecione inscricoes de um unico evento para gerar o pagamento.'));
+        showError('Selecione apenas inscrições do mesmo evento', new Error('Selecione inscrições de um único evento para gerar o pagamento.'));
         return;
     }
     const allowed = resolveAllowedPaymentMethods(items[0].eventId);
     if (!allowed.length) {
-        showError('Evento sem formas de pagamento', new Error('Nenhuma forma de pagamento disponivel para este evento.'));
+        showError("Evento sem formas de pagamento", new Error("Nenhuma forma de pagamento disponível para este evento."));
         return;
     }
     paymentDialog.items = items;
@@ -792,7 +794,7 @@ const removeFromPaymentDialog = (registrationId) => {
 };
 const confirmPaymentGeneration = async () => {
     if (!paymentDialog.items.length) {
-        paymentDialog.error = 'Selecione ao menos uma inscricao para continuar.';
+        paymentDialog.error = 'Selecione ao menos uma inscrição para continuar.';
         return;
     }
     if (!paymentDialog.paymentMethod) {
@@ -823,7 +825,7 @@ const confirmPaymentGeneration = async () => {
         paymentDialog.successOrderId = result?.orderId ?? null;
         selectedRegistrationIds.value = new Set();
         if (!paymentDialog.successLink) {
-            paymentDialog.error = 'Pagamento criado. Nao foi possivel gerar link automatico (pagamento manual).';
+            paymentDialog.error = 'Pagamento criado. Não foi possível gerar link automático (pagamento manual).';
         }
     }
     catch (error) {
@@ -873,7 +875,7 @@ const closeManualConfirmDialog = () => {
 };
 const confirmManualPayment = async () => {
     if (!manualConfirmDialog.items.length) {
-        manualConfirmDialog.error = 'Selecione ao menos uma inscricao.';
+        manualConfirmDialog.error = 'Selecione ao menos uma inscrição.';
         return;
     }
     const allowedOptions = manualConfirmPaymentOptions.value;
@@ -882,7 +884,7 @@ const confirmManualPayment = async () => {
         return;
     }
     if (allowedOptions.length && !allowedOptions.some((opt) => opt.value === manualConfirmDialog.paymentMethod)) {
-        manualConfirmDialog.error = 'Forma de pagamento nao disponivel para este evento.';
+        manualConfirmDialog.error = "Forma de pagamento não disponível para este evento.";
         return;
     }
     manualConfirmDialog.loading = true;
@@ -1154,6 +1156,17 @@ const paymentMethodShort = (method) => {
     if (method === 'CARD_INSTALLMENTS')
         return 'Cartão (parcelado)';
     return paymentMethodLabel(method);
+};
+const resolveRegistrationPriceCents = (registration) => {
+    if (typeof registration.priceCents === 'number')
+        return registration.priceCents;
+    return findEventPriceCents(registration.eventId);
+};
+const resolvePaymentLabel = (registration) => {
+    const priceCents = resolveRegistrationPriceCents(registration);
+    if (priceCents === 0)
+        return 'Gratuito';
+    return paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || '');
 };
 const editDialog = reactive({ open: false, original: null });
 const editForm = reactive({ fullName: '', birthDate: '', cpf: '', districtId: '', churchId: '', photoUrl: '' });
@@ -1582,18 +1595,18 @@ const downloadReceipt = async (registration) => {
         const response = await admin.getRegistrationReceiptLink(registration.id);
         const url = response?.url;
         if (!url) {
-            showError('Comprovante indisponivel', new Error('Nao foi possivel gerar o link do comprovante.'));
+            showError('Comprovante indisponível', new Error('Não foi possível gerar o link do comprovante.'));
             return;
         }
         await createPreviewSession([
             {
                 id: registration.id,
-                title: registration.fullName || "Inscricao " + registration.id,
+                title: registration.fullName || "Inscrição " + registration.id,
                 fileName: "comprovante-" + registration.id + ".pdf",
                 sourceUrl: url,
                 mimeType: 'application/pdf'
             }
-        ], { context: 'Comprovante de inscricao' });
+        ], { context: 'Comprovante de inscrição' });
     }
     catch (error) {
         showError('Falha ao gerar comprovante', error);
@@ -1607,13 +1620,12 @@ const sanitizeFilePart = (value) => value
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '')
     .slice(0, 40);
-const requestReportJobBlob = async (jobResponse) => {
+const requestReportJobResponse = async (jobResponse) => {
     if (!jobResponse?.jobId) {
         throw new Error('Relatorio indisponivel.');
     }
     const job = await admin.waitForReportJob(jobResponse.jobId);
-    const fileResponse = await admin.downloadReportJobFile(job.id);
-    return new Blob([fileResponse.data], { type: 'application/pdf' });
+    return admin.downloadReportJobFile(job.id);
 };
 const generateRegistrationListPdf = async () => {
     if (!canGenerateListPdf.value || listPdfState.loading)
@@ -1622,23 +1634,17 @@ const generateRegistrationListPdf = async () => {
     try {
         const params = buildFilterParams();
         const jobResponse = await admin.requestRegistrationListJob(params);
-        const blob = await requestReportJobBlob(jobResponse);
+        const fileResponse = await requestReportJobResponse(jobResponse);
         const eventLabel = filters.eventId ? findEventTitle(filters.eventId) : 'inscricoes';
         const churchLabel = filters.churchId ? findChurchName(filters.churchId) : '';
         const lotLabel = filters.lotId ? selectedLotName.value : '';
         const parts = ['lista', eventLabel, churchLabel, lotLabel].filter(Boolean).map(sanitizeFilePart);
         const fileName = `${parts.filter(Boolean).join('-') || 'lista-inscricoes'}.pdf`;
-        await createPreviewSession([
-            {
-                title: 'Lista de inscricoes',
-                fileName,
-                blob,
-                mimeType: 'application/pdf'
-            }
-        ], { context: 'Lista de inscricoes' });
+        downloadFromResponse(fileResponse, fileName);
     }
     catch (error) {
-        showError('Falha ao gerar lista em PDF', error);
+        const info = handleDownloadError(error, 'download do relatorio');
+        showError('Falha ao gerar lista em PDF', new Error(info.message));
     }
     finally {
         listPdfState.loading = false;
@@ -1963,7 +1969,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "text-[10px] text-slate-500 dark:text-slate-400" },
             });
-            (__VLS_ctx.paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || ''));
+            (__VLS_ctx.resolvePaymentLabel(registration));
             (__VLS_ctx.formatDateShort(registration.paidAt || registration.createdAt));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-3 rounded-[14px] border border-slate-200/70 bg-slate-50 px-3 py-3 dark:border-white/10 dark:bg-white/5" },
@@ -2007,7 +2013,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                 ...{ class: "text-xs text-slate-700 dark:text-slate-200" },
             });
-            (__VLS_ctx.paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || ''));
+            (__VLS_ctx.resolvePaymentLabel(registration));
             (__VLS_ctx.formatDateShort(registration.paidAt || registration.createdAt));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "flex flex-wrap items-center gap-2" },
@@ -2601,7 +2607,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
                 ...{ class: "hidden sm:inline" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-            (__VLS_ctx.paymentMethodShort(registration.paymentMethod));
+            (__VLS_ctx.resolvePaymentLabel(registration));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
                 ...{ class: "px-5 py-2.5 align-top" },
             });
@@ -2641,7 +2647,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
                 });
                 if (registration.paymentMethod) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-                    (__VLS_ctx.paymentMethodShort(registration.paymentMethod));
+                    (__VLS_ctx.resolvePaymentLabel(registration));
                 }
                 if (registration.paymentMethod && registration.paidAt) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
@@ -3024,7 +3030,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
                 ...{ class: "text-[10px] text-slate-400 dark:text-slate-500" },
             });
-            (__VLS_ctx.paymentMethodShort(registration.paymentMethod || registration.order?.paymentMethod || ''));
+            (__VLS_ctx.resolvePaymentLabel(registration));
             (__VLS_ctx.formatDateShort(registration.paidAt || registration.createdAt));
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (...[$event]) => {
@@ -3408,7 +3414,7 @@ if (__VLS_ctx.registrationPermissions.canList) {
             ...{ onClick: (__VLS_ctx.closeManualConfirmDialog) },
             type: "button",
             ...{ class: "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-white" },
-            'aria-label': "Fechar confirmacao manual",
+            'aria-label': "Fechar confirmação manual",
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "mt-4 space-y-3" },
@@ -6890,6 +6896,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             saveNewRegistration: saveNewRegistration,
             resolvePhotoUrl: resolvePhotoUrl,
             paymentMethodShort: paymentMethodShort,
+            resolvePaymentLabel: resolvePaymentLabel,
             editDialog: editDialog,
             editForm: editForm,
             historyLoading: historyLoading,

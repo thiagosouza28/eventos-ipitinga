@@ -135,17 +135,17 @@ else {
         ...{ class: "flex items-center justify-between" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-        ...{ class: "text-xs uppercase tracking-[0.3em] text-white/70" },
+        ...{ class: "text-xs uppercase tracking-[0.3em] text-[#94a3b8] dark:text-[color:var(--text-muted)]" },
     });
     const __VLS_6 = {}.CalendarDaysIcon;
     /** @type {[typeof __VLS_components.CalendarDaysIcon, ]} */ ;
     // @ts-ignore
     const __VLS_7 = __VLS_asFunctionalComponent(__VLS_6, new __VLS_6({
-        ...{ class: "h-10 w-10 text-white/80" },
+        ...{ class: "h-10 w-10 text-[#4b61ff] dark:text-[#9eb5ff]" },
         'aria-hidden': "true",
     }));
     const __VLS_8 = __VLS_7({
-        ...{ class: "h-10 w-10 text-white/80" },
+        ...{ class: "h-10 w-10 text-[#4b61ff] dark:text-[#9eb5ff]" },
         'aria-hidden': "true",
     }, ...__VLS_functionalComponentArgsRest(__VLS_7));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -460,10 +460,12 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
 /** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#94a3b8]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-[color:var(--text-muted)]']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-10']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-10']} */ ;
-/** @type {__VLS_StyleScopedClasses['text-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[#4b61ff]']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-[#9eb5ff]']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-4xl']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;

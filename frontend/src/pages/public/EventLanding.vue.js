@@ -9,6 +9,7 @@ import { API_BASE_URL } from "../../config/api";
 const { api } = useApi();
 const events = ref([]);
 const loading = ref(false);
+const errorMessage = ref("");
 const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, "");
 const resolveBannerUrl = (value) => {
     if (!value)
@@ -35,9 +36,14 @@ const priceInfo = (event) => {
 };
 onMounted(async () => {
     loading.value = true;
+    errorMessage.value = "";
     try {
         const response = await api.get("/events");
         events.value = response.data;
+    }
+    catch (error) {
+        console.error("Falha ao carregar eventos", error);
+        errorMessage.value = "Não foi possível carregar os eventos agora.";
     }
     finally {
         loading.value = false;
@@ -91,6 +97,21 @@ if (__VLS_ctx.loading) {
     const __VLS_7 = __VLS_asFunctionalComponent(LoadingSpinner, new LoadingSpinner({}));
     const __VLS_8 = __VLS_7({}, ...__VLS_functionalComponentArgsRest(__VLS_7));
 }
+else if (__VLS_ctx.errorMessage) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "py-6" },
+    });
+    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+    // @ts-ignore
+    const __VLS_10 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({}));
+    const __VLS_11 = __VLS_10({}, ...__VLS_functionalComponentArgsRest(__VLS_10));
+    __VLS_12.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+        ...{ class: "text-sm text-neutral-500 dark:text-neutral-400" },
+    });
+    (__VLS_ctx.errorMessage);
+    var __VLS_12;
+}
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "grid gap-6 md:grid-cols-2" },
@@ -98,13 +119,13 @@ else {
     for (const [event] of __VLS_getVForSourceType((__VLS_ctx.events))) {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_10 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        const __VLS_13 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
             key: (event.id),
         }));
-        const __VLS_11 = __VLS_10({
+        const __VLS_14 = __VLS_13({
             key: (event.id),
-        }, ...__VLS_functionalComponentArgsRest(__VLS_10));
-        __VLS_12.slots.default;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_13));
+        __VLS_15.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ class: "flex h-full flex-col gap-4 md:flex-row" },
         });
@@ -165,20 +186,20 @@ else {
                 ...{ class: "text-xs uppercase tracking-wide text-amber-600 dark:text-amber-300" },
             });
         }
-        const __VLS_13 = {}.RouterLink;
+        const __VLS_16 = {}.RouterLink;
         /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
         // @ts-ignore
-        const __VLS_14 = __VLS_asFunctionalComponent(__VLS_13, new __VLS_13({
+        const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
             to: (`/evento/${event.slug}`),
             ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
         }));
-        const __VLS_15 = __VLS_14({
+        const __VLS_18 = __VLS_17({
             to: (`/evento/${event.slug}`),
             ...{ class: "inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_14));
-        __VLS_16.slots.default;
-        var __VLS_16;
-        var __VLS_12;
+        }, ...__VLS_functionalComponentArgsRest(__VLS_17));
+        __VLS_19.slots.default;
+        var __VLS_19;
+        var __VLS_15;
     }
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
@@ -219,6 +240,10 @@ else {
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:justify-start']} */ ;
 /** @type {__VLS_StyleScopedClasses['py-10']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
@@ -284,6 +309,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             formatDate: formatDate,
             events: events,
             loading: loading,
+            errorMessage: errorMessage,
             resolveBannerUrl: resolveBannerUrl,
             priceInfo: priceInfo,
         };

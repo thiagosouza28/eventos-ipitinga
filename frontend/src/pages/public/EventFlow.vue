@@ -7,302 +7,429 @@
       <p class="text-neutral-500">Evento não encontrado.</p>
     </BaseCard>
   </div>
-  <div v-else class="space-y-6" data-uppercase-scope>
-    <BaseCard>
-      <div class="space-y-4">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div class="flex-1">
-            <h1 class="text-2xl font-semibold text-neutral-800 dark:text-neutral-50">
-              {{ eventStore.event.title }}
-            </h1>
-            <p class="text-neutral-500 dark:text-neutral-400">
-              {{ eventStore.event.description }}
+  <div v-else class="min-h-screen bg-[#F6F8FB] pb-16" data-uppercase-scope>
+    <EventNoticeModal
+      v-if="noticeEnabled && resolvedNotice"
+      :slug="noticeSlug"
+      :open="noticeOpen"
+      :title="resolvedNotice.title"
+      :bullets="resolvedNotice.bullets"
+      :footer-text="resolvedNotice.footerText"
+      :show-once="resolvedNotice.showOnce"
+      @accept="handleNoticeAccept"
+      @cancel="handleNoticeCancel"
+    />
+    <div class="mx-auto w-full max-w-3xl space-y-6 px-4 pb-12 pt-6">
+      <div
+        v-if="route.query.success === '1'"
+        class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-sm"
+      >
+        <div class="flex items-start gap-3">
+          <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </span>
+          <div>
+            <p class="text-sm font-semibold">Inscrição confirmada</p>
+            <p class="text-xs text-emerald-700">Sua inscrição foi registrada com sucesso.</p>
+            <p v-if="route.query.orderId" class="text-xs text-emerald-700">
+              Pedido: {{ route.query.orderId }}
             </p>
           </div>
-          <div class="self-start w-full lg:w-auto">
-            <div class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700">
-              <img
-                v-if="hasBannerImage"
-                :src="resolvedBannerUrl"
-                alt="Banner do evento"
-                class="w-full max-h-60 object-contain"
-                loading="lazy"
-                @error="eventBannerError = true"
-              />
-              <div
-                v-else
-                class="flex h-40 w-full items-center justify-center border border-dashed border-neutral-300 px-6 py-4 text-xs text-neutral-400 sm:h-40 sm:w-72 dark:border-neutral-600 dark:text-neutral-500"
-              >
-                Imagem indisponível
+        </div>
+      </div>
+      <BaseCard class="rounded-2xl border border-neutral-200 bg-white/95 shadow-sm">
+        <div class="space-y-4">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div v-if="hasBannerImage" class="w-full shrink-0 sm:mt-1 sm:w-auto">
+              <div class="overflow-hidden rounded-none border border-neutral-200 bg-white p-1.5 shadow-sm">
+                <img
+                  :src="resolvedBannerUrl"
+                  alt="Banner do evento"
+                  class="h-28 w-full object-contain sm:h-20 sm:w-36"
+                  loading="lazy"
+                  @error="eventBannerError = true"
+                />
               </div>
+            </div>
+            <div class="min-w-0 space-y-2">
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  v-if="currentLotName"
+                  class="inline-flex items-center rounded-full bg-primary-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary-700"
+                >
+                  {{ currentLotName }}
+                </span>
+                <span
+                  v-if="isPromoLotActive"
+                  class="inline-flex items-center rounded-full bg-rose-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700"
+                >
+                Promoção
+                </span>
+              </div>
+              <h1 class="text-2xl font-semibold text-neutral-900">
+                {{ eventStore.event.title }}
+              </h1>
+              <p class="max-w-full text-sm text-neutral-500 break-all sm:break-words">
+                {{ eventStore.event.description }}
+              </p>
+              <button
+                v-if="noticeEnabled"
+                type="button"
+                class="inline-flex text-xs font-semibold text-primary-600 hover:text-primary-500"
+                @click="openNotice"
+              >
+                Ver aviso
+              </button>
             </div>
           </div>
           <div class="text-left sm:text-right">
-            <p class="text-sm text-neutral-500">
-              {{ priceInfo.title }}
+            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Investimento
             </p>
-            <p
-              :class="[
-                'text-xl font-semibold',
-                priceValueClass
-              ]"
-            >
+            <p :class="['text-2xl font-semibold', priceValueClass]">
               {{ priceInfo.value }}
             </p>
-            <p
-              v-if="priceInfo.helper"
-              class="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
-            >
+            <p v-if="priceInfo.helper" class="text-xs text-neutral-400">
               {{ priceInfo.helper }}
             </p>
-            <div v-if="isPromoLotActive" class="mt-2 flex flex-wrap items-center gap-2 sm:justify-end">
-              <span
-                class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-rose-700 ring-1 ring-rose-200 shadow-sm dark:bg-rose-500/15 dark:text-rose-200 dark:ring-rose-500/30 motion-safe:animate-pulse"
-              >
-                &#128293; PROMOÇÃO ATIVA
-              </span>
-            </div>
-            <p v-if="promoCountdownText" class="text-xs font-medium text-rose-600 dark:text-rose-300 sm:text-right">
-              &#9203; Promoção termina em: <span class="font-semibold">{{ promoCountdownText }}</span>
-            </p>
-            <div class="mt-3 space-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-              <p v-if="nextLotCountdownText">
-                Próximo lote em
-                <span class="font-semibold text-neutral-800 dark:text-white">
-                  {{ nextLotCountdownText }}
-                </span>
-              </p>
-              <p v-else>Nenhum próximo lote programado.</p>
-              <p v-if="daysToLastLotEnd !== null">
-                Todos os lotes encerram em
-                <span class="font-semibold text-neutral-800 dark:text-white">
-                  {{ formatDayCount(daysToLastLotEnd) }}
-                </span>
-              </p>
-            </div>
           </div>
         </div>
-        <div class="flex flex-wrap gap-4 text-sm text-neutral-500 dark:text-neutral-400">
-          <span>Local: {{ eventStore.event.location }}</span>
-          <span class="hidden sm:inline">|</span>
-          <span>
-            {{ formatDate(eventStore.event.startDate) }} - {{ formatDate(eventStore.event.endDate) }}
-          </span>
-          <span v-if="eventStore.event.minAgeYears">
-            Idade minima: {{ eventStore.event.minAgeYears }}+ anos
-          </span>
+        <div class="space-y-2 text-sm text-neutral-600">
+          <div class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="h-4 w-4 text-primary-600" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 21s7-6.2 7-11.2A7 7 0 0 0 5 9.8C5 14.8 12 21 12 21Z" />
+              <circle cx="12" cy="9" r="2.5" />
+            </svg>
+            <span>{{ eventStore.event.location }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="h-4 w-4 text-primary-600" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M8 3v4M16 3v4M3 11h18" />
+            </svg>
+            <span>{{ formatDate(eventStore.event.startDate) }} - {{ formatDate(eventStore.event.endDate) }}</span>
+          </div>
+          <div v-if="eventStore.event.minAgeYears" class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="h-4 w-4 text-primary-600" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="7" r="3" />
+              <path d="M5 21a7 7 0 0 1 14 0" />
+            </svg>
+            <span>Idade mínima: {{ eventStore.event.minAgeYears }}+ anos</span>
+          </div>
         </div>
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-400">
+          <p v-if="nextLotCountdownText">
+            Próximo lote em <span class="font-semibold text-neutral-600">{{ nextLotCountdownText }}</span>
+          </p>
+          <p v-if="daysToLastLotEnd !== null">
+            Encerramento em <span class="font-semibold text-neutral-600">{{ formatDayCount(daysToLastLotEnd) }}</span>
+          </p>
+        </div>
+        <p v-if="promoCountdownText" class="text-xs font-semibold text-rose-600">
+          Promoção termina em <span class="font-semibold">{{ promoCountdownText }}</span>
+        </p>
       </div>
     </BaseCard>
 
-    <div v-if="registrationOpen" class="space-y-6">
-      <StepWizard :steps="steps" :current-step="currentStep" />
-
-      <BaseCard v-if="currentStep === 0">
-        <ResponsibleCpfForm
-          ref="inscricaoFormRef"
-          v-model="responsibleProfile"
-          :loading="checkingCpf"
-          :error="errorMessage"
-          @update:cpf="buyerCpf = $event"
-          @submit="handleCpfSubmit"
-        />
-      </BaseCard>
-
-      <BaseCard v-if="currentStep === 1">
-        <div
-          v-if="false"
-          class="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
-        >
-          <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
-          <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
-          <div class="mt-3 space-y-2">
-            <div
-              v-for="order in pendingOrders"
-              :key="order.orderId"
-              class="rounded-md border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40"
-            >
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div class="flex-1">
-                  <p class="font-medium">{{ formatCurrency(order.totalCents) }}</p>
-                  <p class="text-xs">
-                    {{ order.registrations.length }} participante(s):
-                    {{ order.registrations.map(r => r.fullName).join(", ") }}
-                  </p>
-                </div>
-                <RouterLink
-                  :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
-                  class="inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100"
+    <div v-if="registrationOpen && canStartWizard" class="space-y-6">
+      <div v-if="currentStep < 4" class="rounded-2xl border border-neutral-200 bg-white px-4 py-5 shadow-sm">
+        <div class="flex items-center justify-between text-xs font-semibold text-neutral-400">
+          <span>Passo {{ currentStep + 1 }} de 4</span>
+          <span class="uppercase tracking-wide text-neutral-300">Inscrição</span>
+        </div>
+        <div class="relative mt-4">
+          <div class="absolute left-6 right-6 top-4 h-px bg-neutral-200"></div>
+          <div class="relative grid grid-cols-4 gap-2 text-center">
+            <div v-for="(step, index) in steps.slice(0, 4)" :key="step.title" class="flex flex-col items-center gap-2">
+              <div
+                :class="[
+                  'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold transition',
+                  index < currentStep
+                    ? 'border-emerald-500 bg-emerald-500 text-white'
+                    : index === currentStep
+                      ? 'border-primary-600 bg-primary-600 text-white'
+                      : 'border-neutral-200 bg-white text-neutral-400'
+                ]"
+              >
+                <svg
+                  v-if="index < currentStep"
+                  viewBox="0 0 24 24"
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                  Pagar
-                </RouterLink>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span v-else>{{ index + 1 }}</span>
               </div>
+              <div class="text-xs font-semibold text-neutral-700">{{ step.title }}</div>
+              <div class="text-[10px] text-neutral-400">{{ step.description }}</div>
             </div>
-            <RouterLink
-              :to="{ name: 'admin-pending-orders', params: { cpf: buyerCpf } }"
-              class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50"
-            >
-              Ver todas as pend�fªncias
-              <IconArrowRight class="ml-1 h-3 w-3" />
-            </RouterLink>
           </div>
         </div>
-        <form @submit.prevent="handleGeneralStep" class="space-y-6">
-          <div class="grid gap-4 md:grid-cols-2">
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Distrito
-              </label>
-              <select
-                v-model="selectedDistrictId"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                :aria-invalid="generalErrors.district ? 'true' : 'false'"
-                aria-describedby="district-error"
-                required
+      </div>
+
+            <BaseCard v-if="currentStep === 0" class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <div class="space-y-4">
+          <div class="space-y-1">
+            <h2 class="text-xl font-semibold text-neutral-900">Identificação</h2>
+            <p class="text-sm text-neutral-500">
+              Informe o CPF do responsável financeiro pela inscrição.
+            </p>
+          </div>
+          <ResponsibleCpfForm
+            ref="inscricaoFormRef"
+            v-model="responsibleProfile"
+            :loading="checkingCpf"
+            :error="errorMessage"
+            @update:cpf="buyerCpf = $event"
+            @submit="handleCpfSubmit"
+          />
+        </div>
+      </BaseCard>
+
+            <BaseCard v-if="currentStep === 1" class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <div class="space-y-6">
+          <div>
+            <h2 class="text-xl font-semibold text-neutral-900">Selecione sua Unidade</h2>
+            <p class="text-sm text-neutral-500">Escolha o distrito e a igreja.</p>
+          </div>
+          <div
+            v-if="false"
+            class="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
+          >
+            <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
+            <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
+            <div class="mt-3 space-y-2">
+              <div
+                v-for="order in pendingOrders"
+                :key="order.orderId"
+                class="rounded-md border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40"
               >
-                <option value="" disabled>Selecione</option>
-                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
-                  {{ district.name }}
-                </option>
-              </select>
-              <p
-                v-if="generalErrors.district"
-                id="district-error"
-                role="alert"
-                class="mt-2 text-sm text-red-600 dark:text-red-400"
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div class="flex-1">
+                    <p class="font-medium">{{ formatCurrency(order.totalCents) }}</p>
+                    <p class="text-xs">
+                      {{ order.registrations.length }} participante(s):
+                      {{ order.registrations.map(r => r.fullName).join(", ") }}
+                    </p>
+                  </div>
+                  <RouterLink
+                    :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
+                    class="inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100"
+                  >
+                    Pagar
+                  </RouterLink>
+                </div>
+              </div>
+              <RouterLink
+                :to="{ name: 'admin-pending-orders', params: { cpf: buyerCpf } }"
+                class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50"
               >
-                {{ generalErrors.district }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Igreja
-              </label>
-              <select
-                v-model="selectedChurchId"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
-                :aria-invalid="generalErrors.church ? 'true' : 'false'"
-                aria-describedby="church-error"
-                :disabled="!selectedDistrictId"
-                required
-              >
-                <option value="" disabled>Selecione</option>
-                <option v-for="church in churchOptions" :key="church.id" :value="church.id">
-                  {{ church.name }}
-                </option>
-              </select>
-              <p
-                v-if="generalErrors.church"
-                id="church-error"
-                role="alert"
-                class="mt-2 text-sm text-red-600 dark:text-red-400"
-              >
-                {{ generalErrors.church }}
-              </p>
+                Ver todas as pendências
+                <IconArrowRight class="ml-1 h-3 w-3" />
+              </RouterLink>
             </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-              Quantidade de participantes
-            </label>
+          <form @submit.prevent="handleGeneralStep" class="space-y-6">
+            <div class="grid gap-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                  Distrito
+                </label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" />
+                      <path d="M9 3v15M15 6v15" />
+                    </svg>
+                  </span>
+                  <select
+                    v-model="selectedDistrictId"
+                    class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
+                    :aria-invalid="generalErrors.district ? 'true' : 'false'"
+                    aria-describedby="district-error"
+                    required
+                  >
+                    <option value="" disabled>Selecione</option>
+                    <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                      {{ district.name }}
+                    </option>
+                  </select>
+                </div>
+                <p
+                  v-if="generalErrors.district"
+                  id="district-error"
+                  role="alert"
+                  class="mt-2 text-sm text-red-600 dark:text-red-400"
+                >
+                  {{ generalErrors.district }}
+                </p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                  Igreja
+                </label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l4 4v4h4v12H4V10h4V6l4-4z" />
+                      <path d="M9 22v-6h6v6" />
+                    </svg>
+                  </span>
+                  <select
+                    v-model="selectedChurchId"
+                    class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
+                    :aria-invalid="generalErrors.church ? 'true' : 'false'"
+                    aria-describedby="church-error"
+                    :disabled="!selectedDistrictId"
+                    required
+                  >
+                    <option value="" disabled>Selecione</option>
+                    <option v-for="church in churchOptions" :key="church.id" :value="church.id">
+                      {{ church.name }}
+                    </option>
+                  </select>
+                </div>
+                <p
+                  v-if="generalErrors.church"
+                  id="church-error"
+                  role="alert"
+                  class="mt-2 text-sm text-red-600 dark:text-red-400"
+                >
+                  {{ generalErrors.church }}
+                </p>
+              </div>
+            </div>
             <div
-              class="mt-1 flex w-full items-center rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 dark:bg-neutral-800 sm:w-56"
+              class="rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
               :aria-invalid="generalErrors.quantity ? 'true' : 'false'"
               aria-describedby="quantity-error"
             >
+              <div class="flex items-center justify-between gap-4">
+                <div>
+                  <p class="text-sm font-semibold text-neutral-800">Participantes</p>
+                  <p class="text-xs text-neutral-500">Incluindo você</p>
+                </div>
+                <div class="flex items-center rounded-full border border-neutral-200 bg-white px-2 py-1 shadow-sm">
+                  <button
+                    type="button"
+                    class="h-9 w-9 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40"
+                    :disabled="!canDecreaseQuantity"
+                    @click="decreaseQuantity"
+                    aria-label="Diminuir quantidade"
+                  >
+                    -
+                  </button>
+                  <input
+                    v-model.number="quantity"
+                    type="number"
+                    min="1"
+                    max="10"
+                    data-quantity-input
+                    class="h-9 w-12 border-0 bg-transparent text-center text-base font-semibold outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="h-9 w-9 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40"
+                    :disabled="!canIncreaseQuantity"
+                    @click="increaseQuantity"
+                    aria-label="Aumentar quantidade"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <p
+                v-if="generalErrors.quantity"
+                id="quantity-error"
+                role="alert"
+                class="mt-2 text-sm text-red-600"
+              >
+                {{ generalErrors.quantity }}
+              </p>
+            </div>
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
               <button
                 type="button"
-                class="h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900"
-                :disabled="!canDecreaseQuantity"
-                @click="decreaseQuantity"
-                aria-label="Diminuir quantidade"
+                class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+                @click="currentStep--"
               >
-                -
+                Voltar
               </button>
-              <input
-                v-model.number="quantity"
-                type="number"
-                min="1"
-                max="10"
-                data-quantity-input
-                class="h-10 w-full border-0 bg-transparent text-center text-lg font-semibold outline-none"
-                required
-              />
               <button
-                type="button"
-                class="h-10 w-10 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40 dark:text-neutral-100 dark:hover:bg-neutral-900"
-                :disabled="!canIncreaseQuantity"
-                @click="increaseQuantity"
-                aria-label="Aumentar quantidade"
+                type="submit"
+                class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto"
               >
-                +
+                Avançar
               </button>
             </div>
-            <p
-              v-if="generalErrors.quantity"
-              id="quantity-error"
-              role="alert"
-              class="mt-2 text-sm text-red-600 dark:text-red-400"
-            >
-              {{ generalErrors.quantity }}
-            </p>
-          </div>
-          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
-            <button
-              type="button"
-              class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
-              @click="currentStep--"
-            >
-              Voltar
-            </button>
-            <button
-              type="submit"
-              class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto"
-            >
-              Avançar
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </BaseCard>
 
-      <div v-if="currentStep === 2" class="space-y-6">
-        <BaseCard>
-          <div class="grid gap-2 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2">
-            <p>
-              <span class="font-semibold text-neutral-700 dark:text-neutral-100">CPF responsável:</span>
-              {{ buyerCpf }}
-            </p>
-            <p>
-              <span class="font-semibold text-neutral-700 dark:text-neutral-100">Distrito:</span>
-              {{ selectedDistrict?.name ?? "Não selecionado" }}
-            </p>
-            <p>
-              <span class="font-semibold text-neutral-700 dark:text-neutral-100">Igreja:</span>
-              {{ selectedChurch?.name ?? "Não selecionada" }}
-            </p>
-            <p>
-              <span class="font-semibold text-neutral-700 dark:text-neutral-100">Participantes:</span>
-              {{ people.length }}
-            </p>
+            <div v-if="currentStep === 2" class="space-y-6">
+        <div class="space-y-1">
+          <h2 class="text-xl font-semibold text-neutral-900">Detalhes dos Participantes</h2>
+          <p class="text-sm text-neutral-500">Preencha as informações de quem irá ao evento.</p>
+        </div>
+
+        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div class="grid gap-3 text-xs text-neutral-500 sm:grid-cols-2">
+            <div>
+              <p class="text-[10px] font-semibold uppercase text-neutral-400">CPF responsável</p>
+              <p class="text-sm font-semibold text-neutral-700">{{ buyerCpf }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold uppercase text-neutral-400">Distrito</p>
+              <p class="text-sm font-semibold text-neutral-700">{{ selectedDistrict?.name ?? "Não selecionado" }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold uppercase text-neutral-400">Igreja</p>
+              <p class="text-sm font-semibold text-neutral-700">{{ selectedChurch?.name ?? "Não selecionada" }}</p>
+            </div>
+            <div>
+              <p class="text-[10px] font-semibold uppercase text-neutral-400">Participantes</p>
+              <p class="text-sm font-semibold text-neutral-700">{{ people.length }}</p>
+            </div>
           </div>
         </BaseCard>
 
         <BaseCard
           v-for="(person, index) in people"
           :key="index"
-          class="rounded-2xl border border-neutral-200/80 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40"
+          class="rounded-2xl border border-neutral-200/80 bg-white shadow-sm"
         >
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">
-              Participante {{ index + 1 }}
-            </h2>
-            <span class="text-sm text-neutral-400">Preencha todos os campos obrigatórios</span>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="3" />
+                  <path d="M4 20a8 8 0 0 1 16 0" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs font-semibold uppercase text-neutral-400">Participante {{ index + 1 }}</p>
+                <p class="text-sm font-semibold text-neutral-800">Dados individuais</p>
+              </div>
+            </div>
+            <span
+              v-if="index === 0"
+              class="inline-flex items-center rounded-full border border-primary-200 bg-primary-50 px-2 py-1 text-[10px] font-semibold uppercase text-primary-700"
+            >
+              Principal
+            </span>
           </div>
           <div class="mt-4 grid gap-4 lg:grid-cols-2">
             <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                CPF
-              </label>
+              <label class="block text-sm font-medium text-neutral-600">CPF</label>
               <input
                 :ref="(el) => setParticipantCpfRef(el as HTMLInputElement | null, index)"
                 v-model="person.cpf"
@@ -310,7 +437,7 @@
                 placeholder="000.000.000-00"
                 inputmode="numeric"
                 autocomplete="off"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                 :aria-invalid="participantCpfErrors[index] ? 'true' : 'false'"
                 :aria-describedby="`participant-cpf-error-${index}`"
                 required
@@ -321,27 +448,23 @@
                 v-if="participantCpfErrors[index]"
                 :id="`participant-cpf-error-${index}`"
                 role="alert"
-                class="mt-1 text-sm text-red-600 dark:text-red-400"
+                class="mt-1 text-sm text-red-600"
               >
                 {{ participantCpfErrors[index] }}
               </p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Nome completo
-              </label>
+              <label class="block text-sm font-medium text-neutral-600">Nome completo</label>
               <input
                 v-model="person.fullName"
                 type="text"
                 required
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Data de nascimento
-              </label>
+              <label class="block text-sm font-medium text-neutral-600">Data de nascimento</label>
               <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                 <DateField
                   v-model="person.birthDate"
@@ -351,20 +474,18 @@
                 />
                 <span
                   v-if="calculateAgeYears(person.birthDate) !== null"
-                  class="text-xs text-neutral-500 dark:text-neutral-400"
+                  class="text-xs text-neutral-500"
                 >
                   {{ calculateAgeYears(person.birthDate) }} anos
                 </span>
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Genero
-              </label>
+              <label class="block text-sm font-medium text-neutral-600">Genero</label>
               <select
                 v-model="person.gender"
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
                 required
               >
                 <option value="" disabled>Selecione</option>
@@ -374,13 +495,11 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Distrito
-              </label>
+              <label class="block text-sm font-medium text-neutral-600">Distrito</label>
               <select
                 v-model="person.districtId"
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
                 @change="onPersonDistrictChange(index)"
               >
                 <option value="" disabled>Selecione</option>
@@ -390,13 +509,11 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Igreja
-              </label>
+              <label class="block text-sm font-medium text-neutral-600">Igreja</label>
               <select
                 v-model="person.churchId"
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-lg border border-neutral-300 px-4 py-2 dark:border-neutral-700 dark:bg-neutral-800 disabled:opacity-60"
+                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
               >
                 <option value="" disabled>Selecione</option>
                 <option
@@ -409,22 +526,31 @@
               </select>
             </div>
             <div class="lg:col-span-2">
-              <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
-                Foto (opcional)
-              </label>
-              <div class="mt-1 flex flex-wrap items-center gap-4">
-                <input
-                  type="file"
-                  accept="image/*"
-                  :disabled="isPersonLocked(index)"
-                  class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 disabled:opacity-60"
-                  @change="handlePhotoUpload($event, index)"
-                />
-                <img
-                  :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
-                  alt="Pre-visualizacao"
-                  class="h-24 w-24 rounded-lg object-cover"
-                />
+              <label class="block text-sm font-medium text-neutral-600">Foto do participante</label>
+              <div class="mt-2 flex flex-col gap-3 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-4">
+                <div class="flex items-center gap-3 text-xs text-neutral-500">
+                  <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+                    <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 5a4 4 0 0 1 4 4v2h2a4 4 0 0 1 4 4v4H2v-4a4 4 0 0 1 4-4h2V9a4 4 0 0 1 4-4Z" />
+                      <path d="M12 9v6M9 12h6" />
+                    </svg>
+                  </div>
+                  JPG ou PNG (Max 5mb)
+                </div>
+                <div class="flex flex-wrap items-center gap-4">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    :disabled="isPersonLocked(index)"
+                    class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 disabled:opacity-60"
+                    @change="handlePhotoUpload($event, index)"
+                  />
+                  <img
+                    :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
+                    alt="Pre-visualizacao"
+                    class="h-20 w-20 rounded-xl object-cover"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -448,236 +574,287 @@
         </div>
         <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
       </div>
+      <div v-if="currentStep === 3" class="space-y-6">
+        <div class="space-y-1">
+          <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Revisao</p>
+          <h2 class="text-xl font-semibold text-neutral-900">Revisao dos dados</h2>
+          <p class="text-sm text-neutral-500">
+            {{
+              shouldSkipPayment
+                ? "Confira as informações antes de confirmar as inscrições."
+                : "Confira as informações antes de prosseguir com o pagamento."
+            }}
+          </p>
+        </div>
 
-      <BaseCard v-if="currentStep === 3">
-        <div class="space-y-6">
-          <div>
-            <h2 class="text-xl font-semibold text-neutral-800 dark:text-neutral-100">
-              Revisão dos dados
-            </h2>
-            <p class="text-sm text-neutral-500">
-              {{
-                isFreeEvent
-                  ? "Confira as informações antes de confirmar as inscrições."
-                  : "Confira as informações antes de prosseguir com o pagamento."
-              }}
-            </p>
+        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase text-neutral-400">Responsável</p>
+              <p class="text-base font-semibold text-neutral-900">
+                {{ responsibleProfile?.fullName || "Responsável financeiro" }}
+              </p>
+              <p class="text-sm text-neutral-500">CPF: {{ buyerCpf }}</p>
+            </div>
+            <button
+              type="button"
+              class="text-xs font-semibold text-primary-600 hover:text-primary-500"
+              @click="currentStep = 0"
+            >
+              Editar
+            </button>
           </div>
-          <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60">
-            <p>CPF responsavel: {{ buyerCpf }}</p>
-            <p>Distrito: {{ selectedDistrict?.name ?? "Não selecionado" }}</p>
-            <p>Igreja: {{ selectedChurch?.name ?? "Não selecionada" }}</p>
+          <div class="mt-4 grid gap-3 text-sm text-neutral-600 sm:grid-cols-2">
+            <div>
+              <p class="text-xs font-semibold uppercase text-neutral-400">Distrito</p>
+              <p class="text-sm font-semibold text-neutral-800">{{ selectedDistrict?.name ?? "Não selecionado" }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase text-neutral-400">Igreja</p>
+              <p class="text-sm font-semibold text-neutral-800">{{ selectedChurch?.name ?? "Não selecionada" }}</p>
+            </div>
           </div>
-          <div
-            v-if="!isFreeEvent"
-            class="space-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm dark:border-neutral-700 dark:bg-neutral-900/60"
-          >
-            <label class="block text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-              Forma de pagamento
-            </label>
-            <div class="grid gap-2 sm:grid-cols-2">
+        </BaseCard>
+
+        <BaseCard
+          v-if="!shouldSkipPayment"
+          class="rounded-2xl border border-neutral-200 bg-white shadow-sm"
+        >
+          <div class="space-y-3">
+            <h3 class="text-base font-semibold text-neutral-900">Forma de pagamento</h3>
+            <div class="grid gap-3">
               <label
                 v-for="option in paymentOptions"
                 :key="option.value"
-                class="flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm shadow-sm transition hover:border-primary-400 dark:border-neutral-700 dark:bg-neutral-900"
+                class="flex cursor-pointer items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-sm transition hover:border-primary-400"
               >
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <path d="M7 8h10M7 12h4" />
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-800">{{ option.label }}</p>
+                  <p class="text-xs text-neutral-500">{{ option.description }}</p>
+                </div>
                 <input
                   v-model="selectedPaymentMethod"
                   type="radio"
                   :value="option.value"
-                  class="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                  class="h-5 w-5 text-primary-600 focus:ring-primary-500"
                 />
-                <span class="flex flex-col">
-                  <span class="font-medium text-neutral-700 dark:text-neutral-100">{{ option.label }}</span>
-                  <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ option.description }}</span>
-                </span>
               </label>
             </div>
-            <p class="text-xs text-neutral-400 dark:text-neutral-500">
-              Pagamento selecionado: {{ selectedPaymentLabel }}.
+            <p class="text-xs text-neutral-400">Pagamento selecionado: {{ selectedPaymentLabel }}.</p>
+            <p v-if="isManualPaymentSelected" class="text-xs text-primary-600">
+              Pagamentos manuais serao confirmados pela tesouraria. Guarde o comprovante para quitar a pendencia.
             </p>
-            <p
-              v-if="isManualPaymentSelected"
-              class="text-xs text-primary-600 dark:text-primary-200"
-            >
-              Pagamentos manuais serão confirmados pela tesouraria. Guarde o comprovante para quitar a pendência.
-            </p>
-            <p
-              v-if="isFreePaymentSelected"
-              class="text-xs text-primary-500 dark:text-primary-200"
-            >
+            <p v-if="isFreePaymentSelected" class="text-xs text-primary-500">
               Esta inscrição será marcada como paga automaticamente, sem gerar cobrança.
             </p>
           </div>
-          <div class="grid gap-4">
+        </BaseCard>
+
+        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div class="flex items-center justify-between gap-4">
+            <h3 class="text-base font-semibold text-neutral-900">Participantes ({{ people.length }})</h3>
+            <span v-if="!shouldSkipPayment" class="text-sm font-semibold text-primary-600">
+              {{ formatCurrency(ticketPriceCents) }} cada
+            </span>
+          </div>
+          <div class="mt-4 space-y-3">
             <div
               v-for="(person, index) in people"
               :key="index"
-              class="rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900/60"
+              class="flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div class="flex items-center gap-3">
-                  <img
-                    :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
-                    alt="Foto do participante"
-                    class="h-12 w-12 rounded-lg object-cover"
-                  />
-                  <div>
-                    <p class="text-sm font-semibold text-neutral-700 dark:text-neutral-100">
-                      {{ person.fullName }}
-                    </p>
-                    <p class="text-xs text-neutral-500">
-                      CPF: {{ person.cpf }}
-                    </p>
-                  </div>
+              <div class="flex items-center gap-3">
+                <img
+                  :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
+                  alt="Foto do participante"
+                  class="h-12 w-12 rounded-xl object-cover"
+                />
+                <div>
+                  <p class="text-sm font-semibold text-neutral-900">{{ person.fullName }}</p>
+                  <p class="text-xs text-neutral-500">
+                    {{ getGenderLabel(person.gender) }}
+                    <span v-if="calculateAgeYears(person.birthDate) !== null">
+                      • {{ calculateAgeYears(person.birthDate) }} anos
+                    </span>
+                  </p>
                 </div>
-                <button class="text-sm text-primary-600 hover:underline" @click="currentStep = 2">
+              </div>
+              <div class="flex flex-col items-start gap-2 text-left sm:items-end sm:text-right">
+                <div>
+                  <p
+                    v-if="isAgeExempt(person) && !isFreeEvent"
+                    class="text-xs font-semibold text-emerald-600"
+                  >
+                    Isento (idade <= mínima)
+                  </p>
+                  <p class="text-sm font-semibold text-neutral-700">
+                    {{ formatCurrency(getParticipantPriceCents(person)) }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-primary-600 hover:text-primary-500"
+                  @click="currentStep = 2"
+                >
                   Editar
                 </button>
               </div>
-              <div class="mt-3 grid gap-1 text-sm text-neutral-500 sm:grid-cols-2">
-                <p>
-                  Nascimento: {{ formatBirthDateLabel(person.birthDate) }}
-                  <span v-if="calculateAgeYears(person.birthDate) !== null">
-                    ({{ calculateAgeYears(person.birthDate) }} anos)
-                  </span>
-                </p>
-                <p>Genero: {{ getGenderLabel(person.gender) }}</p>
-                <p>Distrito: {{ getDistrictName(person.districtId) }}</p>
-                <p>Igreja: {{ getChurchName(person.churchId) }}</p>
-              </div>
             </div>
           </div>
-          <div class="flex flex-col gap-2 text-left sm:text-right">
-            <p v-if="!isFreeEvent" class="text-sm text-neutral-500">
-              Forma de pagamento: {{ selectedPaymentLabel }}
-            </p>
-            <p class="text-sm text-neutral-500">Total</p>
-            <p class="text-2xl font-semibold text-primary-600 dark:text-primary-400">
-              {{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents * people.length) }}
-            </p>
+        </BaseCard>
+
+        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <div class="space-y-2 text-sm text-neutral-600">
+            <div class="flex items-center justify-between">
+              <span>Inscrições ({{ people.length }}x)</span>
+              <span>{{ shouldSkipPayment ? "Gratuito" : formatCurrency(totalPayableCents) }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Taxas de processamento</span>
+              <span class="text-emerald-600">Gratis</span>
+            </div>
           </div>
-          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
-            <button
-              type="button"
-              class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
-              @click="currentStep--"
-            >
-              Voltar
-            </button>
-            <button
-              type="button"
-              class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
-              :disabled="submitting"
-              @click="submitBatch"
-            >
-              <span v-if="submitting" class="flex items-center justify-center gap-2">
-                <span
-                  class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"
-                ></span>
-                Processando...
-              </span>
-              <span v-else>{{ isFreeEvent ? "Confirmar inscrições" : "Gerar pagamento" }}</span>
-            </button>
+          <div class="mt-4 flex items-center justify-between border-t border-neutral-200 pt-4">
+            <span class="text-sm font-semibold text-neutral-600">Total a pagar</span>
+            <span class="text-2xl font-semibold text-primary-600">
+              {{ shouldSkipPayment ? "Gratuito" : formatCurrency(totalPayableCents) }}
+            </span>
           </div>
-          <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
+        </BaseCard>
+
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
+          <button
+            type="button"
+            class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+            @click="currentStep--"
+          >
+            Voltar
+          </button>
+          <button
+            type="button"
+            class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
+            :disabled="submitting"
+            @click="submitBatch"
+          >
+            <span v-if="submitting" class="flex items-center justify-center gap-2">
+              <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent"></span>
+              Processando...
+            </span>
+            <span v-else>{{ shouldSkipPayment ? "Confirmar inscrições" : "Gerar pagamento" }}</span>
+          </button>
         </div>
-      </BaseCard>
-      <!-- Etapa 4: Pagamento inline com Pix (QR + copia e cola) -->
-      <BaseCard v-if="currentStep === 4 && inlinePayment">
-        <div class="flex flex-col gap-6 md:flex-row md:items-start">
-          <div class="flex-1 space-y-4">
-            <div class="flex items-start gap-3 rounded-xl border px-4 py-3" :class="inlineStatusStyles.container">
-              <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full text-white" :class="inlineStatusStyles.badge">
-                {{ inlineStatusIcon }}
-              </span>
+        <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
+      </div>
+      <div v-if="currentStep === 4 && inlinePayment" class="space-y-6">
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-emerald-600">{{ inlineStatusTitle }}</p>
+          <h2 class="mt-2 text-2xl font-semibold text-neutral-900">Pedido Gerado!</h2>
+          <p class="mt-2 text-sm text-neutral-500">{{ inlineStatusMessage }}</p>
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-2">
+          <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <div class="space-y-4 text-center">
               <div>
-                <h2 class="text-lg font-semibold text-neutral-800 dark:text-neutral-100">{{ inlineStatusTitle }}</h2>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                  {{ inlineStatusMessage }}
+                <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Valor a pagar</p>
+                <p class="text-3xl font-semibold text-primary-600">
+                  {{
+                    formatCurrency(
+                      inlinePayment?.totalCents ?? totalPayableCents
+                    )
+                  }}
                 </p>
               </div>
-            </div>
-
-            <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-6 dark:border-neutral-700 dark:bg-neutral-900/60">
-              <div class="flex flex-col gap-2 text-sm text-neutral-600 dark:text-neutral-300 sm:flex-row sm:items-center sm:justify-between">
-                <span>ID do pedido</span>
-                <code class="rounded bg-neutral-100 px-2 py-1 text-xs dark:bg-neutral-800">{{ createdOrderId }}</code>
-              </div>
-              <div class="mt-4 grid gap-3 text-sm text-neutral-600 dark:text-neutral-300 md:grid-cols-2">
-                <div>
-                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Evento</span>
-                  <span>{{ eventStore.event?.title ?? "Carregando..." }}</span>
-                </div>
-                <div>
-                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscrição</span>
-                  <span>{{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents) }}</span>
-                </div>
-                <div>
-                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Total</span>
-                  <span>{{ formatCurrency(inlinePayment?.totalCents ?? ticketPriceCents * (inlinePayment?.participantCount ?? people.length)) }}</span>
-                </div>
-                <div v-if="currentLotName">
-                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Lote vigente</span>
-                  <span>{{ currentLotName }}</span>
-                </div>
-                <div>
-                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Forma de pagamento</span>
-                  <span>{{ paymentMethodLabel(inlinePayment?.paymentMethod ?? selectedPaymentMethod) }}</span>
-                </div>
-                <div v-if="inlinePayment?.paidAt">
-                  <span class="block text-xs uppercase tracking-wide text-neutral-400">Pagamento registrado em</span>
-                  <span>{{ formatDate(inlinePayment?.paidAt as any) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex-1 space-y-6">
-            <section v-if="inlineIsPixMethod" class="space-y-3">
-              <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Pague com Pix</h2>
-                <button
-                  type="button"
-                  class="text-sm text-primary-600 hover:text-primary-500 disabled:text-neutral-400"
-                  :disabled="!inlinePayment?.pixQrData"
-                  @click="copyInlinePixCode"
-                >
-                  Copiar código
-                </button>
-              </header>
-
-              <div class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-6 text-center dark:border-neutral-700 dark:bg-neutral-900/80">
+              <div class="flex items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
                 <img
                   v-if="inlinePayment?.pixQrData?.qr_code_base64"
                   :src="`data:image/png;base64,${inlinePayment.pixQrData.qr_code_base64}`"
                   alt="QR Code Pix"
-                  class="h-48 w-48 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700"
+                  class="h-48 w-48 rounded-xl border border-neutral-200 bg-white p-2"
                 />
                 <div v-else class="flex flex-col items-center justify-center gap-2 py-8 text-neutral-500">
-                  <svg class="h-6 w-6 animate-spin text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
+                  <svg class="h-6 w-6 animate-spin text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
                   <span class="text-sm">Gerando QR Code do Pix...</span>
                 </div>
-                <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                  Escaneie com o aplicativo do seu banco ou cole o código Pix abaixo.
-                </p>
-                <textarea
-                  v-if="inlinePayment?.pixQrData?.qr_code"
-                  class="w-full rounded-lg border border-neutral-300 bg-white p-3 text-xs text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
-                  rows="3"
-                  readonly
-                  :value="inlinePayment.pixQrData.qr_code"
-                />
-                <p v-else class="text-sm text-neutral-400">
-                  O QR Code será exibido assim que a preferência de pagamento for criada.
-                </p>
               </div>
-            </section>
+              <p v-if="inlineIsPixMethod" class="text-sm text-neutral-500">
+                Escaneie com o app do seu banco ou copie o codigo Pix abaixo.
+              </p>
+              <button
+                type="button"
+                class="w-full rounded-xl border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 disabled:opacity-50"
+                :disabled="!canCopyInlinePix"
+                @click="copyInlinePixCode"
+              >
+                Copiar Codigo PIX
+              </button>
+              <textarea
+                v-if="inlinePayment?.pixQrData?.qr_code"
+                class="w-full rounded-xl border border-neutral-200 bg-white p-3 text-xs text-neutral-600"
+                rows="3"
+                readonly
+                :value="inlinePixCode"
+              />
+              <p v-if="inlinePixError" class="text-sm font-semibold text-red-600">
+                {{ inlinePixError }}
+              </p>
+            </div>
+          </BaseCard>
 
-            <section v-if="!inlineIsPixMethod && !inlineIsManual" class="space-y-3">
-              <h2 class="text-lg font-semibold text-neutral-700 dark:text-neutral-100">Checkout Mercado Pago</h2>
-              <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                Prefere cartão? Abra o checkout seguro do Mercado Pago em uma nova aba.
+          <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <div class="space-y-4 text-sm text-neutral-600">
+              <div class="flex items-center justify-between">
+                <span>ID do pedido</span>
+                <code class="rounded bg-neutral-100 px-2 py-1 text-xs">{{ createdOrderId }}</code>
+              </div>
+              <div>
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Evento</span>
+                <span>{{ eventStore.event?.title ?? "Carregando..." }}</span>
+              </div>
+              <div>
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Valor por inscrição</span>
+                <span>{{ isFreeEvent ? "Gratuito" : formatCurrency(ticketPriceCents) }}</span>
+              </div>
+              <div>
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Total</span>
+                <span>
+                  {{
+                    formatCurrency(
+                      inlinePayment?.totalCents ?? totalPayableCents
+                    )
+                  }}
+                </span>
+              </div>
+              <div v-if="currentLotName">
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Lote vigente</span>
+                <span>{{ currentLotName }}</span>
+              </div>
+              <div>
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Forma de pagamento</span>
+                <span>{{ paymentMethodLabel(inlinePayment?.paymentMethod ?? selectedPaymentMethod) }}</span>
+              </div>
+              <div v-if="inlinePayment?.paidAt">
+                <span class="block text-xs uppercase tracking-wide text-neutral-400">Pagamento registrado em</span>
+                <span>{{ formatDate(inlinePayment?.paidAt as any) }}</span>
+              </div>
+            </div>
+            <div v-if="!inlineIsPixMethod && !inlineIsManual" class="mt-5 space-y-2">
+              <p class="text-sm text-neutral-500">
+                Prefere cartao? Abra o checkout seguro do Mercado Pago em uma nova aba.
               </p>
               <button
                 v-if="inlinePayment?.initPoint"
@@ -688,15 +865,27 @@
                 Abrir checkout
               </button>
               <p v-if="inlinePayment?.status !== 'PAID'" class="text-xs text-neutral-400">
-                Assim que o pagamento for aprovado, o status muda automaticamente. Se já pagou, aguarde alguns segundos.
+                Assim que o pagamento for aprovado, o status muda automaticamente.
               </p>
-            </section>
-          </div>
+            </div>
+          </BaseCard>
         </div>
+      </div>
+    </div>
+    <div v-else-if="registrationOpen" class="space-y-4">
+      <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <p class="text-sm text-neutral-600">Leia o aviso para continuar.</p>
+        <button
+          v-if="noticeEnabled"
+          type="button"
+          class="mt-3 inline-flex text-xs font-semibold text-primary-600 hover:text-primary-500"
+          @click="openNotice"
+        >
+          Ver aviso
+        </button>
       </BaseCard>
     </div>
-
-    <BaseCard v-else>
+    <BaseCard v-else class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <p class="text-neutral-500">
         As inscrições deste evento estão liberadas pelo sistema, mas dependem da abertura do próximo lote.
         <span v-if="nextLotInfo">
@@ -708,26 +897,29 @@
         </span>
       </p>
     </BaseCard>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
-    import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-  import { useRouter } from "vue-router";
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 
-  import DateField from "../../components/forms/DateField.vue";
-  import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
-  import BaseCard from "../../components/ui/BaseCard.vue";
-  import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
-  import StepWizard from "../../components/ui/StepWizard.vue";
-  import IconArrowRight from "../../components/ui/IconArrowRight.vue";
+import DateField from "../../components/forms/DateField.vue";
+import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
+import EventNoticeModal from "../../components/forms/EventNoticeModal.vue";
+import BaseCard from "../../components/ui/BaseCard.vue";
+import LoadingSpinner from "../../components/ui/LoadingSpinner.vue";
+import IconArrowRight from "../../components/ui/IconArrowRight.vue";
 import { useCatalogStore } from "../../stores/catalog";
 import { useEventStore } from "../../stores/event";
 import { useApi } from "../../composables/useApi";
 import { API_BASE_URL } from "../../config/api";
-import type { Church, EventLot, RegistrationProfile } from "../../types/api";
+import type { Church, EventLot, RegistrationProfile, EventNotice } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
+import { buildNoticeFingerprint, hasSeenNotice, setSeenNotice } from "../../utils/eventNotice";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
 import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
+import { normalizePixCode, hashPixCode } from "../../utils/pix";
 import {
   paymentMethodLabel,
   PAYMENT_METHODS,
@@ -769,15 +961,77 @@ import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
 
   const props = defineProps<{ slug: string }>();
   const router = useRouter();
+  const route = useRoute();
   const eventStore = useEventStore();
   const catalog = useCatalogStore();
   const { api } = useApi();
   const auth = useAuthStore();
 
+  const noticeOpen = ref(false);
+  const noticeAccepted = ref(true);
+  const resolvedNotice = computed<EventNotice | null>(() => {
+    const notice = eventStore.event?.notice ?? null;
+    if (!notice || !notice.enabled) {
+      return null;
+    }
+    return {
+      ...notice,
+      showOnce: notice.showOnce ?? true
+    };
+  });
+  const noticeEnabled = computed(() => Boolean(resolvedNotice.value));
+  const noticeSlug = computed(() => props.slug ?? "");
+  const noticeFingerprint = computed(() =>
+    resolvedNotice.value ? buildNoticeFingerprint(resolvedNotice.value) : ""
+  );
+  const canStartWizard = computed(() => !noticeEnabled.value || noticeAccepted.value);
+
+  const evaluateNotice = () => {
+    if (!noticeEnabled.value) {
+      noticeOpen.value = false;
+      noticeAccepted.value = true;
+      return;
+    }
+    if (resolvedNotice.value?.showOnce === false) {
+      noticeOpen.value = true;
+      noticeAccepted.value = false;
+      return;
+    }
+    const seen = hasSeenNotice(noticeSlug.value, noticeFingerprint.value);
+    noticeOpen.value = !seen;
+    noticeAccepted.value = seen;
+  };
+
+  const openNotice = () => {
+    noticeOpen.value = true;
+  };
+
+  const handleNoticeAccept = (remember: boolean) => {
+    noticeAccepted.value = true;
+    noticeOpen.value = false;
+    if (resolvedNotice.value?.showOnce !== false && remember) {
+      setSeenNotice(noticeSlug.value, noticeFingerprint.value);
+    }
+  };
+
+  const handleNoticeCancel = () => {
+    noticeAccepted.value = false;
+    noticeOpen.value = false;
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push({ name: "home" });
+  };
+
   const isFreeEvent = computed(() => Boolean(eventStore.event?.isFree));
 const ticketPriceCents = computed(
   () => (isFreeEvent.value ? 0 : eventStore.event?.currentPriceCents ?? eventStore.event?.priceCents ?? 0)
 );
+const minAgeYears = computed(() => {
+  const value = eventStore.event?.minAgeYears;
+  return typeof value === "number" ? value : null;
+});
 const formatDateTimeBr = (value: string) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -1081,11 +1335,11 @@ const disableStatePersistence = () => {
   const cpfAvailabilityCache = new Map<string, CpfCheckResult>();
 
   const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
-  const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento";
+  const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento, verifique se já foi confirmado o pagamento.";
   const DUPLICATE_GLOBAL_ERROR =
     "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
   const REGISTERED_GLOBAL_ERROR =
-    "Um ou mais CPFs já possuem inscricão confirmada neste evento.";
+    "Um ou mais CPFs já possuem inscricão neste evento, verifique se já foi confirmado o pagamento.";
   const REMOTE_ERROR_MESSAGE = "Não foi possível verificar CPF agora. Tente novamente.";
   const CPF_GLOBAL_MESSAGES = [
     DUPLICATE_GLOBAL_ERROR,
@@ -1101,7 +1355,7 @@ const disableStatePersistence = () => {
 
   const steps = computed(() => {
     const base = [
-      { title: "CPF", description: "Informe o CPF do responsável" },
+      { title: "CPF", description: "Informe o CPF do pagador" },
       { title: "Unidade", description: "Escolha distrito e igreja" },
       { title: "Participantes", description: "Dados individuais" },
       { title: "Revisão", description: isFreeEvent.value ? "Revise os dados e confirme" : "Revise os dados" }
@@ -1121,11 +1375,11 @@ const disableStatePersistence = () => {
       eventStore.event?.paymentMethods && eventStore.event.paymentMethods.length > 0
         ? eventStore.event.paymentMethods
         : PAYMENT_METHODS.map((option) => option.value);
-    // Filtrar m�f©todos exclusivos de admin se n�f£o for admin
+    // Filtrar metodos exclusivos de admin se nao for admin
     const isAdmin = auth.user?.role === "AdminGeral" || auth.user?.role === "AdminDistrital";
     return PAYMENT_METHODS.filter((option) => {
       if (!allowed.includes(option.value)) return false;
-      // Se for m�f©todo exclusivo de admin e usu�f¡rio n�f£o for admin, n�f£o mostrar
+      // Se for metodo exclusivo de admin e usuario nao for admin, nao mostrar
       if (ADMIN_ONLY_PAYMENT_METHODS.includes(option.value) && !isAdmin) {
         return false;
       }
@@ -1169,6 +1423,21 @@ const disableStatePersistence = () => {
   const getGenderLabel = (value: string) =>
     genderOptions.find((option) => option.value === value)?.label ?? value;
 
+  const parseDateParts = (value?: string | null) => {
+    if (!value) return null;
+    const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+      return null;
+    }
+    return { year, month, day };
+  };
+
+  const eventStartDateParts = computed(() => parseDateParts(eventStore.event?.startDate ?? ""));
+
   const formatBirthDateLabel = (birthDate?: string | null): string => {
     if (!birthDate) return "--";
     const match = birthDate.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -1184,24 +1453,40 @@ const disableStatePersistence = () => {
   };
 
   const calculateAgeYears = (birthDate: string): number | null => {
-    if (!birthDate) return null;
-    const parts = birthDate.split("-");
-    if (parts.length !== 3) return null;
-    const [yearStr, monthStr, dayStr] = parts;
-    const year = Number(yearStr);
-    const month = Number(monthStr);
-    const day = Number(dayStr);
-    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
-    const date = new Date(year, month - 1, day);
-    if (Number.isNaN(date.getTime())) return null;
-    const today = new Date();
-    let age = today.getFullYear() - date.getFullYear();
-    const m = today.getMonth() - date.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+    const birthParts = parseDateParts(birthDate);
+    const eventParts = eventStartDateParts.value;
+    if (!birthParts || !eventParts) return null;
+    let age = eventParts.year - birthParts.year;
+    if (
+      eventParts.month < birthParts.month ||
+      (eventParts.month === birthParts.month && eventParts.day < birthParts.day)
+    ) {
       age -= 1;
     }
     return age >= 0 ? age : null;
   };
+
+  const isAgeExempt = (person: PersonForm) => {
+    const minAge = minAgeYears.value;
+    if (minAge === null) return false;
+    const age = calculateAgeYears(person.birthDate);
+    if (age === null) return false;
+    return age <= minAge;
+  };
+
+  const getParticipantPriceCents = (person: PersonForm) => {
+    if (isFreeEvent.value) return 0;
+    if (isAgeExempt(person)) return 0;
+    return ticketPriceCents.value;
+  };
+
+  const totalPayableCents = computed(() =>
+    people.reduce((acc, person) => acc + getParticipantPriceCents(person), 0)
+  );
+
+  const shouldSkipPayment = computed(
+    () => isFreeEvent.value || (people.length > 0 && totalPayableCents.value === 0)
+  );
 
   const createEmptyPerson = (): PersonForm => ({
     fullName: "",
@@ -1512,6 +1797,14 @@ const disableStatePersistence = () => {
   });
 
   watch(
+    () => [noticeSlug.value, noticeEnabled.value, noticeFingerprint.value, resolvedNotice.value?.showOnce],
+    () => {
+      evaluateNotice();
+    },
+    { immediate: true }
+  );
+
+  watch(
     () => eventStore.event?.bannerUrl,
     () => {
       eventBannerError.value = false;
@@ -1768,9 +2061,9 @@ const disableStatePersistence = () => {
         payload
       );
       disableStatePersistence();
-      // Se for m�f©todo gratuito, n�f£o redirecionar para p�f¡gina de pagamento
-      if (isFreePaymentSelected.value && response.payment?.isFree) {
-        // Redirecionar para p�f¡gina de evento com mensagem de sucesso
+      // Se for isento/gratuito, nao redirecionar para pagina de pagamento
+      if (response.payment?.isFree || response.payment?.totalCents === 0) {
+        // Redirecionar para pagina de evento com mensagem de sucesso
         router.push({
           name: "event",
           params: { slug: props.slug },
@@ -1803,6 +2096,9 @@ const disableStatePersistence = () => {
     preferenceId?: string;
     initPoint?: string;
     pixQrData?: { qr_code: string; qr_code_base64: string };
+    pixQrHash?: string;
+    pixQrLength?: number;
+    pixQrBase64Length?: number;
     status?: string;
     statusDetail?: string;
     participantCount?: number;
@@ -1814,6 +2110,41 @@ const disableStatePersistence = () => {
   const createdOrderId = ref<string>("");
   const inlinePayment = ref<InlinePayment>(null);
   const inlinePollHandle = ref<number | null>(null);
+  const inlinePixHash = ref("");
+  const inlinePixError = ref("");
+
+  const inlinePixCode = computed(() =>
+    normalizePixCode(inlinePayment.value?.pixQrData?.qr_code ?? "")
+  );
+  const canCopyInlinePix = computed(() => Boolean(inlinePixCode.value) && !inlinePixError.value);
+
+  watch(
+    [inlinePixCode, () => inlinePayment.value?.pixQrHash],
+    async ([code, serverHash]) => {
+      if (!code) {
+        inlinePixHash.value = "";
+        inlinePixError.value = "";
+        return;
+      }
+      const hash = await hashPixCode(code);
+      inlinePixHash.value = hash;
+      if (serverHash && hash && serverHash !== hash) {
+        inlinePixError.value =
+          "Codigo Pix inconsistente. Gere um novo Pix para continuar.";
+        if (createdOrderId.value) {
+          api.post("/payments/pix/integrity", {
+            orderId: createdOrderId.value,
+            qrHashClient: hash,
+            qrHashServer: serverHash,
+            qrLength: code.length,
+            source: "event_flow"
+          }).catch(() => undefined);
+        }
+      } else {
+        inlinePixError.value = "";
+      }
+    }
+  );
 
   const inlineIsPixMethod = computed(() => (inlinePayment.value?.paymentMethod ?? selectedPaymentMethod.value) === "PIX_MP");
   const inlineIsPaid = computed(() => inlinePayment.value?.status === "PAID");
