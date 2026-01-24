@@ -1,4 +1,4 @@
-import type { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@/prisma/generated/client";
 import slugify from "slugify";
 
 import { env } from "../../config/env";
@@ -404,7 +404,7 @@ export class EventService {
         isActive: data.isActive ?? true,
         minAgeYears: data.minAgeYears ?? null,
         ...mapNoticeToFields(data.notice),
-        formConfig: data.formConfig ? normalizeFormConfig(data.formConfig) : null
+        formConfig: data.formConfig ? normalizeFormConfig(data.formConfig) : Prisma.JsonNull
       }
     });
     const serialized = {
@@ -483,7 +483,7 @@ export class EventService {
       Object.assign(payload, mapNoticeToFields(data.notice));
     }
     if (data.formConfig !== undefined) {
-      payload.formConfig = data.formConfig ? normalizeFormConfig(data.formConfig) : null;
+      payload.formConfig = data.formConfig ? normalizeFormConfig(data.formConfig) : Prisma.JsonNull;
     }
 
     const targetDistrictId = data.districtId ?? event.districtId;

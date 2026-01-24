@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@/prisma/generated/client";
 import type { Request } from "express";
 
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
@@ -438,7 +438,7 @@ export class OrderService {
           churchId: person.churchId,
           photoUrl: person.storedPhoto,
           gender: person.gender,
-          formResponses: person.formResponses ?? {},
+          formResponses: (person.formResponses ?? {}) as Prisma.InputJsonValue,
           paymentMethod: resolvedMethod,
           ministryId: event.ministryId,
           status: isFreeOrder ? RegistrationStatus.PAID : RegistrationStatus.PENDING_PAYMENT,
