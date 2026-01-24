@@ -7,7 +7,7 @@
       <p class="text-neutral-500">Evento não encontrado.</p>
     </BaseCard>
   </div>
-  <div v-else class="min-h-screen bg-[#EEF1F5] pb-16" data-uppercase-scope>
+  <div v-else class="event-flow min-h-screen bg-[#EEF1F5] pb-16" data-uppercase-scope>
     <EventNoticeModal
       v-if="noticeEnabled && resolvedNotice"
       :slug="noticeSlug"
@@ -2741,6 +2741,17 @@ input[data-quantity-input]::-webkit-inner-spin-button {
 
 input[data-quantity-input] {
   -moz-appearance: textfield;
+}
+
+.event-flow input,
+.event-flow select,
+.event-flow textarea {
+  color: #111827;
+}
+
+.event-flow input::placeholder,
+.event-flow textarea::placeholder {
+  color: #4b5563;
 }
 </style>
 
