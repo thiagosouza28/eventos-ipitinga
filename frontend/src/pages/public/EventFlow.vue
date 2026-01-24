@@ -3,7 +3,7 @@
     <LoadingSpinner />
   </div>
   <div v-else-if="!eventStore.event">
-    <BaseCard>
+    <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
       <p class="text-neutral-500">Evento não encontrado.</p>
     </BaseCard>
   </div>
@@ -19,10 +19,65 @@
       @accept="handleNoticeAccept"
       @cancel="handleNoticeCancel"
     />
-    <div class="mx-auto w-full max-w-3xl space-y-6 px-4 pb-12 pt-6">
+    <teleport to="body">
+      <div
+        v-if="minorConfirmationOpen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+        tabindex="-1"
+        @keydown.esc="handleMinorConfirmationClose"
+        @click.self="handleMinorConfirmationClose"
+        ref="minorDialogRef"
+      >
+        <div
+          class="w-full max-w-sm rounded border border-emerald-200 bg-white p-6 dark:border-emerald-500/40 dark:bg-neutral-900"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="minor-confirmation-title"
+        >
+          <div class="flex items-center gap-3">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </span>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-emerald-500">Inscrição concluída</p>
+              <h2 id="minor-confirmation-title" class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                Inscrição registrada
+              </h2>
+            </div>
+          </div>
+          <p class="mt-4 text-sm text-neutral-600 dark:text-neutral-300">
+            {{ minorConfirmationMessage }}
+          </p>
+          <div class="mt-6 flex justify-end">
+            <button
+              type="button"
+              class="rounded bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+              @click="handleMinorConfirmationClose"
+            >
+              Entendi
+            </button>
+          </div>
+        </div>
+      </div>
+    </teleport>
+    <div class="mx-auto w-full max-w-6xl space-y-6 px-4 pb-12 pt-6">
+      <div class="sticky top-20 z-40 flex justify-end lg:hidden">
+        <!-- <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[#5a6bff] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25"
+          :aria-pressed="isDark"
+          @click="toggleTheme"
+        >
+          <SunIcon v-if="isDark" class="h-5 w-5" aria-hidden="true" />
+          <MoonIcon v-else class="h-5 w-5" aria-hidden="true" />
+          <span class="sr-only">Alternar tema</span>
+        </button> -->
+      </div>
       <div
         v-if="route.query.success === '1'"
-        class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-sm"
+        class="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900"
       >
         <div class="flex items-start gap-3">
           <span class="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white">
@@ -39,12 +94,12 @@
           </div>
         </div>
       </div>
-      <BaseCard class="rounded-2xl border border-neutral-200 bg-white/95 shadow-sm">
+      <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
         <div class="space-y-4">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
             <div v-if="hasBannerImage" class="w-full shrink-0 sm:mt-1 sm:w-auto">
-              <div class="overflow-hidden rounded-none border border-neutral-200 bg-white p-1.5 shadow-sm">
+              <div class="overflow-hidden rounded-none border border-neutral-200 bg-white p-1.5">
                 <img
                   :src="resolvedBannerUrl"
                   alt="Banner do evento"
@@ -87,7 +142,7 @@
           </div>
           <div class="text-left sm:text-right">
             <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">
-              Investimento
+              Valor da inscrição
             </p>
             <p :class="['text-2xl font-semibold', priceValueClass]">
               {{ priceInfo.value }}
@@ -135,7 +190,7 @@
     </BaseCard>
 
     <div v-if="registrationOpen && canStartWizard" class="space-y-6">
-      <div v-if="currentStep < 4" class="rounded-2xl border border-neutral-200 bg-white px-4 py-5 shadow-sm">
+      <div v-if="currentStep < 4" class="rounded border border-neutral-200 bg-white px-4 py-5">
         <div class="flex items-center justify-between text-xs font-semibold text-neutral-400">
           <span>Passo {{ currentStep + 1 }} de 4</span>
           <span class="uppercase tracking-wide text-neutral-300">Inscrição</span>
@@ -175,7 +230,7 @@
         </div>
       </div>
 
-            <BaseCard v-if="currentStep === 0" class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <BaseCard v-if="currentStep === 0" class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
         <div class="space-y-4">
           <div class="space-y-1">
             <h2 class="text-xl font-semibold text-neutral-900">Identificação</h2>
@@ -194,7 +249,7 @@
         </div>
       </BaseCard>
 
-            <BaseCard v-if="currentStep === 1" class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <BaseCard v-if="currentStep === 1" class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
         <div class="space-y-6">
           <div>
             <h2 class="text-xl font-semibold text-neutral-900">Selecione sua Unidade</h2>
@@ -202,7 +257,7 @@
           </div>
           <div
             v-if="false"
-            class="rounded-md border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
+            class="rounded border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
           >
             <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
             <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
@@ -210,7 +265,7 @@
               <div
                 v-for="order in pendingOrders"
                 :key="order.orderId"
-                class="rounded-md border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40"
+                class="rounded border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40"
               >
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div class="flex-1">
@@ -222,7 +277,7 @@
                   </div>
                   <RouterLink
                     :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
-                    class="inline-flex shrink-0 items-center justify-center rounded-md border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100"
+                    class="inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100"
                   >
                     Pagar
                   </RouterLink>
@@ -252,7 +307,7 @@
                   </span>
                   <select
                     v-model="selectedDistrictId"
-                    class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
                     :aria-invalid="generalErrors.district ? 'true' : 'false'"
                     aria-describedby="district-error"
                     required
@@ -285,7 +340,7 @@
                   </span>
                   <select
                     v-model="selectedChurchId"
-                    class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
                     :aria-invalid="generalErrors.church ? 'true' : 'false'"
                     aria-describedby="church-error"
                     :disabled="!selectedDistrictId"
@@ -308,16 +363,17 @@
               </div>
             </div>
             <div
-              class="rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
+              class="rounded border border-neutral-200 bg-neutral-50 p-4"
               :aria-invalid="generalErrors.quantity ? 'true' : 'false'"
               aria-describedby="quantity-error"
             >
               <div class="flex items-center justify-between gap-4">
                 <div>
                   <p class="text-sm font-semibold text-neutral-800">Participantes</p>
-                  <p class="text-xs text-neutral-500">Incluindo você</p>
+                  <p class="text-xs text-neutral-500">Número de participantes para esta inscrição.</p>
+                  
                 </div>
-                <div class="flex items-center rounded-full border border-neutral-200 bg-white px-2 py-1 shadow-sm">
+                <div class="flex items-center rounded border border-neutral-200 bg-white px-2 py-1">
                   <button
                     type="button"
                     class="h-9 w-9 text-lg font-semibold text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-40"
@@ -331,7 +387,7 @@
                     v-model.number="quantity"
                     type="number"
                     min="1"
-                    max="10"
+                    max="5"
                     data-quantity-input
                     class="h-9 w-12 border-0 bg-transparent text-center text-base font-semibold outline-none"
                     required
@@ -359,14 +415,14 @@
             <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
               <button
                 type="button"
-                class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+                class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
                 @click="currentStep--"
               >
                 Voltar
               </button>
               <button
                 type="submit"
-                class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto"
+                class="w-full rounded bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-primary-500 sm:w-auto"
               >
                 Avançar
               </button>
@@ -381,7 +437,7 @@
           <p class="text-sm text-neutral-500">Preencha as informações de quem irá ao evento.</p>
         </div>
 
-        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
           <div class="grid gap-3 text-xs text-neutral-500 sm:grid-cols-2">
             <div>
               <p class="text-[10px] font-semibold uppercase text-neutral-400">CPF responsável</p>
@@ -405,7 +461,7 @@
         <BaseCard
           v-for="(person, index) in people"
           :key="index"
-          class="rounded-2xl border border-neutral-200/80 bg-white shadow-sm"
+          class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none"
         >
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
@@ -437,7 +493,7 @@
                 placeholder="000.000.000-00"
                 inputmode="numeric"
                 autocomplete="off"
-                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                 :aria-invalid="participantCpfErrors[index] ? 'true' : 'false'"
                 :aria-describedby="`participant-cpf-error-${index}`"
                 required
@@ -460,7 +516,7 @@
                 type="text"
                 required
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
+                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
               />
             </div>
             <div>
@@ -481,11 +537,11 @@
               </div>
             </div>
             <div>
-              <label class="block text-sm font-medium text-neutral-600">Genero</label>
+              <label class="block text-sm font-medium text-neutral-600">Gênero</label>
               <select
                 v-model="person.gender"
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
+                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
                 required
               >
                 <option value="" disabled>Selecione</option>
@@ -499,7 +555,7 @@
               <select
                 v-model="person.districtId"
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
+                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
                 @change="onPersonDistrictChange(index)"
               >
                 <option value="" disabled>Selecione</option>
@@ -513,7 +569,7 @@
               <select
                 v-model="person.churchId"
                 :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm shadow-sm disabled:opacity-60"
+                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
               >
                 <option value="" disabled>Selecione</option>
                 <option
@@ -527,7 +583,7 @@
             </div>
             <div class="lg:col-span-2">
               <label class="block text-sm font-medium text-neutral-600">Foto do participante</label>
-              <div class="mt-2 flex flex-col gap-3 rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 p-4">
+              <div class="mt-2 flex flex-col gap-3 rounded border border-dashed border-neutral-200 bg-neutral-50 p-4">
                 <div class="flex items-center gap-3 text-xs text-neutral-500">
                   <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-50 text-primary-600">
                     <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
@@ -542,13 +598,13 @@
                     type="file"
                     accept="image/*"
                     :disabled="isPersonLocked(index)"
-                    class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 disabled:opacity-60"
+                    class="block w-full max-w-xs text-sm text-neutral-500 file:mr-4 file:rounded file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-primary-700 hover:file:bg-primary-100 disabled:opacity-60"
                     @change="handlePhotoUpload($event, index)"
                   />
                   <img
                     :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
                     alt="Pre-visualizacao"
-                    class="h-20 w-20 rounded-xl object-cover"
+                    class="h-20 w-20 rounded object-cover"
                   />
                 </div>
               </div>
@@ -559,14 +615,14 @@
         <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
           <button
             type="button"
-            class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+            class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
             @click="currentStep--"
           >
             Voltar
           </button>
           <button
             type="button"
-            class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 sm:w-auto"
+            class="w-full rounded bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-primary-500 sm:w-auto"
             @click="goToReview"
           >
             Revisar inscrições
@@ -587,7 +643,7 @@
           </p>
         </div>
 
-        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-xs font-semibold uppercase text-neutral-400">Responsável</p>
@@ -618,7 +674,7 @@
 
         <BaseCard
           v-if="!shouldSkipPayment"
-          class="rounded-2xl border border-neutral-200 bg-white shadow-sm"
+          class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none"
         >
           <div class="space-y-3">
             <h3 class="text-base font-semibold text-neutral-900">Forma de pagamento</h3>
@@ -626,9 +682,9 @@
               <label
                 v-for="option in paymentOptions"
                 :key="option.value"
-                class="flex cursor-pointer items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm shadow-sm transition hover:border-primary-400"
+                class="flex cursor-pointer items-center gap-3 rounded border border-neutral-200 bg-white px-4 py-3 text-sm transition hover:border-primary-400"
               >
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                <div class="flex h-10 w-10 items-center justify-center rounded bg-primary-50 text-primary-600">
                   <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="4" width="18" height="16" rx="2" />
                     <path d="M7 8h10M7 12h4" />
@@ -656,7 +712,7 @@
           </div>
         </BaseCard>
 
-        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
           <div class="flex items-center justify-between gap-4">
             <h3 class="text-base font-semibold text-neutral-900">Participantes ({{ people.length }})</h3>
             <span v-if="!shouldSkipPayment" class="text-sm font-semibold text-primary-600">
@@ -667,13 +723,13 @@
             <div
               v-for="(person, index) in people"
               :key="index"
-              class="flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+              class="flex flex-col gap-3 rounded border border-neutral-200 bg-neutral-50 p-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div class="flex items-center gap-3">
                 <img
                   :src="person.photoUrl || DEFAULT_PHOTO_DATA_URL"
                   alt="Foto do participante"
-                  class="h-12 w-12 rounded-xl object-cover"
+                  class="h-12 w-12 rounded object-cover"
                 />
                 <div>
                   <p class="text-sm font-semibold text-neutral-900">{{ person.fullName }}</p>
@@ -709,7 +765,7 @@
           </div>
         </BaseCard>
 
-        <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
           <div class="space-y-2 text-sm text-neutral-600">
             <div class="flex items-center justify-between">
               <span>Inscrições ({{ people.length }}x)</span>
@@ -731,14 +787,14 @@
         <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
           <button
             type="button"
-            class="w-full rounded-xl border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+            class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
             @click="currentStep--"
           >
             Voltar
           </button>
           <button
             type="button"
-            class="w-full rounded-xl bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-lg shadow-primary-600/30 transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
+            class="w-full rounded bg-primary-600 px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-primary-500 disabled:opacity-70 sm:w-auto"
             :disabled="submitting"
             @click="submitBatch"
           >
@@ -752,7 +808,7 @@
         <p v-if="errorMessage" class="text-sm text-red-500">{{ errorMessage }}</p>
       </div>
       <div v-if="currentStep === 4 && inlinePayment" class="space-y-6">
-        <div class="rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
+        <div class="rounded border border-neutral-200 bg-white p-6 text-center">
           <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M20 6 9 17l-5-5" />
@@ -764,7 +820,7 @@
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
-          <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
             <div class="space-y-4 text-center">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Valor a pagar</p>
@@ -776,12 +832,12 @@
                   }}
                 </p>
               </div>
-              <div class="flex items-center justify-center rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+              <div class="flex items-center justify-center rounded border border-neutral-200 bg-neutral-50 p-4">
                 <img
                   v-if="inlinePayment?.pixQrData?.qr_code_base64"
                   :src="`data:image/png;base64,${inlinePayment.pixQrData.qr_code_base64}`"
                   alt="QR Code Pix"
-                  class="h-48 w-48 rounded-xl border border-neutral-200 bg-white p-2"
+                  class="h-48 w-48 rounded border border-neutral-200 bg-white p-2"
                 />
                 <div v-else class="flex flex-col items-center justify-center gap-2 py-8 text-neutral-500">
                   <svg class="h-6 w-6 animate-spin text-primary-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -796,7 +852,7 @@
               </p>
               <button
                 type="button"
-                class="w-full rounded-xl border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 disabled:opacity-50"
+                class="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition hover:bg-primary-100 disabled:opacity-50"
                 :disabled="!canCopyInlinePix"
                 @click="copyInlinePixCode"
               >
@@ -804,7 +860,7 @@
               </button>
               <textarea
                 v-if="inlinePayment?.pixQrData?.qr_code"
-                class="w-full rounded-xl border border-neutral-200 bg-white p-3 text-xs text-neutral-600"
+                class="w-full rounded border border-neutral-200 bg-white p-3 text-xs text-neutral-600"
                 rows="3"
                 readonly
                 :value="inlinePixCode"
@@ -815,7 +871,7 @@
             </div>
           </BaseCard>
 
-          <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
             <div class="space-y-4 text-sm text-neutral-600">
               <div class="flex items-center justify-between">
                 <span>ID do pedido</span>
@@ -860,7 +916,7 @@
                 v-if="inlinePayment?.initPoint"
                 type="button"
                 @click="handleInlineOpenCheckout"
-                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
+                class="inline-flex items-center justify-center gap-2 rounded bg-primary-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-500"
               >
                 Abrir checkout
               </button>
@@ -873,7 +929,7 @@
       </div>
     </div>
     <div v-else-if="registrationOpen" class="space-y-4">
-      <BaseCard class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+      <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
         <p class="text-sm text-neutral-600">Leia o aviso para continuar.</p>
         <button
           v-if="noticeEnabled"
@@ -885,7 +941,7 @@
         </button>
       </BaseCard>
     </div>
-    <BaseCard v-else class="rounded-2xl border border-neutral-200 bg-white shadow-sm">
+    <BaseCard v-else class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
       <p class="text-neutral-500">
         As inscrições deste evento estão liberadas pelo sistema, mas dependem da abertura do próximo lote.
         <span v-if="nextLotInfo">
@@ -903,6 +959,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { MoonIcon, SunIcon } from "@heroicons/vue/24/outline";
 
 import DateField from "../../components/forms/DateField.vue";
 import ResponsibleCpfForm from "../../components/forms/ResponsibleCpfForm.vue";
@@ -913,6 +970,7 @@ import IconArrowRight from "../../components/ui/IconArrowRight.vue";
 import { useCatalogStore } from "../../stores/catalog";
 import { useEventStore } from "../../stores/event";
 import { useApi } from "../../composables/useApi";
+import { useTheme } from "../../composables/useTheme";
 import { API_BASE_URL } from "../../config/api";
 import type { Church, EventLot, RegistrationProfile, EventNotice } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
@@ -966,6 +1024,7 @@ import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
   const catalog = useCatalogStore();
   const { api } = useApi();
   const auth = useAuthStore();
+  const { isDark, toggleTheme } = useTheme();
 
   const noticeOpen = ref(false);
   const noticeAccepted = ref(true);
@@ -1335,7 +1394,7 @@ const disableStatePersistence = () => {
   const cpfAvailabilityCache = new Map<string, CpfCheckResult>();
 
   const DUPLICATE_ERROR = "CPF duplicado entre os participantes";
-  const REGISTERED_ERROR = "CPF já possui inscricão confirmada para este evento, verifique se já foi confirmado o pagamento.";
+  const REGISTERED_ERROR = "CPF já possui inscricão para este evento, verifique se já foi confirmado o pagamento.";
   const DUPLICATE_GLOBAL_ERROR =
     "Existem CPFs duplicados entre os participantes. Ajuste antes de prosseguir.";
   const REGISTERED_GLOBAL_ERROR =
@@ -1472,6 +1531,45 @@ const disableStatePersistence = () => {
     const age = calculateAgeYears(person.birthDate);
     if (age === null) return false;
     return age <= minAge;
+  };
+
+  const minorParticipantsCount = computed(() => {
+    const minAge = minAgeYears.value;
+    if (minAge === null) return 0;
+    return people.filter((person) => {
+      const age = calculateAgeYears(person.birthDate);
+      return age !== null && age <= minAge;
+    }).length;
+  });
+
+  const hasMinorParticipants = computed(() => minorParticipantsCount.value > 0);
+
+  const minorConfirmationMessage = computed(() => {
+    const count = minorParticipantsCount.value;
+    const minAge = minAgeYears.value;
+    if (!count || minAge === null) return "";
+    const countLabel = count === 1 ? "1 participante" : `${count} participantes`;
+    const ageLabel = minAge === 1 ? "1 ano" : `${minAge} anos`;
+    const targetLabel = count === 1 ? "este participante" : "esses participantes";
+    return `Identificamos ${countLabel} com idade abaixo ou igual à idade mínima do evento (${ageLabel}). A inscrição foi registrada como menor de idade e isenta de cobrança para ${targetLabel}.`;
+  });
+
+  const minorConfirmationOpen = ref(false);
+  const minorConfirmationNextAction = ref<(() => void) | null>(null);
+  const minorDialogRef = ref<HTMLDivElement | null>(null);
+
+  const openMinorConfirmation = (nextAction: () => void) => {
+    minorConfirmationNextAction.value = nextAction;
+    minorConfirmationOpen.value = true;
+  };
+
+  const handleMinorConfirmationClose = () => {
+    minorConfirmationOpen.value = false;
+    const nextAction = minorConfirmationNextAction.value;
+    minorConfirmationNextAction.value = null;
+    if (nextAction) {
+      nextAction();
+    }
   };
 
   const getParticipantPriceCents = (person: PersonForm) => {
@@ -1805,6 +1903,15 @@ const disableStatePersistence = () => {
   );
 
   watch(
+    () => minorConfirmationOpen.value,
+    (open) => {
+      if (open) {
+        nextTick(() => minorDialogRef.value?.focus());
+      }
+    }
+  );
+
+  watch(
     () => eventStore.event?.bannerUrl,
     () => {
       eventBannerError.value = false;
@@ -2061,19 +2168,27 @@ const disableStatePersistence = () => {
         payload
       );
       disableStatePersistence();
-      // Se for isento/gratuito, nao redirecionar para pagina de pagamento
-      if (response.payment?.isFree || response.payment?.totalCents === 0) {
-        // Redirecionar para pagina de evento com mensagem de sucesso
-        router.push({
-          name: "event",
-          params: { slug: props.slug },
-          query: { success: "1", orderId: response.orderId }
-        });
+      const handleSuccess = () => {
+        // Se for isento/gratuito, nao redirecionar para pagina de pagamento
+        if (response.payment?.isFree || response.payment?.totalCents === 0) {
+          // Redirecionar para pagina de evento com mensagem de sucesso
+          router.push({
+            name: "event",
+            params: { slug: props.slug },
+            query: { success: "1", orderId: response.orderId }
+          });
+        } else {
+          createdOrderId.value = response.orderId;
+          inlinePayment.value = response.payment ?? null;
+          currentStep.value = 4;
+          startInlinePolling();
+        }
+      };
+
+      if (hasMinorParticipants.value) {
+        openMinorConfirmation(handleSuccess);
       } else {
-        createdOrderId.value = response.orderId;
-        inlinePayment.value = response.payment ?? null;
-        currentStep.value = 4;
-        startInlinePolling();
+        handleSuccess();
       }
     } catch (error: any) {
       const message = error.response?.data?.message ?? "Erro ao criar inscrições.";

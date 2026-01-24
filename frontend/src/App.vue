@@ -141,7 +141,7 @@
         </div>
       </template>
       <template v-else>
-        <header class="sticky top-0 z-50">
+        <header v-if="!hidePublicChrome" class="sticky top-0 z-50">
           <div class="mx-auto w-full max-w-[1900px] px-3 py-4 sm:px-6">
             <div class="flex items-center justify-between rounded-[32px] border border-[color:var(--app-shell-border)] bg-[color:var(--app-shell-bg)] px-4 py-3 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur dark:shadow-[0_18px_60px_rgba(0,0,0,0.55)]">
               <div class="flex items-center gap-4">
@@ -345,12 +345,19 @@
           </transition>
         </header>
         <div
-          class="mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[98%] flex-col rounded-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)]/95 px-4 py-10 shadow-[0_45px_120px_-60px_rgba(15,23,42,0.45)] backdrop-blur 2xl:max-w-[1900px] sm:px-6"
+          :class="
+            hidePublicChrome
+              ? 'flex min-h-screen w-full flex-col'
+              : 'mx-auto flex min-h-[calc(100vh-72px)] w-full max-w-[98%] flex-col rounded-[32px] border border-[color:var(--border-card)] bg-[color:var(--surface-card)]/95 px-4 py-10 shadow-[0_45px_120px_-60px_rgba(15,23,42,0.45)] backdrop-blur 2xl:max-w-[1900px] sm:px-6'
+          "
         >
-          <main class="flex-1 pb-10">
+          <main :class="hidePublicChrome ? 'flex-1' : 'flex-1 pb-10'">
             <RouterView />
           </main>
-          <footer class="mt-auto border-t border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)] py-6 text-center text-sm text-[color:var(--text-muted)]">
+          <footer
+            v-if="!hidePublicChrome"
+            class="mt-auto border-t border-[color:var(--border-card)] bg-[color:var(--surface-card-alt)] py-6 text-center text-sm text-[color:var(--text-muted)]"
+          >
             &copy; {{ new Date().getFullYear() }} CATRE Ipitinga. Sistema de Inscrições e check-in.
           </footer>
         </div>
@@ -466,6 +473,7 @@ const isAdminLayout = computed(() => {
   const currentName = typeof route.name === "string" ? route.name : "";
   return !adminStandaloneRoutes.has(currentName);
 });
+const hidePublicChrome = computed(() => route.meta.hidePublicChrome === true);
 
 const handleViewportResize = () => {
   if (!isAdminLayout.value) {
