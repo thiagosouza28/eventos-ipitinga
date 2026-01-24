@@ -10,8 +10,8 @@ export const FORM_FIELD_TYPES: EventFormFieldType[] = [
 ];
 
 export const SYSTEM_FIELD_IDS = new Set([
-  "fullName",
   "cpf",
+  "fullName",
   "birthDate",
   "gender",
   "districtId",
@@ -21,18 +21,18 @@ export const SYSTEM_FIELD_IDS = new Set([
 export const DEFAULT_FORM_CONFIG: EventFormConfig = {
   campos: [
     {
-      id: "fullName",
-      label: "Nome completo",
-      tipo: "text",
-      obrigatorio: true,
-      placeholder: "Digite seu nome completo"
-    },
-    {
       id: "cpf",
       label: "CPF",
       tipo: "text",
       obrigatorio: true,
       placeholder: "000.000.000-00"
+    },
+    {
+      id: "fullName",
+      label: "Nome completo",
+      tipo: "text",
+      obrigatorio: true,
+      placeholder: "Digite seu nome completo"
     },
     {
       id: "birthDate",

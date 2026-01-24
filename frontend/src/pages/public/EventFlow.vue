@@ -2746,7 +2746,7 @@ input[data-quantity-input] {
 .event-flow :deep(input),
 .event-flow :deep(select),
 .event-flow :deep(textarea) {
-  color: #111827;
+  color: #111827 !important;
 }
 
 .event-flow :deep(input::placeholder),
