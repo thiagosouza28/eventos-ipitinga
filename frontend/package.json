@@ -24,7 +24,8 @@
     "tailwindcss-animate": "^1.0.7",
     "vue": "^3.5.10",
     "vue-qrcode-reader": "^5.2.2",
-    "vue-router": "^4.4.5"
+    "vue-router": "^4.4.5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",

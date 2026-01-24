@@ -307,3 +307,36 @@ export interface RegistrationOrderSummary {
   expiresAt?: string | null;
   buyerCpf?: string | null;
 }
+
+export interface AdminRegistrationsReportItem {
+  districtId: string | null;
+  districtName: string;
+  eventId: string | null;
+  eventTitle: string;
+  lotId: string | null;
+  lotName: string;
+  registrationsCount: number;
+}
+
+export interface AdminRegistrationsReportTotals {
+  total: number;
+  byDistrict: Array<{ id: string | null; name: string; count: number }>;
+  byEvent: Array<{ id: string | null; name: string; count: number; districtId?: string | null; districtName?: string }>;
+  byLot: Array<{ id: string | null; name: string; count: number; eventId?: string | null; eventTitle?: string }>;
+}
+
+export interface AdminRegistrationsReportResponse {
+  generatedAt: string;
+  filters: {
+    districtId?: string;
+    districtName?: string | null;
+    eventId?: string;
+    eventTitle?: string | null;
+    lotId?: string;
+    lotName?: string | null;
+    startDate?: string;
+    endDate?: string;
+  };
+  items: AdminRegistrationsReportItem[];
+  totals: AdminRegistrationsReportTotals;
+}

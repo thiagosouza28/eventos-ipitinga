@@ -132,6 +132,142 @@
       </BaseCard>
     </div>
 
+    <!-- Relatorio administrativo -->
+    <div v-show="activeTab === 'administrative'" class="space-y-5">
+      <BaseCard class="border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70">
+        <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Distrito</label>
+            <select
+              v-model="adminSummaryFilters.districtId"
+              :disabled="lockDistrictSelect"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+            >
+              <option value="">{{ lockDistrictSelect ? "Distrito vinculado" : "Todos" }}</option>
+              <option v-for="district in accessibleDistricts" :key="district.id" :value="district.id">{{ district.name }}</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Evento</label>
+            <select
+              v-model="adminSummaryFilters.eventId"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+            >
+              <option value="">Todos</option>
+              <option v-for="event in adminSummaryEvents" :key="event.id" :value="event.id">{{ event.title }}</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Lote</label>
+            <select
+              v-model="adminSummaryFilters.lotId"
+              :disabled="!adminSummaryFilters.eventId"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+            >
+              <option value="">{{ adminSummaryFilters.eventId ? "Todos" : "Selecione o evento" }}</option>
+              <option v-for="lot in adminSummaryLots" :key="lot.id" :value="lot.id">{{ lot.name }}</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Data inicial</label>
+            <input
+              v-model="adminSummaryFilters.startDate"
+              type="date"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400">Data final</label>
+            <input
+              v-model="adminSummaryFilters.endDate"
+              type="date"
+              class="w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40"
+            />
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            class="inline-flex flex-1 items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+            :disabled="adminSummary.loading || !reportsPermissions.canReports"
+            @click="loadAdminSummaryReport"
+          >
+            Gerar relatorio
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-sm border border-neutral-200/80 px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10"
+            :disabled="adminSummaryExport.csv || !reportsPermissions.canReports"
+            @click="exportAdminSummaryCsv"
+          >
+            <span v-if="adminSummaryExport.csv" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-neutral-400 border-b-transparent" />
+            Exportar CSV
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-sm border border-sky-500 px-5 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30"
+            :disabled="adminSummaryExport.xlsx || !reportsPermissions.canReports"
+            @click="exportAdminSummaryXlsx"
+          >
+            <span v-if="adminSummaryExport.xlsx" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-sky-400 border-b-transparent" />
+            Exportar Excel
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-sm bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+            :disabled="adminSummaryExport.pdf || !reportsPermissions.canReports"
+            @click="exportAdminSummaryPdf"
+          >
+            <span v-if="adminSummaryExport.pdf" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
+            Exportar PDF
+          </button>
+        </div>
+        <p v-if="adminSummary.generatedAt" class="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+          Gerado em {{ formatDateTime(adminSummary.generatedAt) }}
+        </p>
+      </BaseCard>
+
+      <BaseCard class="border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/40">
+        <TableSkeleton v-if="adminSummary.loading" helperText="Gerando relatorio administrativo..." />
+        <div v-else>
+          <div v-if="!adminSummary.items.length" class="p-6 text-sm text-neutral-500 dark:text-neutral-400">
+            Nenhum dado encontrado para os filtros selecionados.
+          </div>
+          <div v-else class="overflow-x-auto">
+            <table class="min-w-full table-auto text-sm text-neutral-700 dark:text-neutral-200">
+              <thead class="bg-neutral-900 text-[11px] uppercase tracking-[0.3em] text-white dark:bg-neutral-800">
+                <tr>
+                  <th class="px-4 py-3 text-left">Distrito</th>
+                  <th class="px-4 py-3 text-left">Evento</th>
+                  <th class="px-4 py-3 text-left">Lote</th>
+                  <th class="px-4 py-3 text-right">Quantidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="item in adminSummary.items"
+                  :key="`${item.districtId}-${item.eventId}-${item.lotId}`"
+                  class="border-b border-neutral-100/80 bg-white/90 text-neutral-800 transition odd:bg-white even:bg-neutral-50 hover:bg-sky-50/70 dark:border-white/5 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+                >
+                  <td class="px-4 py-3 font-semibold">{{ item.districtName }}</td>
+                  <td class="px-4 py-3 text-neutral-600 dark:text-neutral-300">{{ item.eventTitle }}</td>
+                  <td class="px-4 py-3 text-neutral-600 dark:text-neutral-300">{{ item.lotName }}</td>
+                  <td class="px-4 py-3 text-right font-semibold">{{ item.registrationsCount }}</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="bg-neutral-100/80 text-neutral-800 dark:bg-neutral-800 dark:text-white">
+                  <td class="px-4 py-3 font-semibold" colspan="3">Total geral</td>
+                  <td class="px-4 py-3 text-right font-bold">{{ adminSummary.totals.total }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </BaseCard>
+    </div>
+
     <!-- Relatorio por distrito/igreja -->
     <div v-show="activeTab === 'church'" class="space-y-5">
       <BaseCard class="border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70">
@@ -429,7 +565,15 @@ import { useModulePermissions } from "../../composables/usePermissions";
 import { useAdminStore } from "../../stores/admin";
 import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
-import type { Church, District, Event, Registration } from "../../types/api";
+import type {
+  Church,
+  District,
+  Event,
+  EventLot,
+  Registration,
+  AdminRegistrationsReportItem,
+  AdminRegistrationsReportTotals
+} from "../../types/api";
 import { formatCurrency } from "../../utils/format";
 import { useFileDownload } from "../../composables/useFileDownload";
 
@@ -467,6 +611,7 @@ const tabs = computed(() => {
   const hasFinancialAccess = financialPermissions.canView.value || financialPermissions.canFinancial.value;
   return [
     { key: "event", label: "Eventos", visible: reportsPermissions.canView.value },
+    { key: "administrative", label: "Administrativo", visible: reportsPermissions.canView.value },
     { key: "church", label: "Distritos / Igrejas", visible: reportsPermissions.canView.value },
     { key: "financial", label: "Financeiro", visible: hasFinancialAccess }
   ].filter((tab) => tab.visible);
@@ -646,6 +791,112 @@ const downloadEventReport = async () => {
     showError("Erro ao gerar relat\u00f3rio do evento", new Error(info.message));
   } finally {
     eventDownloadState.value = false;
+  }
+};
+const adminSummaryFilters = reactive({
+  districtId: "",
+  eventId: "",
+  lotId: "",
+  startDate: "",
+  endDate: ""
+});
+
+const adminSummary = reactive({
+  loading: false,
+  items: [] as AdminRegistrationsReportItem[],
+  totals: {
+    total: 0,
+    byDistrict: [],
+    byEvent: [],
+    byLot: []
+  } as AdminRegistrationsReportTotals,
+  generatedAt: null as Date | null
+});
+
+const adminSummaryExport = reactive({
+  csv: false,
+  xlsx: false,
+  pdf: false
+});
+
+const adminSummaryEvents = computed<Event[]>(() => {
+  if (adminSummaryFilters.districtId) {
+    return accessibleEvents.value.filter((event) => event.districtId === adminSummaryFilters.districtId);
+  }
+  return accessibleEvents.value;
+});
+
+const adminSummaryLots = computed<EventLot[]>(() => {
+  if (!adminSummaryFilters.eventId) return [];
+  const fromStore = admin.eventLots[adminSummaryFilters.eventId] ?? [];
+  if (fromStore.length) return fromStore;
+  const fallbackEvent = admin.events.find((event) => event.id === adminSummaryFilters.eventId);
+  return fallbackEvent?.lots ?? [];
+});
+
+const buildAdminSummaryParams = () => ({
+  districtId: adminSummaryFilters.districtId || undefined,
+  eventId: adminSummaryFilters.eventId || undefined,
+  lotId: adminSummaryFilters.lotId || undefined,
+  startDate: adminSummaryFilters.startDate || undefined,
+  endDate: adminSummaryFilters.endDate || undefined
+});
+
+const loadAdminSummaryReport = async () => {
+  adminSummary.loading = true;
+  try {
+    const report = await admin.getAdminRegistrationsSummaryReport(buildAdminSummaryParams());
+    adminSummary.items = report.items ?? [];
+    adminSummary.totals = report.totals ?? {
+      total: 0,
+      byDistrict: [],
+      byEvent: [],
+      byLot: []
+    };
+    adminSummary.generatedAt = report.generatedAt ? new Date(report.generatedAt) : new Date();
+  } catch (error) {
+    showError("Erro ao gerar relatorio administrativo", error);
+  } finally {
+    adminSummary.loading = false;
+  }
+};
+
+const exportAdminSummaryCsv = async () => {
+  adminSummaryExport.csv = true;
+  try {
+    const fileResponse = await admin.downloadAdminRegistrationsSummaryCsv(buildAdminSummaryParams());
+    downloadFromResponse(fileResponse, `relatorio-administrativo-inscricoes-${Date.now()}.csv`);
+  } catch (error) {
+    const info = handleDownloadError(error, "exportacao do relatorio administrativo");
+    showError("Erro ao exportar CSV", new Error(info.message));
+  } finally {
+    adminSummaryExport.csv = false;
+  }
+};
+
+const exportAdminSummaryXlsx = async () => {
+  adminSummaryExport.xlsx = true;
+  try {
+    const fileResponse = await admin.downloadAdminRegistrationsSummaryXlsx(buildAdminSummaryParams());
+    downloadFromResponse(fileResponse, `relatorio-administrativo-inscricoes-${Date.now()}.xlsx`);
+  } catch (error) {
+    const info = handleDownloadError(error, "exportacao do relatorio administrativo");
+    showError("Erro ao exportar Excel", new Error(info.message));
+  } finally {
+    adminSummaryExport.xlsx = false;
+  }
+};
+
+const exportAdminSummaryPdf = async () => {
+  adminSummaryExport.pdf = true;
+  try {
+    const fileResponse = await admin.downloadAdminRegistrationsSummaryPdf(buildAdminSummaryParams());
+    downloadFromResponse(fileResponse, `relatorio-administrativo-inscricoes-${Date.now()}.pdf`);
+  } catch (error) {
+    const info = handleDownloadError(error, "exportacao do relatorio administrativo");
+    showError("Erro ao exportar PDF", new Error(info.message));
+  } finally {
+    adminSummaryExport.pdf = false;
   }
 };
 const churchReport = reactive({
@@ -853,9 +1104,42 @@ const findDistrictName = (districtId: string) =>
   catalog.districts.find((district) => district.id === districtId)?.name ?? "N\u00e3o informado";
 const findChurchName = (churchId: string) =>
   catalog.churches.find((church) => church.id === churchId)?.name ?? "N\u00e3o informado";
+const resolveLotByDate = (participant: Registration) => {
+  const lots = admin.eventLots[participant.eventId] || [];
+  if (!lots.length) return "";
+  const createdAtValue = participant.createdAt ? new Date(participant.createdAt) : null;
+  if (!createdAtValue || Number.isNaN(createdAtValue.getTime())) return "";
+  let candidates = lots.filter((lot) => {
+    const startsAt = lot.startsAt ? new Date(lot.startsAt) : null;
+    if (!startsAt || Number.isNaN(startsAt.getTime())) return false;
+    const endsAt = lot.endsAt ? new Date(lot.endsAt) : null;
+    if (endsAt && Number.isNaN(endsAt.getTime())) return false;
+    return startsAt.getTime() <= createdAtValue.getTime() && (!endsAt || endsAt.getTime() >= createdAtValue.getTime());
+  });
+  const priceCents = typeof participant.priceCents === "number" ? participant.priceCents : null;
+  if (priceCents !== null) {
+    const priceMatches = candidates.filter((lot) => lot.priceCents === priceCents);
+    if (priceMatches.length) {
+      candidates = priceMatches;
+    }
+  }
+  candidates.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+  return candidates[0]?.name || "";
+};
 const findRegistrationLotName = (participant: Registration) => {
   const name = participant.order?.pricingLot?.name ?? participant.order?.lotName ?? "";
-  return name && name.trim().length > 0 ? name : "-";
+  if (name && name.trim().length > 0) return name;
+  const lotId =
+    (participant.order as any)?.pricingLotId ||
+    (participant.order as any)?.lotId ||
+    (participant as any)?.lotId ||
+    "";
+  if (lotId) {
+    const lot = (admin.eventLots[participant.eventId] || []).find((item) => item.id === lotId);
+    if (lot?.name) return lot.name;
+  }
+  const derived = resolveLotByDate(participant);
+  return derived || "-";
 };
 const resolvePhotoUrl = (photoUrl?: string | null) => {
   if (photoUrl && photoUrl.trim().length > 0) {
@@ -992,6 +1276,27 @@ const generalFinancialCards = computed(() => {
   ];
 });
 watch(
+  () => adminSummaryFilters.districtId,
+  (value, previous) => {
+    if (value === previous) return;
+    adminSummaryFilters.eventId = "";
+    adminSummaryFilters.lotId = "";
+  }
+);
+
+watch(
+  () => adminSummaryFilters.eventId,
+  async (value) => {
+    adminSummaryFilters.lotId = "";
+    if (!value) return;
+    try {
+      await admin.loadEventLots(value);
+    } catch (error) {
+      showError("Erro ao carregar lotes", error);
+    }
+  }
+);
+watch(
   () => eventReport.eventId,
   async (next, previous) => {
     if (next && next !== previous) {
@@ -1049,6 +1354,9 @@ onMounted(async () => {
     }
     if (scopedChurchId.value) {
       churchReport.churchId = scopedChurchId.value;
+    }
+    if (scopedDistrictId.value) {
+      adminSummaryFilters.districtId = scopedDistrictId.value;
     }
     if (accessibleEvents.value.length) {
       eventReport.eventId = accessibleEvents.value[0].id;

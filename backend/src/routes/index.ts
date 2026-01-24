@@ -146,6 +146,12 @@ import {
   listResponsibleTransfersHandler,
   createResponsibleTransferHandler
 } from "../controllers/responsible-finance.controller";
+import {
+  adminRegistrationsReportHandler,
+  downloadAdminRegistrationsReportCsvHandler,
+  downloadAdminRegistrationsReportXlsxHandler,
+  downloadAdminRegistrationsReportPdfHandler
+} from "../controllers/admin-registrations-report.controller";
 
 export const router = Router();
 
@@ -318,6 +324,11 @@ router.get(
   authorizePermission("registrations", "reports"),
   registrationsReportHandler
 );
+router.get(
+  "/admin/reports/registrations/summary",
+  authorizePermission("reports", "reports"),
+  adminRegistrationsReportHandler
+);
 router.options(
   "/admin/registrations/report.pdf",
   authorizePermission("registrations", "reports"),
@@ -327,6 +338,36 @@ router.get(
   "/admin/registrations/report.pdf",
   authorizePermission("registrations", "reports"),
   downloadRegistrationsReportHandler
+);
+router.options(
+  "/admin/reports/registrations/summary.csv",
+  authorizePermission("reports", "reports"),
+  downloadAdminRegistrationsReportCsvHandler
+);
+router.get(
+  "/admin/reports/registrations/summary.csv",
+  authorizePermission("reports", "reports"),
+  downloadAdminRegistrationsReportCsvHandler
+);
+router.options(
+  "/admin/reports/registrations/summary.xlsx",
+  authorizePermission("reports", "reports"),
+  downloadAdminRegistrationsReportXlsxHandler
+);
+router.get(
+  "/admin/reports/registrations/summary.xlsx",
+  authorizePermission("reports", "reports"),
+  downloadAdminRegistrationsReportXlsxHandler
+);
+router.options(
+  "/admin/reports/registrations/summary.pdf",
+  authorizePermission("reports", "reports"),
+  downloadAdminRegistrationsReportPdfHandler
+);
+router.get(
+  "/admin/reports/registrations/summary.pdf",
+  authorizePermission("reports", "reports"),
+  downloadAdminRegistrationsReportPdfHandler
 );
 router.get(
   "/admin/reports/jobs/:jobId",

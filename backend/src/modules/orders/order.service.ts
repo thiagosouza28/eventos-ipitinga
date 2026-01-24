@@ -9,6 +9,7 @@ import { auditService } from "../../services/audit.service";
 import { paymentService, extractPreferenceVersion, resolveCurrentLotPriceCents } from "../../services/payment.service";
 import { registrationService } from "../registrations/registration.service";
 import { eventService } from "../events/event.service";
+import { eventLotService } from "../events/event-lot.service";
 import { storageService } from "../../storage/storage.service";
 import { maskCpf, sanitizeCpf } from "../../utils/mask";
 import { logger } from "../../utils/logger";
@@ -1107,6 +1108,16 @@ export class OrderService {
     const buyerCpf = sanitizeCpf(order.buyerCpf ?? registration.cpf);
     const newOrderId = randomUUID();
     const districtAdminId = await this.resolveDistrictAdminId(registration.event.districtId);
+    let resolvedPricingLotId = order.pricingLotId ?? null;
+    if (!resolvedPricingLotId) {
+      try {
+        const lots = await eventLotService.list(registration.eventId);
+        const activeLot = eventLotService.resolveActiveFromList(lots, registration.createdAt ?? new Date());
+        resolvedPricingLotId = activeLot?.id ?? null;
+      } catch (error) {
+        logger.warn({ error, registrationId }, "Falha ao resolver lote para novo pedido");
+      }
+    }
     const shouldDeleteOldOrder =
       (order.status === OrderStatus.PENDING ||
         order.status === OrderStatus.CANCELED ||
@@ -1125,6 +1136,7 @@ export class OrderService {
           paymentMethod,
           externalReference: newOrderId,
           expiresAt,
+          pricingLotId: resolvedPricingLotId,
           mpPreferenceId: null,
           mpPaymentId: null,
           preferenceVersion: 0,
@@ -1249,6 +1261,28 @@ export class OrderService {
       resolvedMethod = PaymentMethod.PIX_MP;
     }
 
+    let resolvedPricingLotId: string | null = null;
+    const lotIds = registrations
+      .map((reg) => reg.order?.pricingLotId)
+      .filter((lotId): lotId is string => Boolean(lotId));
+    const uniqueLotIds = Array.from(new Set(lotIds));
+    if (uniqueLotIds.length === 1) {
+      resolvedPricingLotId = uniqueLotIds[0];
+    } else if (uniqueLotIds.length === 0) {
+      try {
+        const lots = await eventLotService.list(eventId);
+        const derivedLotIds = registrations
+          .map((reg) => eventLotService.resolveActiveFromList(lots, reg.createdAt ?? new Date())?.id ?? null)
+          .filter((lotId): lotId is string => Boolean(lotId));
+        const uniqueDerived = Array.from(new Set(derivedLotIds));
+        if (uniqueDerived.length === 1) {
+          resolvedPricingLotId = uniqueDerived[0];
+        }
+      } catch (error) {
+        logger.warn({ error, eventId }, "Falha ao resolver lote para novo pedido em lote");
+      }
+    }
+
     const prices = registrations.map((reg) =>
       typeof reg.priceCents === "number" ? reg.priceCents : reg.event?.priceCents ?? 0
     );
@@ -1282,7 +1316,7 @@ export class OrderService {
           paymentMethod: resolvedMethod,
           externalReference: orderId,
           expiresAt,
-          pricingLotId: null,
+          pricingLotId: resolvedPricingLotId,
           mpPaymentId: null,
           mpPreferenceId: null,
           preferenceVersion: 0,

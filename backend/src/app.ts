@@ -89,6 +89,9 @@ export const createApp = () => {
   app.use("/api/admin/registrations/report.pdf", downloadCorsMiddleware);
   app.use("/api/admin/registrations/list.pdf", downloadCorsMiddleware);
   app.use("/api/admin/reports/jobs/:jobId/file", downloadCorsMiddleware);
+  app.use("/api/admin/reports/registrations/summary.csv", downloadCorsMiddleware);
+  app.use("/api/admin/reports/registrations/summary.xlsx", downloadCorsMiddleware);
+  app.use("/api/admin/reports/registrations/summary.pdf", downloadCorsMiddleware);
   app.use("/api/admin/financial/events/:eventId/report.pdf", downloadCorsMiddleware);
 
   const concurrencyLimiter = createConcurrencyLimiter({

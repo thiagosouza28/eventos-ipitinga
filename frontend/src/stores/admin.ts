@@ -7,6 +7,7 @@ import type {
   EventLot,
   Order,
   Registration,
+  AdminRegistrationsReportResponse,
   AdminUser,
   AdminProfile,
   UserStatus,
@@ -317,6 +318,42 @@ export const useAdminStore = defineStore("admin", () => {
   const downloadRegistrationListPdf = async (filters: Record<string, unknown> = {}) => {
     const params = normalizeFilters(filters);
     return api.get<Blob>("/admin/registrations/list.pdf", {
+      params,
+      responseType: "blob",
+      timeout: registrationsPdfTimeoutMs
+    });
+  };
+
+  const getAdminRegistrationsSummaryReport = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    const response = await api.get<AdminRegistrationsReportResponse>(
+      "/admin/reports/registrations/summary",
+      { params }
+    );
+    return response.data;
+  };
+
+  const downloadAdminRegistrationsSummaryCsv = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    return api.get<Blob>("/admin/reports/registrations/summary.csv", {
+      params,
+      responseType: "blob",
+      timeout: registrationsPdfTimeoutMs
+    });
+  };
+
+  const downloadAdminRegistrationsSummaryXlsx = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    return api.get<Blob>("/admin/reports/registrations/summary.xlsx", {
+      params,
+      responseType: "blob",
+      timeout: registrationsPdfTimeoutMs
+    });
+  };
+
+  const downloadAdminRegistrationsSummaryPdf = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    return api.get<Blob>("/admin/reports/registrations/summary.pdf", {
       params,
       responseType: "blob",
       timeout: registrationsPdfTimeoutMs
@@ -703,6 +740,10 @@ export const useAdminStore = defineStore("admin", () => {
     loadRegistrations,
     downloadRegistrationReport,
     downloadRegistrationListPdf,
+    getAdminRegistrationsSummaryReport,
+    downloadAdminRegistrationsSummaryCsv,
+    downloadAdminRegistrationsSummaryXlsx,
+    downloadAdminRegistrationsSummaryPdf,
     downloadFinancialReport,
     requestRegistrationReportJob,
     requestRegistrationListJob,

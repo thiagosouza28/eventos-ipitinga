@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>{{title}}</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --card: #f8fafc;
+      --accent: #0f172a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Inter", Arial, sans-serif;
+      color: var(--text);
+      -webkit-print-color-adjust: exact;
+    }
+
+    .page {
+      max-width: 980px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header .eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin: 0 0 6px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .filters {
+      padding: 16px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: #fafafa;
+    }
+
+    .filter-card {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .filter-card span {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .filter-card strong {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .table-wrap {
+      padding: 18px 24px 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    td.count {
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .empty {
+      text-align: center;
+      font-style: italic;
+      color: var(--muted);
+      padding: 16px;
+    }
+
+    tfoot td {
+      padding: 12px;
+      font-weight: 700;
+      background: #f1f5f9;
+      border-top: 2px solid var(--border);
+    }
+
+    .totals {
+      padding: 18px 24px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      border-top: 1px solid var(--border);
+      background: #fbfbfb;
+    }
+
+    .totals-card {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .totals-card h3 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    .totals-card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .totals-card li {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+    }
+
+    .totals-card .empty {
+      text-align: left;
+      padding: 0;
+    }
+
+    footer {
+      padding: 14px 24px 20px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <p class="eyebrow">Relatorio administrativo</p>
+      <h1>{{title}}</h1>
+      <p>Gerado em {{generatedAt}}</p>
+    </header>
+
+    <section class="filters">
+      {{filters}}
+    </section>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Distrito</th>
+            <th>Evento</th>
+            <th>Lote</th>
+            <th style="text-align:right;">Quantidade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{rows}}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Total geral</td>
+            <td style="text-align:right;">{{totalCount}}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <section class="totals">
+      <div class="totals-card">
+        <h3>Totais por distrito</h3>
+        <ul>
+          {{districtTotals}}
+        </ul>
+      </div>
+      <div class="totals-card">
+        <h3>Totais por evento</h3>
+        <ul>
+          {{eventTotals}}
+        </ul>
+      </div>
+      <div class="totals-card">
+        <h3>Totais por lote</h3>
+        <ul>
+          {{lotTotals}}
+        </ul>
+      </div>
+    </section>
+
+    <footer>
+      Relatorio gerado automaticamente pelo sistema de inscricoes.
+    </footer>
+  </div>
+</body>
+</html>
