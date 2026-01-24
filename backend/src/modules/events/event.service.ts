@@ -23,6 +23,7 @@ import {
   DEFAULT_PENDING_PAYMENT_VALUE_RULE,
   PendingPaymentValueRule
 } from "../../config/pending-payment-value-rule";
+import { normalizeFormConfig, resolveEventFormConfig } from "../forms/form-config";
 
 type EventLotEntity = Awaited<ReturnType<typeof eventLotService.list>>[number];
 type ActorUser = {
@@ -167,6 +168,7 @@ export class EventService {
           isFree,
           lots,
           paymentMethods,
+          formConfig: resolveEventFormConfig(event.formConfig),
           notice: serializeNoticeForResponse(event),
           publicLink: `${env.APP_URL}/evento/${event.slug}`,
           currentLot: serializeLot(activeLot),
@@ -228,6 +230,7 @@ export class EventService {
             isFree,
             lots,
             paymentMethods: parsePaymentMethods(event.paymentMethods),
+            formConfig: resolveEventFormConfig(event.formConfig),
             notice: serializeNoticeForResponse(event),
             currentLot: serializeLot(activeLot),
             currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
@@ -286,6 +289,7 @@ export class EventService {
           currentLot: serializeLot(activeLot),
           currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
           notice: serializeNoticeForResponse(event),
+          formConfig: resolveEventFormConfig(event.formConfig),
           ministry: event.ministryId ? ministryMap.get(event.ministryId) ?? null : null,
           district: districtMap.get(event.districtId) ?? null,
           church: event.churchId ? churchMap.get(event.churchId) ?? null : null
@@ -329,6 +333,7 @@ export class EventService {
     districtId: string;
     churchId?: string | null;
     notice?: EventNotice | string | null;
+    formConfig?: unknown | null;
     },
     actor?: ActorUser
   ) {
@@ -398,13 +403,15 @@ export class EventService {
         isFree: data.isFree,
         isActive: data.isActive ?? true,
         minAgeYears: data.minAgeYears ?? null,
-        ...mapNoticeToFields(data.notice)
+        ...mapNoticeToFields(data.notice),
+        formConfig: data.formConfig ? normalizeFormConfig(data.formConfig) : null
       }
     });
     const serialized = {
       ...event,
       paymentMethods: parsePaymentMethods(event.paymentMethods),
-      notice: serializeNoticeForResponse(event)
+      notice: serializeNoticeForResponse(event),
+      formConfig: resolveEventFormConfig(event.formConfig)
     };
     await auditService.log({
       action: "EVENT_CREATED",
@@ -436,6 +443,7 @@ export class EventService {
       districtId?: string;
       churchId?: string | null;
       notice?: EventNotice | string | null;
+      formConfig?: unknown | null;
     }>,
     actor?: ActorUser
   ) {
@@ -473,6 +481,9 @@ export class EventService {
     }
     if (data.notice !== undefined) {
       Object.assign(payload, mapNoticeToFields(data.notice));
+    }
+    if (data.formConfig !== undefined) {
+      payload.formConfig = data.formConfig ? normalizeFormConfig(data.formConfig) : null;
     }
 
     const targetDistrictId = data.districtId ?? event.districtId;
@@ -557,7 +568,8 @@ export class EventService {
     const serialized = {
       ...updated,
       paymentMethods: parsePaymentMethods(updated.paymentMethods),
-      notice: serializeNoticeForResponse(updated)
+      notice: serializeNoticeForResponse(updated),
+      formConfig: resolveEventFormConfig(updated.formConfig)
     };
     await auditService.log({
       action: "EVENT_UPDATED",

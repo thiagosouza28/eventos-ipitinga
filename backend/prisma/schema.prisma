@@ -49,6 +49,7 @@ model Event {
   endDate                 DateTime
   location                String
   bannerUrl               String?
+  formConfig              Json?
   noticeEnabled           Boolean        @default(false)
   noticeTitle             String?
   noticeBullets           String?        @db.LongText
@@ -158,6 +159,7 @@ model Registration {
   responsibleUserId String?
   photoUrl      String?   @db.LongText
   gender        String?
+  formResponses Json?
   paymentMethod String?
   status        String    @default("DRAFT")
   receiptPdfUrl String?

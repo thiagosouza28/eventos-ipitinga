@@ -12,6 +12,7 @@ type PersonPayload = {
   churchId: string;
   gender: string;
   photoUrl?: string | null;
+  formResponses?: Record<string, unknown> | null;
 };
 
 export const useEventStore = defineStore("event", () => {

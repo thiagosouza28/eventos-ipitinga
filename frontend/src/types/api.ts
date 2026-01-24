@@ -125,6 +125,23 @@ export interface EventNotice {
   showOnce?: boolean;
 }
 
+export type EventFormFieldType = "text" | "email" | "number" | "textarea" | "select" | "checkbox";
+
+export interface EventFormField {
+  id: string;
+  label: string;
+  tipo: EventFormFieldType;
+  obrigatorio?: boolean;
+  placeholder?: string;
+  opcoes?: string[];
+  min?: number;
+  max?: number;
+}
+
+export interface EventFormConfig {
+  campos: EventFormField[];
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -133,6 +150,7 @@ export interface Event {
   endDate: string;
   location: string;
   bannerUrl?: string | null;
+  formConfig?: EventFormConfig | null;
   priceCents: number;
   isFree: boolean;
   minAgeYears?: number | null;
@@ -238,6 +256,7 @@ export interface Registration {
   eventId: string;
   priceCents: number;
   gender?: string | null;
+  formResponses?: Record<string, unknown> | null;
   paymentMethod?: PaymentMethod | null;
   paidAt?: string | null;
   photoUrl?: string | null;

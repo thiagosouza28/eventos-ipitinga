@@ -3,11 +3,11 @@
     <LoadingSpinner />
   </div>
   <div v-else-if="!eventStore.event">
-    <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+    <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
       <p class="text-neutral-500">Evento não encontrado.</p>
     </BaseCard>
   </div>
-  <div v-else class="min-h-screen bg-[#F6F8FB] pb-16" data-uppercase-scope>
+  <div v-else class="min-h-screen bg-[#EEF1F5] pb-16" data-uppercase-scope>
     <EventNoticeModal
       v-if="noticeEnabled && resolvedNotice"
       :slug="noticeSlug"
@@ -29,25 +29,25 @@
         ref="minorDialogRef"
       >
         <div
-          class="w-full max-w-sm rounded border border-emerald-200 bg-white p-6 dark:border-emerald-500/40 dark:bg-neutral-900"
+          class="w-full max-w-sm rounded border border-emerald-200 bg-white p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="minor-confirmation-title"
         >
           <div class="flex items-center gap-3">
-            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
               <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </span>
             <div>
               <p class="text-xs font-semibold uppercase tracking-wide text-emerald-500">Inscrição concluída</p>
-              <h2 id="minor-confirmation-title" class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              <h2 id="minor-confirmation-title" class="text-lg font-semibold text-neutral-900">
                 Inscrição registrada
               </h2>
             </div>
           </div>
-          <p class="mt-4 text-sm text-neutral-600 dark:text-neutral-300">
+          <p class="mt-4 text-sm text-neutral-600">
             {{ minorConfirmationMessage }}
           </p>
           <div class="mt-6 flex justify-end">
@@ -66,7 +66,7 @@
       <div class="sticky top-20 z-40 flex justify-end lg:hidden">
         <!-- <button
           type="button"
-          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[#5a6bff] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-white dark:shadow-black/30 dark:hover:bg-white/25"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/90 text-[#5a6bff] shadow-sm shadow-black/10 transition hover:-translate-y-0.5 hover:bg-white"
           :aria-pressed="isDark"
           @click="toggleTheme"
         >
@@ -94,7 +94,7 @@
           </div>
         </div>
       </div>
-      <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+      <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
         <div class="space-y-4">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
@@ -230,7 +230,7 @@
         </div>
       </div>
 
-            <BaseCard v-if="currentStep === 0" class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+            <BaseCard v-if="currentStep === 0" class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
         <div class="space-y-4">
           <div class="space-y-1">
             <h2 class="text-xl font-semibold text-neutral-900">Identificação</h2>
@@ -249,7 +249,7 @@
         </div>
       </BaseCard>
 
-            <BaseCard v-if="currentStep === 1" class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+            <BaseCard v-if="currentStep === 1" class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
         <div class="space-y-6">
           <div>
             <h2 class="text-xl font-semibold text-neutral-900">Selecione sua Unidade</h2>
@@ -257,7 +257,7 @@
           </div>
           <div
             v-if="false"
-            class="rounded border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100"
+            class="rounded border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900"
           >
             <p class="font-semibold">{{ pendingOrders.length }} pagamento(s) pendente(s) encontrado(s).</p>
             <p>Você pode ver e pagar as pendências existentes ou seguir com uma nova inscrição.</p>
@@ -265,7 +265,7 @@
               <div
                 v-for="order in pendingOrders"
                 :key="order.orderId"
-                class="rounded border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40"
+                class="rounded border border-primary-100 bg-white/80 p-2"
               >
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div class="flex-1">
@@ -277,7 +277,7 @@
                   </div>
                   <RouterLink
                     :to="{ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }"
-                    class="inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100"
+                    class="inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10"
                   >
                     Pagar
                   </RouterLink>
@@ -285,7 +285,7 @@
               </div>
               <RouterLink
                 :to="{ name: 'admin-pending-orders', params: { cpf: buyerCpf } }"
-                class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50"
+                class="inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600"
               >
                 Ver todas as pendências
                 <IconArrowRight class="ml-1 h-3 w-3" />
@@ -295,7 +295,7 @@
           <form @submit.prevent="handleGeneralStep" class="space-y-6">
             <div class="grid gap-4">
               <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                <label class="block text-sm font-medium text-neutral-600">
                   Distrito
                 </label>
                 <div class="relative">
@@ -307,7 +307,7 @@
                   </span>
                   <select
                     v-model="selectedDistrictId"
-                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                     :aria-invalid="generalErrors.district ? 'true' : 'false'"
                     aria-describedby="district-error"
                     required
@@ -322,13 +322,13 @@
                   v-if="generalErrors.district"
                   id="district-error"
                   role="alert"
-                  class="mt-2 text-sm text-red-600 dark:text-red-400"
+                  class="mt-2 text-sm text-red-600"
                 >
                   {{ generalErrors.district }}
                 </p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
+                <label class="block text-sm font-medium text-neutral-600">
                   Igreja
                 </label>
                 <div class="relative">
@@ -340,7 +340,7 @@
                   </span>
                   <select
                     v-model="selectedChurchId"
-                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                     :aria-invalid="generalErrors.church ? 'true' : 'false'"
                     aria-describedby="church-error"
                     :disabled="!selectedDistrictId"
@@ -356,7 +356,7 @@
                   v-if="generalErrors.church"
                   id="church-error"
                   role="alert"
-                  class="mt-2 text-sm text-red-600 dark:text-red-400"
+                  class="mt-2 text-sm text-red-600"
                 >
                   {{ generalErrors.church }}
                 </p>
@@ -415,7 +415,7 @@
             <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
               <button
                 type="button"
-                class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+                class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 sm:w-auto"
                 @click="currentStep--"
               >
                 Voltar
@@ -437,7 +437,7 @@
           <p class="text-sm text-neutral-500">Preencha as informações de quem irá ao evento.</p>
         </div>
 
-        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+        <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
           <div class="grid gap-3 text-xs text-neutral-500 sm:grid-cols-2">
             <div>
               <p class="text-[10px] font-semibold uppercase text-neutral-400">CPF responsável</p>
@@ -461,7 +461,7 @@
         <BaseCard
           v-for="(person, index) in people"
           :key="index"
-          class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none"
+          class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none"
         >
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
@@ -484,103 +484,257 @@
             </span>
           </div>
           <div class="mt-4 grid gap-4 lg:grid-cols-2">
-            <div>
-              <label class="block text-sm font-medium text-neutral-600">CPF</label>
-              <input
-                :ref="(el) => setParticipantCpfRef(el as HTMLInputElement | null, index)"
-                v-model="person.cpf"
-                type="text"
-                placeholder="000.000.000-00"
-                inputmode="numeric"
-                autocomplete="off"
-                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                :aria-invalid="participantCpfErrors[index] ? 'true' : 'false'"
-                :aria-describedby="`participant-cpf-error-${index}`"
-                required
-                @input="onParticipantCpfInput(index, $event)"
-                @blur="onParticipantCpfBlur(index)"
-              />
-              <p
-                v-if="participantCpfErrors[index]"
-                :id="`participant-cpf-error-${index}`"
-                role="alert"
-                class="mt-1 text-sm text-red-600"
-              >
-                {{ participantCpfErrors[index] }}
-              </p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600">Nome completo</label>
-              <input
-                v-model="person.fullName"
-                type="text"
-                required
-                :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600">Data de nascimento</label>
-              <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                <DateField
-                  v-model="person.birthDate"
+            <template v-for="field in formFields" :key="`${index}-${field.id}`">
+              <div v-if="field.id === 'cpf'">
+                <label class="block text-sm font-medium text-neutral-600">
+                  {{ field.label }}
+                  <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                </label>
+                <input
+                  :ref="(el) => setParticipantCpfRef(el as HTMLInputElement | null, index)"
+                  v-model="person.cpf"
+                  type="text"
+                  :placeholder="field.placeholder || '000.000.000-00'"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  :aria-invalid="participantCpfErrors[index] ? 'true' : 'false'"
+                  :aria-describedby="`participant-cpf-error-${index}`"
                   required
-                  :disabled="isPersonLocked(index)"
-                  class="w-full"
+                  @input="onParticipantCpfInput(index, $event)"
+                  @blur="onParticipantCpfBlur(index)"
                 />
-                <span
-                  v-if="calculateAgeYears(person.birthDate) !== null"
-                  class="text-xs text-neutral-500"
+                <p
+                  v-if="participantCpfErrors[index]"
+                  :id="`participant-cpf-error-${index}`"
+                  role="alert"
+                  class="mt-1 text-sm text-red-600"
                 >
-                  {{ calculateAgeYears(person.birthDate) }} anos
-                </span>
+                  {{ participantCpfErrors[index] }}
+                </p>
               </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600">Gênero</label>
-              <select
-                v-model="person.gender"
-                :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
-                required
-              >
-                <option value="" disabled>Selecione</option>
-                <option v-for="option in genderOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600">Distrito</label>
-              <select
-                v-model="person.districtId"
-                :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
-                @change="onPersonDistrictChange(index)"
-              >
-                <option value="" disabled>Selecione</option>
-                <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
-                  {{ district.name }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-600">Igreja</label>
-              <select
-                v-model="person.churchId"
-                :disabled="isPersonLocked(index)"
-                class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
-              >
-                <option value="" disabled>Selecione</option>
-                <option
-                  v-for="church in getPersonChurchOptions(person.districtId)"
-                  :key="church.id"
-                  :value="church.id"
+              <div v-else-if="field.id === 'fullName'">
+                <label class="block text-sm font-medium text-neutral-600">
+                  {{ field.label }}
+                  <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                </label>
+                <input
+                  :value="person.fullName"
+                  type="text"
+                  :required="isFieldRequired(field)"
+                  :disabled="isPersonLocked(index)"
+                  class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                  :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                  :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                  @input="updateFieldValue(person, field, ($event.target as HTMLInputElement).value, index)"
+                />
+                <p
+                  v-if="getFieldError(index, field.id)"
+                  :id="`participant-field-${index}-${field.id}-error`"
+                  role="alert"
+                  class="mt-1 text-sm text-red-600"
                 >
-                  {{ church.name }}
-                </option>
-              </select>
-            </div>
+                  {{ getFieldError(index, field.id) }}
+                </p>
+              </div>
+              <div v-else-if="field.id === 'birthDate'">
+                <label class="block text-sm font-medium text-neutral-600">
+                  {{ field.label }}
+                  <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                </label>
+                <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                  <DateField
+                    :modelValue="person.birthDate"
+                    :disabled="isPersonLocked(index)"
+                    :required="isFieldRequired(field)"
+                    :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                    :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                    inputClass="w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    class="w-full"
+                    :placeholder="field.placeholder"
+                    @update:modelValue="(value) => updateFieldValue(person, field, value, index)"
+                  />
+                  <span
+                    v-if="calculateAgeYears(person.birthDate) !== null"
+                    class="text-xs text-neutral-500"
+                  >
+                    {{ calculateAgeYears(person.birthDate) }} anos
+                  </span>
+                </div>
+                <p
+                  v-if="getFieldError(index, field.id)"
+                  :id="`participant-field-${index}-${field.id}-error`"
+                  role="alert"
+                  class="mt-1 text-sm text-red-600"
+                >
+                  {{ getFieldError(index, field.id) }}
+                </p>
+              </div>
+              <div v-else-if="field.id === 'gender'">
+                <label class="block text-sm font-medium text-neutral-600">
+                  {{ field.label }}
+                  <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                </label>
+                <select
+                  :value="person.gender"
+                  :disabled="isPersonLocked(index)"
+                  class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                  :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                  :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                  @change="updateFieldValue(person, field, ($event.target as HTMLSelectElement).value, index)"
+                >
+                  <option value="" disabled>Selecione</option>
+                  <option v-for="option in genderOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <p
+                  v-if="getFieldError(index, field.id)"
+                  :id="`participant-field-${index}-${field.id}-error`"
+                  role="alert"
+                  class="mt-1 text-sm text-red-600"
+                >
+                  {{ getFieldError(index, field.id) }}
+                </p>
+              </div>
+              <div v-else-if="field.id === 'districtId'">
+                <label class="block text-sm font-medium text-neutral-600">
+                  {{ field.label }}
+                  <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                </label>
+                <select
+                  :value="person.districtId"
+                  :disabled="isPersonLocked(index)"
+                  class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                  :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                  :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                  @change="(event) => { updateFieldValue(person, field, (event.target as HTMLSelectElement).value, index); onPersonDistrictChange(index); }"
+                >
+                  <option value="" disabled>Selecione</option>
+                  <option v-for="district in catalog.districts" :key="district.id" :value="district.id">
+                    {{ district.name }}
+                  </option>
+                </select>
+                <p
+                  v-if="getFieldError(index, field.id)"
+                  :id="`participant-field-${index}-${field.id}-error`"
+                  role="alert"
+                  class="mt-1 text-sm text-red-600"
+                >
+                  {{ getFieldError(index, field.id) }}
+                </p>
+              </div>
+              <div v-else-if="field.id === 'churchId'">
+                <label class="block text-sm font-medium text-neutral-600">
+                  {{ field.label }}
+                  <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                </label>
+                <select
+                  :value="person.churchId"
+                  :disabled="isPersonLocked(index)"
+                  class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                  :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                  :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                  @change="updateFieldValue(person, field, ($event.target as HTMLSelectElement).value, index)"
+                >
+                  <option value="" disabled>Selecione</option>
+                  <option
+                    v-for="church in getPersonChurchOptions(person.districtId)"
+                    :key="church.id"
+                    :value="church.id"
+                  >
+                    {{ church.name }}
+                  </option>
+                </select>
+                <p
+                  v-if="getFieldError(index, field.id)"
+                  :id="`participant-field-${index}-${field.id}-error`"
+                  role="alert"
+                  class="mt-1 text-sm text-red-600"
+                >
+                  {{ getFieldError(index, field.id) }}
+                </p>
+              </div>
+              <div v-else :class="field.tipo === 'textarea' || field.tipo === 'checkbox' ? 'lg:col-span-2' : ''">
+                <template v-if="field.tipo === 'checkbox'">
+                  <label class="flex items-center gap-2 text-sm font-medium text-neutral-600">
+                    <input
+                      type="checkbox"
+                      :checked="Boolean(getFieldValue(person, field))"
+                      :disabled="isPersonLocked(index)"
+                      class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                      :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                      :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                      @change="updateFieldValue(person, field, ($event.target as HTMLInputElement).checked, index)"
+                    />
+                    <span>
+                      {{ field.label }}
+                      <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                    </span>
+                  </label>
+                  <p
+                    v-if="getFieldError(index, field.id)"
+                    :id="`participant-field-${index}-${field.id}-error`"
+                    role="alert"
+                    class="mt-1 text-sm text-red-600"
+                  >
+                    {{ getFieldError(index, field.id) }}
+                  </p>
+                </template>
+                <template v-else>
+                  <label class="block text-sm font-medium text-neutral-600">
+                    {{ field.label }}
+                    <span v-if="isFieldRequired(field)" class="text-red-500">*</span>
+                  </label>
+                  <select
+                    v-if="field.tipo === 'select'"
+                    :value="(getFieldValue(person, field) as string) || ''"
+                    :disabled="isPersonLocked(index)"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                    :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                    :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                    @change="updateFieldValue(person, field, ($event.target as HTMLSelectElement).value, index)"
+                  >
+                    <option value="" disabled>Selecione</option>
+                    <option v-for="option in field.opcoes ?? []" :key="option" :value="option">
+                      {{ option }}
+                    </option>
+                  </select>
+                  <textarea
+                    v-else-if="field.tipo === 'textarea'"
+                    :value="(getFieldValue(person, field) as string) || ''"
+                    rows="3"
+                    :disabled="isPersonLocked(index)"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                    :placeholder="field.placeholder"
+                    :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                    :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                    @input="updateFieldValue(person, field, ($event.target as HTMLTextAreaElement).value, index)"
+                  ></textarea>
+                  <input
+                    v-else
+                    :value="(getFieldValue(person, field) as string) || ''"
+                    :type="field.tipo === 'number' ? 'number' : field.tipo === 'email' ? 'email' : 'text'"
+                    :disabled="isPersonLocked(index)"
+                    class="mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60"
+                    :placeholder="field.placeholder"
+                    :min="field.tipo === 'number' ? field.min : undefined"
+                    :max="field.tipo === 'number' ? field.max : undefined"
+                    :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
+                    :aria-describedby="`participant-field-${index}-${field.id}-error`"
+                    @input="updateFieldValue(person, field, ($event.target as HTMLInputElement).value, index)"
+                  />
+                  <p
+                    v-if="getFieldError(index, field.id)"
+                    :id="`participant-field-${index}-${field.id}-error`"
+                    role="alert"
+                    class="mt-1 text-sm text-red-600"
+                  >
+                    {{ getFieldError(index, field.id) }}
+                  </p>
+                </template>
+              </div>
+            </template>
             <div class="lg:col-span-2">
               <label class="block text-sm font-medium text-neutral-600">Foto do participante</label>
               <div class="mt-2 flex flex-col gap-3 rounded border border-dashed border-neutral-200 bg-neutral-50 p-4">
@@ -615,7 +769,7 @@
         <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
           <button
             type="button"
-            class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+            class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 sm:w-auto"
             @click="currentStep--"
           >
             Voltar
@@ -643,7 +797,7 @@
           </p>
         </div>
 
-        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+        <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
           <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-xs font-semibold uppercase text-neutral-400">Responsável</p>
@@ -674,7 +828,7 @@
 
         <BaseCard
           v-if="!shouldSkipPayment"
-          class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none"
+          class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none"
         >
           <div class="space-y-3">
             <h3 class="text-base font-semibold text-neutral-900">Forma de pagamento</h3>
@@ -712,7 +866,7 @@
           </div>
         </BaseCard>
 
-        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+        <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
           <div class="flex items-center justify-between gap-4">
             <h3 class="text-base font-semibold text-neutral-900">Participantes ({{ people.length }})</h3>
             <span v-if="!shouldSkipPayment" class="text-sm font-semibold text-primary-600">
@@ -765,7 +919,7 @@
           </div>
         </BaseCard>
 
-        <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+        <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
           <div class="space-y-2 text-sm text-neutral-600">
             <div class="flex items-center justify-between">
               <span>Inscrições ({{ people.length }}x)</span>
@@ -787,7 +941,7 @@
         <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3">
           <button
             type="button"
-            class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto"
+            class="w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 sm:w-auto"
             @click="currentStep--"
           >
             Voltar
@@ -820,7 +974,7 @@
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
-          <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+          <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
             <div class="space-y-4 text-center">
               <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Valor a pagar</p>
@@ -871,7 +1025,7 @@
             </div>
           </BaseCard>
 
-          <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+          <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
             <div class="space-y-4 text-sm text-neutral-600">
               <div class="flex items-center justify-between">
                 <span>ID do pedido</span>
@@ -929,7 +1083,7 @@
       </div>
     </div>
     <div v-else-if="registrationOpen" class="space-y-4">
-      <BaseCard class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+      <BaseCard class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
         <p class="text-sm text-neutral-600">Leia o aviso para continuar.</p>
         <button
           v-if="noticeEnabled"
@@ -941,7 +1095,7 @@
         </button>
       </BaseCard>
     </div>
-    <BaseCard v-else class="!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none">
+    <BaseCard v-else class="!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none">
       <p class="text-neutral-500">
         As inscrições deste evento estão liberadas pelo sistema, mas dependem da abertura do próximo lote.
         <span v-if="nextLotInfo">
@@ -972,12 +1126,13 @@ import { useEventStore } from "../../stores/event";
 import { useApi } from "../../composables/useApi";
 import { useTheme } from "../../composables/useTheme";
 import { API_BASE_URL } from "../../config/api";
-import type { Church, EventLot, RegistrationProfile, EventNotice } from "../../types/api";
+import type { Church, EventLot, RegistrationProfile, EventNotice, EventFormField } from "../../types/api";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { buildNoticeFingerprint, hasSeenNotice, setSeenNotice } from "../../utils/eventNotice";
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
 import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 import { normalizePixCode, hashPixCode } from "../../utils/pix";
+import { normalizeFormConfig, SYSTEM_FIELD_IDS } from "../../utils/formConfig";
 import {
   paymentMethodLabel,
   PAYMENT_METHODS,
@@ -1015,6 +1170,7 @@ import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
     districtId: string;
     churchId: string;
     photoUrl: string | null;
+    formResponses: Record<string, unknown>;
   };
 
   const props = defineProps<{ slug: string }>();
@@ -1044,6 +1200,11 @@ import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
     resolvedNotice.value ? buildNoticeFingerprint(resolvedNotice.value) : ""
   );
   const canStartWizard = computed(() => !noticeEnabled.value || noticeAccepted.value);
+
+  const eventFormConfig = computed(() => normalizeFormConfig(eventStore.event?.formConfig ?? null));
+  const formFields = computed(() => eventFormConfig.value.campos);
+  const isFieldRequired = (field: EventFormField) =>
+    Boolean(field.obrigatorio) || SYSTEM_FIELD_IDS.has(field.id);
 
   const evaluateNotice = () => {
     if (!noticeEnabled.value) {
@@ -1149,12 +1310,12 @@ const isPromoLotActive = computed(() => {
 });
 const priceValueClass = computed(() => {
   if (priceInfo.value.pending) {
-    return "text-neutral-500 dark:text-neutral-400";
+    return "text-neutral-500";
   }
   if (isPromoLotActive.value) {
-    return "text-rose-600 dark:text-rose-400";
+    return "text-rose-600";
   }
-  return "text-primary-600 dark:text-primary-400";
+  return "text-primary-600";
 });
 const currentLotName = computed(() =>
   isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null
@@ -1326,10 +1487,12 @@ const loadPersistedState = () => {
           gender: person.gender || "",
           districtId: person.districtId || "",
           churchId: person.churchId || "",
-          photoUrl: person.photoUrl || null
+          photoUrl: person.photoUrl || null,
+          formResponses: person.formResponses ?? {}
         }))
       );
       resetParticipantCpfState(people.length);
+      resetParticipantFieldErrors(people.length);
     }
     if (typeof saved.currentStep === "number") currentStep.value = saved.currentStep;
   } catch (error) {
@@ -1383,9 +1546,10 @@ const disableStatePersistence = () => {
   const selectedDistrictId = ref("");
   const selectedChurchId = ref("");
   const selectedPaymentMethod = ref<PaymentMethod>("PIX_MP");
-    const people = reactive<PersonForm[]>([]);
+  const people = reactive<PersonForm[]>([]);
   const participantCpfErrors = reactive<string[]>([]);
   const participantCpfRefs = ref<(HTMLInputElement | null)[]>([]);
+  const participantFieldErrors = reactive<Record<number, Record<string, string>>>({});
   const submitting = ref(false);
   const checkingCpf = ref(false);
   const errorMessage = ref("");
@@ -1481,6 +1645,193 @@ const disableStatePersistence = () => {
     catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
   const getGenderLabel = (value: string) =>
     genderOptions.find((option) => option.value === value)?.label ?? value;
+
+  const getFieldValue = (person: PersonForm, field: EventFormField) => {
+    switch (field.id) {
+      case "fullName":
+        return person.fullName;
+      case "cpf":
+        return person.cpf;
+      case "birthDate":
+        return person.birthDate;
+      case "gender":
+        return person.gender;
+      case "districtId":
+        return person.districtId;
+      case "churchId":
+        return person.churchId;
+      default:
+        return person.formResponses?.[field.id];
+    }
+  };
+
+  const setFieldValue = (person: PersonForm, field: EventFormField, value: unknown) => {
+    switch (field.id) {
+      case "fullName":
+        person.fullName = String(value ?? "");
+        break;
+      case "cpf":
+        person.cpf = String(value ?? "");
+        break;
+      case "birthDate":
+        person.birthDate = String(value ?? "");
+        break;
+      case "gender":
+        person.gender = String(value ?? "");
+        break;
+      case "districtId":
+        person.districtId = String(value ?? "");
+        break;
+      case "churchId":
+        person.churchId = String(value ?? "");
+        break;
+      default:
+        if (!person.formResponses) {
+          person.formResponses = {};
+        }
+        person.formResponses[field.id] = value;
+    }
+  };
+
+  const updateFieldValue = (
+    person: PersonForm,
+    field: EventFormField,
+    value: unknown,
+    index: number
+  ) => {
+    let normalized = value;
+    if (field.tipo === "number") {
+      const raw = String(value ?? "");
+      if (!raw.trim()) {
+        normalized = "";
+      } else {
+        const parsed = Number(raw);
+        normalized = Number.isFinite(parsed) ? parsed : raw;
+      }
+    }
+    setFieldValue(person, field, normalized);
+    clearParticipantFieldError(index, field.id);
+  };
+
+  const getFieldError = (index: number, fieldId: string) =>
+    getParticipantFieldError(index, fieldId);
+
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const validateFieldValue = (field: EventFormField, value: unknown, person?: PersonForm): string => {
+    const required = isFieldRequired(field);
+    const isEmpty = value === undefined || value === null || value === "";
+    if (required && isEmpty) {
+      return "Campo obrigatório.";
+    }
+    if (isEmpty) {
+      return "";
+    }
+
+    if (field.id === "districtId") {
+      const exists = catalog.districts.some((district) => district.id === value);
+      return exists ? "" : "Distrito inválido.";
+    }
+    if (field.id === "churchId") {
+      const districtId = person?.districtId ?? "";
+      const churches = getPersonChurchOptions(districtId);
+      const exists = churches.some((church) => church.id === value);
+      return exists ? "" : "Igreja inválida.";
+    }
+    if (field.id === "gender") {
+      const exists = genderOptions.some((option) => option.value === value);
+      return exists ? "" : "Selecione um gênero válido.";
+    }
+
+    switch (field.tipo) {
+      case "email": {
+        if (typeof value !== "string" || !emailPattern.test(value)) {
+          return "E-mail inválido.";
+        }
+        return "";
+      }
+      case "number": {
+        const numeric = typeof value === "number" ? value : Number(value);
+        if (!Number.isFinite(numeric)) {
+          return "Número inválido.";
+        }
+        if (typeof field.min === "number" && numeric < field.min) {
+          return `Valor mínimo é ${field.min}.`;
+        }
+        if (typeof field.max === "number" && numeric > field.max) {
+          return `Valor máximo é ${field.max}.`;
+        }
+        return "";
+      }
+      case "select": {
+        if (!field.opcoes || !field.opcoes.length) {
+          return "";
+        }
+        if (typeof value !== "string" || !field.opcoes.includes(value)) {
+          return "Seleção inválida.";
+        }
+        return "";
+      }
+      case "checkbox": {
+        if (required && value !== true) {
+          return "Este campo é obrigatório.";
+        }
+        if (typeof value !== "boolean") {
+          return "Valor inválido.";
+        }
+        return "";
+      }
+      default:
+        return "";
+    }
+  };
+
+  const validateParticipantsFields = () => {
+    let allValid = true;
+    people.forEach((person, index) => {
+      const errors: Record<string, string> = {};
+      formFields.value.forEach((field) => {
+        if (field.id === "cpf") {
+          return;
+        }
+        const value = getFieldValue(person, field);
+        const error = validateFieldValue(field, value, person);
+        if (error) {
+          errors[field.id] = error;
+          allValid = false;
+        }
+      });
+      participantFieldErrors[index] = errors;
+    });
+    return allValid;
+  };
+
+  const applyParticipantFieldErrors = (errorsByIndex: Record<string, Record<string, string>>) => {
+    Object.entries(errorsByIndex).forEach(([indexKey, errors]) => {
+      const index = Number(indexKey);
+      if (!participantFieldErrors[index]) {
+        participantFieldErrors[index] = {};
+      }
+      Object.assign(participantFieldErrors[index], errors);
+    });
+  };
+
+  const buildFormResponsesPayload = (person: PersonForm) => {
+    const responses = person.formResponses ?? {};
+    const allowed = new Set(
+      formFields.value
+        .map((field) => field.id)
+        .filter((id) => !SYSTEM_FIELD_IDS.has(id))
+    );
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(responses).forEach(([key, value]) => {
+      if (!allowed.has(key)) return;
+      if (value !== undefined) {
+        cleaned[key] = value;
+      }
+    });
+    return cleaned;
+  };
 
   const parseDateParts = (value?: string | null) => {
     if (!value) return null;
@@ -1593,7 +1944,8 @@ const disableStatePersistence = () => {
     gender: "",
     districtId: selectedDistrictId.value || "",
     churchId: selectedChurchId.value || "",
-    photoUrl: null
+    photoUrl: null,
+    formResponses: {}
   });
 
   const ensurePersonChurch = (index: number) => {
@@ -1839,6 +2191,32 @@ const disableStatePersistence = () => {
     participantCpfRefs.value = new Array(count).fill(null);
   };
 
+  const resetParticipantFieldErrors = (count: number) => {
+    Object.keys(participantFieldErrors).forEach((key) => {
+      delete participantFieldErrors[Number(key)];
+    });
+    for (let index = 0; index < count; index += 1) {
+      participantFieldErrors[index] = {};
+    }
+  };
+
+  const setParticipantFieldError = (index: number, fieldId: string, message: string) => {
+    if (!participantFieldErrors[index]) {
+      participantFieldErrors[index] = {};
+    }
+    participantFieldErrors[index][fieldId] = message;
+  };
+
+  const clearParticipantFieldError = (index: number, fieldId: string) => {
+    if (!participantFieldErrors[index]) return;
+    if (participantFieldErrors[index][fieldId]) {
+      delete participantFieldErrors[index][fieldId];
+    }
+  };
+
+  const getParticipantFieldError = (index: number, fieldId: string) =>
+    participantFieldErrors[index]?.[fieldId] ?? "";
+
   const ensureParticipantCpfsValid = async () => {
     let firstInvalidIndex = -1;
 
@@ -2054,6 +2432,7 @@ const disableStatePersistence = () => {
       ensurePersonChurch(index);
     }
     resetParticipantCpfState(size);
+    resetParticipantFieldErrors(size);
     errorMessage.value = "";
     currentStep.value = 2;
   };
@@ -2082,16 +2461,8 @@ const disableStatePersistence = () => {
       }
       ensurePersonChurch(index);
     });
-
-    const hasMissing = people.some(
-      (person) =>
-        !person.fullName.trim() ||
-        !person.birthDate ||
-        !person.gender ||
-        !person.districtId ||
-        !person.churchId
-    );
-    if (hasMissing) {
+    const fieldsValid = validateParticipantsFields();
+    if (!fieldsValid) {
       errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
       return;
     }
@@ -2128,23 +2499,15 @@ const disableStatePersistence = () => {
         }
         ensurePersonChurch(index);
       });
-
-      const hasMissing = people.some(
-        (person) =>
-          !person.fullName.trim() ||
-          !person.birthDate ||
-          !person.gender ||
-          !person.districtId ||
-          !person.churchId
-      );
-      if (hasMissing) {
-        errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
+      const fieldsValid = validateParticipantsFields();
+      if (!fieldsValid) {
+        errorMessage.value = "Preencha todos os dados obrigat�rios dos participantes.";
         currentStep.value = 2;
         return;
       }
     } catch (error: any) {
-      if (error?.response?.data?.message?.includes("CPF já registrado")) {
-        errorMessage.value = "CPF já possui inscrição confirmada para este evento";
+      if (error?.response?.data?.message?.includes("CPF j� registrado")) {
+        errorMessage.value = "CPF j� possui inscri��o confirmada para este evento";
         currentStep.value = 2;
         return;
       }
@@ -2160,7 +2523,8 @@ const disableStatePersistence = () => {
         gender: person.gender,
         districtId: person.districtId,
         churchId: person.churchId,
-        photoUrl: person.photoUrl
+        photoUrl: person.photoUrl,
+        formResponses: buildFormResponsesPayload(person)
       }));
       const response = await eventStore.createBatchOrder(
         normalizeCPF(buyerCpf.value),
@@ -2191,18 +2555,24 @@ const disableStatePersistence = () => {
         handleSuccess();
       }
     } catch (error: any) {
-      const message = error.response?.data?.message ?? "Erro ao criar inscrições.";
+      const message = error.response?.data?.message ?? "Erro ao criar inscri��es.";
+      const status = error.response?.status;
+      const fieldErrors = error.response?.data?.details?.fieldErrors;
+      if (status === 422 && fieldErrors) {
+        resetParticipantFieldErrors(people.length);
+        applyParticipantFieldErrors(fieldErrors);
+        errorMessage.value = message || "Revise os campos destacados.";
+        currentStep.value = 2;
+        return;
+      }
       errorMessage.value = message;
-      if (error.response?.status === 409) {
+      if (status === 409) {
         await handleConflictError(message);
       }
     } finally {
       submitting.value = false;
     }
   };
-
-
-
 
 
 
@@ -2289,24 +2659,24 @@ const disableStatePersistence = () => {
   const inlineStatusStyles = computed(() => {
     if (inlineIsPaid.value) {
       return {
-        container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
+        container: "border-primary-200 bg-primary-50",
         badge: "bg-primary-600"
       };
     }
     if (inlineIsManual.value) {
       return {
-        container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
+        container: "border-neutral-200 bg-white",
         badge: "bg-neutral-900"
       };
     }
     if (inlinePayment.value?.status === "CANCELED") {
       return {
-        container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
+        container: "border-black/60 bg-black text-white",
         badge: "bg-black"
       };
     }
     return {
-      container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
+      container: "border-primary-100 bg-white",
       badge: "bg-primary-500"
     };
   });
@@ -2373,3 +2743,9 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 </style>
+
+
+
+
+
+

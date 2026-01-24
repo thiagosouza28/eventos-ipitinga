@@ -34,7 +34,7 @@ export const router = createRouter({
     history: createWebHistory(),
     routes: [
         { path: "/", name: "home", component: EventLanding },
-        { path: "/evento/:slug", name: "event", component: EventFlow, props: true },
+        { path: "/evento/:slug", name: "event", component: EventFlow, props: true, meta: { hidePublicChrome: true } },
         { path: "/evento/:slug/pagamento/:orderId", name: "payment", component: PaymentPage, props: true },
         {
             path: "/admin/pendencias",

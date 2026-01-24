@@ -93,7 +93,8 @@ const batchSchema = z.object({
             z.literal(null),
             z.literal("")
           ])
-          .optional()
+          .optional(),
+        formResponses: z.record(z.any()).optional()
       })
     )
     .min(1)

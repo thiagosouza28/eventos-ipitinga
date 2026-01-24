@@ -365,6 +365,9 @@
           </div>
         </div>
         <div class="md:col-span-2">
+          <EventFormConfigEditor v-model="createForm.formConfig" />
+        </div>
+        <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
             Imagem do banner (arquivo)
           </label>
@@ -675,6 +678,9 @@
               </label>
             </div>
           </div>
+        </div>
+        <div class="md:col-span-2">
+          <EventFormConfigEditor v-model="editForm.formConfig" />
         </div>
         <div class="md:col-span-2">
           <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-300">
@@ -1192,11 +1198,13 @@ import { useAdminStore } from "../../stores/admin";
 import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
+import EventFormConfigEditor from "../../components/admin/EventFormConfigEditor.vue";
 import type {
   District,
   Event as ApiEvent,
   EventNotice,
   EventLot,
+  EventFormConfig,
   PaymentMethod,
   Ministry,
   Church
@@ -1205,6 +1213,7 @@ import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
 import { useModulePermissions } from "../../composables/usePermissions";
+import { DEFAULT_FORM_CONFIG, normalizeFormConfig } from "../../utils/formConfig";
 import {
   DEFAULT_PENDING_PAYMENT_VALUE_RULE,
   PENDING_PAYMENT_VALUE_RULES,
@@ -1340,6 +1349,7 @@ type EventForm = {
   districtId: string;
   churchId: string;
   notice: EventNoticeForm;
+  formConfig: EventFormConfig;
 };
 
 const slugifyValue = (value: string) =>
@@ -1400,6 +1410,16 @@ const buildNoticePayload = (notice: EventNoticeForm): EventNotice | null => {
   };
 };
 
+const cloneFormConfig = (config?: EventFormConfig | null): EventFormConfig => {
+  const normalized = normalizeFormConfig(config ?? DEFAULT_FORM_CONFIG);
+  return {
+    campos: normalized.campos.map((field) => ({
+      ...field,
+      opcoes: field.opcoes ? [...field.opcoes] : undefined
+    }))
+  };
+};
+
 const createForm = reactive<EventForm>({
   title: "",
   slug: "",
@@ -1415,7 +1435,8 @@ const createForm = reactive<EventForm>({
   ministryId: "",
   districtId: "",
   churchId: "",
-  notice: buildNoticeForm(null)
+  notice: buildNoticeForm(null),
+  formConfig: cloneFormConfig(null)
 });
 
 const editForm = reactive<EventForm>({
@@ -1433,7 +1454,8 @@ const editForm = reactive<EventForm>({
   ministryId: "",
   districtId: "",
   churchId: "",
-  notice: buildNoticeForm(null)
+  notice: buildNoticeForm(null),
+  formConfig: cloneFormConfig(null)
 });
 
 const editingEventId = ref<string | null>(null);
@@ -1806,6 +1828,7 @@ const resetCreateForm = () => {
   createForm.districtId = userDistrictId.value || "";
   createForm.churchId = userDistrictId.value ? userChurchId.value || "" : "";
   createForm.notice = buildNoticeForm(null);
+  createForm.formConfig = cloneFormConfig(null);
   applyChurchLock("create", createForm.districtId);
   if (createForm.districtId) {
     loadChurchesForDistrict(createForm.districtId, "create");
@@ -1830,6 +1853,7 @@ const resetEditForm = () => {
   editForm.districtId = "";
   editForm.churchId = "";
   editForm.notice = buildNoticeForm(null);
+  editForm.formConfig = cloneFormConfig(null);
   editChurchLocked.value = false;
 };
 
@@ -2009,7 +2033,8 @@ const submitCreate = async () => {
       isActive: true,
       ministryId: createForm.ministryId,
       districtId: createForm.districtId,
-      notice: noticePayload ?? null
+      notice: noticePayload ?? null,
+      formConfig: normalizeFormConfig(createForm.formConfig)
     } as Partial<ApiEvent>);
     resetCreateForm();
     createModalOpen.value = false;
@@ -2064,7 +2089,8 @@ const submitEdit = async () => {
       pendingPaymentValueRule: editForm.pendingPaymentValueRule,
       ministryId: editForm.ministryId,
       districtId: editForm.districtId,
-      notice: noticePayload ?? null
+      notice: noticePayload ?? null,
+      formConfig: normalizeFormConfig(editForm.formConfig)
     } as Partial<ApiEvent>);
     cancelEdit();
   } catch (error) {
@@ -2098,6 +2124,7 @@ const startEdit = (event: ApiEvent) => {
   editForm.districtId = event.districtId ?? "";
   editForm.churchId = event.churchId ?? "";
   editForm.notice = buildNoticeForm(event.notice ?? null);
+  editForm.formConfig = cloneFormConfig(event.formConfig ?? null);
   applyChurchLock("edit", editForm.districtId);
   if (editForm.districtId) {
     handleDistrictChange("edit", editForm.districtId);

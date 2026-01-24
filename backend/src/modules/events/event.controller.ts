@@ -45,6 +45,7 @@ const createSchema = z.object({
   paymentMethods: z.array(paymentMethodSchema).min(1).optional(),
   pendingPaymentValueRule: pendingPaymentValueRuleSchema.optional(),
   notice: noticeSchema,
+  formConfig: z.any().optional(),
   ministryId: z.string().cuid(),
   districtId: z.string().cuid(),
   churchId: z.string().cuid().optional()

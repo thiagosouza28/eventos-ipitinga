@@ -33,6 +33,7 @@ import { buildPixMeta } from "../../utils/pix";
 import { getActivePixProvider } from "../payments/pix-gateway";
 import { pixPaymentService } from "../payments/pix.service";
 import { getTableColumns } from "../../utils/schema-cache";
+import { resolveEventFormConfig, SYSTEM_FIELD_IDS, validateFormResponses } from "../forms/form-config";
 
 type GenderInput = Gender | "MASCULINO" | "FEMININO" | "OUTRO";
 
@@ -44,6 +45,7 @@ type BatchPerson = {
   districtId: string;
   churchId: string;
   photoUrl?: string | null;
+  formResponses?: Record<string, unknown> | null;
 };
 
 const isManualPayment = (paymentId: string) => paymentId.startsWith("MANUAL-");
@@ -310,6 +312,23 @@ export class OrderService {
       throw new AppError("Evento sem distrito associado", 400);
     }
 
+    const formConfig = resolveEventFormConfig(event.formConfig);
+    const formErrors: Record<number, Record<string, string>> = {};
+    const cleanedFormResponses = payload.people.map((person, index) => {
+      const validation = validateFormResponses(formConfig, person.formResponses ?? {}, {
+        ignoreFields: SYSTEM_FIELD_IDS
+      });
+      if (Object.keys(validation.errors).length) {
+        formErrors[index] = validation.errors;
+      }
+      return validation.cleaned;
+    });
+    if (Object.keys(formErrors).length) {
+      throw new AppError("Campos do formulário inválidos", 422, {
+        fieldErrors: formErrors
+      });
+    }
+
     const allowedMethods = parsePaymentMethods(event.paymentMethods);
     const requestedMethod = payload.paymentMethod;
     const fallbackMethod =
@@ -359,7 +378,7 @@ export class OrderService {
     }
 
     const peoplePrepared = await Promise.all(
-      payload.people.map(async (person) => {
+      payload.people.map(async (person, index) => {
         const lockedDistrictId = isDirectorLocal && actorDistrictId ? actorDistrictId : person.districtId;
         const lockedChurchId = isDirectorLocal && actorChurchId ? actorChurchId : person.churchId;
         const cpf = sanitizeCpf(person.cpf);
@@ -373,7 +392,8 @@ export class OrderService {
           districtId: lockedDistrictId,
           churchId: lockedChurchId,
           storedPhoto,
-          gender: parseGender(person.gender)
+          gender: parseGender(person.gender),
+          formResponses: cleanedFormResponses[index] ?? {}
         };
       })
     );
@@ -418,6 +438,7 @@ export class OrderService {
           churchId: person.churchId,
           photoUrl: person.storedPhoto,
           gender: person.gender,
+          formResponses: person.formResponses ?? {},
           paymentMethod: resolvedMethod,
           ministryId: event.ministryId,
           status: isFreeOrder ? RegistrationStatus.PAID : RegistrationStatus.PENDING_PAYMENT,
