@@ -181,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
 
 import type { EventFormConfig, EventFormField } from "../../types/api";
 import { FORM_FIELD_TYPES, SYSTEM_FIELD_IDS } from "../../utils/formConfig";
@@ -193,6 +193,7 @@ const fieldTypes = FORM_FIELD_TYPES;
 const dragIndex = ref<number | null>(null);
 const optionsDrafts = reactive<Record<string, string>>({});
 const fieldKeys = ref<string[]>([]);
+const isLocalUpdate = ref(false);
 
 const createFieldKey = () =>
   `field_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
@@ -202,12 +203,21 @@ const syncFieldKeys = (length: number) => {
   fieldKeys.value = Array.from({ length }, (_, index) => fieldKeys.value[index] ?? createFieldKey());
 };
 
+const resetFieldKeys = () => {
+  fieldKeys.value = props.modelValue.campos.map(() => createFieldKey());
+};
+
 watch(
-  () => props.modelValue.campos.length,
-  (length) => {
-    syncFieldKeys(length);
+  () => props.modelValue,
+  () => {
+    if (isLocalUpdate.value) {
+      syncFieldKeys(props.modelValue.campos.length);
+      return;
+    }
+    resetFieldKeys();
+    Object.keys(optionsDrafts).forEach((key) => delete optionsDrafts[key]);
   },
-  { immediate: true }
+  { deep: true, immediate: true }
 );
 
 const cloneConfig = (config: EventFormConfig): EventFormConfig => ({
@@ -222,7 +232,11 @@ const isLocked = (field: EventFormField) => SYSTEM_FIELD_IDS.has(field.id);
 const updateConfig = (updater: (config: EventFormConfig) => void) => {
   const next = cloneConfig(props.modelValue);
   updater(next);
+  isLocalUpdate.value = true;
   emit("update:modelValue", next);
+  nextTick(() => {
+    isLocalUpdate.value = false;
+  });
 };
 
 const generateFieldId = (config: EventFormConfig) => {

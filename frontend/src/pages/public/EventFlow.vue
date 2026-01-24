@@ -2743,22 +2743,22 @@ input[data-quantity-input] {
   -moz-appearance: textfield;
 }
 
-.event-flow input,
-.event-flow select,
-.event-flow textarea {
+.event-flow :deep(input),
+.event-flow :deep(select),
+.event-flow :deep(textarea) {
   color: #111827;
 }
 
-.event-flow input::placeholder,
-.event-flow textarea::placeholder {
+.event-flow :deep(input::placeholder),
+.event-flow :deep(textarea::placeholder) {
   color: #4b5563;
 }
 
-.event-flow input[type="date"] {
+.event-flow :deep(input[type="date"]) {
   color: #111827;
 }
 
-.event-flow input[type="date"]::-webkit-datetime-edit {
+.event-flow :deep(input[type="date"]::-webkit-datetime-edit) {
   color: #111827;
 }
 </style>
