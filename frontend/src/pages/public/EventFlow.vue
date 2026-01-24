@@ -549,7 +549,7 @@
                     :required="isFieldRequired(field)"
                     :aria-invalid="getFieldError(index, field.id) ? 'true' : 'false'"
                     :aria-describedby="`participant-field-${index}-${field.id}-error`"
-                    inputClass="w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    inputClass="w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm text-black focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
                     class="w-full"
                     :placeholder="field.placeholder"
                     @update:modelValue="(value) => updateFieldValue(person, field, value, index)"
@@ -2752,6 +2752,14 @@ input[data-quantity-input] {
 .event-flow input::placeholder,
 .event-flow textarea::placeholder {
   color: #4b5563;
+}
+
+.event-flow input[type="date"] {
+  color: #111827;
+}
+
+.event-flow input[type="date"]::-webkit-datetime-edit {
+  color: #111827;
 }
 </style>
 

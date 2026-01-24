@@ -20,7 +20,7 @@
     <div class="mt-4 space-y-3">
       <div
         v-for="(field, index) in modelValue.campos"
-        :key="index"
+        :key="fieldKeys[index]"
         class="rounded border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-700 dark:bg-neutral-950"
         draggable="true"
         @dragstart="onDragStart(index)"
@@ -181,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 
 import type { EventFormConfig, EventFormField } from "../../types/api";
 import { FORM_FIELD_TYPES, SYSTEM_FIELD_IDS } from "../../utils/formConfig";
@@ -192,6 +192,23 @@ const emit = defineEmits<{ (e: "update:modelValue", value: EventFormConfig): voi
 const fieldTypes = FORM_FIELD_TYPES;
 const dragIndex = ref<number | null>(null);
 const optionsDrafts = reactive<Record<string, string>>({});
+const fieldKeys = ref<string[]>([]);
+
+const createFieldKey = () =>
+  `field_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+
+const syncFieldKeys = (length: number) => {
+  if (fieldKeys.value.length === length) return;
+  fieldKeys.value = Array.from({ length }, (_, index) => fieldKeys.value[index] ?? createFieldKey());
+};
+
+watch(
+  () => props.modelValue.campos.length,
+  (length) => {
+    syncFieldKeys(length);
+  },
+  { immediate: true }
+);
 
 const cloneConfig = (config: EventFormConfig): EventFormConfig => ({
   campos: config.campos.map((field) => ({
@@ -229,6 +246,7 @@ const addField = () => {
       placeholder: ""
     });
   });
+  fieldKeys.value.push(createFieldKey());
 };
 
 const removeField = (index: number) => {
@@ -240,6 +258,7 @@ const removeField = (index: number) => {
       delete optionsDrafts[key];
     }
   });
+  fieldKeys.value.splice(index, 1);
 };
 
 const updateField = (index: number, patch: Partial<EventFormField>) => {
@@ -327,6 +346,8 @@ const onDrop = (index: number) => {
     const [moved] = config.campos.splice(dragIndex.value as number, 1);
     config.campos.splice(index, 0, moved);
   });
+  const [movedKey] = fieldKeys.value.splice(dragIndex.value, 1);
+  fieldKeys.value.splice(index, 0, movedKey);
   dragIndex.value = null;
 };
 </script>
