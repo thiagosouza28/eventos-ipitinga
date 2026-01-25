@@ -1,12 +1,12 @@
 {
   "build": {
     "env": {
-      "VITE_API_URL": "https://18.231.250.231:3333/api",
+      "VITE_API_URL": "https://ipitinga.ideartcloud.com.br/api",
       "VITE_APP_URL": "https://eventos-ipitinga.vercel.app"
     }
   },
   "env": {
-    "VITE_API_URL": "https://18.231.250.231:3333/api",
+    "VITE_API_URL": "https://ipitinga.ideartcloud.com.br/api",
     "VITE_APP_URL": "https://eventos-ipitinga.vercel.app"
   },
   "rewrites": [
