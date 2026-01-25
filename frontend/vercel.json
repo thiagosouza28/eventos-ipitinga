@@ -1,22 +1,22 @@
 {
   "build": {
     "env": {
-      "VITE_API_URL": "https://18.231.250.231:3333/api",
-      "VITE_APP_URL": "https://ipitinga.ideartcloud.com.br"
+      "VITE_API_URL": "https://eventos-ipitinga.vercel.app/api",
+      "VITE_APP_URL": "https://eventos-ipitinga.vercel.app"
     }
   },
   "env": {
-    "VITE_API_URL": "https://18.231.250.231:3333/api",
-    "VITE_APP_URL": "https://ipitinga.ideartcloud.com.br"
+    "VITE_API_URL": "https://eventos-ipitinga.vercel.app/api",
+    "VITE_APP_URL": "https://eventos-ipitinga.vercel.app"
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://18.231.250.231:3333/api/$1"
+      "destination": "http://18.231.250.231:3333/api/$1"
     },
     {
       "source": "/uploads/(.*)",
-      "destination": "https://18.231.250.231:3333/uploads/$1"
+      "destination": "http://18.231.250.231:3333/uploads/$1"
     },
     {
       "source": "/(.*)",
