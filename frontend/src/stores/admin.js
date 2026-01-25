@@ -225,6 +225,40 @@ export const useAdminStore = defineStore("admin", () => {
             timeout: registrationsPdfTimeoutMs
         });
     };
+    const getAdminRegistrationsSummaryReport = async (filters = {}) => {
+        const params = normalizeFilters(filters);
+        const response = await api.get("/admin/reports/registrations/summary", { params });
+        return response.data;
+    };
+    const downloadAdminRegistrationsSummaryCsv = async (filters = {}) => {
+        const params = normalizeFilters(filters);
+        return api.get("/admin/reports/registrations/summary.csv", {
+            params,
+            responseType: "blob",
+            timeout: registrationsPdfTimeoutMs
+        });
+    };
+    const downloadAdminRegistrationsSummaryXlsx = async (filters = {}) => {
+        const params = normalizeFilters(filters);
+        return api.get("/admin/reports/registrations/summary.xlsx", {
+            params,
+            responseType: "blob",
+            timeout: registrationsPdfTimeoutMs
+        });
+    };
+    const downloadAdminRegistrationsSummaryPdf = async (filters = {}) => {
+        const params = normalizeFilters(filters);
+        return api.get("/admin/reports/registrations/summary.pdf", {
+            params,
+            responseType: "blob",
+            timeout: registrationsPdfTimeoutMs
+        });
+    };
+    const getRegistrationsDashboard = async (filters = {}) => {
+        const params = normalizeFilters(filters);
+        const response = await api.get("/admin/dashboard/registrations", { params });
+        return response.data;
+    };
     const downloadFinancialReport = async (eventId) => {
         return api.get(`/admin/financial/events/${eventId}/report.pdf`, {
             responseType: "blob",
@@ -483,6 +517,11 @@ export const useAdminStore = defineStore("admin", () => {
         loadRegistrations,
         downloadRegistrationReport,
         downloadRegistrationListPdf,
+        getAdminRegistrationsSummaryReport,
+        downloadAdminRegistrationsSummaryCsv,
+        downloadAdminRegistrationsSummaryXlsx,
+        downloadAdminRegistrationsSummaryPdf,
+        getRegistrationsDashboard,
         downloadFinancialReport,
         requestRegistrationReportJob,
         requestRegistrationListJob,

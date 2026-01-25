@@ -426,16 +426,44 @@ const registrationLotName = (registration) => registration.lotName ||
     registration.order?.pricingLot?.name ||
     registration.lot?.name ||
     '';
+const resolveLotByDate = (registration) => {
+    const lots = admin.eventLots[registration.eventId] || [];
+    if (!lots.length)
+        return '';
+    const createdAtValue = registration.createdAt ? new Date(registration.createdAt) : null;
+    if (!createdAtValue || Number.isNaN(createdAtValue.getTime()))
+        return '';
+    let candidates = lots.filter((lot) => {
+        const startsAt = lot.startsAt ? new Date(lot.startsAt) : null;
+        if (!startsAt || Number.isNaN(startsAt.getTime()))
+            return false;
+        const endsAt = lot.endsAt ? new Date(lot.endsAt) : null;
+        if (endsAt && Number.isNaN(endsAt.getTime()))
+            return false;
+        return startsAt.getTime() <= createdAtValue.getTime() && (!endsAt || endsAt.getTime() >= createdAtValue.getTime());
+    });
+    const priceCents = typeof registration.priceCents === 'number' ? registration.priceCents : null;
+    if (priceCents !== null) {
+        const priceMatches = candidates.filter((lot) => lot.priceCents === priceCents);
+        if (priceMatches.length) {
+            candidates = priceMatches;
+        }
+    }
+    candidates.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+    return candidates[0]?.name || '';
+};
 const findRegistrationLotLabel = (registration) => {
     const name = registrationLotName(registration);
     if (name)
         return name;
     const lotId = registrationLotId(registration);
-    if (!lotId)
-        return '';
     const lots = admin.eventLots[registration.eventId] || [];
-    const lot = lots.find((item) => item.id === lotId);
-    return lot?.name || '';
+    if (lotId) {
+        const lot = lots.find((item) => item.id === lotId);
+        if (lot?.name)
+            return lot.name;
+    }
+    return resolveLotByDate(registration);
 };
 const findDistrictName = (id) => districtMap.value.get(id)?.name ?? registrationDistrictMap.value.get(id) ?? "Não informado";
 const findChurchName = (id) => churchMap.value.get(id)?.name ?? registrationChurchMap.value.get(id) ?? "Não informado";

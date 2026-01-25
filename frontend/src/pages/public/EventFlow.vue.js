@@ -17,6 +17,7 @@ import { buildNoticeFingerprint, hasSeenNotice, setSeenNotice } from "../../util
 import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
 import { REGISTRATION_STORAGE_KEY } from "../../config/storageKeys";
 import { normalizePixCode, hashPixCode } from "../../utils/pix";
+import { normalizeFormConfig, SYSTEM_FIELD_IDS } from "../../utils/formConfig";
 import { paymentMethodLabel, PAYMENT_METHODS, MANUAL_PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS, FREE_PAYMENT_METHODS } from "../../config/paymentMethods";
 import { useAuthStore } from "../../stores/auth";
 import { formatCPF, normalizeCPF, validateCPF } from "../../utils/cpf";
@@ -44,6 +45,9 @@ const noticeEnabled = computed(() => Boolean(resolvedNotice.value));
 const noticeSlug = computed(() => props.slug ?? "");
 const noticeFingerprint = computed(() => resolvedNotice.value ? buildNoticeFingerprint(resolvedNotice.value) : "");
 const canStartWizard = computed(() => !noticeEnabled.value || noticeAccepted.value);
+const eventFormConfig = computed(() => normalizeFormConfig(eventStore.event?.formConfig ?? null));
+const formFields = computed(() => eventFormConfig.value.campos);
+const isFieldRequired = (field) => Boolean(field.obrigatorio) || SYSTEM_FIELD_IDS.has(field.id);
 const evaluateNotice = () => {
     if (!noticeEnabled.value) {
         noticeOpen.value = false;
@@ -142,12 +146,12 @@ const isPromoLotActive = computed(() => {
 });
 const priceValueClass = computed(() => {
     if (priceInfo.value.pending) {
-        return "text-neutral-500 dark:text-neutral-400";
+        return "text-neutral-500";
     }
     if (isPromoLotActive.value) {
-        return "text-rose-600 dark:text-rose-400";
+        return "text-rose-600";
     }
-    return "text-primary-600 dark:text-primary-400";
+    return "text-primary-600";
 });
 const currentLotName = computed(() => isFreeEvent.value ? null : eventStore.event?.currentLot?.name ?? null);
 const nextLotInfo = computed(() => {
@@ -325,9 +329,11 @@ const loadPersistedState = () => {
                 gender: person.gender || "",
                 districtId: person.districtId || "",
                 churchId: person.churchId || "",
-                photoUrl: person.photoUrl || null
+                photoUrl: person.photoUrl || null,
+                formResponses: person.formResponses ?? {}
             })));
             resetParticipantCpfState(people.length);
+            resetParticipantFieldErrors(people.length);
         }
         if (typeof saved.currentStep === "number")
             currentStep.value = saved.currentStep;
@@ -388,6 +394,7 @@ const selectedPaymentMethod = ref("PIX_MP");
 const people = reactive([]);
 const participantCpfErrors = reactive([]);
 const participantCpfRefs = ref([]);
+const participantFieldErrors = reactive({});
 const submitting = ref(false);
 const checkingCpf = ref(false);
 const errorMessage = ref("");
@@ -460,6 +467,176 @@ const getPersonChurchOptions = (districtId) => churchesByDistrict.value.get(dist
 const getDistrictName = (id) => catalog.districts.find((district) => district.id === id)?.name ?? "Não informado";
 const getChurchName = (id) => catalog.churches.find((church) => church.id === id)?.name ?? "Não informado";
 const getGenderLabel = (value) => genderOptions.find((option) => option.value === value)?.label ?? value;
+const getFieldValue = (person, field) => {
+    switch (field.id) {
+        case "fullName":
+            return person.fullName;
+        case "cpf":
+            return person.cpf;
+        case "birthDate":
+            return person.birthDate;
+        case "gender":
+            return person.gender;
+        case "districtId":
+            return person.districtId;
+        case "churchId":
+            return person.churchId;
+        default:
+            return person.formResponses?.[field.id];
+    }
+};
+const setFieldValue = (person, field, value) => {
+    switch (field.id) {
+        case "fullName":
+            person.fullName = String(value ?? "");
+            break;
+        case "cpf":
+            person.cpf = String(value ?? "");
+            break;
+        case "birthDate":
+            person.birthDate = String(value ?? "");
+            break;
+        case "gender":
+            person.gender = String(value ?? "");
+            break;
+        case "districtId":
+            person.districtId = String(value ?? "");
+            break;
+        case "churchId":
+            person.churchId = String(value ?? "");
+            break;
+        default:
+            if (!person.formResponses) {
+                person.formResponses = {};
+            }
+            person.formResponses[field.id] = value;
+    }
+};
+const updateFieldValue = (person, field, value, index) => {
+    let normalized = value;
+    if (field.tipo === "number") {
+        const raw = String(value ?? "");
+        if (!raw.trim()) {
+            normalized = "";
+        }
+        else {
+            const parsed = Number(raw);
+            normalized = Number.isFinite(parsed) ? parsed : raw;
+        }
+    }
+    setFieldValue(person, field, normalized);
+    clearParticipantFieldError(index, field.id);
+};
+const getFieldError = (index, fieldId) => getParticipantFieldError(index, fieldId);
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const validateFieldValue = (field, value, person) => {
+    const required = isFieldRequired(field);
+    const isEmpty = value === undefined || value === null || value === "";
+    if (required && isEmpty) {
+        return "Campo obrigatório.";
+    }
+    if (isEmpty) {
+        return "";
+    }
+    if (field.id === "districtId") {
+        const exists = catalog.districts.some((district) => district.id === value);
+        return exists ? "" : "Distrito inválido.";
+    }
+    if (field.id === "churchId") {
+        const districtId = person?.districtId ?? "";
+        const churches = getPersonChurchOptions(districtId);
+        const exists = churches.some((church) => church.id === value);
+        return exists ? "" : "Igreja inválida.";
+    }
+    if (field.id === "gender") {
+        const exists = genderOptions.some((option) => option.value === value);
+        return exists ? "" : "Selecione um gênero válido.";
+    }
+    switch (field.tipo) {
+        case "email": {
+            if (typeof value !== "string" || !emailPattern.test(value)) {
+                return "E-mail inválido.";
+            }
+            return "";
+        }
+        case "number": {
+            const numeric = typeof value === "number" ? value : Number(value);
+            if (!Number.isFinite(numeric)) {
+                return "Número inválido.";
+            }
+            if (typeof field.min === "number" && numeric < field.min) {
+                return `Valor mínimo é ${field.min}.`;
+            }
+            if (typeof field.max === "number" && numeric > field.max) {
+                return `Valor máximo é ${field.max}.`;
+            }
+            return "";
+        }
+        case "select": {
+            if (!field.opcoes || !field.opcoes.length) {
+                return "";
+            }
+            if (typeof value !== "string" || !field.opcoes.includes(value)) {
+                return "Seleção inválida.";
+            }
+            return "";
+        }
+        case "checkbox": {
+            if (required && value !== true) {
+                return "Este campo é obrigatório.";
+            }
+            if (typeof value !== "boolean") {
+                return "Valor inválido.";
+            }
+            return "";
+        }
+        default:
+            return "";
+    }
+};
+const validateParticipantsFields = () => {
+    let allValid = true;
+    people.forEach((person, index) => {
+        const errors = {};
+        formFields.value.forEach((field) => {
+            if (field.id === "cpf") {
+                return;
+            }
+            const value = getFieldValue(person, field);
+            const error = validateFieldValue(field, value, person);
+            if (error) {
+                errors[field.id] = error;
+                allValid = false;
+            }
+        });
+        participantFieldErrors[index] = errors;
+    });
+    return allValid;
+};
+const applyParticipantFieldErrors = (errorsByIndex) => {
+    Object.entries(errorsByIndex).forEach(([indexKey, errors]) => {
+        const index = Number(indexKey);
+        if (!participantFieldErrors[index]) {
+            participantFieldErrors[index] = {};
+        }
+        Object.assign(participantFieldErrors[index], errors);
+    });
+};
+const buildFormResponsesPayload = (person) => {
+    const responses = person.formResponses ?? {};
+    const allowed = new Set(formFields.value
+        .map((field) => field.id)
+        .filter((id) => !SYSTEM_FIELD_IDS.has(id)));
+    const cleaned = {};
+    Object.entries(responses).forEach(([key, value]) => {
+        if (!allowed.has(key))
+            return;
+        if (value !== undefined) {
+            cleaned[key] = value;
+        }
+    });
+    return cleaned;
+};
 const parseDateParts = (value) => {
     if (!value)
         return null;
@@ -562,7 +739,8 @@ const createEmptyPerson = () => ({
     gender: "",
     districtId: selectedDistrictId.value || "",
     churchId: selectedChurchId.value || "",
-    photoUrl: null
+    photoUrl: null,
+    formResponses: {}
 });
 const ensurePersonChurch = (index) => {
     const person = people[index];
@@ -777,6 +955,28 @@ const resetParticipantCpfState = (count) => {
     }
     participantCpfRefs.value = new Array(count).fill(null);
 };
+const resetParticipantFieldErrors = (count) => {
+    Object.keys(participantFieldErrors).forEach((key) => {
+        delete participantFieldErrors[Number(key)];
+    });
+    for (let index = 0; index < count; index += 1) {
+        participantFieldErrors[index] = {};
+    }
+};
+const setParticipantFieldError = (index, fieldId, message) => {
+    if (!participantFieldErrors[index]) {
+        participantFieldErrors[index] = {};
+    }
+    participantFieldErrors[index][fieldId] = message;
+};
+const clearParticipantFieldError = (index, fieldId) => {
+    if (!participantFieldErrors[index])
+        return;
+    if (participantFieldErrors[index][fieldId]) {
+        delete participantFieldErrors[index][fieldId];
+    }
+};
+const getParticipantFieldError = (index, fieldId) => participantFieldErrors[index]?.[fieldId] ?? "";
 const ensureParticipantCpfsValid = async () => {
     let firstInvalidIndex = -1;
     people.forEach((person, index) => {
@@ -944,6 +1144,7 @@ const handleGeneralStep = () => {
         ensurePersonChurch(index);
     }
     resetParticipantCpfState(size);
+    resetParticipantFieldErrors(size);
     errorMessage.value = "";
     currentStep.value = 2;
 };
@@ -972,12 +1173,8 @@ const goToReview = async () => {
         }
         ensurePersonChurch(index);
     });
-    const hasMissing = people.some((person) => !person.fullName.trim() ||
-        !person.birthDate ||
-        !person.gender ||
-        !person.districtId ||
-        !person.churchId);
-    if (hasMissing) {
+    const fieldsValid = validateParticipantsFields();
+    if (!fieldsValid) {
         errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
         return;
     }
@@ -1010,20 +1207,16 @@ const submitBatch = async () => {
             }
             ensurePersonChurch(index);
         });
-        const hasMissing = people.some((person) => !person.fullName.trim() ||
-            !person.birthDate ||
-            !person.gender ||
-            !person.districtId ||
-            !person.churchId);
-        if (hasMissing) {
-            errorMessage.value = "Preencha todos os dados obrigatórios dos participantes.";
+        const fieldsValid = validateParticipantsFields();
+        if (!fieldsValid) {
+            errorMessage.value = "Preencha todos os dados obrigat�rios dos participantes.";
             currentStep.value = 2;
             return;
         }
     }
     catch (error) {
-        if (error?.response?.data?.message?.includes("CPF já registrado")) {
-            errorMessage.value = "CPF já possui inscrição confirmada para este evento";
+        if (error?.response?.data?.message?.includes("CPF j� registrado")) {
+            errorMessage.value = "CPF j� possui inscri��o confirmada para este evento";
             currentStep.value = 2;
             return;
         }
@@ -1038,7 +1231,8 @@ const submitBatch = async () => {
             gender: person.gender,
             districtId: person.districtId,
             churchId: person.churchId,
-            photoUrl: person.photoUrl
+            photoUrl: person.photoUrl,
+            formResponses: buildFormResponsesPayload(person)
         }));
         const response = await eventStore.createBatchOrder(normalizeCPF(buyerCpf.value), selectedPaymentMethod.value, payload);
         disableStatePersistence();
@@ -1067,9 +1261,18 @@ const submitBatch = async () => {
         }
     }
     catch (error) {
-        const message = error.response?.data?.message ?? "Erro ao criar inscrições.";
+        const message = error.response?.data?.message ?? "Erro ao criar inscri��es.";
+        const status = error.response?.status;
+        const fieldErrors = error.response?.data?.details?.fieldErrors;
+        if (status === 422 && fieldErrors) {
+            resetParticipantFieldErrors(people.length);
+            applyParticipantFieldErrors(fieldErrors);
+            errorMessage.value = message || "Revise os campos destacados.";
+            currentStep.value = 2;
+            return;
+        }
         errorMessage.value = message;
-        if (error.response?.status === 409) {
+        if (status === 409) {
             await handleConflictError(message);
         }
     }
@@ -1145,24 +1348,24 @@ const inlineStatusIcon = computed(() => {
 const inlineStatusStyles = computed(() => {
     if (inlineIsPaid.value) {
         return {
-            container: "border-primary-200 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10",
+            container: "border-primary-200 bg-primary-50",
             badge: "bg-primary-600"
         };
     }
     if (inlineIsManual.value) {
         return {
-            container: "border-neutral-200 bg-white dark:border-neutral-700 dark:bg-neutral-900/60",
+            container: "border-neutral-200 bg-white",
             badge: "bg-neutral-900"
         };
     }
     if (inlinePayment.value?.status === "CANCELED") {
         return {
-            container: "border-black/60 bg-black text-white dark:border-white/20 dark:bg-black",
+            container: "border-black/60 bg-black text-white",
             badge: "bg-black"
         };
     }
     return {
-        container: "border-primary-100 bg-white dark:border-primary-900/40 dark:bg-neutral-950/60",
+        container: "border-primary-100 bg-white",
         badge: "bg-primary-500"
     };
 });
@@ -1212,6 +1415,12 @@ debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
 if (__VLS_ctx.eventStore.loading) {
@@ -1226,10 +1435,10 @@ else if (!__VLS_ctx.eventStore.event) {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
     const __VLS_3 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+        ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
     }));
     const __VLS_4 = __VLS_3({
-        ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+        ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_3));
     __VLS_5.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
@@ -1239,7 +1448,7 @@ else if (!__VLS_ctx.eventStore.event) {
 }
 else {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "min-h-screen bg-[#F6F8FB] pb-16" },
+        ...{ class: "event-flow min-h-screen bg-[#EEF1F5] pb-16" },
         'data-uppercase-scope': true,
     });
     if (__VLS_ctx.noticeEnabled && __VLS_ctx.resolvedNotice) {
@@ -1296,7 +1505,7 @@ else {
         });
         /** @type {typeof __VLS_ctx.minorDialogRef} */ ;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-            ...{ class: "w-full max-w-sm rounded border border-emerald-200 bg-white p-6 dark:border-emerald-500/40 dark:bg-neutral-900" },
+            ...{ class: "w-full max-w-sm rounded border border-emerald-200 bg-white p-6" },
             role: "dialog",
             'aria-modal': "true",
             'aria-labelledby': "minor-confirmation-title",
@@ -1305,7 +1514,7 @@ else {
             ...{ class: "flex items-center gap-3" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-            ...{ class: "inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300" },
+            ...{ class: "inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
             viewBox: "0 0 24 24",
@@ -1325,10 +1534,10 @@ else {
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({
             id: "minor-confirmation-title",
-            ...{ class: "text-lg font-semibold text-neutral-900 dark:text-neutral-100" },
+            ...{ class: "text-lg font-semibold text-neutral-900" },
         });
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-            ...{ class: "mt-4 text-sm text-neutral-600 dark:text-neutral-300" },
+            ...{ class: "mt-4 text-sm text-neutral-600" },
         });
         (__VLS_ctx.minorConfirmationMessage);
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1386,10 +1595,10 @@ else {
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
     const __VLS_18 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-        ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+        ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
     }));
     const __VLS_19 = __VLS_18({
-        ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+        ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_18));
     __VLS_20.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1639,10 +1848,10 @@ else {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
             const __VLS_21 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
             const __VLS_22 = __VLS_21({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_21));
             __VLS_23.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1703,10 +1912,10 @@ else {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
             const __VLS_34 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
             const __VLS_35 = __VLS_34({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_34));
             __VLS_36.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1721,7 +1930,7 @@ else {
             });
             if (false) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "rounded border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-100" },
+                    ...{ class: "rounded border border-primary-200 bg-primary-50 p-3 text-sm text-primary-900" },
                 });
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     ...{ class: "font-semibold" },
@@ -1734,7 +1943,7 @@ else {
                 for (const [order] of __VLS_getVForSourceType((__VLS_ctx.pendingOrders))) {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         key: (order.orderId),
-                        ...{ class: "rounded border border-primary-100 bg-white/80 p-2 dark:border-primary-500/30 dark:bg-neutral-900/40" },
+                        ...{ class: "rounded border border-primary-100 bg-white/80 p-2" },
                     });
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                         ...{ class: "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between" },
@@ -1756,11 +1965,11 @@ else {
                     // @ts-ignore
                     const __VLS_38 = __VLS_asFunctionalComponent(__VLS_37, new __VLS_37({
                         to: ({ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }),
-                        ...{ class: "inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100" },
+                        ...{ class: "inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10" },
                     }));
                     const __VLS_39 = __VLS_38({
                         to: ({ name: 'payment', params: { slug: props.slug, orderId: order.orderId } }),
-                        ...{ class: "inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10 dark:border-primary-400 dark:text-primary-100" },
+                        ...{ class: "inline-flex shrink-0 items-center justify-center rounded border border-primary-500 px-3 py-1 text-xs font-medium text-primary-700 transition hover:bg-primary-500/10" },
                     }, ...__VLS_functionalComponentArgsRest(__VLS_38));
                     __VLS_40.slots.default;
                     var __VLS_40;
@@ -1770,11 +1979,11 @@ else {
                 // @ts-ignore
                 const __VLS_42 = __VLS_asFunctionalComponent(__VLS_41, new __VLS_41({
                     to: ({ name: 'admin-pending-orders', params: { cpf: __VLS_ctx.buyerCpf } }),
-                    ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50" },
+                    ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600" },
                 }));
                 const __VLS_43 = __VLS_42({
                     to: ({ name: 'admin-pending-orders', params: { cpf: __VLS_ctx.buyerCpf } }),
-                    ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600 dark:text-primary-100 dark:hover:text-primary-50" },
+                    ...{ class: "inline-flex items-center text-xs font-medium text-primary-700 hover:text-primary-600" },
                 }, ...__VLS_functionalComponentArgsRest(__VLS_42));
                 __VLS_44.slots.default;
                 /** @type {[typeof IconArrowRight, ]} */ ;
@@ -1796,7 +2005,7 @@ else {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                ...{ class: "block text-sm font-medium text-neutral-600" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "relative" },
@@ -1819,7 +2028,7 @@ else {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                 value: (__VLS_ctx.selectedDistrictId),
-                ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800" },
+                ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" },
                 'aria-invalid': (__VLS_ctx.generalErrors.district ? 'true' : 'false'),
                 'aria-describedby': "district-error",
                 required: true,
@@ -1839,13 +2048,13 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     id: "district-error",
                     role: "alert",
-                    ...{ class: "mt-2 text-sm text-red-600 dark:text-red-400" },
+                    ...{ class: "mt-2 text-sm text-red-600" },
                 });
                 (__VLS_ctx.generalErrors.district);
             }
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
             __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
+                ...{ class: "block text-sm font-medium text-neutral-600" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "relative" },
@@ -1868,7 +2077,7 @@ else {
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
                 value: (__VLS_ctx.selectedChurchId),
-                ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 dark:border-neutral-700 dark:bg-neutral-800" },
+                ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 pl-10 text-sm text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" },
                 'aria-invalid': (__VLS_ctx.generalErrors.church ? 'true' : 'false'),
                 'aria-describedby': "church-error",
                 disabled: (!__VLS_ctx.selectedDistrictId),
@@ -1889,7 +2098,7 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
                     id: "church-error",
                     role: "alert",
-                    ...{ class: "mt-2 text-sm text-red-600 dark:text-red-400" },
+                    ...{ class: "mt-2 text-sm text-red-600" },
                 });
                 (__VLS_ctx.generalErrors.church);
             }
@@ -1958,7 +2167,7 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto" },
+                ...{ class: "w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 type: "submit",
@@ -1982,10 +2191,10 @@ else {
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
             const __VLS_48 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
             const __VLS_49 = __VLS_48({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }, ...__VLS_functionalComponentArgsRest(__VLS_48));
             __VLS_50.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -2029,11 +2238,11 @@ else {
                 // @ts-ignore
                 const __VLS_51 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
                     key: (index),
-                    ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                    ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
                 }));
                 const __VLS_52 = __VLS_51({
                     key: (index),
-                    ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                    ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
                 }, ...__VLS_functionalComponentArgsRest(__VLS_51));
                 __VLS_53.slots.default;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -2076,161 +2285,533 @@ else {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "mt-4 grid gap-4 lg:grid-cols-2" },
                 });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                    ...{ onInput: (...[$event]) => {
-                            if (!!(__VLS_ctx.eventStore.loading))
-                                return;
-                            if (!!(!__VLS_ctx.eventStore.event))
-                                return;
-                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
-                                return;
-                            if (!(__VLS_ctx.currentStep === 2))
-                                return;
-                            __VLS_ctx.onParticipantCpfInput(index, $event);
-                        } },
-                    ...{ onBlur: (...[$event]) => {
-                            if (!!(__VLS_ctx.eventStore.loading))
-                                return;
-                            if (!!(!__VLS_ctx.eventStore.event))
-                                return;
-                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
-                                return;
-                            if (!(__VLS_ctx.currentStep === 2))
-                                return;
-                            __VLS_ctx.onParticipantCpfBlur(index);
-                        } },
-                    ref: ((el) => __VLS_ctx.setParticipantCpfRef(el, index)),
-                    value: (person.cpf),
-                    type: "text",
-                    placeholder: "000.000.000-00",
-                    inputmode: "numeric",
-                    autocomplete: "off",
-                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" },
-                    'aria-invalid': (__VLS_ctx.participantCpfErrors[index] ? 'true' : 'false'),
-                    'aria-describedby': (`participant-cpf-error-${index}`),
-                    required: true,
-                });
-                if (__VLS_ctx.participantCpfErrors[index]) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-                        id: (`participant-cpf-error-${index}`),
-                        role: "alert",
-                        ...{ class: "mt-1 text-sm text-red-600" },
-                    });
-                    (__VLS_ctx.participantCpfErrors[index]);
-                }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
-                    value: (person.fullName),
-                    type: "text",
-                    required: true,
-                    disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-                    ...{ class: "mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" },
-                });
-                /** @type {[typeof DateField, ]} */ ;
-                // @ts-ignore
-                const __VLS_54 = __VLS_asFunctionalComponent(DateField, new DateField({
-                    modelValue: (person.birthDate),
-                    required: true,
-                    disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "w-full" },
-                }));
-                const __VLS_55 = __VLS_54({
-                    modelValue: (person.birthDate),
-                    required: true,
-                    disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "w-full" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_54));
-                if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
-                        ...{ class: "text-xs text-neutral-500" },
-                    });
-                    (__VLS_ctx.calculateAgeYears(person.birthDate));
-                }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-                    value: (person.gender),
-                    disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
-                    required: true,
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-                    value: "",
-                    disabled: true,
-                });
-                for (const [option] of __VLS_getVForSourceType((__VLS_ctx.genderOptions))) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-                        key: (option.value),
-                        value: (option.value),
-                    });
-                    (option.label);
-                }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-                    ...{ onChange: (...[$event]) => {
-                            if (!!(__VLS_ctx.eventStore.loading))
-                                return;
-                            if (!!(!__VLS_ctx.eventStore.event))
-                                return;
-                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
-                                return;
-                            if (!(__VLS_ctx.currentStep === 2))
-                                return;
-                            __VLS_ctx.onPersonDistrictChange(index);
-                        } },
-                    value: (person.districtId),
-                    disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-                    value: "",
-                    disabled: true,
-                });
-                for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-                        key: (district.id),
-                        value: (district.id),
-                    });
-                    (district.name);
-                }
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
-                    ...{ class: "block text-sm font-medium text-neutral-600" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
-                    value: (person.churchId),
-                    disabled: (__VLS_ctx.isPersonLocked(index)),
-                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
-                });
-                __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-                    value: "",
-                    disabled: true,
-                });
-                for (const [church] of __VLS_getVForSourceType((__VLS_ctx.getPersonChurchOptions(person.districtId)))) {
-                    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
-                        key: (church.id),
-                        value: (church.id),
-                    });
-                    (church.name);
+                for (const [field] of __VLS_getVForSourceType((__VLS_ctx.formFields))) {
+                    (`${index}-${field.id}`);
+                    if (field.id === 'cpf') {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                            ...{ class: "block text-sm font-medium text-neutral-600" },
+                        });
+                        (field.label);
+                        if (__VLS_ctx.isFieldRequired(field)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-red-500" },
+                            });
+                        }
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                            ...{ onInput: (...[$event]) => {
+                                    if (!!(__VLS_ctx.eventStore.loading))
+                                        return;
+                                    if (!!(!__VLS_ctx.eventStore.event))
+                                        return;
+                                    if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                        return;
+                                    if (!(__VLS_ctx.currentStep === 2))
+                                        return;
+                                    if (!(field.id === 'cpf'))
+                                        return;
+                                    __VLS_ctx.onParticipantCpfInput(index, $event);
+                                } },
+                            ...{ onBlur: (...[$event]) => {
+                                    if (!!(__VLS_ctx.eventStore.loading))
+                                        return;
+                                    if (!!(!__VLS_ctx.eventStore.event))
+                                        return;
+                                    if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                        return;
+                                    if (!(__VLS_ctx.currentStep === 2))
+                                        return;
+                                    if (!(field.id === 'cpf'))
+                                        return;
+                                    __VLS_ctx.onParticipantCpfBlur(index);
+                                } },
+                            ref: ((el) => __VLS_ctx.setParticipantCpfRef(el, index)),
+                            value: (person.cpf),
+                            type: "text",
+                            placeholder: (field.placeholder || '000.000.000-00'),
+                            inputmode: "numeric",
+                            autocomplete: "off",
+                            ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" },
+                            'aria-invalid': (__VLS_ctx.participantCpfErrors[index] ? 'true' : 'false'),
+                            'aria-describedby': (`participant-cpf-error-${index}`),
+                            required: true,
+                        });
+                        if (__VLS_ctx.participantCpfErrors[index]) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                id: (`participant-cpf-error-${index}`),
+                                role: "alert",
+                                ...{ class: "mt-1 text-sm text-red-600" },
+                            });
+                            (__VLS_ctx.participantCpfErrors[index]);
+                        }
+                    }
+                    else if (field.id === 'fullName') {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                            ...{ class: "block text-sm font-medium text-neutral-600" },
+                        });
+                        (field.label);
+                        if (__VLS_ctx.isFieldRequired(field)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-red-500" },
+                            });
+                        }
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                            ...{ onInput: (...[$event]) => {
+                                    if (!!(__VLS_ctx.eventStore.loading))
+                                        return;
+                                    if (!!(!__VLS_ctx.eventStore.event))
+                                        return;
+                                    if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                        return;
+                                    if (!(__VLS_ctx.currentStep === 2))
+                                        return;
+                                    if (!!(field.id === 'cpf'))
+                                        return;
+                                    if (!(field.id === 'fullName'))
+                                        return;
+                                    __VLS_ctx.updateFieldValue(person, field, $event.target.value, index);
+                                } },
+                            value: (person.fullName),
+                            type: "text",
+                            required: (__VLS_ctx.isFieldRequired(field)),
+                            disabled: (__VLS_ctx.isPersonLocked(index)),
+                            ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                            'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                            'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                        });
+                        if (__VLS_ctx.getFieldError(index, field.id)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                id: (`participant-field-${index}-${field.id}-error`),
+                                role: "alert",
+                                ...{ class: "mt-1 text-sm text-red-600" },
+                            });
+                            (__VLS_ctx.getFieldError(index, field.id));
+                        }
+                    }
+                    else if (field.id === 'birthDate') {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                            ...{ class: "block text-sm font-medium text-neutral-600" },
+                        });
+                        (field.label);
+                        if (__VLS_ctx.isFieldRequired(field)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-red-500" },
+                            });
+                        }
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                            ...{ class: "mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" },
+                        });
+                        /** @type {[typeof DateField, ]} */ ;
+                        // @ts-ignore
+                        const __VLS_54 = __VLS_asFunctionalComponent(DateField, new DateField({
+                            ...{ 'onUpdate:modelValue': {} },
+                            modelValue: (person.birthDate),
+                            disabled: (__VLS_ctx.isPersonLocked(index)),
+                            required: (__VLS_ctx.isFieldRequired(field)),
+                            'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                            'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                            inputClass: "w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm text-black focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100",
+                            ...{ class: "w-full" },
+                            placeholder: (field.placeholder),
+                        }));
+                        const __VLS_55 = __VLS_54({
+                            ...{ 'onUpdate:modelValue': {} },
+                            modelValue: (person.birthDate),
+                            disabled: (__VLS_ctx.isPersonLocked(index)),
+                            required: (__VLS_ctx.isFieldRequired(field)),
+                            'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                            'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                            inputClass: "w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm text-black focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100",
+                            ...{ class: "w-full" },
+                            placeholder: (field.placeholder),
+                        }, ...__VLS_functionalComponentArgsRest(__VLS_54));
+                        let __VLS_57;
+                        let __VLS_58;
+                        let __VLS_59;
+                        const __VLS_60 = {
+                            'onUpdate:modelValue': ((value) => __VLS_ctx.updateFieldValue(person, field, value, index))
+                        };
+                        var __VLS_56;
+                        if (__VLS_ctx.calculateAgeYears(person.birthDate) !== null) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-xs text-neutral-500" },
+                            });
+                            (__VLS_ctx.calculateAgeYears(person.birthDate));
+                        }
+                        if (__VLS_ctx.getFieldError(index, field.id)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                id: (`participant-field-${index}-${field.id}-error`),
+                                role: "alert",
+                                ...{ class: "mt-1 text-sm text-red-600" },
+                            });
+                            (__VLS_ctx.getFieldError(index, field.id));
+                        }
+                    }
+                    else if (field.id === 'gender') {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                            ...{ class: "block text-sm font-medium text-neutral-600" },
+                        });
+                        (field.label);
+                        if (__VLS_ctx.isFieldRequired(field)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-red-500" },
+                            });
+                        }
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+                            ...{ onChange: (...[$event]) => {
+                                    if (!!(__VLS_ctx.eventStore.loading))
+                                        return;
+                                    if (!!(!__VLS_ctx.eventStore.event))
+                                        return;
+                                    if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                        return;
+                                    if (!(__VLS_ctx.currentStep === 2))
+                                        return;
+                                    if (!!(field.id === 'cpf'))
+                                        return;
+                                    if (!!(field.id === 'fullName'))
+                                        return;
+                                    if (!!(field.id === 'birthDate'))
+                                        return;
+                                    if (!(field.id === 'gender'))
+                                        return;
+                                    __VLS_ctx.updateFieldValue(person, field, $event.target.value, index);
+                                } },
+                            value: (person.gender),
+                            disabled: (__VLS_ctx.isPersonLocked(index)),
+                            ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                            'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                            'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                        });
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                            value: "",
+                            disabled: true,
+                        });
+                        for (const [option] of __VLS_getVForSourceType((__VLS_ctx.genderOptions))) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                                key: (option.value),
+                                value: (option.value),
+                            });
+                            (option.label);
+                        }
+                        if (__VLS_ctx.getFieldError(index, field.id)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                id: (`participant-field-${index}-${field.id}-error`),
+                                role: "alert",
+                                ...{ class: "mt-1 text-sm text-red-600" },
+                            });
+                            (__VLS_ctx.getFieldError(index, field.id));
+                        }
+                    }
+                    else if (field.id === 'districtId') {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                            ...{ class: "block text-sm font-medium text-neutral-600" },
+                        });
+                        (field.label);
+                        if (__VLS_ctx.isFieldRequired(field)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-red-500" },
+                            });
+                        }
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+                            ...{ onChange: ((event) => { __VLS_ctx.updateFieldValue(person, field, event.target.value, index); __VLS_ctx.onPersonDistrictChange(index); }) },
+                            value: (person.districtId),
+                            disabled: (__VLS_ctx.isPersonLocked(index)),
+                            ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                            'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                            'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                        });
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                            value: "",
+                            disabled: true,
+                        });
+                        for (const [district] of __VLS_getVForSourceType((__VLS_ctx.catalog.districts))) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                                key: (district.id),
+                                value: (district.id),
+                            });
+                            (district.name);
+                        }
+                        if (__VLS_ctx.getFieldError(index, field.id)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                id: (`participant-field-${index}-${field.id}-error`),
+                                role: "alert",
+                                ...{ class: "mt-1 text-sm text-red-600" },
+                            });
+                            (__VLS_ctx.getFieldError(index, field.id));
+                        }
+                    }
+                    else if (field.id === 'churchId') {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                            ...{ class: "block text-sm font-medium text-neutral-600" },
+                        });
+                        (field.label);
+                        if (__VLS_ctx.isFieldRequired(field)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                ...{ class: "text-red-500" },
+                            });
+                        }
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+                            ...{ onChange: (...[$event]) => {
+                                    if (!!(__VLS_ctx.eventStore.loading))
+                                        return;
+                                    if (!!(!__VLS_ctx.eventStore.event))
+                                        return;
+                                    if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                        return;
+                                    if (!(__VLS_ctx.currentStep === 2))
+                                        return;
+                                    if (!!(field.id === 'cpf'))
+                                        return;
+                                    if (!!(field.id === 'fullName'))
+                                        return;
+                                    if (!!(field.id === 'birthDate'))
+                                        return;
+                                    if (!!(field.id === 'gender'))
+                                        return;
+                                    if (!!(field.id === 'districtId'))
+                                        return;
+                                    if (!(field.id === 'churchId'))
+                                        return;
+                                    __VLS_ctx.updateFieldValue(person, field, $event.target.value, index);
+                                } },
+                            value: (person.churchId),
+                            disabled: (__VLS_ctx.isPersonLocked(index)),
+                            ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                            'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                            'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                        });
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                            value: "",
+                            disabled: true,
+                        });
+                        for (const [church] of __VLS_getVForSourceType((__VLS_ctx.getPersonChurchOptions(person.districtId)))) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                                key: (church.id),
+                                value: (church.id),
+                            });
+                            (church.name);
+                        }
+                        if (__VLS_ctx.getFieldError(index, field.id)) {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                id: (`participant-field-${index}-${field.id}-error`),
+                                role: "alert",
+                                ...{ class: "mt-1 text-sm text-red-600" },
+                            });
+                            (__VLS_ctx.getFieldError(index, field.id));
+                        }
+                    }
+                    else {
+                        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                            ...{ class: (field.tipo === 'textarea' || field.tipo === 'checkbox' ? 'lg:col-span-2' : '') },
+                        });
+                        if (field.tipo === 'checkbox') {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                                ...{ class: "flex items-center gap-2 text-sm font-medium text-neutral-600" },
+                            });
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                                ...{ onChange: (...[$event]) => {
+                                        if (!!(__VLS_ctx.eventStore.loading))
+                                            return;
+                                        if (!!(!__VLS_ctx.eventStore.event))
+                                            return;
+                                        if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                            return;
+                                        if (!(__VLS_ctx.currentStep === 2))
+                                            return;
+                                        if (!!(field.id === 'cpf'))
+                                            return;
+                                        if (!!(field.id === 'fullName'))
+                                            return;
+                                        if (!!(field.id === 'birthDate'))
+                                            return;
+                                        if (!!(field.id === 'gender'))
+                                            return;
+                                        if (!!(field.id === 'districtId'))
+                                            return;
+                                        if (!!(field.id === 'churchId'))
+                                            return;
+                                        if (!(field.tipo === 'checkbox'))
+                                            return;
+                                        __VLS_ctx.updateFieldValue(person, field, $event.target.checked, index);
+                                    } },
+                                type: "checkbox",
+                                checked: (Boolean(__VLS_ctx.getFieldValue(person, field))),
+                                disabled: (__VLS_ctx.isPersonLocked(index)),
+                                ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
+                                'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                                'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                            });
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+                            (field.label);
+                            if (__VLS_ctx.isFieldRequired(field)) {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                    ...{ class: "text-red-500" },
+                                });
+                            }
+                            if (__VLS_ctx.getFieldError(index, field.id)) {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                    id: (`participant-field-${index}-${field.id}-error`),
+                                    role: "alert",
+                                    ...{ class: "mt-1 text-sm text-red-600" },
+                                });
+                                (__VLS_ctx.getFieldError(index, field.id));
+                            }
+                        }
+                        else {
+                            __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+                                ...{ class: "block text-sm font-medium text-neutral-600" },
+                            });
+                            (field.label);
+                            if (__VLS_ctx.isFieldRequired(field)) {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+                                    ...{ class: "text-red-500" },
+                                });
+                            }
+                            if (field.tipo === 'select') {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+                                    ...{ onChange: (...[$event]) => {
+                                            if (!!(__VLS_ctx.eventStore.loading))
+                                                return;
+                                            if (!!(!__VLS_ctx.eventStore.event))
+                                                return;
+                                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                                return;
+                                            if (!(__VLS_ctx.currentStep === 2))
+                                                return;
+                                            if (!!(field.id === 'cpf'))
+                                                return;
+                                            if (!!(field.id === 'fullName'))
+                                                return;
+                                            if (!!(field.id === 'birthDate'))
+                                                return;
+                                            if (!!(field.id === 'gender'))
+                                                return;
+                                            if (!!(field.id === 'districtId'))
+                                                return;
+                                            if (!!(field.id === 'churchId'))
+                                                return;
+                                            if (!!(field.tipo === 'checkbox'))
+                                                return;
+                                            if (!(field.tipo === 'select'))
+                                                return;
+                                            __VLS_ctx.updateFieldValue(person, field, $event.target.value, index);
+                                        } },
+                                    value: (__VLS_ctx.getFieldValue(person, field) || ''),
+                                    disabled: (__VLS_ctx.isPersonLocked(index)),
+                                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                                    'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                                    'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                                });
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                                    value: "",
+                                    disabled: true,
+                                });
+                                for (const [option] of __VLS_getVForSourceType((field.opcoes ?? []))) {
+                                    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+                                        key: (option),
+                                        value: (option),
+                                    });
+                                    (option);
+                                }
+                            }
+                            else if (field.tipo === 'textarea') {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.textarea, __VLS_intrinsicElements.textarea)({
+                                    ...{ onInput: (...[$event]) => {
+                                            if (!!(__VLS_ctx.eventStore.loading))
+                                                return;
+                                            if (!!(!__VLS_ctx.eventStore.event))
+                                                return;
+                                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                                return;
+                                            if (!(__VLS_ctx.currentStep === 2))
+                                                return;
+                                            if (!!(field.id === 'cpf'))
+                                                return;
+                                            if (!!(field.id === 'fullName'))
+                                                return;
+                                            if (!!(field.id === 'birthDate'))
+                                                return;
+                                            if (!!(field.id === 'gender'))
+                                                return;
+                                            if (!!(field.id === 'districtId'))
+                                                return;
+                                            if (!!(field.id === 'churchId'))
+                                                return;
+                                            if (!!(field.tipo === 'checkbox'))
+                                                return;
+                                            if (!!(field.tipo === 'select'))
+                                                return;
+                                            if (!(field.tipo === 'textarea'))
+                                                return;
+                                            __VLS_ctx.updateFieldValue(person, field, $event.target.value, index);
+                                        } },
+                                    value: (__VLS_ctx.getFieldValue(person, field) || ''),
+                                    rows: "3",
+                                    disabled: (__VLS_ctx.isPersonLocked(index)),
+                                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                                    placeholder: (field.placeholder),
+                                    'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                                    'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                                });
+                            }
+                            else {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+                                    ...{ onInput: (...[$event]) => {
+                                            if (!!(__VLS_ctx.eventStore.loading))
+                                                return;
+                                            if (!!(!__VLS_ctx.eventStore.event))
+                                                return;
+                                            if (!(__VLS_ctx.registrationOpen && __VLS_ctx.canStartWizard))
+                                                return;
+                                            if (!(__VLS_ctx.currentStep === 2))
+                                                return;
+                                            if (!!(field.id === 'cpf'))
+                                                return;
+                                            if (!!(field.id === 'fullName'))
+                                                return;
+                                            if (!!(field.id === 'birthDate'))
+                                                return;
+                                            if (!!(field.id === 'gender'))
+                                                return;
+                                            if (!!(field.id === 'districtId'))
+                                                return;
+                                            if (!!(field.id === 'churchId'))
+                                                return;
+                                            if (!!(field.tipo === 'checkbox'))
+                                                return;
+                                            if (!!(field.tipo === 'select'))
+                                                return;
+                                            if (!!(field.tipo === 'textarea'))
+                                                return;
+                                            __VLS_ctx.updateFieldValue(person, field, $event.target.value, index);
+                                        } },
+                                    value: (__VLS_ctx.getFieldValue(person, field) || ''),
+                                    type: (field.tipo === 'number' ? 'number' : field.tipo === 'email' ? 'email' : 'text'),
+                                    disabled: (__VLS_ctx.isPersonLocked(index)),
+                                    ...{ class: "mt-1 w-full rounded border border-neutral-200 bg-white px-4 py-2 text-sm disabled:opacity-60" },
+                                    placeholder: (field.placeholder),
+                                    min: (field.tipo === 'number' ? field.min : undefined),
+                                    max: (field.tipo === 'number' ? field.max : undefined),
+                                    'aria-invalid': (__VLS_ctx.getFieldError(index, field.id) ? 'true' : 'false'),
+                                    'aria-describedby': (`participant-field-${index}-${field.id}-error`),
+                                });
+                            }
+                            if (__VLS_ctx.getFieldError(index, field.id)) {
+                                __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+                                    id: (`participant-field-${index}-${field.id}-error`),
+                                    role: "alert",
+                                    ...{ class: "mt-1 text-sm text-red-600" },
+                                });
+                                (__VLS_ctx.getFieldError(index, field.id));
+                            }
+                        }
+                    }
                 }
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "lg:col-span-2" },
@@ -2303,7 +2884,7 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto" },
+                ...{ class: "w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.goToReview) },
@@ -2338,13 +2919,13 @@ else {
                 : "Confira as informações antes de prosseguir com o pagamento.");
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_57 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+            const __VLS_61 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
-            const __VLS_58 = __VLS_57({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_57));
-            __VLS_59.slots.default;
+            const __VLS_62 = __VLS_61({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_61));
+            __VLS_63.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "flex items-start justify-between gap-4" },
             });
@@ -2394,17 +2975,17 @@ else {
                 ...{ class: "text-sm font-semibold text-neutral-800" },
             });
             (__VLS_ctx.selectedChurch?.name ?? "Não selecionada");
-            var __VLS_59;
+            var __VLS_63;
             if (!__VLS_ctx.shouldSkipPayment) {
                 /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
                 // @ts-ignore
-                const __VLS_60 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                    ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+                const __VLS_64 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                    ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
                 }));
-                const __VLS_61 = __VLS_60({
-                    ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_60));
-                __VLS_62.slots.default;
+                const __VLS_65 = __VLS_64({
+                    ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+                }, ...__VLS_functionalComponentArgsRest(__VLS_64));
+                __VLS_66.slots.default;
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                     ...{ class: "space-y-3" },
                 });
@@ -2471,17 +3052,17 @@ else {
                         ...{ class: "text-xs text-primary-500" },
                     });
                 }
-                var __VLS_62;
+                var __VLS_66;
             }
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_63 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+            const __VLS_67 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
-            const __VLS_64 = __VLS_63({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_63));
-            __VLS_65.slots.default;
+            const __VLS_68 = __VLS_67({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_67));
+            __VLS_69.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "flex items-center justify-between gap-4" },
             });
@@ -2553,16 +3134,16 @@ else {
                     ...{ class: "text-xs font-semibold text-primary-600 hover:text-primary-500" },
                 });
             }
-            var __VLS_65;
+            var __VLS_69;
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_66 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+            const __VLS_70 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
-            const __VLS_67 = __VLS_66({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_66));
-            __VLS_68.slots.default;
+            const __VLS_71 = __VLS_70({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_70));
+            __VLS_72.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-2 text-sm text-neutral-600" },
             });
@@ -2590,7 +3171,7 @@ else {
                 ...{ class: "text-2xl font-semibold text-primary-600" },
             });
             (__VLS_ctx.shouldSkipPayment ? "Gratuito" : __VLS_ctx.formatCurrency(__VLS_ctx.totalPayableCents));
-            var __VLS_68;
+            var __VLS_72;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-3" },
             });
@@ -2607,7 +3188,7 @@ else {
                         __VLS_ctx.currentStep--;
                     } },
                 type: "button",
-                ...{ class: "w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-50 dark:hover:bg-neutral-800 sm:w-auto" },
+                ...{ class: "w-full rounded border border-neutral-300 px-4 py-2 text-center text-sm font-semibold text-neutral-800 transition hover:bg-neutral-100 sm:w-auto" },
             });
             __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
                 ...{ onClick: (__VLS_ctx.submitBatch) },
@@ -2670,13 +3251,13 @@ else {
             });
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_69 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+            const __VLS_73 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
-            const __VLS_70 = __VLS_69({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_69));
-            __VLS_71.slots.default;
+            const __VLS_74 = __VLS_73({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_73));
+            __VLS_75.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-4 text-center" },
             });
@@ -2750,16 +3331,16 @@ else {
                 });
                 (__VLS_ctx.inlinePixError);
             }
-            var __VLS_71;
+            var __VLS_75;
             /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
             // @ts-ignore
-            const __VLS_72 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+            const __VLS_76 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
             }));
-            const __VLS_73 = __VLS_72({
-                ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_72));
-            __VLS_74.slots.default;
+            const __VLS_77 = __VLS_76({
+                ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+            }, ...__VLS_functionalComponentArgsRest(__VLS_76));
+            __VLS_78.slots.default;
             __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
                 ...{ class: "space-y-4 text-sm text-neutral-600" },
             });
@@ -2831,7 +3412,7 @@ else {
                     });
                 }
             }
-            var __VLS_74;
+            var __VLS_78;
         }
     }
     else if (__VLS_ctx.registrationOpen) {
@@ -2840,13 +3421,13 @@ else {
         });
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_75 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-            ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+        const __VLS_79 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
         }));
-        const __VLS_76 = __VLS_75({
-            ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_75));
-        __VLS_77.slots.default;
+        const __VLS_80 = __VLS_79({
+            ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_79));
+        __VLS_81.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-sm text-neutral-600" },
         });
@@ -2857,18 +3438,18 @@ else {
                 ...{ class: "mt-3 inline-flex text-xs font-semibold text-primary-600 hover:text-primary-500" },
             });
         }
-        var __VLS_77;
+        var __VLS_81;
     }
     else {
         /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
         // @ts-ignore
-        const __VLS_78 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
-            ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
+        const __VLS_82 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+            ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
         }));
-        const __VLS_79 = __VLS_78({
-            ...{ class: "!rounded !border-neutral-200 !bg-white !shadow-none !backdrop-blur-none" },
-        }, ...__VLS_functionalComponentArgsRest(__VLS_78));
-        __VLS_80.slots.default;
+        const __VLS_83 = __VLS_82({
+            ...{ class: "!rounded !border-neutral-200 !bg-[#F7F8FA] !shadow-none !backdrop-blur-none" },
+        }, ...__VLS_functionalComponentArgsRest(__VLS_82));
+        __VLS_84.slots.default;
         __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
             ...{ class: "text-neutral-500" },
         });
@@ -2883,17 +3464,18 @@ else {
         else {
             __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
         }
-        var __VLS_80;
+        var __VLS_84;
     }
 }
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['event-flow']} */ ;
 /** @type {__VLS_StyleScopedClasses['min-h-screen']} */ ;
-/** @type {__VLS_StyleScopedClasses['bg-[#F6F8FB]']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-[#EEF1F5]']} */ ;
 /** @type {__VLS_StyleScopedClasses['pb-16']} */ ;
 /** @type {__VLS_StyleScopedClasses['fixed']} */ ;
 /** @type {__VLS_StyleScopedClasses['inset-0']} */ ;
@@ -2910,8 +3492,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['border-emerald-200']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-6']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-emerald-500/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -2923,8 +3503,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['rounded-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-emerald-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-emerald-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-emerald-500/15']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-emerald-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
@@ -2935,11 +3513,9 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-lg']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['justify-end']} */ ;
@@ -2994,7 +3570,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-emerald-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
@@ -3152,7 +3728,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
@@ -3164,7 +3740,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
@@ -3180,9 +3756,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['p-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-900']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/40']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-primary-500/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
@@ -3191,8 +3764,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['border-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
 /** @type {__VLS_StyleScopedClasses['p-2']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-primary-500/30']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-900/40']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
 /** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
@@ -3216,16 +3787,12 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-primary-500/10']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-primary-400']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
 /** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['items-center']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-primary-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:text-primary-50']} */ ;
 /** @type {__VLS_StyleScopedClasses['ml-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['h-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-3']} */ ;
@@ -3236,7 +3803,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['relative']} */ ;
 /** @type {__VLS_StyleScopedClasses['pointer-events-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['absolute']} */ ;
@@ -3261,17 +3827,13 @@ else {
 /** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['relative']} */ ;
 /** @type {__VLS_StyleScopedClasses['pointer-events-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['absolute']} */ ;
@@ -3296,12 +3858,9 @@ else {
 /** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-red-400']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
@@ -3370,9 +3929,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3395,7 +3951,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['grid']} */ ;
@@ -3433,7 +3989,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -3482,6 +4038,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3502,6 +4059,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3512,10 +4070,14 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex-col']} */ ;
@@ -3526,10 +4088,14 @@ else {
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3540,10 +4106,14 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3554,10 +4124,14 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3568,6 +4142,63 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['block']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['lg:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -3639,9 +4270,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3671,7 +4299,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -3713,7 +4341,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-3']} */ ;
@@ -3762,7 +4390,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['flex']} */ ;
@@ -3819,7 +4447,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
@@ -3864,9 +4492,6 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['transition']} */ ;
 /** @type {__VLS_StyleScopedClasses['hover:bg-neutral-100']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:border-neutral-700']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:text-neutral-50']} */ ;
-/** @type {__VLS_StyleScopedClasses['dark:hover:bg-neutral-800']} */ ;
 /** @type {__VLS_StyleScopedClasses['sm:w-auto']} */ ;
 /** @type {__VLS_StyleScopedClasses['w-full']} */ ;
 /** @type {__VLS_StyleScopedClasses['rounded']} */ ;
@@ -3930,7 +4555,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
@@ -4000,7 +4625,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-red-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
@@ -4066,7 +4691,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['space-y-4']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -4079,7 +4704,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['hover:text-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['!rounded']} */ ;
 /** @type {__VLS_StyleScopedClasses['!border-neutral-200']} */ ;
-/** @type {__VLS_StyleScopedClasses['!bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['!bg-[#F7F8FA]']} */ ;
 /** @type {__VLS_StyleScopedClasses['!shadow-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['!backdrop-blur-none']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
@@ -4107,6 +4732,8 @@ const __VLS_self = (await import('vue')).defineComponent({
             noticeEnabled: noticeEnabled,
             noticeSlug: noticeSlug,
             canStartWizard: canStartWizard,
+            formFields: formFields,
+            isFieldRequired: isFieldRequired,
             openNotice: openNotice,
             handleNoticeAccept: handleNoticeAccept,
             handleNoticeCancel: handleNoticeCancel,
@@ -4155,6 +4782,9 @@ const __VLS_self = (await import('vue')).defineComponent({
             selectedChurch: selectedChurch,
             getPersonChurchOptions: getPersonChurchOptions,
             getGenderLabel: getGenderLabel,
+            getFieldValue: getFieldValue,
+            updateFieldValue: updateFieldValue,
+            getFieldError: getFieldError,
             calculateAgeYears: calculateAgeYears,
             isAgeExempt: isAgeExempt,
             minorConfirmationMessage: minorConfirmationMessage,

@@ -12,10 +12,12 @@ import { useAdminStore } from "../../stores/admin";
 import { useAuthStore } from "../../stores/auth";
 import { useCatalogStore } from "../../stores/catalog";
 import { useApi } from "../../composables/useApi";
+import EventFormConfigEditor from "../../components/admin/EventFormConfigEditor.vue";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { PAYMENT_METHODS } from "../../config/paymentMethods";
 import { API_BASE_URL } from "../../config/api";
 import { useModulePermissions } from "../../composables/usePermissions";
+import { DEFAULT_FORM_CONFIG, normalizeFormConfig } from "../../utils/formConfig";
 import { DEFAULT_PENDING_PAYMENT_VALUE_RULE, PENDING_PAYMENT_VALUE_RULES, getPendingPaymentValueRuleDescription, getPendingPaymentValueRuleLabel } from "../../config/pendingPaymentValueRules";
 const admin = useAdminStore();
 const auth = useAuthStore();
@@ -151,6 +153,15 @@ const buildNoticePayload = (notice) => {
         showOnce: notice.showOnce
     };
 };
+const cloneFormConfig = (config) => {
+    const normalized = normalizeFormConfig(config ?? DEFAULT_FORM_CONFIG);
+    return {
+        campos: normalized.campos.map((field) => ({
+            ...field,
+            opcoes: field.opcoes ? [...field.opcoes] : undefined
+        }))
+    };
+};
 const createForm = reactive({
     title: "",
     slug: "",
@@ -166,7 +177,8 @@ const createForm = reactive({
     ministryId: "",
     districtId: "",
     churchId: "",
-    notice: buildNoticeForm(null)
+    notice: buildNoticeForm(null),
+    formConfig: cloneFormConfig(null)
 });
 const editForm = reactive({
     title: "",
@@ -183,7 +195,8 @@ const editForm = reactive({
     ministryId: "",
     districtId: "",
     churchId: "",
-    notice: buildNoticeForm(null)
+    notice: buildNoticeForm(null),
+    formConfig: cloneFormConfig(null)
 });
 const editingEventId = ref(null);
 const loadingEvents = ref(true);
@@ -512,6 +525,7 @@ const resetCreateForm = () => {
     createForm.districtId = userDistrictId.value || "";
     createForm.churchId = userDistrictId.value ? userChurchId.value || "" : "";
     createForm.notice = buildNoticeForm(null);
+    createForm.formConfig = cloneFormConfig(null);
     applyChurchLock("create", createForm.districtId);
     if (createForm.districtId) {
         loadChurchesForDistrict(createForm.districtId, "create");
@@ -536,6 +550,7 @@ const resetEditForm = () => {
     editForm.districtId = "";
     editForm.churchId = "";
     editForm.notice = buildNoticeForm(null);
+    editForm.formConfig = cloneFormConfig(null);
     editChurchLocked.value = false;
 };
 const openCreateModal = () => {
@@ -704,7 +719,8 @@ const submitCreate = async () => {
             isActive: true,
             ministryId: createForm.ministryId,
             districtId: createForm.districtId,
-            notice: noticePayload ?? null
+            notice: noticePayload ?? null,
+            formConfig: normalizeFormConfig(createForm.formConfig)
         });
         resetCreateForm();
         createModalOpen.value = false;
@@ -760,7 +776,8 @@ const submitEdit = async () => {
             pendingPaymentValueRule: editForm.pendingPaymentValueRule,
             ministryId: editForm.ministryId,
             districtId: editForm.districtId,
-            notice: noticePayload ?? null
+            notice: noticePayload ?? null,
+            formConfig: normalizeFormConfig(editForm.formConfig)
         });
         cancelEdit();
     }
@@ -795,6 +812,7 @@ const startEdit = (event) => {
     editForm.districtId = event.districtId ?? "";
     editForm.churchId = event.churchId ?? "";
     editForm.notice = buildNoticeForm(event.notice ?? null);
+    editForm.formConfig = cloneFormConfig(event.formConfig ?? null);
     applyChurchLock("edit", editForm.districtId);
     if (editForm.districtId) {
         handleDistrictChange("edit", editForm.districtId);
@@ -1525,6 +1543,17 @@ if (__VLS_ctx.eventPermissions.canList) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
+    /** @type {[typeof EventFormConfigEditor, ]} */ ;
+    // @ts-ignore
+    const __VLS_44 = __VLS_asFunctionalComponent(EventFormConfigEditor, new EventFormConfigEditor({
+        modelValue: (__VLS_ctx.createForm.formConfig),
+    }));
+    const __VLS_45 = __VLS_44({
+        modelValue: (__VLS_ctx.createForm.formConfig),
+    }, ...__VLS_functionalComponentArgsRest(__VLS_44));
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
         ...{ class: "block text-sm font-medium text-neutral-600 dark:text-neutral-300" },
     });
@@ -1747,23 +1776,23 @@ if (__VLS_ctx.eventPermissions.canList) {
     var __VLS_39;
     /** @type {[typeof Modal, typeof Modal, ]} */ ;
     // @ts-ignore
-    const __VLS_44 = __VLS_asFunctionalComponent(Modal, new Modal({
+    const __VLS_47 = __VLS_asFunctionalComponent(Modal, new Modal({
         ...{ 'onUpdate:modelValue': {} },
         modelValue: (__VLS_ctx.editModalOpen),
         title: "Editar evento",
     }));
-    const __VLS_45 = __VLS_44({
+    const __VLS_48 = __VLS_47({
         ...{ 'onUpdate:modelValue': {} },
         modelValue: (__VLS_ctx.editModalOpen),
         title: "Editar evento",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_44));
-    let __VLS_47;
-    let __VLS_48;
-    let __VLS_49;
-    const __VLS_50 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_47));
+    let __VLS_50;
+    let __VLS_51;
+    let __VLS_52;
+    const __VLS_53 = {
         'onUpdate:modelValue': (__VLS_ctx.handleEditModalToggle)
     };
-    __VLS_46.slots.default;
+    __VLS_49.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
         ...{ onSubmit: (__VLS_ctx.submitEdit) },
         ...{ class: "mt-2 grid gap-4 md:grid-cols-2" },
@@ -1882,6 +1911,17 @@ if (__VLS_ctx.eventPermissions.canList) {
         ...{ class: "h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500" },
     });
     (__VLS_ctx.editForm.notice.showOnce);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "md:col-span-2" },
+    });
+    /** @type {[typeof EventFormConfigEditor, ]} */ ;
+    // @ts-ignore
+    const __VLS_54 = __VLS_asFunctionalComponent(EventFormConfigEditor, new EventFormConfigEditor({
+        modelValue: (__VLS_ctx.editForm.formConfig),
+    }));
+    const __VLS_55 = __VLS_54({
+        modelValue: (__VLS_ctx.editForm.formConfig),
+    }, ...__VLS_functionalComponentArgsRest(__VLS_54));
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "md:col-span-2" },
     });
@@ -2095,17 +2135,17 @@ if (__VLS_ctx.eventPermissions.canList) {
         disabled: (__VLS_ctx.savingEdit),
     });
     (__VLS_ctx.savingEdit ? "Salvando..." : "Salvar alterações");
-    var __VLS_46;
-    const __VLS_51 = {}.teleport;
+    var __VLS_49;
+    const __VLS_57 = {}.teleport;
     /** @type {[typeof __VLS_components.Teleport, typeof __VLS_components.teleport, typeof __VLS_components.Teleport, typeof __VLS_components.teleport, ]} */ ;
     // @ts-ignore
-    const __VLS_52 = __VLS_asFunctionalComponent(__VLS_51, new __VLS_51({
+    const __VLS_58 = __VLS_asFunctionalComponent(__VLS_57, new __VLS_57({
         to: "body",
     }));
-    const __VLS_53 = __VLS_52({
+    const __VLS_59 = __VLS_58({
         to: "body",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_52));
-    __VLS_54.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_58));
+    __VLS_60.slots.default;
     if (__VLS_ctx.details.open) {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
             ...{ onClick: (__VLS_ctx.closeDetails) },
@@ -2138,19 +2178,19 @@ if (__VLS_ctx.eventPermissions.canList) {
         });
         (__VLS_ctx.details.event?.isActive ? 'Ativo' : 'Inativo');
         if (__VLS_ctx.details.event?.id) {
-            const __VLS_55 = {}.RouterLink;
+            const __VLS_61 = {}.RouterLink;
             /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
             // @ts-ignore
-            const __VLS_56 = __VLS_asFunctionalComponent(__VLS_55, new __VLS_55({
+            const __VLS_62 = __VLS_asFunctionalComponent(__VLS_61, new __VLS_61({
                 to: ({ name: 'admin-event-financial', params: { eventId: __VLS_ctx.details.event.id } }),
                 ...{ class: "inline-flex items-center justify-center rounded-full border border-primary-300/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-200 transition hover:bg-primary-500/20" },
             }));
-            const __VLS_57 = __VLS_56({
+            const __VLS_63 = __VLS_62({
                 to: ({ name: 'admin-event-financial', params: { eventId: __VLS_ctx.details.event.id } }),
                 ...{ class: "inline-flex items-center justify-center rounded-full border border-primary-300/50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary-200 transition hover:bg-primary-500/20" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_56));
-            __VLS_58.slots.default;
-            var __VLS_58;
+            }, ...__VLS_functionalComponentArgsRest(__VLS_62));
+            __VLS_64.slots.default;
+            var __VLS_64;
         }
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.closeDetails) },
@@ -2289,15 +2329,15 @@ if (__VLS_ctx.eventPermissions.canList) {
                     type: "button",
                     ...{ class: "inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white" },
                 });
-                const __VLS_59 = {}.PlusIcon;
+                const __VLS_65 = {}.PlusIcon;
                 /** @type {[typeof __VLS_components.PlusIcon, ]} */ ;
                 // @ts-ignore
-                const __VLS_60 = __VLS_asFunctionalComponent(__VLS_59, new __VLS_59({
+                const __VLS_66 = __VLS_asFunctionalComponent(__VLS_65, new __VLS_65({
                     ...{ class: "h-4 w-4" },
                 }));
-                const __VLS_61 = __VLS_60({
+                const __VLS_67 = __VLS_66({
                     ...{ class: "h-4 w-4" },
-                }, ...__VLS_functionalComponentArgsRest(__VLS_60));
+                }, ...__VLS_functionalComponentArgsRest(__VLS_66));
             }
             if (__VLS_ctx.loadingLots) {
                 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -2430,23 +2470,23 @@ if (__VLS_ctx.eventPermissions.canList) {
             ...{ class: "mt-8 flex flex-col gap-3 text-sm sm:flex-row sm:justify-between" },
         });
         if (__VLS_ctx.details.event) {
-            const __VLS_63 = {}.RouterLink;
+            const __VLS_69 = {}.RouterLink;
             /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
             // @ts-ignore
-            const __VLS_64 = __VLS_asFunctionalComponent(__VLS_63, new __VLS_63({
+            const __VLS_70 = __VLS_asFunctionalComponent(__VLS_69, new __VLS_69({
                 to: (`/evento/${__VLS_ctx.details.event.slug}`),
                 target: "_blank",
                 rel: "noopener",
                 ...{ class: "inline-flex items-center justify-center rounded-full border border-primary-300/50 px-5 py-2 text-sm font-semibold text-primary-200 transition hover:bg-primary-500/20" },
             }));
-            const __VLS_65 = __VLS_64({
+            const __VLS_71 = __VLS_70({
                 to: (`/evento/${__VLS_ctx.details.event.slug}`),
                 target: "_blank",
                 rel: "noopener",
                 ...{ class: "inline-flex items-center justify-center rounded-full border border-primary-300/50 px-5 py-2 text-sm font-semibold text-primary-200 transition hover:bg-primary-500/20" },
-            }, ...__VLS_functionalComponentArgsRest(__VLS_64));
-            __VLS_66.slots.default;
-            var __VLS_66;
+            }, ...__VLS_functionalComponentArgsRest(__VLS_70));
+            __VLS_72.slots.default;
+            var __VLS_72;
         }
         __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
             ...{ onClick: (__VLS_ctx.closeDetails) },
@@ -2454,27 +2494,27 @@ if (__VLS_ctx.eventPermissions.canList) {
             ...{ class: "inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-2 text-sm font-semibold text-white transition hover:bg-white/10" },
         });
     }
-    var __VLS_54;
+    var __VLS_60;
     /** @type {[typeof Modal, typeof Modal, ]} */ ;
     // @ts-ignore
-    const __VLS_67 = __VLS_asFunctionalComponent(Modal, new Modal({
+    const __VLS_73 = __VLS_asFunctionalComponent(Modal, new Modal({
         ...{ 'onUpdate:modelValue': {} },
         modelValue: (__VLS_ctx.lotModalOpen),
         title: (__VLS_ctx.editingLotId ? 'Editar lote' : 'Criar novo lote'),
     }));
-    const __VLS_68 = __VLS_67({
+    const __VLS_74 = __VLS_73({
         ...{ 'onUpdate:modelValue': {} },
         modelValue: (__VLS_ctx.lotModalOpen),
         title: (__VLS_ctx.editingLotId ? 'Editar lote' : 'Criar novo lote'),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_67));
-    let __VLS_70;
-    let __VLS_71;
-    let __VLS_72;
-    const __VLS_73 = {
+    }, ...__VLS_functionalComponentArgsRest(__VLS_73));
+    let __VLS_76;
+    let __VLS_77;
+    let __VLS_78;
+    const __VLS_79 = {
         'onUpdate:modelValue': ((v) => { __VLS_ctx.lotModalOpen = v; if (!v)
             __VLS_ctx.cancelLotEdit(); })
     };
-    __VLS_69.slots.default;
+    __VLS_75.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.form, __VLS_intrinsicElements.form)({
         ...{ onSubmit: (__VLS_ctx.submitLot) },
         ...{ class: "space-y-3 text-sm" },
@@ -2563,21 +2603,21 @@ if (__VLS_ctx.eventPermissions.canList) {
         disabled: (__VLS_ctx.lotSaving),
     });
     (__VLS_ctx.lotSaving ? 'Salvando...' : __VLS_ctx.editingLotId ? 'Salvar alterações' : 'Adicionar lote');
-    var __VLS_69;
+    var __VLS_75;
 }
 else {
     /** @type {[typeof AccessDeniedNotice, ]} */ ;
     // @ts-ignore
-    const __VLS_74 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
+    const __VLS_80 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
         module: "events",
         action: "view",
     }));
-    const __VLS_75 = __VLS_74({
+    const __VLS_81 = __VLS_80({
         module: "events",
         action: "view",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_74));
-    var __VLS_77 = {};
-    var __VLS_76;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_80));
+    var __VLS_83 = {};
+    var __VLS_82;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
@@ -3135,6 +3175,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
 /** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
@@ -3533,6 +3574,7 @@ else {
 /** @type {__VLS_StyleScopedClasses['border-neutral-300']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-primary-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['focus:ring-primary-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['md:col-span-2']} */ ;
 /** @type {__VLS_StyleScopedClasses['block']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
@@ -4250,6 +4292,7 @@ const __VLS_self = (await import('vue')).defineComponent({
             Modal: Modal,
             AccessDeniedNotice: AccessDeniedNotice,
             TableSkeleton: TableSkeleton,
+            EventFormConfigEditor: EventFormConfigEditor,
             formatCurrency: formatCurrency,
             formatDate: formatDate,
             getPendingPaymentValueRuleDescription: getPendingPaymentValueRuleDescription,

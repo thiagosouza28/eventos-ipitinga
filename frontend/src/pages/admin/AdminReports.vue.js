@@ -41,6 +41,7 @@ const tabs = computed(() => {
     const hasFinancialAccess = financialPermissions.canView.value || financialPermissions.canFinancial.value;
     return [
         { key: "event", label: "Eventos", visible: reportsPermissions.canView.value },
+        { key: "administrative", label: "Administrativo", visible: reportsPermissions.canView.value },
         { key: "church", label: "Distritos / Igrejas", visible: reportsPermissions.canView.value },
         { key: "financial", label: "Financeiro", visible: hasFinancialAccess }
     ].filter((tab) => tab.visible);
@@ -187,6 +188,113 @@ const downloadEventReport = async () => {
     }
     finally {
         eventDownloadState.value = false;
+    }
+};
+const adminSummaryFilters = reactive({
+    districtId: "",
+    eventId: "",
+    lotId: "",
+    startDate: "",
+    endDate: ""
+});
+const adminSummary = reactive({
+    loading: false,
+    items: [],
+    totals: {
+        total: 0,
+        byDistrict: [],
+        byEvent: [],
+        byLot: []
+    },
+    generatedAt: null
+});
+const adminSummaryExport = reactive({
+    csv: false,
+    xlsx: false,
+    pdf: false
+});
+const adminSummaryEvents = computed(() => {
+    if (adminSummaryFilters.districtId) {
+        return accessibleEvents.value.filter((event) => event.districtId === adminSummaryFilters.districtId);
+    }
+    return accessibleEvents.value;
+});
+const adminSummaryLots = computed(() => {
+    if (!adminSummaryFilters.eventId)
+        return [];
+    const fromStore = admin.eventLots[adminSummaryFilters.eventId] ?? [];
+    if (fromStore.length)
+        return fromStore;
+    const fallbackEvent = admin.events.find((event) => event.id === adminSummaryFilters.eventId);
+    return fallbackEvent?.lots ?? [];
+});
+const buildAdminSummaryParams = () => ({
+    districtId: adminSummaryFilters.districtId || undefined,
+    eventId: adminSummaryFilters.eventId || undefined,
+    lotId: adminSummaryFilters.lotId || undefined,
+    startDate: adminSummaryFilters.startDate || undefined,
+    endDate: adminSummaryFilters.endDate || undefined
+});
+const loadAdminSummaryReport = async () => {
+    adminSummary.loading = true;
+    try {
+        const report = await admin.getAdminRegistrationsSummaryReport(buildAdminSummaryParams());
+        adminSummary.items = report.items ?? [];
+        adminSummary.totals = report.totals ?? {
+            total: 0,
+            byDistrict: [],
+            byEvent: [],
+            byLot: []
+        };
+        adminSummary.generatedAt = report.generatedAt ? new Date(report.generatedAt) : new Date();
+    }
+    catch (error) {
+        showError("Erro ao gerar relatorio administrativo", error);
+    }
+    finally {
+        adminSummary.loading = false;
+    }
+};
+const exportAdminSummaryCsv = async () => {
+    adminSummaryExport.csv = true;
+    try {
+        const fileResponse = await admin.downloadAdminRegistrationsSummaryCsv(buildAdminSummaryParams());
+        downloadFromResponse(fileResponse, `relatorio-administrativo-inscricoes-${Date.now()}.csv`);
+    }
+    catch (error) {
+        const info = handleDownloadError(error, "exportacao do relatorio administrativo");
+        showError("Erro ao exportar CSV", new Error(info.message));
+    }
+    finally {
+        adminSummaryExport.csv = false;
+    }
+};
+const exportAdminSummaryXlsx = async () => {
+    adminSummaryExport.xlsx = true;
+    try {
+        const fileResponse = await admin.downloadAdminRegistrationsSummaryXlsx(buildAdminSummaryParams());
+        downloadFromResponse(fileResponse, `relatorio-administrativo-inscricoes-${Date.now()}.xlsx`);
+    }
+    catch (error) {
+        const info = handleDownloadError(error, "exportacao do relatorio administrativo");
+        showError("Erro ao exportar Excel", new Error(info.message));
+    }
+    finally {
+        adminSummaryExport.xlsx = false;
+    }
+};
+const exportAdminSummaryPdf = async () => {
+    adminSummaryExport.pdf = true;
+    try {
+        const fileResponse = await admin.downloadAdminRegistrationsSummaryPdf(buildAdminSummaryParams());
+        downloadFromResponse(fileResponse, `relatorio-administrativo-inscricoes-${Date.now()}.pdf`);
+    }
+    catch (error) {
+        const info = handleDownloadError(error, "exportacao do relatorio administrativo");
+        showError("Erro ao exportar PDF", new Error(info.message));
+    }
+    finally {
+        adminSummaryExport.pdf = false;
     }
 };
 const churchReport = reactive({
@@ -387,9 +495,47 @@ const formatBirthDate = (value) => {
 const findEventTitle = (eventId) => admin.events.find((event) => event.id === eventId)?.title ?? "Evento";
 const findDistrictName = (districtId) => catalog.districts.find((district) => district.id === districtId)?.name ?? "N\u00e3o informado";
 const findChurchName = (churchId) => catalog.churches.find((church) => church.id === churchId)?.name ?? "N\u00e3o informado";
+const resolveLotByDate = (participant) => {
+    const lots = admin.eventLots[participant.eventId] || [];
+    if (!lots.length)
+        return "";
+    const createdAtValue = participant.createdAt ? new Date(participant.createdAt) : null;
+    if (!createdAtValue || Number.isNaN(createdAtValue.getTime()))
+        return "";
+    let candidates = lots.filter((lot) => {
+        const startsAt = lot.startsAt ? new Date(lot.startsAt) : null;
+        if (!startsAt || Number.isNaN(startsAt.getTime()))
+            return false;
+        const endsAt = lot.endsAt ? new Date(lot.endsAt) : null;
+        if (endsAt && Number.isNaN(endsAt.getTime()))
+            return false;
+        return startsAt.getTime() <= createdAtValue.getTime() && (!endsAt || endsAt.getTime() >= createdAtValue.getTime());
+    });
+    const priceCents = typeof participant.priceCents === "number" ? participant.priceCents : null;
+    if (priceCents !== null) {
+        const priceMatches = candidates.filter((lot) => lot.priceCents === priceCents);
+        if (priceMatches.length) {
+            candidates = priceMatches;
+        }
+    }
+    candidates.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+    return candidates[0]?.name || "";
+};
 const findRegistrationLotName = (participant) => {
     const name = participant.order?.pricingLot?.name ?? participant.order?.lotName ?? "";
-    return name && name.trim().length > 0 ? name : "-";
+    if (name && name.trim().length > 0)
+        return name;
+    const lotId = participant.order?.pricingLotId ||
+        participant.order?.lotId ||
+        participant?.lotId ||
+        "";
+    if (lotId) {
+        const lot = (admin.eventLots[participant.eventId] || []).find((item) => item.id === lotId);
+        if (lot?.name)
+            return lot.name;
+    }
+    const derived = resolveLotByDate(participant);
+    return derived || "-";
 };
 const resolvePhotoUrl = (photoUrl) => {
     if (photoUrl && photoUrl.trim().length > 0) {
@@ -508,6 +654,23 @@ const generalFinancialCards = computed(() => {
         { label: "Saldo em caixa", value: formatCurrency(totals.cashBalanceCents ?? 0), accent: "text-emerald-600 dark:text-emerald-300" }
     ];
 });
+watch(() => adminSummaryFilters.districtId, (value, previous) => {
+    if (value === previous)
+        return;
+    adminSummaryFilters.eventId = "";
+    adminSummaryFilters.lotId = "";
+});
+watch(() => adminSummaryFilters.eventId, async (value) => {
+    adminSummaryFilters.lotId = "";
+    if (!value)
+        return;
+    try {
+        await admin.loadEventLots(value);
+    }
+    catch (error) {
+        showError("Erro ao carregar lotes", error);
+    }
+});
 watch(() => eventReport.eventId, async (next, previous) => {
     if (next && next !== previous) {
         await loadEventParticipants();
@@ -552,6 +715,9 @@ onMounted(async () => {
         }
         if (scopedChurchId.value) {
             churchReport.churchId = scopedChurchId.value;
+        }
+        if (scopedDistrictId.value) {
+            adminSummaryFilters.districtId = scopedDistrictId.value;
         }
         if (accessibleEvents.value.length) {
             eventReport.eventId = accessibleEvents.value[0].id;
@@ -867,7 +1033,7 @@ if (__VLS_ctx.reportsPermissions.canView) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "space-y-5" },
     });
-    __VLS_asFunctionalDirective(__VLS_directives.vShow)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.activeTab === 'church') }, null, null);
+    __VLS_asFunctionalDirective(__VLS_directives.vShow)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.activeTab === 'administrative') }, null, null);
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
     const __VLS_22 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
@@ -877,6 +1043,244 @@ if (__VLS_ctx.reportsPermissions.canView) {
         ...{ class: "border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70" },
     }, ...__VLS_functionalComponentArgsRest(__VLS_22));
     __VLS_24.slots.default;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "grid gap-5 md:grid-cols-2 xl:grid-cols-5" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.adminSummaryFilters.districtId),
+        disabled: (__VLS_ctx.lockDistrictSelect),
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    (__VLS_ctx.lockDistrictSelect ? "Distrito vinculado" : "Todos");
+    for (const [district] of __VLS_getVForSourceType((__VLS_ctx.accessibleDistricts))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (district.id),
+            value: (district.id),
+        });
+        (district.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.adminSummaryFilters.eventId),
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    for (const [event] of __VLS_getVForSourceType((__VLS_ctx.adminSummaryEvents))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (event.id),
+            value: (event.id),
+        });
+        (event.title);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+        value: (__VLS_ctx.adminSummaryFilters.lotId),
+        disabled: (!__VLS_ctx.adminSummaryFilters.eventId),
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 disabled:opacity-70 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+        value: "",
+    });
+    (__VLS_ctx.adminSummaryFilters.eventId ? "Todos" : "Selecione o evento");
+    for (const [lot] of __VLS_getVForSourceType((__VLS_ctx.adminSummaryLots))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+            key: (lot.id),
+            value: (lot.id),
+        });
+        (lot.name);
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "date",
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+    });
+    (__VLS_ctx.adminSummaryFilters.startDate);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-2" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.label, __VLS_intrinsicElements.label)({
+        ...{ class: "text-xs font-semibold uppercase tracking-[0.35em] text-neutral-500 dark:text-neutral-400" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+        type: "date",
+        ...{ class: "w-full rounded-sm border border-neutral-200/70 bg-white/80 px-4 py-3 text-sm text-neutral-900 shadow-inner transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-sky-500 dark:focus:ring-sky-900/40" },
+    });
+    (__VLS_ctx.adminSummaryFilters.endDate);
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "mt-4 flex flex-wrap gap-3" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.loadAdminSummaryReport) },
+        type: "button",
+        ...{ class: "inline-flex flex-1 items-center justify-center rounded-sm border border-neutral-300/80 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        disabled: (__VLS_ctx.adminSummary.loading || !__VLS_ctx.reportsPermissions.canReports),
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.exportAdminSummaryCsv) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center rounded-sm border border-neutral-200/80 px-5 py-2.5 text-sm font-semibold text-neutral-700 transition hover:-translate-y-0.5 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/20 dark:text-white dark:hover:bg-white/10" },
+        disabled: (__VLS_ctx.adminSummaryExport.csv || !__VLS_ctx.reportsPermissions.canReports),
+    });
+    if (__VLS_ctx.adminSummaryExport.csv) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-neutral-400 border-b-transparent" },
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.exportAdminSummaryXlsx) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center rounded-sm border border-sky-500 px-5 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30" },
+        disabled: (__VLS_ctx.adminSummaryExport.xlsx || !__VLS_ctx.reportsPermissions.canReports),
+    });
+    if (__VLS_ctx.adminSummaryExport.xlsx) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-sky-400 border-b-transparent" },
+        });
+    }
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+        ...{ onClick: (__VLS_ctx.exportAdminSummaryPdf) },
+        type: "button",
+        ...{ class: "inline-flex items-center justify-center rounded-sm bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-neutral-900/30 transition hover:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-neutral-900" },
+        disabled: (__VLS_ctx.adminSummaryExport.pdf || !__VLS_ctx.reportsPermissions.canReports),
+    });
+    if (__VLS_ctx.adminSummaryExport.pdf) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span)({
+            ...{ class: "mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" },
+        });
+    }
+    if (__VLS_ctx.adminSummary.generatedAt) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: "mt-3 text-xs text-neutral-500 dark:text-neutral-400" },
+        });
+        (__VLS_ctx.formatDateTime(__VLS_ctx.adminSummary.generatedAt));
+    }
+    var __VLS_24;
+    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+    // @ts-ignore
+    const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        ...{ class: "border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/40" },
+    }));
+    const __VLS_26 = __VLS_25({
+        ...{ class: "border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/40" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_25));
+    __VLS_27.slots.default;
+    if (__VLS_ctx.adminSummary.loading) {
+        /** @type {[typeof TableSkeleton, ]} */ ;
+        // @ts-ignore
+        const __VLS_28 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+            helperText: "Gerando relatorio administrativo...",
+        }));
+        const __VLS_29 = __VLS_28({
+            helperText: "Gerando relatorio administrativo...",
+        }, ...__VLS_functionalComponentArgsRest(__VLS_28));
+    }
+    else {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
+        if (!__VLS_ctx.adminSummary.items.length) {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "p-6 text-sm text-neutral-500 dark:text-neutral-400" },
+            });
+        }
+        else {
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+                ...{ class: "overflow-x-auto" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.table, __VLS_intrinsicElements.table)({
+                ...{ class: "min-w-full table-auto text-sm text-neutral-700 dark:text-neutral-200" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.thead, __VLS_intrinsicElements.thead)({
+                ...{ class: "bg-neutral-900 text-[11px] uppercase tracking-[0.3em] text-white dark:bg-neutral-800" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+                ...{ class: "px-4 py-3 text-left" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+                ...{ class: "px-4 py-3 text-left" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+                ...{ class: "px-4 py-3 text-left" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.th, __VLS_intrinsicElements.th)({
+                ...{ class: "px-4 py-3 text-right" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.tbody, __VLS_intrinsicElements.tbody)({});
+            for (const [item] of __VLS_getVForSourceType((__VLS_ctx.adminSummary.items))) {
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
+                    key: (`${item.districtId}-${item.eventId}-${item.lotId}`),
+                    ...{ class: "border-b border-neutral-100/80 bg-white/90 text-neutral-800 transition odd:bg-white even:bg-neutral-50 hover:bg-sky-50/70 dark:border-white/5 dark:bg-white/5 dark:text-white dark:hover:bg-white/10" },
+                });
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                    ...{ class: "px-4 py-3 font-semibold" },
+                });
+                (item.districtName);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                    ...{ class: "px-4 py-3 text-neutral-600 dark:text-neutral-300" },
+                });
+                (item.eventTitle);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                    ...{ class: "px-4 py-3 text-neutral-600 dark:text-neutral-300" },
+                });
+                (item.lotName);
+                __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                    ...{ class: "px-4 py-3 text-right font-semibold" },
+                });
+                (item.registrationsCount);
+            }
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.tfoot, __VLS_intrinsicElements.tfoot)({});
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.tr, __VLS_intrinsicElements.tr)({
+                ...{ class: "bg-neutral-100/80 text-neutral-800 dark:bg-neutral-800 dark:text-white" },
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-4 py-3 font-semibold" },
+                colspan: "3",
+            });
+            __VLS_asFunctionalElement(__VLS_intrinsicElements.td, __VLS_intrinsicElements.td)({
+                ...{ class: "px-4 py-3 text-right font-bold" },
+            });
+            (__VLS_ctx.adminSummary.totals.total);
+        }
+    }
+    var __VLS_27;
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "space-y-5" },
+    });
+    __VLS_asFunctionalDirective(__VLS_directives.vShow)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.activeTab === 'church') }, null, null);
+    /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
+    // @ts-ignore
+    const __VLS_31 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+        ...{ class: "border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70" },
+    }));
+    const __VLS_32 = __VLS_31({
+        ...{ class: "border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70" },
+    }, ...__VLS_functionalComponentArgsRest(__VLS_31));
+    __VLS_33.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "grid gap-5 md:grid-cols-2 xl:grid-cols-5" },
     });
@@ -1002,25 +1406,25 @@ if (__VLS_ctx.reportsPermissions.canView) {
     }
     __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
     (__VLS_ctx.churchReportDownloadState ? "Preparando..." : "Baixar PDF");
-    var __VLS_24;
+    var __VLS_33;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_25 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_34 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/40" },
     }));
-    const __VLS_26 = __VLS_25({
+    const __VLS_35 = __VLS_34({
         ...{ class: "border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/40" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_25));
-    __VLS_27.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_34));
+    __VLS_36.slots.default;
     if (__VLS_ctx.churchReport.loading) {
         /** @type {[typeof TableSkeleton, ]} */ ;
         // @ts-ignore
-        const __VLS_28 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+        const __VLS_37 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
             helperText: "Carregando participantes...",
         }));
-        const __VLS_29 = __VLS_28({
+        const __VLS_38 = __VLS_37({
             helperText: "Carregando participantes...",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_28));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_37));
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
@@ -1091,20 +1495,20 @@ if (__VLS_ctx.reportsPermissions.canView) {
             }
         }
     }
-    var __VLS_27;
+    var __VLS_36;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "space-y-5" },
     });
     __VLS_asFunctionalDirective(__VLS_directives.vShow)(null, { ...__VLS_directiveBindingRestFields, value: (__VLS_ctx.activeTab === 'financial') }, null, null);
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_31 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_40 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70" },
     }));
-    const __VLS_32 = __VLS_31({
+    const __VLS_41 = __VLS_40({
         ...{ class: "border border-white/60 bg-gradient-to-br from-white to-neutral-50 shadow-xl shadow-neutral-200/70 dark:border-white/10 dark:from-neutral-900 dark:to-neutral-900/70" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_31));
-    __VLS_33.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_40));
+    __VLS_42.slots.default;
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ class: "flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" },
     });
@@ -1156,25 +1560,25 @@ if (__VLS_ctx.reportsPermissions.canView) {
         ...{ class: "inline-flex items-center justify-center rounded-sm border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30" },
         disabled: (!__VLS_ctx.selectedFinancialEventId),
     });
-    var __VLS_33;
+    var __VLS_42;
     /** @type {[typeof BaseCard, typeof BaseCard, ]} */ ;
     // @ts-ignore
-    const __VLS_34 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
+    const __VLS_43 = __VLS_asFunctionalComponent(BaseCard, new BaseCard({
         ...{ class: "border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/50" },
     }));
-    const __VLS_35 = __VLS_34({
+    const __VLS_44 = __VLS_43({
         ...{ class: "border border-white/60 bg-white/95 shadow-2xl shadow-neutral-200/80 dark:border-white/10 dark:bg-neutral-950/70 dark:shadow-black/50" },
-    }, ...__VLS_functionalComponentArgsRest(__VLS_34));
-    __VLS_36.slots.default;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_43));
+    __VLS_45.slots.default;
     if (__VLS_ctx.financialLoading) {
         /** @type {[typeof TableSkeleton, ]} */ ;
         // @ts-ignore
-        const __VLS_37 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+        const __VLS_46 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
             helperText: "Carregando resumo financeiro...",
         }));
-        const __VLS_38 = __VLS_37({
+        const __VLS_47 = __VLS_46({
             helperText: "Carregando resumo financeiro...",
-        }, ...__VLS_functionalComponentArgsRest(__VLS_37));
+        }, ...__VLS_functionalComponentArgsRest(__VLS_46));
     }
     else {
         __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({});
@@ -1284,14 +1688,14 @@ if (__VLS_ctx.reportsPermissions.canView) {
                     });
                     /** @type {[typeof TableSkeleton, ]} */ ;
                     // @ts-ignore
-                    const __VLS_40 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
+                    const __VLS_49 = __VLS_asFunctionalComponent(TableSkeleton, new TableSkeleton({
                         rows: (2),
                         helperText: "Sincronizando financeiro do evento...",
                     }));
-                    const __VLS_41 = __VLS_40({
+                    const __VLS_50 = __VLS_49({
                         rows: (2),
                         helperText: "Sincronizando financeiro do evento...",
-                    }, ...__VLS_functionalComponentArgsRest(__VLS_40));
+                    }, ...__VLS_functionalComponentArgsRest(__VLS_49));
                 }
                 else {
                     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -1376,19 +1780,19 @@ if (__VLS_ctx.reportsPermissions.canView) {
             }
         }
     }
-    var __VLS_36;
+    var __VLS_45;
 }
 else {
     /** @type {[typeof AccessDeniedNotice, ]} */ ;
     // @ts-ignore
-    const __VLS_43 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
+    const __VLS_52 = __VLS_asFunctionalComponent(AccessDeniedNotice, new AccessDeniedNotice({
         module: "Relatorios",
     }));
-    const __VLS_44 = __VLS_43({
+    const __VLS_53 = __VLS_52({
         module: "Relatorios",
-    }, ...__VLS_functionalComponentArgsRest(__VLS_43));
-    var __VLS_46 = {};
-    var __VLS_45;
+    }, ...__VLS_functionalComponentArgsRest(__VLS_52));
+    var __VLS_55 = {};
+    var __VLS_54;
 }
 /** @type {__VLS_StyleScopedClasses['space-y-6']} */ ;
 /** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
@@ -1682,6 +2086,340 @@ else {
 /** @type {__VLS_StyleScopedClasses['py-3']} */ ;
 /** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
 /** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-gradient-to-br']} */ ;
+/** @type {__VLS_StyleScopedClasses['from-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['to-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:from-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:to-neutral-900/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['grid']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['md:grid-cols-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['xl:grid-cols-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['space-y-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.35em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-inner']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:outline-none']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['focus:ring-sky-100']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:focus:ring-sky-900/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-wrap']} */ ;
+/** @type {__VLS_StyleScopedClasses['gap-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['flex-1']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-300/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-medium']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-white/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/20']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['mr-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-sky-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sky-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:-translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-sky-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-sky-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-sky-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-sky-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['mr-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-sky-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['inline-flex']} */ ;
+/** @type {__VLS_StyleScopedClasses['items-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['justify-center']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-5']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-2.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-lg']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-neutral-900/30']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:translate-y-0.5']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:cursor-not-allowed']} */ ;
+/** @type {__VLS_StyleScopedClasses['disabled:opacity-60']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['mr-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['h-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['w-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['animate-spin']} */ ;
+/** @type {__VLS_StyleScopedClasses['rounded-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-2']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-b-transparent']} */ ;
+/** @type {__VLS_StyleScopedClasses['mt-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-xs']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['border']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/95']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-2xl']} */ ;
+/** @type {__VLS_StyleScopedClasses['shadow-neutral-200/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-950/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:shadow-black/40']} */ ;
+/** @type {__VLS_StyleScopedClasses['p-6']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-500']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-400']} */ ;
+/** @type {__VLS_StyleScopedClasses['overflow-x-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['min-w-full']} */ ;
+/** @type {__VLS_StyleScopedClasses['table-auto']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-sm']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-700']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-200']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-900']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-[11px]']} */ ;
+/** @type {__VLS_StyleScopedClasses['uppercase']} */ ;
+/** @type {__VLS_StyleScopedClasses['tracking-[0.3em]']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-left']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-b']} */ ;
+/** @type {__VLS_StyleScopedClasses['border-neutral-100/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-white/90']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['transition']} */ ;
+/** @type {__VLS_StyleScopedClasses['odd:bg-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['even:bg-neutral-50']} */ ;
+/** @type {__VLS_StyleScopedClasses['hover:bg-sky-50/70']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:border-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-white/5']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:hover:bg-white/10']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-600']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-neutral-300']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['bg-neutral-100/80']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:bg-neutral-800']} */ ;
+/** @type {__VLS_StyleScopedClasses['dark:text-white']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-semibold']} */ ;
+/** @type {__VLS_StyleScopedClasses['px-4']} */ ;
+/** @type {__VLS_StyleScopedClasses['py-3']} */ ;
+/** @type {__VLS_StyleScopedClasses['text-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['font-bold']} */ ;
 /** @type {__VLS_StyleScopedClasses['space-y-5']} */ ;
 /** @type {__VLS_StyleScopedClasses['border']} */ ;
 /** @type {__VLS_StyleScopedClasses['border-white/60']} */ ;
@@ -2321,6 +3059,15 @@ const __VLS_self = (await import('vue')).defineComponent({
             loadEventParticipants: loadEventParticipants,
             eventDownloadState: eventDownloadState,
             downloadEventReport: downloadEventReport,
+            adminSummaryFilters: adminSummaryFilters,
+            adminSummary: adminSummary,
+            adminSummaryExport: adminSummaryExport,
+            adminSummaryEvents: adminSummaryEvents,
+            adminSummaryLots: adminSummaryLots,
+            loadAdminSummaryReport: loadAdminSummaryReport,
+            exportAdminSummaryCsv: exportAdminSummaryCsv,
+            exportAdminSummaryXlsx: exportAdminSummaryXlsx,
+            exportAdminSummaryPdf: exportAdminSummaryPdf,
             churchReport: churchReport,
             churchParticipants: churchParticipants,
             churchReportDownloadState: churchReportDownloadState,

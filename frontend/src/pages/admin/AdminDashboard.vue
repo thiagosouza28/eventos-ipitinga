@@ -128,7 +128,11 @@
                 Nenhum distrito com inscrições no período.
               </div>
               <div v-else class="mt-4 space-y-3">
-                <div v-for="district in districtChartRows" :key="district.districtId" class="space-y-1">
+                <div
+                  v-for="(district, index) in districtChartRows"
+                  :key="`${district.districtId ?? 'district'}-${index}`"
+                  class="space-y-1"
+                >
                   <div class="flex items-center justify-between gap-3 text-xs text-[color:var(--text-muted)]">
                     <span class="font-semibold text-[color:var(--text)]">{{ district.districtName }}</span>
                     <div class="flex items-center gap-2 text-[11px] font-semibold whitespace-nowrap">
@@ -195,7 +199,11 @@
                 Nenhuma igreja com inscrições no período.
               </div>
               <div v-else class="mt-4 space-y-3">
-                <div v-for="church in churchChartRows" :key="church.churchId" class="space-y-1">
+                <div
+                  v-for="(church, index) in churchChartRows"
+                  :key="`${church.churchId ?? 'church'}-${index}`"
+                  class="space-y-1"
+                >
                   <div class="flex items-center justify-between gap-3 text-xs text-[color:var(--text-muted)]">
                     <span class="font-semibold text-[color:var(--text)]">{{ church.churchName }}</span>
                     <div class="flex items-center gap-2 text-[11px] font-semibold whitespace-nowrap">
