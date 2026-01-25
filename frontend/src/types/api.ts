@@ -340,3 +340,54 @@ export interface AdminRegistrationsReportResponse {
   items: AdminRegistrationsReportItem[];
   totals: AdminRegistrationsReportTotals;
 }
+
+export interface RegistrationsDashboardSummary {
+  totalRegistrations: number;
+  districtsCount: number;
+  churchesCount: number;
+  lotsCount: number;
+}
+
+export interface RegistrationsDashboardDistrict {
+  districtId: string | null;
+  districtName: string;
+  registrationsCount: number;
+  confirmedCount: number;
+  pendingCount: number;
+  canceledCount: number;
+}
+
+export interface RegistrationsDashboardChurch {
+  churchId: string | null;
+  churchName: string;
+  districtId: string | null;
+  districtName: string;
+  registrationsCount: number;
+  confirmedCount: number;
+  pendingCount: number;
+  canceledCount: number;
+}
+
+export interface RegistrationsDashboardLot {
+  lotId: string | null;
+  lotName: string;
+  eventId: string | null;
+  eventTitle: string;
+  registrationsCount: number;
+  confirmedCount: number;
+  pendingCount: number;
+  canceledCount: number;
+}
+
+export interface RegistrationsDashboardResponse {
+  generatedAt: string;
+  filters: {
+    eventId?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  summary: RegistrationsDashboardSummary;
+  byDistrict: RegistrationsDashboardDistrict[];
+  byChurch: RegistrationsDashboardChurch[];
+  byLot: RegistrationsDashboardLot[];
+}

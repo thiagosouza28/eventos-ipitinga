@@ -1,6 +1,7 @@
 import { Prisma } from "@/prisma/generated/client";
 
 import { prisma } from "../../lib/prisma";
+import { registrationLotFallback } from "../../utils/registration-lot-fallback";
 import { AppError } from "../../utils/errors";
 
 export type AdminRegistrationsReportFilters = {
@@ -186,9 +187,6 @@ export const adminRegistrationsReportService = {
     if (filters.eventId) {
       whereParts.push(Prisma.sql`e.id = ${filters.eventId}`);
     }
-    if (filters.lotId) {
-      whereParts.push(Prisma.sql`o.pricingLotId = ${filters.lotId}`);
-    }
     if (filters.churchId) {
       whereParts.push(Prisma.sql`e.churchId = ${filters.churchId}`);
     }
@@ -202,8 +200,13 @@ export const adminRegistrationsReportService = {
       whereParts.push(Prisma.sql`e.ministryId IN (${Prisma.join(filters.ministryIds)})`);
     }
 
-    const whereClause = whereParts.length
-      ? Prisma.sql`WHERE ${Prisma.join(whereParts, " AND ")}`
+    const baseWhereParts = [...whereParts, registrationLotFallback.latestLotCondition];
+    if (filters.lotId) {
+      baseWhereParts.push(Prisma.sql`${registrationLotFallback.lotIdExpr} = ${filters.lotId}`);
+    }
+
+    const whereClause = baseWhereParts.length
+      ? Prisma.sql`WHERE ${Prisma.join(baseWhereParts, " AND ")}`
       : Prisma.sql``;
 
     const rows = await prisma.$queryRaw<
@@ -222,17 +225,24 @@ export const adminRegistrationsReportService = {
         d.name AS districtName,
         e.id AS eventId,
         e.title AS eventTitle,
-        el.id AS lotId,
-        el.name AS lotName,
+        ${registrationLotFallback.lotIdExpr} AS lotId,
+        ${registrationLotFallback.lotNameExpr} AS lotName,
         COUNT(r.id) AS registrationsCount
       FROM Registration r
       INNER JOIN Event e ON e.id = r.eventId
       INNER JOIN District d ON d.id = e.districtId
       LEFT JOIN \`Order\` o ON o.id = r.orderId
       LEFT JOIN EventLot el ON el.id = o.pricingLotId
+      ${registrationLotFallback.joinSql}
       ${whereClause}
-      GROUP BY d.id, d.name, e.id, e.title, el.id, el.name
-      ORDER BY d.name ASC, e.title ASC, el.name ASC
+      GROUP BY
+        d.id,
+        d.name,
+        e.id,
+        e.title,
+        ${registrationLotFallback.lotIdExpr},
+        ${registrationLotFallback.lotNameExpr}
+      ORDER BY d.name ASC, e.title ASC, lotName ASC
     `);
 
     const items: AdminRegistrationsReportItem[] = rows.map((row) => ({
@@ -241,7 +251,7 @@ export const adminRegistrationsReportService = {
       eventId: row.eventId ?? null,
       eventTitle: row.eventTitle ?? "Evento nao informado",
       lotId: row.lotId ?? null,
-      lotName: row.lotName ?? "Lote vigente",
+      lotName: row.lotName ?? "Sem lote",
       registrationsCount: safeCount(row.registrationsCount)
     }));
 

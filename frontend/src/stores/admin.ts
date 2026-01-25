@@ -8,6 +8,7 @@ import type {
   Order,
   Registration,
   AdminRegistrationsReportResponse,
+  RegistrationsDashboardResponse,
   AdminUser,
   AdminProfile,
   UserStatus,
@@ -358,6 +359,15 @@ export const useAdminStore = defineStore("admin", () => {
       responseType: "blob",
       timeout: registrationsPdfTimeoutMs
     });
+  };
+
+  const getRegistrationsDashboard = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    const response = await api.get<RegistrationsDashboardResponse>(
+      "/admin/dashboard/registrations",
+      { params }
+    );
+    return response.data;
   };
 
   const downloadFinancialReport = async (eventId: string) => {
@@ -744,6 +754,7 @@ export const useAdminStore = defineStore("admin", () => {
     downloadAdminRegistrationsSummaryCsv,
     downloadAdminRegistrationsSummaryXlsx,
     downloadAdminRegistrationsSummaryPdf,
+    getRegistrationsDashboard,
     downloadFinancialReport,
     requestRegistrationReportJob,
     requestRegistrationListJob,

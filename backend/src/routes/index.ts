@@ -152,6 +152,7 @@ import {
   downloadAdminRegistrationsReportXlsxHandler,
   downloadAdminRegistrationsReportPdfHandler
 } from "../controllers/admin-registrations-report.controller";
+import { registrationsDashboardHandler } from "../controllers/registrations-dashboard.controller";
 
 export const router = Router();
 
@@ -226,6 +227,12 @@ router.get(
 );
 
 router.post("/admin/profile/change-password", changePasswordHandler);
+
+router.get(
+  "/admin/dashboard/registrations",
+  authorizePermission("dashboard", "view"),
+  registrationsDashboardHandler
+);
 
 router.get("/admin/districts", authorizePermission("districts", "view"), listDistrictsHandler);
 router.post("/admin/districts", authorizePermission("districts", "create"), createDistrictHandler);

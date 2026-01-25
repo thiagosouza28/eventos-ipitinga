@@ -263,7 +263,117 @@ const buildRegistrationListQuery = (
   orderBy: { createdAt: "desc" } as const
 });
 
-const normalizeRegistrationList = <T>(items: T[]) => items;
+type RegistrationListRow = Prisma.RegistrationGetPayload<{
+  select: typeof registrationListSelect;
+}>;
+
+const pickLatestLot = <T extends { startsAt: Date }>(lots: T[]) =>
+  lots.reduce<T | null>((current, lot) => (!current || lot.startsAt > current.startsAt ? lot : current), null);
+
+const resolveLotFallback = (
+  lots: Array<{ id: string; name: string; priceCents: number; startsAt: Date; endsAt: Date | null }>,
+  referenceDate: Date,
+  priceCents?: number | null
+) => {
+  const inRange = lots.filter(
+    (lot) =>
+      lot.startsAt <= referenceDate &&
+      (!lot.endsAt || lot.endsAt >= referenceDate)
+  );
+  if (priceCents != null) {
+    const priceMatches = inRange.filter((lot) => lot.priceCents === priceCents);
+    if (priceMatches.length) {
+      return pickLatestLot(priceMatches);
+    }
+  }
+  if (inRange.length) {
+    return pickLatestLot(inRange);
+  }
+  if (priceCents != null) {
+    const priceOnly = lots.filter((lot) => lot.priceCents === priceCents);
+    if (priceOnly.length) {
+      return pickLatestLot(priceOnly);
+    }
+  }
+  return null;
+};
+
+const normalizeRegistrationList = async (items: RegistrationListRow[]) => {
+  if (!items.length) return items;
+
+  const needsFallback = (registration: RegistrationListRow) => {
+    const order = registration.order as any;
+    const existingName =
+      order?.pricingLot?.name ||
+      order?.lotName ||
+      (registration as any).lotName ||
+      (registration as any).lot?.name;
+    return !existingName;
+  };
+
+  const targets = items.filter(needsFallback);
+  if (!targets.length) return items;
+
+  const eventIds = Array.from(
+    new Set(targets.map((item) => item.eventId).filter(Boolean))
+  );
+  if (!eventIds.length) return items;
+
+  const lots = await prisma.eventLot.findMany({
+    where: { eventId: { in: eventIds } },
+    orderBy: [{ eventId: "asc" }, { startsAt: "asc" }]
+  });
+
+  const lotsMap = new Map<string, typeof lots>();
+  for (const lot of lots) {
+    const list = lotsMap.get(lot.eventId) ?? [];
+    list.push(lot);
+    lotsMap.set(lot.eventId, list);
+  }
+
+  items.forEach((registration) => {
+    if (!needsFallback(registration)) return;
+    const eventLots = lotsMap.get(registration.eventId) ?? [];
+    if (!eventLots.length) return;
+
+    const order = registration.order as any;
+    const explicitLotId =
+      order?.pricingLotId ||
+      order?.lotId ||
+      (registration as any).lotId ||
+      (registration as any).lot?.id ||
+      null;
+
+    let resolvedLot =
+      explicitLotId
+        ? eventLots.find((lot) => lot.id === explicitLotId) ?? null
+        : null;
+
+    if (!resolvedLot && registration.createdAt) {
+      resolvedLot = resolveLotFallback(
+        eventLots,
+        new Date(registration.createdAt),
+        typeof registration.priceCents === "number" ? registration.priceCents : null
+      );
+    }
+
+    if (!resolvedLot) return;
+
+    (registration as any).lotId = resolvedLot.id;
+    (registration as any).lotName = resolvedLot.name;
+
+    if (order) {
+      if (!order.pricingLotId) {
+        order.pricingLotId = resolvedLot.id;
+      }
+      if (!order.pricingLot) {
+        order.pricingLot = { id: resolvedLot.id, name: resolvedLot.name };
+      }
+    }
+  });
+
+  return items;
+};
 
 const REPORT_BATCH_SIZE = 500;
 const forEachRegistrationBatch = async (
@@ -373,7 +483,7 @@ export class RegistrationService {
 
   async list(filters: RegistrationFilters, ministryIds?: string[]) {
     const items = await prisma.registration.findMany(buildRegistrationListQuery(filters, ministryIds));
-    return normalizeRegistrationList(items);
+    return await normalizeRegistrationList(items as RegistrationListRow[]);
   }
 
   async listPaged(
@@ -398,7 +508,8 @@ export class RegistrationService {
     ]);
 
     const totalPages = total > 0 ? Math.ceil(total / take) : 0;
-    return { items: normalizeRegistrationList(items), total, totalPages };
+    const normalized = await normalizeRegistrationList(items as RegistrationListRow[]);
+    return { items: normalized, total, totalPages };
   }
 
   async report(filters: RegistrationFilters, groupBy: "event" | "church", ministryIds?: string[]) {
