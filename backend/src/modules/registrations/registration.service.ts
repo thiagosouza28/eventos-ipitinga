@@ -270,11 +270,13 @@ type RegistrationListRow = Prisma.RegistrationGetPayload<{
 const pickLatestLot = <T extends { startsAt: Date }>(lots: T[]) =>
   lots.reduce<T | null>((current, lot) => (!current || lot.startsAt > current.startsAt ? lot : current), null);
 
-const resolveLotFallback = (
-  lots: Array<{ id: string; name: string; priceCents: number; startsAt: Date; endsAt: Date | null }>,
+const resolveLotFallback = <
+  T extends { id: string; name: string; priceCents: number; startsAt: Date; endsAt: Date | null }
+>(
+  lots: T[],
   referenceDate: Date,
   priceCents?: number | null
-) => {
+): T | null => {
   const inRange = lots.filter(
     (lot) =>
       lot.startsAt <= referenceDate &&
