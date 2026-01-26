@@ -67,6 +67,15 @@
               <span v-if="eventDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
               <span>{{ eventDownloadState ? "Preparando..." : "Baixar PDF" }}</span>
             </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-sm border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30"
+              :disabled="!eventReport.eventId || eventXlsxState"
+              @click="exportEventXlsx"
+            >
+              <span v-if="eventXlsxState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-sky-400 border-b-transparent" />
+              <span>{{ eventXlsxState ? "Preparando..." : "Exportar Excel" }}</span>
+            </button>
           </div>
         </div>
 
@@ -345,6 +354,15 @@
             <span v-if="churchReportDownloadState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-white border-b-transparent" />
             <span>{{ churchReportDownloadState ? "Preparando..." : "Baixar PDF" }}</span>
           </button>
+          <button
+            type="button"
+            class="inline-flex items-center justify-center rounded-sm border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30"
+            :disabled="!churchReport.churchId || churchReportXlsxState"
+            @click="exportChurchXlsx"
+          >
+            <span v-if="churchReportXlsxState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-sky-400 border-b-transparent" />
+            <span>{{ churchReportXlsxState ? "Preparando..." : "Exportar Excel" }}</span>
+          </button>
         </div>
       </BaseCard>
 
@@ -436,9 +454,10 @@
             <button
               type="button"
               class="inline-flex items-center justify-center rounded-sm border border-sky-500 px-6 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-300 dark:text-sky-200 dark:hover:bg-sky-900/30"
-              :disabled="!selectedFinancialEventId"
-              @click="exportFinancialCsv"
+              :disabled="!selectedFinancialEventId || financialXlsxState"
+              @click="exportFinancialXlsx"
             >
+              <span v-if="financialXlsxState" class="mr-2 h-4 w-4 animate-spin rounded-sm border-2 border-sky-400 border-b-transparent" />
               Exportar Excel
             </button>
           </div>
@@ -576,6 +595,7 @@ import type {
 } from "../../types/api";
 import { formatCurrency } from "../../utils/format";
 import { useFileDownload } from "../../composables/useFileDownload";
+import * as XLSX from "xlsx";
 
 const props = defineProps<{ tab?: string }>();
 
@@ -586,7 +606,7 @@ const admin = useAdminStore();
 const catalog = useCatalogStore();
 const auth = useAuthStore();
 const { api } = useApi();
-const { downloadFromResponse, handleDownloadError } = useFileDownload();
+const { downloadFromResponse, downloadFile, handleDownloadError } = useFileDownload();
 
 const reportsPermissions = useModulePermissions("reports");
 const financialPermissions = useModulePermissions("financial");
@@ -743,6 +763,23 @@ const requestReportJobResponse = async (
   return admin.downloadReportJobFile(job.id);
 };
 
+const buildXlsxBlob = (
+  sheetName: string,
+  rows: Array<Array<string | number | null>>,
+  cols?: Array<{ wch: number }>
+) => {
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  if (cols?.length) {
+    sheet["!cols"] = cols;
+  }
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
+  const data = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+  return new Blob([data], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+};
+
 const fetchParticipantsForEvent = async (eventId: string) => {
   const params: Record<string, string> = { eventId };
   if (!isGeneralAdmin.value && scopedDistrictId.value) {
@@ -771,6 +808,7 @@ const loadEventParticipants = async () => {
 };
 
 const eventDownloadState = ref(false);
+const eventXlsxState = ref(false);
 const downloadEventReport = async () => {
   if (!eventReport.eventId) return;
   eventDownloadState.value = true;
@@ -791,6 +829,54 @@ const downloadEventReport = async () => {
     showError("Erro ao gerar relat\u00f3rio do evento", new Error(info.message));
   } finally {
     eventDownloadState.value = false;
+  }
+};
+
+const exportEventXlsx = async () => {
+  if (!eventReport.eventId || eventXlsxState.value) return;
+  eventXlsxState.value = true;
+  try {
+    const participants =
+      eventParticipants.value.length > 0
+        ? eventParticipants.value
+        : normalizeParticipants(await fetchParticipantsForEvent(eventReport.eventId));
+    if (!participants.length) {
+      showError("Nada para exportar", new Error("Carregue os participantes do evento antes de exportar."));
+      return;
+    }
+    const rows = [
+      ["Nº", "Participante", "Igreja", "Distrito", "Nascimento", "Idade", "Status", "Evento", "Lote"],
+      ...participants.map((participant, index) => [
+        index + 1,
+        participant.fullName ?? "",
+        findChurchName(participant.churchId),
+        findDistrictName(participant.districtId),
+        formatBirthDate(participant.birthDate),
+        participant.ageYears ?? "",
+        translateStatus(participant.status),
+        findEventTitle(participant.eventId),
+        findRegistrationLotName(participant)
+      ])
+    ];
+    const blob = buildXlsxBlob("Evento", rows, [
+      { wch: 6 },
+      { wch: 32 },
+      { wch: 24 },
+      { wch: 22 },
+      { wch: 14 },
+      { wch: 10 },
+      { wch: 14 },
+      { wch: 28 },
+      { wch: 18 }
+    ]);
+    const filename = selectedEvent.value?.slug ?? selectedEvent.value?.title ?? "relatorio-evento";
+    const safeName = String(filename).replace(/\s+/g, "-").toLowerCase();
+    downloadFile(blob, `relatorio-evento-${safeName}.xlsx`);
+  } catch (error) {
+    const info = handleDownloadError(error, "exportacao do relatorio do evento");
+    showError("Erro ao exportar Excel do evento", new Error(info.message));
+  } finally {
+    eventXlsxState.value = false;
   }
 };
 const adminSummaryFilters = reactive({
@@ -910,6 +996,7 @@ const churchReport = reactive({
 
 const churchParticipants = ref<Registration[]>([]);
 const churchReportDownloadState = ref(false);
+const churchReportXlsxState = ref(false);
 
 const churchesForSelectedDistrict = computed<Church[]>(() => {
   const districtId = churchReport.districtId || scopedDistrictId.value;
@@ -972,6 +1059,54 @@ const downloadChurchReport = async () => {
   }
 };
 
+const exportChurchXlsx = async () => {
+  if (!churchReport.churchId || churchReportXlsxState.value) return;
+  churchReportXlsxState.value = true;
+  try {
+    if (!churchParticipants.value.length) {
+      await loadChurchParticipants();
+    }
+    const participants = churchParticipants.value;
+    if (!participants.length) {
+      showError("Nada para exportar", new Error("Carregue os participantes antes de exportar."));
+      return;
+    }
+    const rows = [
+      ["Nº", "Participante", "Igreja", "Distrito", "Nascimento", "Idade", "Status", "Evento", "Lote"],
+      ...participants.map((participant, index) => [
+        index + 1,
+        participant.fullName ?? "",
+        findChurchName(participant.churchId),
+        findDistrictName(participant.districtId),
+        formatBirthDate(participant.birthDate),
+        participant.ageYears ?? "",
+        translateStatus(participant.status),
+        findEventTitle(participant.eventId),
+        findRegistrationLotName(participant)
+      ])
+    ];
+    const blob = buildXlsxBlob("Igreja", rows, [
+      { wch: 6 },
+      { wch: 32 },
+      { wch: 24 },
+      { wch: 22 },
+      { wch: 14 },
+      { wch: 10 },
+      { wch: 14 },
+      { wch: 28 },
+      { wch: 18 }
+    ]);
+    const churchName = findChurchName(churchReport.churchId);
+    const safeName = String(churchName).replace(/\s+/g, "-").toLowerCase();
+    downloadFile(blob, `participantes-${safeName}.xlsx`);
+  } catch (error) {
+    const info = handleDownloadError(error, "exportacao do relatorio da igreja");
+    showError("Erro ao exportar Excel da igreja", new Error(info.message));
+  } finally {
+    churchReportXlsxState.value = false;
+  }
+};
+
 const financialSummary = ref<any | null>(null);
 const financialLoading = ref(true);
 const financialDetailLoading = ref(false);
@@ -979,6 +1114,7 @@ const financialEventSummary = ref<any | null>(null);
 const selectedFinancialEventId = ref("");
 const financialGeneratedAt = ref<Date | null>(null);
 const financialDownloadState = ref(false);
+const financialXlsxState = ref(false);
 
 const ensureParticipantsForEvent = async (eventId: string) => {
   if (!eventId) return [];
@@ -1028,31 +1164,42 @@ const downloadFinancialPdf = async () => {
     financialDownloadState.value = false;
   }
 };
-const exportFinancialCsv = async () => {
-  if (!selectedFinancialEventId.value) return;
-  const participants = await ensureParticipantsForEvent(selectedFinancialEventId.value);
-  if (!participants.length) {
-    showError("Nada para exportar", new Error("Carregue os participantes do evento antes de exportar."));
-    return;
+const exportFinancialXlsx = async () => {
+  if (!selectedFinancialEventId.value || financialXlsxState.value) return;
+  financialXlsxState.value = true;
+  try {
+    const participants = normalizeParticipants(await ensureParticipantsForEvent(selectedFinancialEventId.value));
+    if (!participants.length) {
+      showError("Nada para exportar", new Error("Carregue os participantes do evento antes de exportar."));
+      return;
+    }
+    const rows = [
+      ["Nº", "Participante", "Status", "Valor (R$)", "Igreja", "Distrito"],
+      ...participants.map((participant, index) => [
+        index + 1,
+        participant.fullName ?? "",
+        translateStatus(participant.status),
+        Number(((participant.priceCents ?? 0) / 100).toFixed(2)),
+        findChurchName(participant.churchId),
+        findDistrictName(participant.districtId)
+      ])
+    ];
+    const blob = buildXlsxBlob("Financeiro", rows, [
+      { wch: 6 },
+      { wch: 32 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 24 },
+      { wch: 22 }
+    ]);
+    const safeName = findEventTitle(selectedFinancialEventId.value).replace(/\s+/g, "-").toLowerCase();
+    downloadFile(blob, `financeiro-${safeName}.xlsx`);
+  } catch (error) {
+    const info = handleDownloadError(error, "exportacao do relatorio financeiro");
+    showError("Erro ao exportar Excel financeiro", new Error(info.message));
+  } finally {
+    financialXlsxState.value = false;
   }
-  const headers = ["Participante", "Status", "Valor", "Igreja", "Distrito"];
-  const rows = participants.map((participant) => [
-    `"${participant.fullName.replace(/"/g, '""')}"`,
-    translateStatus(participant.status),
-    (participant.priceCents / 100).toFixed(2).replace(".", ","),
-    `"${findChurchName(participant.churchId).replace(/"/g, '""')}"`,
-    `"${findDistrictName(participant.districtId).replace(/"/g, '""')}"`
-  ]);
-  const csvContent = [headers.join(";"), ...rows.map((row) => row.join(";"))].join("\n");
-  const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `financeiro-${findEventTitle(selectedFinancialEventId.value)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 };
 
 const loadFinancialSummary = async () => {

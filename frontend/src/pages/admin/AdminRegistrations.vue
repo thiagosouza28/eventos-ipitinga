@@ -56,6 +56,19 @@
               Gerar PDF
             </button>
             <button
+              v-if="canGenerateListPdf"
+              type="button"
+              class="inline-flex items-center justify-center gap-2 rounded-full border border-sky-200/70 bg-white/90 px-5 py-2.5 text-sm font-semibold text-sky-700 shadow-sm shadow-sky-200/40 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-sky-500/40 dark:bg-sky-500/10 dark:text-sky-100"
+              :disabled="listXlsxState.loading || displayedRegistrations.length === 0"
+              @click="generateRegistrationListXlsx"
+            >
+              <span
+                v-if="listXlsxState.loading"
+                class="h-4 w-4 animate-spin rounded-full border-2 border-sky-600 border-t-transparent dark:border-sky-200"
+              />
+              Gerar Excel
+            </button>
+            <button
               v-if="registrationPermissions.canCreate"
               type="button"
               class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-600 to-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/50 transition hover:translate-y-0.5"
@@ -1685,6 +1698,7 @@ const updateMobileState = () => {
 }
 const shouldAutoApply = computed(() => hideFilters.value || !isMobile.value)
 const listPdfState = reactive({ loading: false })
+const listXlsxState = reactive({ loading: false })
 const registrationsPage = ref(1)
 const pageSizeOptions = [10, 25, 50, 100]
 const defaultPageSize = computed(() => {
@@ -3168,6 +3182,26 @@ const generateRegistrationListPdf = async () => {
     showError('Falha ao gerar lista em PDF', new Error(info.message))
   } finally {
     listPdfState.loading = false
+  }
+}
+
+const generateRegistrationListXlsx = async () => {
+  if (!canGenerateListPdf.value || listXlsxState.loading) return
+  listXlsxState.loading = true
+  try {
+    const params = { ...buildFilterParams(), orderBy: 'church' }
+    const fileResponse = await admin.downloadRegistrationListXlsx(params)
+    const eventLabel = filters.eventId ? findEventTitle(filters.eventId) : 'inscricoes'
+    const churchLabel = filters.churchId ? findChurchName(filters.churchId) : ''
+    const lotLabel = filters.lotId ? selectedLotName.value : ''
+    const parts = ['lista', eventLabel, churchLabel, lotLabel].filter(Boolean).map(sanitizeFilePart)
+    const fileName = `${parts.filter(Boolean).join('-') || 'lista-inscricoes'}.xlsx`
+    downloadFromResponse(fileResponse, fileName)
+  } catch (error) {
+    const info = handleDownloadError(error, 'download do relatorio')
+    showError('Falha ao gerar lista em Excel', new Error(info.message))
+  } finally {
+    listXlsxState.loading = false
   }
 }
 </script>

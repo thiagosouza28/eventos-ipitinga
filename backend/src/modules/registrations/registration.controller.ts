@@ -40,6 +40,10 @@ const optionalStatus = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
   z.enum(["DRAFT", "PENDING_PAYMENT", "PAID", "CANCELED", "REFUNDED", "CHECKED_IN"]).optional()
 );
+const optionalOrderBy = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.enum(["createdAt", "church", "name"]).optional()
+);
 
 const listSchema = z.object({
   eventId: optionalId,
@@ -77,6 +81,9 @@ const reportDownloadSchema = reportSchema.extend({
 });
 const listPdfSchema = listSchema.extend({
   async: asyncFlagSchema
+});
+const listXlsxSchema = listSchema.extend({
+  orderBy: optionalOrderBy
 });
 
 const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "") : v);
@@ -270,6 +277,38 @@ export const downloadRegistrationsListPdfHandler = async (request: Request, resp
       return response.status(400).json(reportErrorPayload);
     }
     return respondReportError(response, error, "Erro ao gerar lista de inscricoes em PDF");
+  }
+};
+
+export const downloadRegistrationsListXlsxHandler = async (request: Request, response: Response) => {
+  // Aplicar headers de CORS antes de qualquer resposta
+  applyDownloadHeaders(request, response);
+  if (request.method === "OPTIONS") {
+    return response.status(200).end();
+  }
+  try {
+    const { orderBy, ...filters } = listXlsxSchema.parse(request.query);
+    const ministryIds = getScopedMinistryIds(request.user);
+    const scopedFilters = applyScopedLocationFilters(filters, request.user);
+    await registrationService.validateReportAvailability(scopedFilters, ministryIds);
+    const includeCpf = hasPermission(request.user?.permissions, "registrations", "reports");
+
+    const buffer = await registrationService.generateListXlsx(scopedFilters, ministryIds, {
+      includeCpf,
+      orderBy
+    });
+    const filename = `lista-inscricoes-${Date.now()}.xlsx`;
+    return sendDownloadBuffer(response, {
+      buffer,
+      fileName: filename,
+      contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      return response.status(400).json(reportErrorPayload);
+    }
+    return respondReportError(response, error, "Erro ao gerar lista de inscricoes em Excel");
   }
 };
 

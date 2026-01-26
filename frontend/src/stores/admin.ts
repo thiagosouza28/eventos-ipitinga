@@ -325,6 +325,15 @@ export const useAdminStore = defineStore("admin", () => {
     });
   };
 
+  const downloadRegistrationListXlsx = async (filters: Record<string, unknown> = {}) => {
+    const params = normalizeFilters(filters);
+    return api.get<Blob>("/admin/registrations/list.xlsx", {
+      params,
+      responseType: "blob",
+      timeout: registrationsPdfTimeoutMs
+    });
+  };
+
   const getAdminRegistrationsSummaryReport = async (filters: Record<string, unknown> = {}) => {
     const params = normalizeFilters(filters);
     const response = await api.get<AdminRegistrationsReportResponse>(
@@ -750,6 +759,7 @@ export const useAdminStore = defineStore("admin", () => {
     loadRegistrations,
     downloadRegistrationReport,
     downloadRegistrationListPdf,
+    downloadRegistrationListXlsx,
     getAdminRegistrationsSummaryReport,
     downloadAdminRegistrationsSummaryCsv,
     downloadAdminRegistrationsSummaryXlsx,

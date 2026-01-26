@@ -2,6 +2,7 @@ import { createReadStream, promises as fs } from "fs";
 import path from "path";
 
 import type { Prisma } from "@/prisma/generated/client";
+import * as XLSX from "xlsx";
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError, UnauthorizedError } from "../../utils/errors";
 import { calculateAge } from "../../utils/cpf";
@@ -113,6 +114,12 @@ const formatBirthDateBr = (date: Date | null | undefined) => {
   }
   return brDateFormatterNoTimezone.format(date);
 };
+const formatCpfFull = (value?: string | null) => {
+  if (!value) return "";
+  const digits = String(value).replace(/\D/g, "");
+  if (digits.length !== 11) return value;
+  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
 
 const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => {
   let baseUrl: URL;
@@ -185,6 +192,34 @@ export type RegistrationFilters = {
   status?: RegistrationStatusValue;
   lotId?: string;
   search?: string;
+};
+type RegistrationListOrderBy = "createdAt" | "church" | "name";
+
+const normalizeSortValue = (value?: string | null) => (value ?? "").toString().trim();
+
+const compareSort = (a?: string | null, b?: string | null) =>
+  normalizeSortValue(a).localeCompare(normalizeSortValue(b), "pt-BR", { sensitivity: "base" });
+
+const sortRegistrationListItems = (
+  items: RegistrationListItem[],
+  orderBy?: RegistrationListOrderBy
+) => {
+  if (!orderBy || orderBy === "createdAt") return items;
+  const sorted = [...items];
+  if (orderBy === "name") {
+    sorted.sort((a, b) => compareSort(a.fullName, b.fullName) || compareSort(a.churchName, b.churchName));
+    return sorted;
+  }
+  if (orderBy === "church") {
+    sorted.sort(
+      (a, b) =>
+        compareSort(a.churchName, b.churchName) ||
+        compareSort(a.districtName ?? "", b.districtName ?? "") ||
+        compareSort(a.fullName, b.fullName)
+    );
+    return sorted;
+  }
+  return sorted;
 };
 
 const buildRegistrationWhere = (filters: RegistrationFilters = {}, ministryIds?: string[]) => {
@@ -418,6 +453,67 @@ const forEachRegistrationBatchById = async (
     await handler(batch);
     cursor = batch[batch.length - 1]?.id ?? null;
   }
+};
+const buildRegistrationListPayload = async (
+  filters: RegistrationFilters,
+  ministryIds?: string[]
+) => {
+  const listQuery: Prisma.RegistrationFindManyArgs = {
+    where: buildRegistrationWhere(filters, ministryIds),
+    include: {
+      event: true,
+      church: { include: { district: true } },
+      district: true,
+      order: {
+        include: {
+          pricingLot: true
+        }
+      }
+    },
+    orderBy: [{ createdAt: "desc" }]
+  };
+
+  const registrations: any[] = [];
+  await forEachRegistrationBatch(listQuery, (batch) => {
+    registrations.push(...batch);
+  });
+
+  const items: RegistrationListItem[] = registrations.map((registration) => ({
+    fullName: registration.fullName,
+    cpf: registration.cpf,
+    status: registration.status,
+    createdAt: registration.createdAt,
+    eventTitle: registration.event?.title ?? "Evento nao informado",
+    churchName: registration.church?.name ?? "Igreja nao informada",
+    districtName: registration.district?.name ?? registration.church?.district?.name ?? null,
+    lotName: registration.order?.pricingLot?.name ?? null
+  }));
+
+  const [eventMeta, churchMeta, districtMeta, lotMeta] = await Promise.all([
+    filters.eventId
+      ? prisma.event.findUnique({ where: { id: filters.eventId }, select: { title: true } })
+      : null,
+    filters.churchId
+      ? prisma.church.findUnique({ where: { id: filters.churchId }, select: { name: true } })
+      : null,
+    filters.districtId
+      ? prisma.district.findUnique({ where: { id: filters.districtId }, select: { name: true } })
+      : null,
+    filters.lotId
+      ? prisma.eventLot.findUnique({ where: { id: filters.lotId }, select: { name: true } })
+      : null
+  ]);
+
+  const meta: RegistrationListMeta = {
+    eventName: filters.eventId ? eventMeta?.title ?? "Nao informado" : null,
+    churchName: filters.churchId ? churchMeta?.name ?? "Nao informado" : null,
+    districtName: filters.districtId ? districtMeta?.name ?? "Nao informado" : null,
+    lotName: filters.lotId ? lotMeta?.name ?? "Nao informado" : null,
+    statusLabel: filters.status ? resolvePaymentStatusLabel(filters.status) : null,
+    search: filters.search?.trim() ?? null
+  };
+
+  return { items, meta };
 };
 
 export class RegistrationService {
@@ -1250,60 +1346,7 @@ export class RegistrationService {
     ministryIds?: string[],
     options?: { includeCpf?: boolean }
   ) {
-    const listQuery: Prisma.RegistrationFindManyArgs = {
-      where: buildRegistrationWhere(filters, ministryIds),
-      include: {
-        event: true,
-        church: { include: { district: true } },
-        district: true,
-        order: {
-          include: {
-            pricingLot: true
-          }
-        }
-      },
-      orderBy: [{ createdAt: "desc" }]
-    };
-
-    const registrations: any[] = [];
-    await forEachRegistrationBatch(listQuery, (batch) => {
-      registrations.push(...batch);
-    });
-
-    const items: RegistrationListItem[] = registrations.map((registration) => ({
-      fullName: registration.fullName,
-      cpf: registration.cpf,
-      status: registration.status,
-      createdAt: registration.createdAt,
-      eventTitle: registration.event?.title ?? "Evento nao informado",
-      churchName: registration.church?.name ?? "Igreja nao informada",
-      districtName: registration.district?.name ?? registration.church?.district?.name ?? null,
-      lotName: registration.order?.pricingLot?.name ?? null
-    }));
-
-    const [eventMeta, churchMeta, districtMeta, lotMeta] = await Promise.all([
-      filters.eventId
-        ? prisma.event.findUnique({ where: { id: filters.eventId }, select: { title: true } })
-        : null,
-      filters.churchId
-        ? prisma.church.findUnique({ where: { id: filters.churchId }, select: { name: true } })
-        : null,
-      filters.districtId
-        ? prisma.district.findUnique({ where: { id: filters.districtId }, select: { name: true } })
-        : null,
-      filters.lotId
-        ? prisma.eventLot.findUnique({ where: { id: filters.lotId }, select: { name: true } })
-        : null
-    ]);
-
-    const meta: RegistrationListMeta = {
-      eventName: filters.eventId ? eventMeta?.title ?? "Nao informado" : null,
-      churchName: filters.churchId ? churchMeta?.name ?? "Nao informado" : null,
-      districtName: filters.districtId ? districtMeta?.name ?? "Nao informado" : null,
-      lotName: filters.lotId ? lotMeta?.name ?? "Nao informado" : null,
-      statusLabel: filters.status ? resolvePaymentStatusLabel(filters.status) : null,
-      search: filters.search?.trim() ?? null
-    };
+    const { items, meta } = await buildRegistrationListPayload(filters, ministryIds);
 
     const pdfBuffer = await generateRegistrationListPdf({
       generatedAt: brDateTimeFormatter.format(new Date()),
@@ -1313,6 +1356,65 @@ export class RegistrationService {
     });
 
     return pdfBuffer;
+  }
+  async generateListXlsx(
+    filters: RegistrationFilters,
+    ministryIds?: string[],
+    options?: { includeCpf?: boolean; orderBy?: RegistrationListOrderBy }
+  ) {
+    const { items } = await buildRegistrationListPayload(filters, ministryIds);
+    const includeCpf = options?.includeCpf ?? false;
+    const orderBy = options?.orderBy ?? "church";
+    const orderedItems = sortRegistrationListItems(items, orderBy);
+
+    const headers = [
+      "Nº",
+      "Inscrito",
+      ...(includeCpf ? ["CPF"] : []),
+      "Evento",
+      "Lote",
+      "Igreja",
+      "Distrito",
+      "Status",
+      "Data",
+      "Assinatura"
+    ];
+
+    const rows = orderedItems.map((item, index) => {
+      const createdAtLabel = item.createdAt
+        ? brDateTimeFormatter.format(new Date(item.createdAt))
+        : "";
+      return [
+        index + 1,
+        item.fullName ?? "",
+        ...(includeCpf ? [formatCpfFull(item.cpf)] : []),
+        item.eventTitle ?? "",
+        item.lotName ?? "",
+        item.churchName ?? "",
+        item.districtName ?? "",
+        resolvePaymentStatusLabel(item.status),
+        createdAtLabel,
+        ""
+      ];
+    });
+
+    const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    sheet["!cols"] = [
+      { wch: 6 },
+      { wch: 32 },
+      ...(includeCpf ? [{ wch: 18 }] : []),
+      { wch: 30 },
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 22 },
+      { wch: 16 },
+      { wch: 20 },
+      { wch: 32 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, sheet, "Inscricoes");
+    return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
   }
 
   async generateEventSheetPdf(
@@ -1483,6 +1585,11 @@ export class RegistrationService {
 }
 
 export const registrationService = new RegistrationService();
+
+
+
+
+
 
 
 

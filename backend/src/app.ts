@@ -88,6 +88,7 @@ export const createApp = () => {
   app.use("/api/receipts/:registrationId.pdf", downloadCorsMiddleware);
   app.use("/api/admin/registrations/report.pdf", downloadCorsMiddleware);
   app.use("/api/admin/registrations/list.pdf", downloadCorsMiddleware);
+  app.use("/api/admin/registrations/list.xlsx", downloadCorsMiddleware);
   app.use("/api/admin/reports/jobs/:jobId/file", downloadCorsMiddleware);
   app.use("/api/admin/reports/registrations/summary.csv", downloadCorsMiddleware);
   app.use("/api/admin/reports/registrations/summary.xlsx", downloadCorsMiddleware);

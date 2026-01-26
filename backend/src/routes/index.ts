@@ -63,6 +63,7 @@ import {
   listRegistrationsHandler,
   downloadRegistrationsReportHandler,
   downloadRegistrationsListPdfHandler,
+  downloadRegistrationsListXlsxHandler,
   registrationsReportHandler,
   reactivateRegistrationHandler,
   refundRegistrationHandler,
@@ -325,6 +326,18 @@ router.get(
   authorizePermission("registrations", "view"),
   authorizePermission("reports", "reports"),
   downloadRegistrationsListPdfHandler
+);
+router.options(
+  "/admin/registrations/list.xlsx",
+  authorizePermission("registrations", "view"),
+  authorizePermission("reports", "reports"),
+  downloadRegistrationsListXlsxHandler
+);
+router.get(
+  "/admin/registrations/list.xlsx",
+  authorizePermission("registrations", "view"),
+  authorizePermission("reports", "reports"),
+  downloadRegistrationsListXlsxHandler
 );
 router.get(
   "/admin/registrations/report",
