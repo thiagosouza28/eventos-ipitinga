@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && cross-env NO_COLOR=1 vite build",
+    "build": "vue-tsc --noEmit && cross-env NO_COLOR=1 vite build",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.{ts,tsx,vue}\"",
     "test": "vitest",

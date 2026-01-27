@@ -65,10 +65,11 @@ class StorageService {
     const filepath = path.join(this.uploadsDir, filename);
     await fs.writeFile(filepath, buffer);
 
-    const publicUrl =
-      env.STORAGE_DRIVER === "in-memory"
-        ? `data:${mime};base64,${data}`
-        : `${env.APP_URL}/uploads/${filename}`;
+    const inlineBase64 = env.STORAGE_DRIVER === "in-memory" && env.NODE_ENV === "test";
+    const appBase = env.APP_URL.replace(/\/$/, "");
+    const publicUrl = inlineBase64
+      ? `data:${mime};base64,${data}`
+      : `${appBase}/uploads/${filename}`;
 
     logger.info({ filename }, "Foto salva no storage local");
     return publicUrl;
@@ -131,10 +132,11 @@ class StorageService {
     const filepath = path.join(proofsDir, filename);
     await fs.writeFile(filepath, buffer);
 
-    const publicUrl =
-      env.STORAGE_DRIVER === "in-memory"
-        ? `data:${mime};base64,${data}`
-        : `${env.APP_URL.replace(/\/$/, "")}/uploads/${folder}/${filename}`;
+    const inlineBase64 = env.STORAGE_DRIVER === "in-memory" && env.NODE_ENV === "test";
+    const appBase = env.APP_URL.replace(/\/$/, "");
+    const publicUrl = inlineBase64
+      ? `data:${mime};base64,${data}`
+      : `${appBase}/uploads/${folder}/${filename}`;
     logger.info({ filename }, "Comprovante salvo no storage local");
     return publicUrl;
   }

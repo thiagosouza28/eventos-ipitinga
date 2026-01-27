@@ -93,7 +93,6 @@ const toPublicPhotoUrl = (value?: string | null) => {
   }
   return `${base}/uploads/${sanitized}`;
 };
-
 // Formatação de data sem timezone (para datas de nascimento)
 const brDateFormatterNoTimezone = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -265,6 +264,7 @@ const registrationListSelect = {
   cpf: true,
   birthDate: true,
   ageYears: true,
+  photoUrl: true,
   priceCents: true,
   districtId: true,
   churchId: true,
@@ -337,6 +337,10 @@ const resolveLotFallback = <
 
 const normalizeRegistrationList = async (items: RegistrationListRow[]) => {
   if (!items.length) return items;
+
+  items.forEach((registration) => {
+    registration.photoUrl = toPublicPhotoUrl(registration.photoUrl) ?? null;
+  });
 
   const needsFallback = (registration: RegistrationListRow) => {
     const order = registration.order as any;

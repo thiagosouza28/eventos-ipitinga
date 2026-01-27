@@ -21,7 +21,7 @@ export const useAdminStore = defineStore("admin", () => {
   const { api } = useApi();
   const registrationsTimeoutMs = (() => {
     const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_TIMEOUT_MS);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 20000;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 30000;
   })();
   const registrationsPdfTimeoutMs = (() => {
     const parsed = Number(import.meta.env.VITE_API_REGISTRATIONS_PDF_TIMEOUT_MS);
