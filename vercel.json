@@ -12,11 +12,11 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "http://18.231.250.231:3333/api/$1"
+      "destination": "https://18.231.250.231:3333/api/$1"
     },
     {
       "source": "/uploads/(.*)",
-      "destination": "http://18.231.250.231:3333/uploads/$1"
+      "destination": "https://18.231.250.231:3333/uploads/$1"
     },
     {
       "source": "/(.*)",
