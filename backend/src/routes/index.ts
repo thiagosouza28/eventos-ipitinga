@@ -190,6 +190,8 @@ router.get("/catalog/churches/director", findChurchByDirectorCpfHandler);
 router.get("/catalog/ministries", listMinistriesHandler);
 router.get("/public/districts", listDistrictsHandler);
 router.get("/public/churches", listChurchesHandler);
+// Consulta publica de inscricoes (somente leitura)
+router.get("/public/registrations", listRegistrationsHandler);
 
 // Autenticação
 router.post("/admin/login", loginHandler);
