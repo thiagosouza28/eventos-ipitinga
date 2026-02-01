@@ -144,8 +144,10 @@
           <img
             v-if="pendingCheckin.registration.photoUrl"
             :src="resolvePhotoUrl(pendingCheckin.registration.photoUrl)"
+            :data-fallback="resolvePhotoFallbackUrl(pendingCheckin.registration.photoUrl)"
             alt="Foto do participante"
             class="h-40 w-full object-cover"
+            @error="handlePhotoError"
           />
           <span v-else class="px-3 text-center text-xs text-neutral-500 dark:text-neutral-300">
             Foto não enviada
@@ -262,7 +264,8 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useModulePermissions } from "../../composables/usePermissions";
-import { resolvePhotoUrl } from "../../utils/photo";
+import { resolvePhotoFallbackUrl, resolvePhotoUrl } from "../../utils/photo";
+import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
 
 const route = useRoute();
 const admin = useAdminStore() as any;
@@ -318,6 +321,19 @@ type CheckinHistoryEvent = {
   label?: string;
   actor?: { id: string; name?: string | null } | null;
   details?: Record<string, unknown>;
+};
+
+const handlePhotoError = (event: Event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLImageElement)) return;
+  const fallback = target.dataset.fallback;
+  if (fallback && target.src !== fallback) {
+    target.src = fallback;
+    return;
+  }
+  if (target.src !== DEFAULT_PHOTO_DATA_URL) {
+    target.src = DEFAULT_PHOTO_DATA_URL;
+  }
 };
 
 const cpf = ref("");

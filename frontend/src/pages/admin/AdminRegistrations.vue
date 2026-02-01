@@ -186,6 +186,7 @@
                     <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-slate-200/70 bg-white/80 dark:border-white/10 dark:bg-white/5">
                       <img
                         :src="resolvePhotoUrl(registration.photoUrl)"
+                        :data-fallback="resolvePhotoFallbackUrl(registration.photoUrl)"
                         class="h-full w-full object-cover"
                         :alt="`Foto de ${registration.fullName}`"
                         loading="lazy"
@@ -546,6 +547,7 @@
               <td class="px-5 py-2.5 align-top">
                 <img
                   :src="resolvePhotoUrl(registration.photoUrl)"
+                  :data-fallback="resolvePhotoFallbackUrl(registration.photoUrl)"
                   class="h-12 w-12 rounded-full border border-white/70 object-cover dark:border-white/10"
                   :alt="`Foto de ${registration.fullName}`"
                   loading="lazy"
@@ -774,6 +776,7 @@
                   <div class="relative">
                     <img
                       :src="resolvePhotoUrl(registration.photoUrl)"
+                      :data-fallback="resolvePhotoFallbackUrl(registration.photoUrl)"
                       class="h-12 w-12 rounded-full border border-slate-200 object-cover dark:border-slate-700"
                       :alt="`Foto de ${registration.fullName}`"
                       loading="lazy"
@@ -1573,7 +1576,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog.vue'
 import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf'
 import { paymentMethodLabel, PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS } from '../../config/paymentMethods'
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto'
-import { resolvePhotoUrl } from '../../utils/photo'
+import { resolvePhotoFallbackUrl, resolvePhotoUrl } from '../../utils/photo'
 import { useModulePermissions } from '../../composables/usePermissions'
 import { createPreviewSession } from '../../utils/documentPreview'
 import { useFileDownload } from '../../composables/useFileDownload'
@@ -2730,6 +2733,11 @@ const findEventSlug = (eventId: string) => admin.events.find((e) => e.id === eve
 const handlePhotoError = (event: Event) => {
   const target = event.target
   if (!(target instanceof HTMLImageElement)) return
+  const fallback = target.dataset.fallback
+  if (fallback && target.src !== fallback) {
+    target.src = fallback
+    return
+  }
   if (target.src !== DEFAULT_PHOTO_DATA_URL) {
     target.src = DEFAULT_PHOTO_DATA_URL
   }

@@ -382,8 +382,10 @@
                 <div class="h-16 w-16 shrink-0 overflow-hidden rounded-sm border border-white/80 bg-neutral-100 dark:border-white/20">
                   <img
                     :src="resolvePhotoUrl(participant.photoUrl)"
+                    :data-fallback="resolvePhotoFallbackUrl(participant.photoUrl)"
                     :alt="participant.fullName ? 'Foto de ' + participant.fullName : 'Foto do participante'"
                     class="h-full w-full object-cover"
+                    @error="handlePhotoError"
                   />
                 </div>
                 <div class="flex-1 space-y-1 text-sm text-neutral-600 dark:text-neutral-300">
@@ -578,7 +580,8 @@ import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import TableSkeleton from "../../components/ui/TableSkeleton.vue";
-import { resolvePhotoUrl } from "../../utils/photo";
+import { resolvePhotoFallbackUrl, resolvePhotoUrl } from "../../utils/photo";
+import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
 import { useApi } from "../../composables/useApi";
 import { useModulePermissions } from "../../composables/usePermissions";
 import { useAdminStore } from "../../stores/admin";
@@ -636,6 +639,19 @@ const tabs = computed(() => {
     { key: "financial", label: "Financeiro", visible: hasFinancialAccess }
   ].filter((tab) => tab.visible);
 });
+
+const handlePhotoError = (event: Event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLImageElement)) return;
+  const fallback = target.dataset.fallback;
+  if (fallback && target.src !== fallback) {
+    target.src = fallback;
+    return;
+  }
+  if (target.src !== DEFAULT_PHOTO_DATA_URL) {
+    target.src = DEFAULT_PHOTO_DATA_URL;
+  }
+};
 
 const activeTab = ref("event");
 const setActiveTab = (tabKey?: string | null) => {
