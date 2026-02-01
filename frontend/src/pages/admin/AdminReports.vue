@@ -590,7 +590,7 @@ import { useCatalogStore } from "../../stores/catalog";
 import type {
   Church,
   District,
-  Event,
+  Event as EventModel,
   EventLot,
   Registration,
   AdminRegistrationsReportItem,
@@ -640,7 +640,7 @@ const tabs = computed(() => {
   ].filter((tab) => tab.visible);
 });
 
-const handlePhotoError = (event: Event) => {
+const handlePhotoError = (event: globalThis.Event) => {
   const target = event.target;
   if (!(target instanceof HTMLImageElement)) return;
   const fallback = target.dataset.fallback;
@@ -732,7 +732,7 @@ const eventReport = reactive({
 });
 
 const eventParticipants = ref<Registration[]>([]);
-const selectedEvent = computed<Event | null>(() => accessibleEvents.value.find((event) => event.id === eventReport.eventId) ?? null);
+const selectedEvent = computed<EventModel | null>(() => accessibleEvents.value.find((event) => event.id === eventReport.eventId) ?? null);
 
 const normalizeRegistrationStatus = (status?: string | null) => {
   if (!status) return "PENDING_PAYMENT";
@@ -921,7 +921,7 @@ const adminSummaryExport = reactive({
   pdf: false
 });
 
-const adminSummaryEvents = computed<Event[]>(() => {
+const adminSummaryEvents = computed<EventModel[]>(() => {
   if (adminSummaryFilters.districtId) {
     return accessibleEvents.value.filter((event) => event.districtId === adminSummaryFilters.districtId);
   }
@@ -1240,7 +1240,7 @@ const formatDateTime = (value: Date | string) =>
 
 const formatDateBr = (value: string | Date) => new Date(value).toLocaleDateString("pt-BR");
 
-const formatEventPeriod = (event: Event) => {
+const formatEventPeriod = (event: EventModel) => {
   const start = formatDateBr(event.startDate);
   const end = formatDateBr(event.endDate);
   if (start === end) return start;
