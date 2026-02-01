@@ -5,6 +5,7 @@ import path from "path";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 import { env } from "../config/env";
+import { getPublicAppBaseUrl } from "../utils/public-url";
 import { logger } from "../utils/logger";
 
 class StorageService {
@@ -66,7 +67,7 @@ class StorageService {
     await fs.writeFile(filepath, buffer);
 
     const inlineBase64 = env.STORAGE_DRIVER === "in-memory" && env.NODE_ENV === "test";
-    const appBase = env.APP_URL.replace(/\/$/, "");
+    const appBase = getPublicAppBaseUrl();
     const publicUrl = inlineBase64
       ? `data:${mime};base64,${data}`
       : `${appBase}/uploads/${filename}`;
@@ -133,7 +134,7 @@ class StorageService {
     await fs.writeFile(filepath, buffer);
 
     const inlineBase64 = env.STORAGE_DRIVER === "in-memory" && env.NODE_ENV === "test";
-    const appBase = env.APP_URL.replace(/\/$/, "");
+    const appBase = getPublicAppBaseUrl();
     const publicUrl = inlineBase64
       ? `data:${mime};base64,${data}`
       : `${appBase}/uploads/${folder}/${filename}`;

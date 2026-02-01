@@ -28,6 +28,7 @@ import { storageService } from "../../storage/storage.service";
 import { orderService } from "../orders/order.service";
 import { resolveOrderExpirationDate } from "../../utils/order-expiration";
 import { logger } from "../../utils/logger";
+import { getPublicAppBaseUrl } from "../../utils/public-url";
 
 const backendRoot = path.resolve(__dirname, "..", "..", "..");
 const resolveReceiptsDir = () => {
@@ -87,7 +88,7 @@ const toPublicPhotoUrl = (value?: string | null) => {
   }
   const sanitized = value.replace(/^\/+/, "");
   if (!sanitized) return undefined;
-  const base = env.APP_URL.replace(/\/$/, "");
+  const base = getPublicAppBaseUrl();
   if (sanitized.startsWith("uploads/")) {
     return `${base}/${sanitized}`;
   }

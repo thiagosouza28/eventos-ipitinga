@@ -29,6 +29,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   APP_URL: z.string().url(),
   API_URL: z.string().url(),
+  PUBLIC_APP_URL: z.string().url().optional(),
   DATABASE_URL: z.string().min(1),
   DATABASE_POOL_LIMIT: z.coerce.number().int().positive().default(20),
   DATABASE_POOL_TIMEOUT: z.coerce.number().int().positive().default(10),
@@ -104,6 +105,9 @@ const ensureHttpsUrl = (label: string, url: string) => {
 if (rawEnv.NODE_ENV === "production") {
   ensureHttpsUrl("APP_URL", rawEnv.APP_URL);
   ensureHttpsUrl("API_URL", rawEnv.API_URL);
+  if (rawEnv.PUBLIC_APP_URL) {
+    ensureHttpsUrl("PUBLIC_APP_URL", rawEnv.PUBLIC_APP_URL);
+  }
 }
 
 const resolveSqliteUrl = (url: string) => {

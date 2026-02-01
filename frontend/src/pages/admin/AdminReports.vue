@@ -578,7 +578,7 @@ import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import BaseCard from "../../components/ui/BaseCard.vue";
 import ErrorDialog from "../../components/ui/ErrorDialog.vue";
 import TableSkeleton from "../../components/ui/TableSkeleton.vue";
-import { DEFAULT_PHOTO_DATA_URL } from "../../config/defaultPhoto";
+import { resolvePhotoUrl } from "../../utils/photo";
 import { useApi } from "../../composables/useApi";
 import { useModulePermissions } from "../../composables/usePermissions";
 import { useAdminStore } from "../../stores/admin";
@@ -1287,12 +1287,6 @@ const findRegistrationLotName = (participant: Registration) => {
   }
   const derived = resolveLotByDate(participant);
   return derived || "-";
-};
-const resolvePhotoUrl = (photoUrl?: string | null) => {
-  if (photoUrl && photoUrl.trim().length > 0) {
-    return photoUrl;
-  }
-  return DEFAULT_PHOTO_DATA_URL;
 };
 
 const statusLabels: Record<string, string> = {

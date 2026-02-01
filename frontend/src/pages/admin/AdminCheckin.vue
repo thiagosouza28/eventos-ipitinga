@@ -143,7 +143,7 @@
         <div class="flex w-full max-w-[160px] items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-800">
           <img
             v-if="pendingCheckin.registration.photoUrl"
-            :src="pendingCheckin.registration.photoUrl"
+            :src="resolvePhotoUrl(pendingCheckin.registration.photoUrl)"
             alt="Foto do participante"
             class="h-40 w-full object-cover"
           />
@@ -262,6 +262,7 @@ import TableSkeleton from "../../components/ui/TableSkeleton.vue";
 import AccessDeniedNotice from "../../components/admin/AccessDeniedNotice.vue";
 import { useAdminStore } from "../../stores/admin";
 import { useModulePermissions } from "../../composables/usePermissions";
+import { resolvePhotoUrl } from "../../utils/photo";
 
 const route = useRoute();
 const admin = useAdminStore() as any;
