@@ -190,6 +190,7 @@
                         :alt="`Foto de ${registration.fullName}`"
                         loading="lazy"
                         decoding="async"
+                        @error="handlePhotoError"
                       />
                     </div>
                     <div class="min-w-0 flex-1">
@@ -549,6 +550,7 @@
                   :alt="`Foto de ${registration.fullName}`"
                   loading="lazy"
                   decoding="async"
+                  @error="handlePhotoError"
                 />
               </td>
               <td class="px-5 py-2.5 align-top">
@@ -776,6 +778,7 @@
                       :alt="`Foto de ${registration.fullName}`"
                       loading="lazy"
                       decoding="async"
+                      @error="handlePhotoError"
                     />
                   </div>
                   <div class="min-w-0 flex-1">
@@ -1570,6 +1573,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog.vue'
 import { validateCPF, normalizeCPF, formatCPF } from '../../utils/cpf'
 import { paymentMethodLabel, PAYMENT_METHODS, ADMIN_ONLY_PAYMENT_METHODS } from '../../config/paymentMethods'
 import { DEFAULT_PHOTO_DATA_URL } from '../../config/defaultPhoto'
+import { API_BASE_URL } from '../../config/api'
 import { useModulePermissions } from '../../composables/usePermissions'
 import { createPreviewSession } from '../../utils/documentPreview'
 import { useFileDownload } from '../../composables/useFileDownload'
@@ -2723,11 +2727,42 @@ const saveNewRegistration = async () => {
 // Ações e helpers adicionais
 const findEventSlug = (eventId: string) => admin.events.find((e) => e.id === eventId)?.slug ?? ''
 
+const apiOrigin = API_BASE_URL.replace(/\/api\/?$/, '')
+const normalizedApiOrigin = apiOrigin.replace(/\/$/, '')
+const uploadsBaseUrl = `${normalizedApiOrigin}/uploads`
+const isPrivateHost = (hostname: string) => {
+  const host = hostname.toLowerCase()
+  if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0') return true
+  if (/^10\./.test(host)) return true
+  if (/^192\.168\./.test(host)) return true
+  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return true
+  return false
+}
 const resolvePhotoUrl = (photoUrl?: string | null) => {
-  if (typeof photoUrl === 'string' && photoUrl.trim().length > 0) {
-    return photoUrl
+  if (!photoUrl || !photoUrl.trim()) return DEFAULT_PHOTO_DATA_URL
+  const trimmed = photoUrl.trim()
+  if (/^(https?:|data:|blob:)/i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed)
+      if (isPrivateHost(parsed.hostname) && parsed.pathname.startsWith('/uploads/')) {
+        return `${normalizedApiOrigin}${parsed.pathname}`
+      }
+    } catch {}
+    return trimmed
   }
-  return DEFAULT_PHOTO_DATA_URL
+  const sanitized = trimmed.replace(/^\/+/, '')
+  if (!sanitized) return DEFAULT_PHOTO_DATA_URL
+  if (sanitized.startsWith('uploads/')) {
+    return `${normalizedApiOrigin}/${sanitized}`
+  }
+  return `${uploadsBaseUrl}/${sanitized}`
+}
+const handlePhotoError = (event: Event) => {
+  const target = event.target
+  if (!(target instanceof HTMLImageElement)) return
+  if (target.src !== DEFAULT_PHOTO_DATA_URL) {
+    target.src = DEFAULT_PHOTO_DATA_URL
+  }
 }
 
 const paymentMethodShort = (method?: string | null) => {

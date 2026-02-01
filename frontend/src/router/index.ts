@@ -19,6 +19,8 @@ const AdminEvents = () => import("../pages/admin/AdminEvents.vue");
 const AdminRegistrations = () => import("../pages/admin/AdminRegistrations.vue");
 const AdminOrders = () => import("../pages/admin/AdminOrders.vue");
 const AdminCheckin = () => import("../pages/admin/AdminCheckin.vue");
+const AdminInscritosOffline = () => import("../pages/admin/AdminInscritosOffline.vue");
+const AdminTeamRaffle = () => import("../pages/admin/AdminTeamRaffle.vue");
 const AdminCatalog = () => import("../pages/admin/AdminCatalog.vue");
 const AdminDistricts = () => import("../pages/admin/AdminDistricts.vue");
 const AdminChurches = () => import("../pages/admin/AdminChurches.vue");
@@ -154,6 +156,18 @@ export const router = createRouter({
       name: "admin-checkin",
       component: AdminCheckin,
       props: true,
+      meta: { requiresAuth: true, requiresPermission: { module: "checkin", action: "view" } }
+    },
+    {
+      path: "/admin/inscritos-offline",
+      name: "admin-offline-inscritos",
+      component: AdminInscritosOffline,
+      meta: { requiresAuth: true, requiresPermission: { module: "checkin", action: "view" } }
+    },
+    {
+      path: "/admin/sorteios-equipes",
+      name: "admin-team-raffle",
+      component: AdminTeamRaffle,
       meta: { requiresAuth: true, requiresPermission: { module: "checkin", action: "view" } }
     },
     {

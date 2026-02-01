@@ -372,6 +372,7 @@ import { RouterLink, RouterView, useRoute, useRouter, type RouteLocationRaw } fr
 import { storeToRefs } from "pinia";
 import {
   ArrowRightOnRectangleIcon,
+  ArrowPathIcon,
   Bars3Icon,
   BanknotesIcon,
   BuildingOffice2Icon,
@@ -385,6 +386,7 @@ import {
   ShieldCheckIcon,
   Squares2X2Icon,
   SunIcon,
+  TrophyIcon,
   UserCircleIcon,
   UserPlusIcon,
   UsersIcon,
@@ -448,6 +450,8 @@ const baseAdminMenu: MenuDefinition[] = [
   { label: "Financeiro", to: { name: "admin-financial" }, icon: BanknotesIcon, module: "financial" },
   { label: "Financeiro (responsáveis)", to: { name: "admin-district-finance" }, icon: BanknotesIcon, module: "financial" },
   { label: "Check-in", to: { name: "admin-checkin" }, icon: QrCodeIcon, module: "checkin" },
+  { label: "Inscritos offline", to: { name: "admin-offline-inscritos" }, icon: ArrowPathIcon, module: "checkin" },
+  { label: "Sorteios equipes", to: { name: "admin-team-raffle" }, icon: TrophyIcon, module: "checkin" },
   { label: "PIX / Pagamentos", to: { name: "admin-pix-config" }, icon: Cog6ToothIcon, requiresRole: "AdminGeral" },
   { label: "Configurações", to: "/admin/system-config", icon: Cog6ToothIcon, requiresRole: "AdminGeral" }
 ];
