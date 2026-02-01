@@ -116,7 +116,7 @@ export const createApp = () => {
   app.use(compression());
   app.use(
     "/uploads",
-    express.static(path.resolve(__dirname, "..", "tmp", "uploads"), {
+    express.static(path.resolve(__dirname, "..", "uploads"), {
       maxAge: env.STATIC_CACHE_MAX_AGE_MS,
       immutable: false
     })

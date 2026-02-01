@@ -26,6 +26,7 @@
     "db:setup": "ts-node scripts/setup-sqlite.ts",
     "openapi": "ts-node scripts/generate-openapi.ts",
     "photos:migrate": "ts-node -r tsconfig-paths/register scripts/migrate-registration-photos.ts",
+    "uploads:migrate": "ts-node -r tsconfig-paths/register scripts/migrate-uploads-dir.ts",
     "doctor": "node scripts/doctor.js"
   },
   "prisma": {

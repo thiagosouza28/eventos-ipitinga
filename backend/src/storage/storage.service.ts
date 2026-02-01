@@ -9,7 +9,7 @@ import { getPublicAppBaseUrl } from "../utils/public-url";
 import { logger } from "../utils/logger";
 
 class StorageService {
-  private uploadsDir = path.resolve(__dirname, "..", "..", "tmp", "uploads");
+  private uploadsDir = path.resolve(__dirname, "..", "..", "uploads");
   private supabase: SupabaseClient | null = null;
   private supabaseBucket: string | null = null;
 
@@ -189,7 +189,7 @@ class StorageService {
         return;
       }
 
-      // Remoção local: mapear /uploads/{filename} para pasta tmp/uploads
+      // Remoção local: mapear /uploads/{filename} para pasta uploads
       const u = new URL(url, env.APP_URL);
       if (u.pathname.startsWith("/uploads/")) {
         const filename = u.pathname.replace("/uploads/", "");

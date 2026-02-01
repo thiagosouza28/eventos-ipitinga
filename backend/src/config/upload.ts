@@ -6,7 +6,7 @@ import multer from "multer";
 
 import { AppError } from "../utils/errors";
 
-const uploadsDir = path.resolve(__dirname, "..", "..", "tmp", "uploads");
+const uploadsDir = path.resolve(__dirname, "..", "..", "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 export const uploadMiddleware = multer({
