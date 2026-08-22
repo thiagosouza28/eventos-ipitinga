@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 
 import { financialService } from "./financial.service";
 import { generateFinancialEventReportPdf } from "../../pdf/financial-report.service";
@@ -7,9 +7,10 @@ import { getScopedMinistryIds } from "../../utils/user-scope";
 import { z } from "zod";
 import { reportJobService } from "../reports/report-job.service";
 import { applyDownloadHeaders, sendDownloadBuffer } from "../../middlewares/download-headers";
+import { logger } from "../../utils/logger";
 
-const eventIdSchema = z.string().min(6, "eventId invalido");
-const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio. Verifique os dados do evento.";
+const eventIdSchema = z.string().min(6, "eventId inválido");
+const REPORT_ERROR_MESSAGE = "Não foi possível gerar o relatório. Verifique os dados do evento.";
 const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
 
 const parseAsyncFlag = (value: unknown) => {
@@ -30,7 +31,7 @@ export const getEventSummaryHandler = async (request: Request, response: Respons
     const summary = await financialService.getEventSummary(eventId);
     return response.json(summary);
   } catch (error: any) {
-    console.error("Erro ao obter resumo do evento:", error);
+    logger.error({ error }, "Erro ao obter resumo do evento");
     const status = error?.statusCode ?? 500;
     return response.status(status).json({
       message: error?.message ?? "Erro ao obter resumo do evento",
@@ -48,7 +49,7 @@ export const getDistrictSummaryHandler = async (request: Request, response: Resp
     const summary = await financialService.getDistrictSummary(eventId, districtId);
     return response.json(summary);
   } catch (error: any) {
-    console.error("Erro ao obter resumo do distrito:", error);
+    logger.error({ error }, "Erro ao obter resumo do distrito");
     const status = error?.statusCode ?? 500;
     return response.status(status).json({
       message: error?.message ?? "Erro ao obter dados do distrito",
@@ -66,7 +67,7 @@ export const getChurchSummaryHandler = async (request: Request, response: Respon
     const summary = await financialService.getChurchSummary(eventId, churchId);
     return response.json(summary);
   } catch (error: any) {
-    console.error("Erro ao obter resumo da igreja:", error);
+    logger.error({ error }, "Erro ao obter resumo da igreja");
     const status = error?.statusCode ?? 500;
     return response.status(status).json({
       message: error?.message ?? "Erro ao obter dados da igreja",
@@ -80,8 +81,7 @@ export const getGeneralSummaryHandler = async (request: Request, response: Respo
     const summary = await financialService.getGeneralSummary();
     return response.json(summary);
   } catch (error: any) {
-    console.error("Erro ao obter resumo financeiro geral:", error);
-    console.error("Stack trace:", error.stack);
+    logger.error({ error }, "Erro ao obter resumo financeiro geral");
     const status = error?.statusCode ?? 500;
     return response.status(status).json({
       message: error?.message ?? "Erro ao obter resumo financeiro",
@@ -136,7 +136,7 @@ export const downloadEventFinancialReportHandler = async (
     if (error instanceof z.ZodError) {
       return response.status(400).json(reportErrorPayload);
     }
-    console.error("Erro ao gerar relatorio financeiro em PDF:", error);
+    logger.error({ error }, "Erro ao gerar relatório financeiro em PDF");
     const status = error?.statusCode ?? 500;
     return response.status(status).json(reportErrorPayload);
   }

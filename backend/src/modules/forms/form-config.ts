@@ -178,7 +178,7 @@ export const normalizeFormConfig = (input?: unknown | null): FormConfig => {
     });
   }
   const sanitized: FormConfig = {
-    campos: parsed.data.campos.map((field) => sanitizeField(field))
+    campos: parsed.data.campos.map((field) => sanitizeField(field as FormFieldConfig))
   };
   const issues = collectConfigIssues(sanitized);
   if (issues.length) {

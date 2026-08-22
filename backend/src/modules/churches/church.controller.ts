@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { churchService } from "./church.service";
@@ -90,7 +90,7 @@ export const createChurchHandler = async (request: Request, response: Response) 
   cleanBody.name = nameValue;
   cleanBody.districtId = districtValue;
 
-  const payload = createSchema.parse(cleanBody);
+  const payload = createSchema.parse(cleanBody) as any;
   const church = await churchService.create(payload, request.user?.id);
   return response.status(201).json(church);
 };

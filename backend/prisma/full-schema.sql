@@ -1,353 +1,590 @@
-﻿-- CreateTable
-CREATE TABLE `District` (
+-- Eventos Ipitinga - estrutura completa do banco MySQL
+-- Gerado a partir de backend/prisma/schema.prisma.
+-- Compatível com MySQL 8.0 ou superior.
+-- Este arquivo cria apenas a estrutura. Para dados iniciais, execute: npm run db:seed
+
+CREATE DATABASE IF NOT EXISTS `eventos_ipitinga`
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE `eventos_ipitinga`;
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+-- CreateTable
+CREATE TABLE `districts` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `pastorName` VARCHAR(191) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `pastor_name` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    UNIQUE INDEX `District_name_key`(`name`),
+    UNIQUE INDEX `districts_name_key`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Church` (
+CREATE TABLE `churches` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `districtId` VARCHAR(191) NOT NULL,
-    `directorName` VARCHAR(191) NULL,
-    `directorCpf` VARCHAR(191) NULL,
-    `directorBirthDate` DATETIME(3) NULL,
-    `directorEmail` VARCHAR(191) NULL,
-    `directorWhatsapp` VARCHAR(191) NULL,
-    `directorPhotoUrl` LONGTEXT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `district_id` VARCHAR(191) NOT NULL,
+    `director_name` VARCHAR(191) NULL,
+    `director_cpf` VARCHAR(191) NULL,
+    `director_birth_date` DATETIME(3) NULL,
+    `director_email` VARCHAR(191) NULL,
+    `director_whatsapp` VARCHAR(191) NULL,
+    `director_photo_url` TEXT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `Church_districtId_idx`(`districtId`),
-    UNIQUE INDEX `Church_name_districtId_key`(`name`, `districtId`),
+    INDEX `churches_district_id_idx`(`district_id`),
+    UNIQUE INDEX `churches_name_district_id_key`(`name`, `district_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Event` (
+CREATE TABLE `events` (
     `id` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NOT NULL,
-    `startDate` DATETIME(3) NOT NULL,
-    `endDate` DATETIME(3) NOT NULL,
+    `start_date` DATETIME(3) NOT NULL,
+    `end_date` DATETIME(3) NOT NULL,
     `location` VARCHAR(191) NOT NULL,
-    `bannerUrl` VARCHAR(191) NULL,
-    `formConfig` JSON NULL,
-    `priceCents` INTEGER NOT NULL DEFAULT 0,
-    `minAgeYears` INTEGER NULL,
-    `isFree` BOOLEAN NOT NULL DEFAULT false,
-    `isActive` BOOLEAN NOT NULL DEFAULT true,
+    `banner_url` VARCHAR(191) NULL,
+    `form_config` JSON NULL,
+    `notice_enabled` BOOLEAN NOT NULL DEFAULT false,
+    `notice_title` VARCHAR(191) NULL,
+    `notice_bullets` TEXT NULL,
+    `notice_footer_text` VARCHAR(191) NULL,
+    `notice_show_once` BOOLEAN NOT NULL DEFAULT true,
+    `price_cents` INTEGER NOT NULL DEFAULT 0,
+    `insurance_enabled` BOOLEAN NOT NULL DEFAULT false,
+    `insurance_required` BOOLEAN NOT NULL DEFAULT false,
+    `insurance_daily_cents` INTEGER NOT NULL DEFAULT 0,
+    `min_age_years` INTEGER NULL,
+    `is_free` BOOLEAN NOT NULL DEFAULT false,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
     `slug` VARCHAR(191) NOT NULL,
-    `paymentMethods` VARCHAR(191) NOT NULL DEFAULT 'PIX_MP',
-    `pendingPaymentValueRule` VARCHAR(191) NOT NULL DEFAULT 'KEEP_ORIGINAL',
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `ministryId` VARCHAR(191) NULL,
-    `createdById` VARCHAR(191) NULL,
+    `payment_methods` VARCHAR(191) NOT NULL DEFAULT 'PIX_MP',
+    `pending_payment_value_rule` VARCHAR(191) NOT NULL DEFAULT 'KEEP_ORIGINAL',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `ministry_id` VARCHAR(191) NULL,
+    `created_by_id` VARCHAR(191) NULL,
+    `district_id` VARCHAR(191) NOT NULL,
+    `church_id` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `Event_slug_key`(`slug`),
-    INDEX `Event_ministryId_idx`(`ministryId`),
+    UNIQUE INDEX `events_slug_key`(`slug`),
+    INDEX `events_ministry_id_idx`(`ministry_id`),
+    INDEX `events_created_by_id_idx`(`created_by_id`),
+    INDEX `events_district_id_idx`(`district_id`),
+    INDEX `events_church_id_idx`(`church_id`),
+    INDEX `events_is_active_start_date_idx`(`is_active`, `start_date`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Order` (
+CREATE TABLE `orders` (
     `id` VARCHAR(191) NOT NULL,
-    `eventId` VARCHAR(191) NOT NULL,
-    `buyerCpf` VARCHAR(191) NOT NULL,
-    `totalCents` INTEGER NOT NULL,
+    `event_id` VARCHAR(191) NOT NULL,
+    `buyer_cpf` VARCHAR(191) NOT NULL,
+    `total_cents` INTEGER NOT NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
-    `paymentMethod` VARCHAR(191) NOT NULL DEFAULT 'PIX_MP',
-    `mpPaymentId` VARCHAR(191) NULL,
-    `mpPreferenceId` VARCHAR(191) NULL,
-    `preferenceVersion` INTEGER NOT NULL DEFAULT 0,
-    `pricingLotId` VARCHAR(191) NULL,
-    `externalReference` VARCHAR(191) NOT NULL,
-    `expiresAt` DATETIME(3) NOT NULL,
-    `paidAt` DATETIME(3) NULL,
-  `manualPaymentReference` VARCHAR(191) NULL,
-  `manualPaymentProofUrl` LONGTEXT NULL,
-  `feeCents` INTEGER NOT NULL DEFAULT 0,
-    `netAmountCents` INTEGER NOT NULL DEFAULT 0,
-    `origin` VARCHAR(191) NOT NULL DEFAULT 'MARKETPLACE',
-    `responsibleName` VARCHAR(191) NULL,
-    `responsibleDocument` VARCHAR(191) NULL,
-    `responsibleEmail` VARCHAR(191) NULL,
-    `responsiblePhone` VARCHAR(191) NULL,
-    `amountReceivedCents` INTEGER NULL,
-    `manualNotes` LONGTEXT NULL,
-    `confirmedById` VARCHAR(191) NULL,
-    `confirmedAt` DATETIME(3) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `payment_method` VARCHAR(191) NOT NULL DEFAULT 'PIX_MP',
+    `mp_payment_id` VARCHAR(191) NULL,
+    `mp_preference_id` VARCHAR(191) NULL,
+    `preference_version` INTEGER NOT NULL DEFAULT 0,
+    `pricing_lot_id` VARCHAR(191) NULL,
+    `external_reference` VARCHAR(191) NOT NULL,
+    `expires_at` DATETIME(3) NOT NULL,
+    `paid_at` DATETIME(3) NULL,
+    `manual_payment_reference` VARCHAR(191) NULL,
+    `manual_payment_proof_url` TEXT NULL,
+    `fee_cents` INTEGER NOT NULL DEFAULT 0,
+    `net_amount_cents` INTEGER NOT NULL DEFAULT 0,
+    `origin` ENUM('MARKETPLACE', 'MANUAL') NOT NULL DEFAULT 'MARKETPLACE',
+    `responsible_name` VARCHAR(191) NULL,
+    `responsible_document` VARCHAR(191) NULL,
+    `responsible_email` VARCHAR(191) NULL,
+    `responsible_phone` VARCHAR(191) NULL,
+    `amount_received_cents` INTEGER NULL,
+    `manual_notes` TEXT NULL,
+    `confirmed_by_id` VARCHAR(191) NULL,
+    `confirmed_at` DATETIME(3) NULL,
+    `district_id` VARCHAR(191) NULL,
+    `district_admin_id` VARCHAR(191) NULL,
+    `responsible_user_id` VARCHAR(191) NULL,
+    `amount_to_transfer` INTEGER NOT NULL DEFAULT 0,
+    `transfer_status` ENUM('PENDING', 'TRANSFERRED', 'FAILED') NULL,
+    `transfer_batch_id` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    UNIQUE INDEX `Order_externalReference_key`(`externalReference`),
-    INDEX `Order_eventId_idx`(`eventId`),
-    INDEX `Order_buyerCpf_idx`(`buyerCpf`),
-    INDEX `Order_status_idx`(`status`),
-    INDEX `Order_origin_idx`(`origin`),
-    INDEX `Order_confirmedById_idx`(`confirmedById`),
+    UNIQUE INDEX `orders_external_reference_key`(`external_reference`),
+    INDEX `orders_event_id_idx`(`event_id`),
+    INDEX `orders_buyer_cpf_idx`(`buyer_cpf`),
+    INDEX `orders_status_idx`(`status`),
+    INDEX `orders_pricing_lot_id_idx`(`pricing_lot_id`),
+    INDEX `orders_origin_idx`(`origin`),
+    INDEX `orders_confirmed_by_id_idx`(`confirmed_by_id`),
+    INDEX `orders_district_id_idx`(`district_id`),
+    INDEX `orders_district_admin_id_idx`(`district_admin_id`),
+    INDEX `orders_responsible_user_id_idx`(`responsible_user_id`),
+    INDEX `orders_transfer_status_idx`(`transfer_status`),
+    INDEX `orders_transfer_batch_id_idx`(`transfer_batch_id`),
+    INDEX `orders_buyer_cpf_status_idx`(`buyer_cpf`, `status`),
+    INDEX `orders_event_id_buyer_cpf_status_idx`(`event_id`, `buyer_cpf`, `status`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Registration` (
+CREATE TABLE `registrations` (
     `id` VARCHAR(191) NOT NULL,
-    `orderId` VARCHAR(191) NOT NULL,
-    `eventId` VARCHAR(191) NOT NULL,
-    `ministryId` VARCHAR(191) NULL,
-    `fullName` VARCHAR(191) NOT NULL,
+    `order_id` VARCHAR(191) NOT NULL,
+    `event_id` VARCHAR(191) NOT NULL,
+    `full_name` VARCHAR(191) NOT NULL,
     `cpf` VARCHAR(191) NOT NULL,
-    `birthDate` DATETIME(3) NOT NULL,
-    `ageYears` INTEGER NOT NULL,
-    `priceCents` INTEGER NOT NULL DEFAULT 0,
-    `districtId` VARCHAR(191) NOT NULL,
-    `churchId` VARCHAR(191) NOT NULL,
-    `photoUrl` LONGTEXT NULL,
+    `birth_date` DATETIME(3) NOT NULL,
+    `age_years` INTEGER NOT NULL,
+    `price_cents` INTEGER NOT NULL DEFAULT 0,
+    `insurance_selected` BOOLEAN NOT NULL DEFAULT false,
+    `insurance_daily_cents` INTEGER NOT NULL DEFAULT 0,
+    `insurance_days` INTEGER NOT NULL DEFAULT 0,
+    `insurance_amount_cents` INTEGER NOT NULL DEFAULT 0,
+    `insurance_waiver_accepted` BOOLEAN NOT NULL DEFAULT false,
+    `insurance_waiver_accepted_at` DATETIME(3) NULL,
+    `district_id` VARCHAR(191) NOT NULL,
+    `church_id` VARCHAR(191) NOT NULL,
+    `responsible_user_id` VARCHAR(191) NULL,
+    `photo_url` TEXT NULL,
     `gender` VARCHAR(191) NULL,
-    `formResponses` JSON NULL,
-    `paymentMethod` VARCHAR(191) NULL,
+    `form_responses` JSON NULL,
+    `payment_method` VARCHAR(191) NULL,
     `status` VARCHAR(191) NOT NULL DEFAULT 'DRAFT',
-    `receiptPdfUrl` VARCHAR(191) NULL,
-    `checkinAt` DATETIME(3) NULL,
-    `paidAt` DATETIME(3) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `receipt_pdf_url` VARCHAR(191) NULL,
+    `checkin_at` DATETIME(3) NULL,
+    `paid_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `ministry_id` VARCHAR(191) NULL,
 
-    INDEX `Registration_orderId_idx`(`orderId`),
-    INDEX `Registration_eventId_idx`(`eventId`),
-    INDEX `Registration_cpf_idx`(`cpf`),
-    INDEX `Registration_status_idx`(`status`),
-    UNIQUE INDEX `Registration_eventId_cpf_key`(`eventId`, `cpf`),
+    INDEX `registrations_order_id_idx`(`order_id`),
+    INDEX `registrations_event_id_idx`(`event_id`),
+    INDEX `registrations_cpf_idx`(`cpf`),
+    INDEX `registrations_status_idx`(`status`),
+    INDEX `registrations_church_id_idx`(`church_id`),
+    INDEX `registrations_district_id_idx`(`district_id`),
+    INDEX `registrations_ministry_id_idx`(`ministry_id`),
+    INDEX `registrations_responsible_user_id_idx`(`responsible_user_id`),
+    INDEX `registrations_event_id_status_created_at_idx`(`event_id`, `status`, `created_at`),
+    INDEX `registrations_event_id_insurance_selected_idx`(`event_id`, `insurance_selected`),
+    UNIQUE INDEX `registrations_event_id_cpf_key`(`event_id`, `cpf`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Refund` (
+CREATE TABLE `refunds` (
     `id` VARCHAR(191) NOT NULL,
-    `orderId` VARCHAR(191) NOT NULL,
-    `registrationId` VARCHAR(191) NOT NULL,
-    `amountCents` INTEGER NOT NULL,
-    `mpRefundId` VARCHAR(191) NOT NULL,
+    `order_id` VARCHAR(191) NOT NULL,
+    `registration_id` VARCHAR(191) NOT NULL,
+    `amount_cents` INTEGER NOT NULL,
+    `mp_refund_id` VARCHAR(191) NOT NULL,
     `reason` VARCHAR(191) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    INDEX `refunds_order_id_idx`(`order_id`),
+    INDEX `refunds_registration_id_idx`(`registration_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `WebhookEvent` (
+CREATE TABLE `webhook_events` (
     `id` VARCHAR(191) NOT NULL,
     `provider` VARCHAR(191) NOT NULL,
-    `eventType` VARCHAR(191) NOT NULL,
-    `payloadJson` VARCHAR(191) NOT NULL,
-    `idempotencyKey` VARCHAR(191) NOT NULL,
-    `processedAt` DATETIME(3) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `orderId` VARCHAR(191) NULL,
+    `event_type` VARCHAR(191) NOT NULL,
+    `payload_json` VARCHAR(191) NOT NULL,
+    `idempotency_key` VARCHAR(191) NOT NULL,
+    `processed_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `order_id` VARCHAR(191) NULL,
 
-    UNIQUE INDEX `WebhookEvent_idempotencyKey_key`(`idempotencyKey`),
+    UNIQUE INDEX `webhook_events_idempotency_key_key`(`idempotency_key`),
+    INDEX `webhook_events_order_id_idx`(`order_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `OrderItem` (
+CREATE TABLE `audit_logs` (
     `id` VARCHAR(191) NOT NULL,
-    `orderId` VARCHAR(191) NOT NULL,
-    `registrationId` VARCHAR(191) NOT NULL,
-    `amountCents` INTEGER NOT NULL,
-    `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
-    `notes` LONGTEXT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
-    `confirmedById` VARCHAR(191) NULL,
-
-    UNIQUE INDEX `OrderItem_orderId_registrationId_key`(`orderId`, `registrationId`),
-    INDEX `OrderItem_registrationId_idx`(`registrationId`),
-    INDEX `OrderItem_confirmedById_idx`(`confirmedById`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `ServiceOrder` (
-    `id` VARCHAR(191) NOT NULL,
-    `orderId` VARCHAR(191) NOT NULL,
-    `number` INTEGER NOT NULL,
-    `totalCents` INTEGER NOT NULL,
-    `proofUrl` LONGTEXT NULL,
-    `pdfUrl` LONGTEXT NULL,
-    `notes` LONGTEXT NULL,
-    `metadata` JSON NULL,
-    `issuedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `issuedById` VARCHAR(191) NULL,
-
-    UNIQUE INDEX `ServiceOrder_orderId_number_key`(`orderId`, `number`),
-    INDEX `ServiceOrder_orderId_idx`(`orderId`),
-    INDEX `ServiceOrder_issuedById_idx`(`issuedById`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `AuditLog` (
-    `id` VARCHAR(191) NOT NULL,
-    `actorUserId` VARCHAR(191) NULL,
+    `actor_user_id` VARCHAR(191) NULL,
     `action` VARCHAR(191) NOT NULL,
     `entity` VARCHAR(191) NOT NULL,
-    `entityId` VARCHAR(191) NOT NULL,
-    `metadataJson` LONGTEXT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `entity_id` VARCHAR(191) NOT NULL,
+    `metadata_json` TEXT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    INDEX `audit_logs_actor_user_id_idx`(`actor_user_id`),
+    INDEX `audit_logs_entity_entity_id_idx`(`entity`, `entity_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User` (
+CREATE TABLE `users` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `cpf` VARCHAR(191) NULL,
-    `phone` VARCHAR(191) NULL,
-    `photoUrl` LONGTEXT NULL,
     `email` VARCHAR(191) NOT NULL,
-    `passwordHash` VARCHAR(191) NOT NULL,
+    `password_hash` VARCHAR(191) NULL,
     `role` VARCHAR(191) NOT NULL,
-    `districtScopeId` VARCHAR(191) NULL,
-    `mustChangePassword` BOOLEAN NOT NULL DEFAULT false,
-    `churchScopeId` VARCHAR(191) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `district_scope_id` VARCHAR(191) NULL,
+    `church_scope_id` VARCHAR(191) NULL,
+    `ministry_id` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `cpf` VARCHAR(191) NULL,
+    `must_change_password` BOOLEAN NOT NULL DEFAULT false,
+    `password_updated_at` DATETIME(3) NULL,
+    `phone` VARCHAR(191) NULL,
+    `photo_url` TEXT NULL,
+    `profile_id` VARCHAR(191) NULL,
+    `status` ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
+    `pix_type` ENUM('CPF', 'CNPJ', 'EMAIL', 'PHONE', 'EVP', 'RANDOM') NULL,
+    `pix_key` VARCHAR(191) NULL,
+    `pix_owner_name` VARCHAR(191) NULL,
+    `pix_owner_document` VARCHAR(191) NULL,
+    `pix_bank_name` VARCHAR(191) NULL,
+    `pix_status` ENUM('VALIDATED', 'PENDING') NULL DEFAULT 'PENDING',
 
-    UNIQUE INDEX `User_cpf_key`(`cpf`),
-    UNIQUE INDEX `User_email_key`(`email`),
+    UNIQUE INDEX `users_email_key`(`email`),
+    UNIQUE INDEX `users_cpf_key`(`cpf`),
+    INDEX `users_profile_id_idx`(`profile_id`),
+    INDEX `users_church_scope_id_idx`(`church_scope_id`),
+    INDEX `users_district_scope_id_idx`(`district_scope_id`),
+    INDEX `users_ministry_id_idx`(`ministry_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `EventLot` (
+CREATE TABLE `system_configs` (
     `id` VARCHAR(191) NOT NULL,
-    `eventId` VARCHAR(191) NOT NULL,
+    `settings` JSON NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+    `updated_by_id` VARCHAR(191) NULL,
+
+    INDEX `system_configs_updated_by_id_idx`(`updated_by_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `event_lots` (
+    `id` VARCHAR(191) NOT NULL,
+    `event_id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
-    `priceCents` INTEGER NOT NULL,
-    `type` VARCHAR(191) NOT NULL DEFAULT 'PADRAO',
-    `status` VARCHAR(191) NOT NULL DEFAULT 'INATIVO',
-    `startsAt` DATETIME(3) NOT NULL,
-    `endsAt` DATETIME(3) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `price_cents` INTEGER NOT NULL,
+    `type` ENUM('PADRAO', 'PROMOCIONAL') NOT NULL DEFAULT 'PADRAO',
+    `status` ENUM('ATIVO', 'INATIVO', 'ENCERRADO') NOT NULL DEFAULT 'INATIVO',
+    `starts_at` DATETIME(3) NOT NULL,
+    `ends_at` DATETIME(3) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `EventLot_eventId_idx`(`eventId`),
-    UNIQUE INDEX `EventLot_eventId_name_key`(`eventId`, `name`),
+    INDEX `event_lots_event_id_idx`(`event_id`),
+    UNIQUE INDEX `event_lots_event_id_name_key`(`event_id`, `name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Expense` (
+CREATE TABLE `expenses` (
     `id` VARCHAR(191) NOT NULL,
-    `eventId` VARCHAR(191) NOT NULL,
+    `event_id` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NOT NULL,
     `date` DATETIME(3) NOT NULL,
-    `amountCents` INTEGER NOT NULL,
-    `madeBy` VARCHAR(191) NOT NULL,
+    `amount_cents` INTEGER NOT NULL,
+    `made_by` VARCHAR(191) NOT NULL,
     `items` VARCHAR(191) NULL,
-    `receiptUrl` VARCHAR(191) NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
+    `receipt_url` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    INDEX `Expense_eventId_idx`(`eventId`),
-    INDEX `Expense_date_idx`(`date`),
+    INDEX `expenses_event_id_idx`(`event_id`),
+    INDEX `expenses_date_idx`(`date`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Ministry` (
+CREATE TABLE `ministries` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
     `description` VARCHAR(191) NULL,
-    `isActive` BOOLEAN NOT NULL DEFAULT true,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `Ministry_name_key`(`name`),
+    UNIQUE INDEX `ministries_name_key`(`name`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `MinistryUser` (
-    `userId` VARCHAR(191) NOT NULL,
-    `ministryId` VARCHAR(191) NOT NULL,
-    `assignedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+CREATE TABLE `ministry_users` (
+    `user_id` VARCHAR(191) NOT NULL,
+    `ministry_id` VARCHAR(191) NOT NULL,
+    `assigned_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    INDEX `MinistryUser_ministryId_idx`(`ministryId`),
-    PRIMARY KEY (`userId`, `ministryId`)
+    INDEX `ministry_users_ministry_id_idx`(`ministry_id`),
+    PRIMARY KEY (`user_id`, `ministry_id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `profiles` (
+    `id` VARCHAR(191) NOT NULL,
+    `user_id` VARCHAR(191) NOT NULL,
+    `nome` VARCHAR(191) NOT NULL,
+    `avatar_url` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `profile_permissions` (
+    `id` VARCHAR(191) NOT NULL,
+    `profile_id` VARCHAR(191) NOT NULL,
+    `module` VARCHAR(191) NOT NULL,
+    `can_view` BOOLEAN NOT NULL DEFAULT false,
+    `can_create` BOOLEAN NOT NULL DEFAULT false,
+    `can_edit` BOOLEAN NOT NULL DEFAULT false,
+    `can_delete` BOOLEAN NOT NULL DEFAULT false,
+    `can_approve` BOOLEAN NOT NULL DEFAULT false,
+    `can_deactivate` BOOLEAN NOT NULL DEFAULT false,
+    `can_report` BOOLEAN NOT NULL DEFAULT false,
+    `can_financial` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    INDEX `profile_permissions_profile_id_idx`(`profile_id`),
+    UNIQUE INDEX `profile_permissions_profile_id_module_key`(`profile_id`, `module`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `user_permissions` (
+    `id` VARCHAR(191) NOT NULL,
+    `user_id` VARCHAR(191) NOT NULL,
+    `module` VARCHAR(191) NOT NULL,
+    `can_view` BOOLEAN NOT NULL DEFAULT false,
+    `can_create` BOOLEAN NOT NULL DEFAULT false,
+    `can_edit` BOOLEAN NOT NULL DEFAULT false,
+    `can_delete` BOOLEAN NOT NULL DEFAULT false,
+    `can_approve` BOOLEAN NOT NULL DEFAULT false,
+    `can_deactivate` BOOLEAN NOT NULL DEFAULT false,
+    `can_report` BOOLEAN NOT NULL DEFAULT false,
+    `can_financial` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    INDEX `user_permissions_user_id_idx`(`user_id`),
+    UNIQUE INDEX `user_permissions_user_id_module_key`(`user_id`, `module`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `order_items` (
+    `id` VARCHAR(191) NOT NULL,
+    `order_id` VARCHAR(191) NOT NULL,
+    `registration_id` VARCHAR(191) NOT NULL,
+    `amount_cents` INTEGER NOT NULL,
+    `status` ENUM('PENDING', 'CONFIRMED', 'CANCELED') NOT NULL DEFAULT 'PENDING',
+    `notes` TEXT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+    `confirmed_by_id` VARCHAR(191) NULL,
+
+    INDEX `order_items_registration_id_idx`(`registration_id`),
+    INDEX `order_items_confirmed_by_id_idx`(`confirmed_by_id`),
+    UNIQUE INDEX `order_items_order_id_registration_id_key`(`order_id`, `registration_id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `service_orders` (
+    `id` VARCHAR(191) NOT NULL,
+    `order_id` VARCHAR(191) NOT NULL,
+    `number` INTEGER NOT NULL,
+    `total_cents` INTEGER NOT NULL,
+    `proof_url` TEXT NULL,
+    `pdf_url` TEXT NULL,
+    `notes` TEXT NULL,
+    `metadata` JSON NULL,
+    `issued_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `issued_by_id` VARCHAR(191) NULL,
+
+    INDEX `service_orders_order_id_idx`(`order_id`),
+    INDEX `service_orders_issued_by_id_idx`(`issued_by_id`),
+    UNIQUE INDEX `service_orders_order_id_number_key`(`order_id`, `number`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `transfers` (
+    `id` VARCHAR(191) NOT NULL,
+    `district_id` VARCHAR(191) NULL,
+    `district_admin_id` VARCHAR(191) NULL,
+    `responsible_user_id` VARCHAR(191) NULL,
+    `amount` INTEGER NOT NULL,
+    `pix_type` ENUM('CPF', 'CNPJ', 'EMAIL', 'PHONE', 'EVP', 'RANDOM') NULL,
+    `pix_key` VARCHAR(191) NULL,
+    `pix_owner_name` VARCHAR(191) NULL,
+    `pix_owner_document` VARCHAR(191) NULL,
+    `pix_bank_name` VARCHAR(191) NULL,
+    `order_ids` JSON NOT NULL,
+    `mp_transfer_id` VARCHAR(191) NULL,
+    `status` ENUM('PENDING', 'SUCCESS', 'FAILED') NOT NULL DEFAULT 'PENDING',
+    `error_message` VARCHAR(191) NULL,
+    `created_by_id` VARCHAR(191) NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `transfers_district_id_idx`(`district_id`),
+    INDEX `transfers_district_admin_id_idx`(`district_admin_id`),
+    INDEX `transfers_responsible_user_id_idx`(`responsible_user_id`),
+    INDEX `transfers_status_idx`(`status`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `pix_gateway_configs` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `provider` VARCHAR(191) NOT NULL,
+    `client_id` VARCHAR(191) NULL,
+    `client_secret` VARCHAR(191) NULL,
+    `api_key` VARCHAR(191) NULL,
+    `webhook_url` VARCHAR(191) NULL,
+    `certificate_path` VARCHAR(191) NULL,
+    `active` BOOLEAN NOT NULL DEFAULT true,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `Church` ADD CONSTRAINT `Church_districtId_fkey` FOREIGN KEY (`districtId`) REFERENCES `District`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `churches` ADD CONSTRAINT `churches_district_id_fkey` FOREIGN KEY (`district_id`) REFERENCES `districts`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Event` ADD CONSTRAINT `Event_ministryId_fkey` FOREIGN KEY (`ministryId`) REFERENCES `Ministry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `events` ADD CONSTRAINT `events_created_by_id_fkey` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Event` ADD CONSTRAINT `Event_createdById_fkey` FOREIGN KEY (`createdById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `events` ADD CONSTRAINT `events_ministry_id_fkey` FOREIGN KEY (`ministry_id`) REFERENCES `ministries`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Order` ADD CONSTRAINT `Order_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `events` ADD CONSTRAINT `events_district_id_fkey` FOREIGN KEY (`district_id`) REFERENCES `districts`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Order` ADD CONSTRAINT `Order_pricingLotId_fkey` FOREIGN KEY (`pricingLotId`) REFERENCES `EventLot`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `events` ADD CONSTRAINT `events_church_id_fkey` FOREIGN KEY (`church_id`) REFERENCES `churches`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Registration` ADD CONSTRAINT `Registration_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Registration` ADD CONSTRAINT `Registration_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_pricing_lot_id_fkey` FOREIGN KEY (`pricing_lot_id`) REFERENCES `event_lots`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Registration` ADD CONSTRAINT `Registration_ministryId_fkey` FOREIGN KEY (`ministryId`) REFERENCES `Ministry`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_confirmed_by_id_fkey` FOREIGN KEY (`confirmed_by_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Registration` ADD CONSTRAINT `Registration_districtId_fkey` FOREIGN KEY (`districtId`) REFERENCES `District`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_district_id_fkey` FOREIGN KEY (`district_id`) REFERENCES `districts`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Registration` ADD CONSTRAINT `Registration_churchId_fkey` FOREIGN KEY (`churchId`) REFERENCES `Church`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_district_admin_id_fkey` FOREIGN KEY (`district_admin_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Refund` ADD CONSTRAINT `Refund_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_responsible_user_id_fkey` FOREIGN KEY (`responsible_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Refund` ADD CONSTRAINT `Refund_registrationId_fkey` FOREIGN KEY (`registrationId`) REFERENCES `Registration`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `orders` ADD CONSTRAINT `orders_transfer_batch_id_fkey` FOREIGN KEY (`transfer_batch_id`) REFERENCES `transfers`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `WebhookEvent` ADD CONSTRAINT `WebhookEvent_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `Order` ADD CONSTRAINT `Order_confirmedById_fkey` FOREIGN KEY (`confirmedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_registrationId_fkey` FOREIGN KEY (`registrationId`) REFERENCES `Registration`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
-ALTER TABLE `OrderItem` ADD CONSTRAINT `OrderItem_confirmedById_fkey` FOREIGN KEY (`confirmedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_orderId_fkey` FOREIGN KEY (`orderId`) REFERENCES `Order`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `ServiceOrder` ADD CONSTRAINT `ServiceOrder_issuedById_fkey` FOREIGN KEY (`issuedById`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `registrations` ADD CONSTRAINT `registrations_church_id_fkey` FOREIGN KEY (`church_id`) REFERENCES `churches`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `AuditLog` ADD CONSTRAINT `AuditLog_actorUserId_fkey` FOREIGN KEY (`actorUserId`) REFERENCES `User`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `registrations` ADD CONSTRAINT `registrations_district_id_fkey` FOREIGN KEY (`district_id`) REFERENCES `districts`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_districtScopeId_fkey` FOREIGN KEY (`districtScopeId`) REFERENCES `District`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `registrations` ADD CONSTRAINT `registrations_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `User` ADD CONSTRAINT `User_churchScopeId_fkey` FOREIGN KEY (`churchScopeId`) REFERENCES `Church`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `registrations` ADD CONSTRAINT `registrations_ministry_id_fkey` FOREIGN KEY (`ministry_id`) REFERENCES `ministries`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `EventLot` ADD CONSTRAINT `EventLot_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `registrations` ADD CONSTRAINT `registrations_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Expense` ADD CONSTRAINT `Expense_eventId_fkey` FOREIGN KEY (`eventId`) REFERENCES `Event`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `registrations` ADD CONSTRAINT `registrations_responsible_user_id_fkey` FOREIGN KEY (`responsible_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `MinistryUser` ADD CONSTRAINT `MinistryUser_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `refunds` ADD CONSTRAINT `refunds_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `MinistryUser` ADD CONSTRAINT `MinistryUser_ministryId_fkey` FOREIGN KEY (`ministryId`) REFERENCES `Ministry`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `refunds` ADD CONSTRAINT `refunds_registration_id_fkey` FOREIGN KEY (`registration_id`) REFERENCES `registrations`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `webhook_events` ADD CONSTRAINT `webhook_events_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `audit_logs` ADD CONSTRAINT `audit_logs_actor_user_id_fkey` FOREIGN KEY (`actor_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `users` ADD CONSTRAINT `users_church_scope_id_fkey` FOREIGN KEY (`church_scope_id`) REFERENCES `churches`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `users` ADD CONSTRAINT `users_district_scope_id_fkey` FOREIGN KEY (`district_scope_id`) REFERENCES `districts`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `users` ADD CONSTRAINT `users_ministry_id_fkey` FOREIGN KEY (`ministry_id`) REFERENCES `ministries`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `users` ADD CONSTRAINT `users_profile_id_fkey` FOREIGN KEY (`profile_id`) REFERENCES `profiles`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `system_configs` ADD CONSTRAINT `system_configs_updated_by_id_fkey` FOREIGN KEY (`updated_by_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `event_lots` ADD CONSTRAINT `event_lots_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `expenses` ADD CONSTRAINT `expenses_event_id_fkey` FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ministry_users` ADD CONSTRAINT `ministry_users_ministry_id_fkey` FOREIGN KEY (`ministry_id`) REFERENCES `ministries`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `ministry_users` ADD CONSTRAINT `ministry_users_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `profile_permissions` ADD CONSTRAINT `profile_permissions_profile_id_fkey` FOREIGN KEY (`profile_id`) REFERENCES `profiles`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `user_permissions` ADD CONSTRAINT `user_permissions_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `order_items` ADD CONSTRAINT `order_items_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `order_items` ADD CONSTRAINT `order_items_registration_id_fkey` FOREIGN KEY (`registration_id`) REFERENCES `registrations`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `order_items` ADD CONSTRAINT `order_items_confirmed_by_id_fkey` FOREIGN KEY (`confirmed_by_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `service_orders` ADD CONSTRAINT `service_orders_order_id_fkey` FOREIGN KEY (`order_id`) REFERENCES `orders`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `service_orders` ADD CONSTRAINT `service_orders_issued_by_id_fkey` FOREIGN KEY (`issued_by_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_district_id_fkey` FOREIGN KEY (`district_id`) REFERENCES `districts`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_district_admin_id_fkey` FOREIGN KEY (`district_admin_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_responsible_user_id_fkey` FOREIGN KEY (`responsible_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transfers` ADD CONSTRAINT `transfers_created_by_id_fkey` FOREIGN KEY (`created_by_id`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+SET FOREIGN_KEY_CHECKS = 1;
 

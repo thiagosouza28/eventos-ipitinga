@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { profileService } from "./profile.service";
@@ -40,13 +40,13 @@ export const listProfilesHandler = async (_request: Request, response: Response)
 };
 
 export const createProfileHandler = async (request: Request, response: Response) => {
-  const payload = createSchema.parse(request.body);
+  const payload = createSchema.parse(request.body) as any;
   const profile = await profileService.create(payload);
   return response.status(201).json(profile);
 };
 
 export const updateProfileHandler = async (request: Request, response: Response) => {
-  const payload = updateSchema.parse(request.body);
+  const payload = updateSchema.parse(request.body) as any;
   const profile = await profileService.update(request.params.id, payload);
   return response.json(profile);
 };

@@ -1,4 +1,4 @@
-import { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "../../lib/prisma";
 import { registrationLotFallback } from "../../utils/registration-lot-fallback";
@@ -82,7 +82,7 @@ const parseDateInput = (value: string, mode: "start" | "end") => {
   }
 
   if (Number.isNaN(parsed.getTime())) {
-    throw new AppError("Data invalida.", 400);
+    throw new AppError("Data inválida.", 400);
   }
 
   if (mode === "start" && DATE_ONLY_REGEX.test(trimmed)) {
@@ -99,7 +99,7 @@ const normalizeFilters = (filters: RegistrationDashboardFilters) => {
   const endDate = endDateRaw ? parseDateInput(endDateRaw, "end") : null;
 
   if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
-    throw new AppError("Data inicial nao pode ser maior que a data final.", 400);
+    throw new AppError("Data inicial não pode ser maior que a data final.", 400);
   }
 
   return {
@@ -122,22 +122,22 @@ export const registrationsDashboardService = {
 
     const whereParts: Prisma.Sql[] = [];
     if (filters.eventId) {
-      whereParts.push(Prisma.sql`r.eventId = ${filters.eventId}`);
+      whereParts.push(Prisma.sql`r.event_id = ${filters.eventId}`);
     }
     if (filters.districtId) {
-      whereParts.push(Prisma.sql`r.districtId = ${filters.districtId}`);
+      whereParts.push(Prisma.sql`r.district_id = ${filters.districtId}`);
     }
     if (filters.churchId) {
-      whereParts.push(Prisma.sql`r.churchId = ${filters.churchId}`);
+      whereParts.push(Prisma.sql`r.church_id = ${filters.churchId}`);
     }
     if (normalized.startDate) {
-      whereParts.push(Prisma.sql`r.createdAt >= ${normalized.startDate}`);
+      whereParts.push(Prisma.sql`r.created_at >= ${normalized.startDate}`);
     }
     if (normalized.endDate) {
-      whereParts.push(Prisma.sql`r.createdAt <= ${normalized.endDate}`);
+      whereParts.push(Prisma.sql`r.created_at <= ${normalized.endDate}`);
     }
     if (filters.ministryIds && filters.ministryIds.length) {
-      whereParts.push(Prisma.sql`r.ministryId IN (${Prisma.join(filters.ministryIds)})`);
+      whereParts.push(Prisma.sql`r.ministry_id IN (${Prisma.join(filters.ministryIds)})`);
     }
 
     const whereClause = whereParts.length
@@ -145,8 +145,8 @@ export const registrationsDashboardService = {
       : Prisma.sql``;
 
     const totalRows = await prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
-      SELECT COUNT(r.id) AS total
-      FROM Registration r
+      SELECT COUNT(r.id) AS "total"
+      FROM registrations r
       ${whereClause}
     `);
 
@@ -161,21 +161,21 @@ export const registrationsDashboardService = {
       }>
     >(Prisma.sql`
       SELECT
-        r.districtId AS districtId,
-        d.name AS districtName,
-        SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END) AS confirmedCount,
-        SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END) AS pendingCount,
-        SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END) AS canceledCount,
+        r.district_id AS "districtId",
+        d.name AS "districtName",
+        SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END) AS "confirmedCount",
+        SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END) AS "pendingCount",
+        SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END) AS "canceledCount",
         (
           SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END)
           + SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END)
           + SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END)
-        ) AS totalCount
-      FROM Registration r
-      INNER JOIN District d ON d.id = r.districtId
+        ) AS "totalCount"
+      FROM registrations r
+      INNER JOIN districts d ON d.id = r.district_id
       ${whereClause}
-      GROUP BY r.districtId, d.name
-      ORDER BY totalCount DESC, d.name ASC
+      GROUP BY r.district_id, d.name
+      ORDER BY "totalCount" DESC, d.name ASC
     `);
 
     const byChurchRows = await prisma.$queryRaw<
@@ -191,24 +191,24 @@ export const registrationsDashboardService = {
       }>
     >(Prisma.sql`
       SELECT
-        r.churchId AS churchId,
-        c.name AS churchName,
-        c.districtId AS districtId,
-        d.name AS districtName,
-        SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END) AS confirmedCount,
-        SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END) AS pendingCount,
-        SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END) AS canceledCount,
+        r.church_id AS "churchId",
+        c.name AS "churchName",
+        c.district_id AS "districtId",
+        d.name AS "districtName",
+        SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END) AS "confirmedCount",
+        SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END) AS "pendingCount",
+        SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END) AS "canceledCount",
         (
           SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END)
           + SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END)
           + SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END)
-        ) AS totalCount
-      FROM Registration r
-      INNER JOIN Church c ON c.id = r.churchId
-      INNER JOIN District d ON d.id = c.districtId
+        ) AS "totalCount"
+      FROM registrations r
+      INNER JOIN churches c ON c.id = r.church_id
+      INNER JOIN districts d ON d.id = c.district_id
       ${whereClause}
-      GROUP BY r.churchId, c.name, c.districtId, d.name
-      ORDER BY totalCount DESC, c.name ASC
+      GROUP BY r.church_id, c.name, c.district_id, d.name
+      ORDER BY "totalCount" DESC, c.name ASC
     `);
 
     const baseWhereParts = [...whereParts, registrationLotFallback.latestLotCondition];
@@ -229,26 +229,26 @@ export const registrationsDashboardService = {
       }>
     >(Prisma.sql`
       SELECT
-        ${registrationLotFallback.lotIdExpr} AS lotId,
-        ${registrationLotFallback.lotNameExpr} AS lotName,
-        e.id AS eventId,
-        e.title AS eventTitle,
-        SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END) AS confirmedCount,
-        SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END) AS pendingCount,
-        SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END) AS canceledCount,
+        ${registrationLotFallback.lotIdExpr} AS "lotId",
+        ${registrationLotFallback.lotNameExpr} AS "lotName",
+        e.id AS "eventId",
+        e.title AS "eventTitle",
+        SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END) AS "confirmedCount",
+        SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END) AS "pendingCount",
+        SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END) AS "canceledCount",
         (
           SUM(CASE WHEN r.status IN ('PAID', 'CHECKED_IN') THEN 1 ELSE 0 END)
           + SUM(CASE WHEN r.status IN ('PENDING_PAYMENT', 'DRAFT') THEN 1 ELSE 0 END)
           + SUM(CASE WHEN r.status IN ('CANCELED', 'REFUNDED') THEN 1 ELSE 0 END)
-        ) AS totalCount
-      FROM Registration r
-      INNER JOIN Event e ON e.id = r.eventId
-      LEFT JOIN \`Order\` o ON o.id = r.orderId
-      LEFT JOIN EventLot el ON el.id = o.pricingLotId
+        ) AS "totalCount"
+      FROM registrations r
+      INNER JOIN events e ON e.id = r.event_id
+      LEFT JOIN orders o ON o.id = r.order_id
+      LEFT JOIN event_lots el ON el.id = o.pricing_lot_id
       ${registrationLotFallback.joinSql}
       ${lotWhereClause}
-      GROUP BY lotId, lotName, e.id, e.title
-      ORDER BY totalCount DESC, lotName ASC
+      GROUP BY ${registrationLotFallback.lotIdExpr}, ${registrationLotFallback.lotNameExpr}, e.id, e.title
+      ORDER BY "totalCount" DESC, "lotName" ASC
     `);
 
     const byDistrict = byDistrictRows.map((row) => {
@@ -262,7 +262,7 @@ export const registrationsDashboardService = {
 
       return {
         districtId: row.districtId ?? null,
-        districtName: row.districtName ?? "Nao informado",
+        districtName: row.districtName ?? "Não informado",
         confirmedCount,
         pendingCount,
         canceledCount,
@@ -281,9 +281,9 @@ export const registrationsDashboardService = {
 
       return {
         churchId: row.churchId ?? null,
-        churchName: row.churchName ?? "Nao informado",
+        churchName: row.churchName ?? "Não informado",
         districtId: row.districtId ?? null,
-        districtName: row.districtName ?? "Nao informado",
+        districtName: row.districtName ?? "Não informado",
         confirmedCount,
         pendingCount,
         canceledCount,
@@ -304,7 +304,7 @@ export const registrationsDashboardService = {
         lotId: row.lotId ?? null,
         lotName: row.lotName ?? "Sem lote",
         eventId: row.eventId ?? null,
-        eventTitle: row.eventTitle ?? "Evento nao informado",
+        eventTitle: row.eventTitle ?? "Evento não informado",
         confirmedCount,
         pendingCount,
         canceledCount,

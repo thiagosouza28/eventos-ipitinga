@@ -1,6 +1,7 @@
 import { MercadoPagoConfig, Preference, Payment, PaymentRefund, MerchantOrder } from "mercadopago";
 import type { PreferenceCreateData } from "mercadopago/dist/clients/preference/create/types";
-import type { Prisma } from "@/prisma/generated/client";
+import type { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
 import { env } from "../config/env";
 import { prisma } from "../lib/prisma";
@@ -19,6 +20,7 @@ import {
   resolvePixExpirationDate
 } from "../utils/order-expiration";
 import { buildPixMeta } from "../utils/pix";
+import { getPublicApiBaseUrl } from "../utils/public-url";
 
 const isPublicHttpsUrl = (url: string | null | undefined) => {
   if (!url) return false;
@@ -39,23 +41,22 @@ const shouldWarnAutoReturn = (successUrl: string) =>
   !isSuccessUrlHttps(successUrl) && (env.NODE_ENV === "production" || !allowInsecureAutoReturn);
 
 const resolveNotificationUrl = () => {
-  const base =
-    (env.MP_WEBHOOK_PUBLIC_URL && isPublicHttpsUrl(env.MP_WEBHOOK_PUBLIC_URL) && env.MP_WEBHOOK_PUBLIC_URL) ||
-    (isPublicHttpsUrl(env.API_URL) && env.API_URL) ||
-    null;
-  if (!base) return null;
-  const normalized = base.trim().replace(/\/$/, "");
-  return `${normalized}/webhooks/mercadopago`;
+  if (env.MP_WEBHOOK_PUBLIC_URL && isPublicHttpsUrl(env.MP_WEBHOOK_PUBLIC_URL)) {
+    return env.MP_WEBHOOK_PUBLIC_URL.trim().replace(/\/$/, "");
+  }
+  const apiUrl = getPublicApiBaseUrl();
+  if (!isPublicHttpsUrl(apiUrl)) return null;
+  return `${apiUrl}/webhooks/mercadopago`;
 };
 
 const buildPaymentDescription = (eventTitle?: string | null, participantNames: string[] = []) => {
-  const base = (eventTitle ?? "Inscricao").trim();
+  const base = (eventTitle ?? "Inscrição").trim();
   const names = participantNames.filter(Boolean).join(", ");
   return names ? `${base} - ${names}` : base;
 };
 
 const buildStatementDescriptor = (eventTitle?: string | null, participantNames: string[] = []) => {
-  const base = (eventTitle ?? "Inscricao").toString().replace(/\s+/g, " ").trim();
+  const base = (eventTitle ?? "Inscrição").toString().replace(/\s+/g, " ").trim();
   const firstName = participantNames.find(Boolean)?.split(/\s+/)?.[0] ?? "";
   const raw = `${base} ${firstName}`.trim().toUpperCase();
   return raw.slice(0, 22);
@@ -194,6 +195,45 @@ export const extractPreferenceVersion = (metadata: any): number | null => {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const getMercadoPagoErrorMessage = (error: any) => {
+  const cause = Array.isArray(error?.cause) ? error.cause[0] : undefined;
+  return String(cause?.description ?? cause?.code ?? error?.message ?? error?.error ?? "").trim();
+};
+
+const isRefundTemporarilyUnavailable = (error: any) => {
+  const status = Number(error?.status ?? error?.response?.status);
+  const message = getMercadoPagoErrorMessage(error).toLowerCase();
+  return (
+    status === 425 ||
+    message.includes("invalid status to refund") ||
+    message.includes("not yet enabled for refund") ||
+    message.includes("movement operations pending")
+  );
+};
+
+const translateRefundError = (error: any) => {
+  const rawMessage = getMercadoPagoErrorMessage(error);
+  const message = rawMessage.toLowerCase();
+
+  if (isRefundTemporarilyUnavailable(error)) {
+    return "O Mercado Pago ainda não liberou este pagamento para estorno. Aguarde alguns minutos e tente novamente.";
+  }
+  if (message.includes("insufficient") || message.includes("not enough balance")) {
+    return "Saldo insuficiente na conta Mercado Pago para realizar o estorno.";
+  }
+  if (message.includes("refund period") || message.includes("too old")) {
+    return "O prazo permitido pelo Mercado Pago para estornar este pagamento foi excedido.";
+  }
+  if (message.includes("amount") || message.includes("exceed")) {
+    return "O valor solicitado não está disponível para estorno no Mercado Pago.";
+  }
+  if (message.includes("unauthorized") || message.includes("not authorized")) {
+    return "A credencial configurada não tem permissão para estornar este pagamento no Mercado Pago.";
+  }
+
+  return rawMessage || "Erro ao solicitar estorno no Mercado Pago";
+};
+
 const isRetryableError = (error: any) => {
   const status = Number(error?.status ?? error?.response?.status);
   if (!Number.isNaN(status) && status >= 500) return true;
@@ -244,7 +284,7 @@ class PaymentService {
         status: "PENDING"
       };
     } catch (error: any) {
-      logger.error({ preferenceId, error }, "Falha ao recuperar preferencia Mercado Pago");
+      logger.error({ preferenceId, error }, "Falha ao recuperar preferência Mercado Pago");
       const message =
         error?.message ?? error?.cause?.[0]?.description ?? "Erro ao recuperar preferência existente";
       throw new AppError(message, Number(error?.status) || 502);
@@ -258,7 +298,7 @@ class PaymentService {
       include: { registrations: true, event: true }
     });
     if (!order) {
-      throw new NotFoundError("Pedido nao encontrado");
+      throw new NotFoundError("Pedido não encontrado");
     }
 
     const { totalCents } = await buildPreferenceItemsForOrder(order);
@@ -276,7 +316,7 @@ class PaymentService {
     const rawCpf = (order.buyerCpf || order.registrations[0]?.cpf || "").toString();
     const sanitizedCpf = rawCpf.replace(/\D/g, "");
     if (!sanitizedCpf || sanitizedCpf.length !== 11) {
-      throw new AppError("CPF do pagador ausente ou invalido para gerar PIX", 400);
+      throw new AppError("CPF do pagador ausente ou inválido para gerar PIX", 400);
     }
 
     const buyerName = (order as any).buyerName as string | null | undefined;
@@ -313,15 +353,20 @@ class PaymentService {
       body.additional_info = {
         items: order.registrations.map((registration: any) => ({
           id: registration.id,
-          title: `${order.event?.title ?? "Inscricao"} - ${registration.fullName}`,
-          description: `${order.event?.title ?? "Inscricao"} - ${registration.fullName}`,
+          title: `${order.event?.title ?? "Inscrição"} - ${registration.fullName}`,
+          description: `${order.event?.title ?? "Inscrição"} - ${registration.fullName}`,
           quantity: 1,
           unit_price: (registration.priceCents ?? order.totalCents / Math.max(order.registrations.length, 1)) / 100
         }))
       };
     }
 
-    const payment = await this.payment.create({ body });
+    const payment = await this.payment.create({
+      body,
+      requestOptions: {
+        idempotencyKey: `pix-${order.id}-${order.preferenceVersion ?? 0}`
+      }
+    });
 
     const desiredExpiresAt = resolveEffectiveExpirationDate(
       order.paymentMethod as PaymentMethod,
@@ -448,7 +493,7 @@ class PaymentService {
     } else if (shouldWarnAutoReturn(backUrls.success)) {
       logger.warn(
         { successUrl: backUrls.success },
-        "Auto return desabilitado: URL de sucesso nao utiliza HTTPS"
+        "Auto return desabilitado: URL de sucesso não utiliza HTTPS"
       );
     }
 
@@ -458,7 +503,7 @@ class PaymentService {
         body: preferencePayload
       });
     } catch (error: any) {
-      logger.error({ orderId, error }, "Falha ao criar preferencia Mercado Pago");
+      logger.error({ orderId, error }, "Falha ao criar preferência Mercado Pago");
       const message =
         error?.message ?? error?.cause?.[0]?.description ?? "Erro ao gerar pagamento com Mercado Pago";
       throw new AppError(message, Number(error?.status) || 502);
@@ -620,7 +665,7 @@ class PaymentService {
     } else if (shouldWarnAutoReturn(backUrls.success)) {
       logger.warn(
         { successUrl: backUrls.success },
-        "Auto return desabilitado: URL de sucesso nao utiliza HTTPS"
+        "Auto return desabilitado: URL de sucesso não utiliza HTTPS"
       );
     }
 
@@ -630,7 +675,7 @@ class PaymentService {
         body: preferencePayload
       });
     } catch (error: any) {
-      logger.error({ orderIds, error }, "Falha ao criar preferencia em lote Mercado Pago");
+      logger.error({ orderIds, error }, "Falha ao criar preferência em lote Mercado Pago");
       const message =
         error?.message ?? error?.cause?.[0]?.description ?? "Erro ao gerar pagamento em lote com Mercado Pago";
       throw new AppError(message, Number(error?.status) || 502);
@@ -706,12 +751,15 @@ class PaymentService {
             external_reference: orderId,
             sort: "date_created",
             criteria: "desc",
-            limit: 1
+            limit: 20
           }
         })
       );
 
-      const payment = searchResult.results?.[0];
+      const results = searchResult.results ?? [];
+      // Não deixe uma tentativa mais recente rejeitada/expirada ocultar um
+      // pagamento aprovado para a mesma referência externa.
+      const payment = results.find((candidate) => candidate.status === "approved") ?? results[0];
       if (!payment) return null;
 
       return {
@@ -727,9 +775,31 @@ class PaymentService {
   }
 
   async refundRegistration(orderId: string, registrationId: string, amountCents: number) {
-    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        registrations: {
+          where: { id: registrationId },
+          include: { refunds: true }
+        }
+      }
+    });
     if (!order?.mpPaymentId) {
-      throw new ConflictError("Pedido nao possui pagamento confirmado");
+      throw new ConflictError("Pedido não possui pagamento confirmado");
+    }
+
+    const registration = order.registrations[0];
+    if (!registration) {
+      throw new NotFoundError("Inscrição não pertence ao pedido informado");
+    }
+    if (registration.status === "REFUNDED" || registration.refunds.length > 0) {
+      throw new ConflictError("Esta inscrição já foi estornada");
+    }
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      throw new ConflictError("Valor de estorno inválido");
+    }
+    if (amountCents !== registration.priceCents) {
+      throw new ConflictError("O estorno deve corresponder ao valor integral da inscrição");
     }
 
     const paymentMethod = order.paymentMethod as PaymentMethod | null;
@@ -737,28 +807,84 @@ class PaymentService {
       paymentMethod !== PaymentMethod.PIX_MP ||
       order.mpPaymentId.startsWith("MANUAL-")
     ) {
-      throw new ConflictError("Pedido nao foi pago pelo Mercado Pago");
+      throw new ConflictError("Pedido não foi pago pelo Mercado Pago");
     }
 
-    try {
-      const response = await this.refund.create({
-        payment_id: order.mpPaymentId,
-        body: {
-          amount: amountCents / 100
+    const payment = await this.fetchPayment(order.mpPaymentId).catch((error: any) => {
+      logger.error({ orderId, registrationId, error }, "Falha ao validar pagamento antes do estorno");
+      throw new AppError("Não foi possível validar o pagamento no Mercado Pago. Tente novamente.", 502);
+    });
+    const paymentStatus = String(payment.status ?? "").toLowerCase();
+    if (paymentStatus !== "approved") {
+      throw new ConflictError(
+        `O pagamento não pode ser estornado no status atual do Mercado Pago (${paymentStatus || "desconhecido"})`
+      );
+    }
+    if (payment.external_reference && payment.external_reference !== order.externalReference) {
+      throw new ConflictError("O pagamento do Mercado Pago não corresponde a este pedido");
+    }
+
+    const paidCents = Math.round(Number(payment.transaction_amount ?? 0) * 100);
+    const providerRefundedCents = Math.round(Number(payment.transaction_amount_refunded ?? 0) * 100);
+    const remainingCents = Math.max(0, paidCents - providerRefundedCents);
+    if (amountCents > remainingCents) {
+      throw new ConflictError(
+        remainingCents > 0
+          ? `O Mercado Pago permite estornar no máximo R$ ${(remainingCents / 100).toFixed(2).replace(".", ",")}`
+          : "Este pagamento já foi estornado integralmente no Mercado Pago"
+      );
+    }
+
+    const baseIdempotencyKey = `registration-refund-${registrationId}`;
+    let idempotencyKey = baseIdempotencyKey;
+    let lastError: any;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        const response = await this.refund.create({
+          payment_id: order.mpPaymentId,
+          body: { amount: amountCents / 100 },
+          requestOptions: { idempotencyKey }
+        });
+
+        if (!response.id) {
+          throw new AppError("Mercado Pago não confirmou o identificador do estorno", 502);
         }
-      });
 
-      logger.info({ orderId, registrationId, refundId: response.id }, "Estorno solicitado ao Mercado Pago");
+        logger.info(
+          { orderId, registrationId, refundId: response.id, amountCents },
+          "Estorno confirmado pelo Mercado Pago"
+        );
 
-      return response;
-    } catch (error: any) {
-      logger.error({ orderId, registrationId, error }, "Falha ao solicitar estorno no Mercado Pago");
-      const message =
-        error?.message ??
-        error?.cause?.[0]?.description ??
-        "Erro ao solicitar estorno no Mercado Pago";
-      throw new AppError(message, Number(error?.status) || 502);
+        return response;
+      } catch (error: any) {
+        lastError = error;
+        const shouldRetry = attempt < 3 && (isRefundTemporarilyUnavailable(error) || isRetryableError(error));
+        if (!shouldRetry) break;
+
+        const providerStatus = Number(error?.status ?? error?.response?.status);
+        const definitiveProviderRejection = providerStatus >= 400 && providerStatus < 500;
+        if (definitiveProviderRejection && isRefundTemporarilyUnavailable(error)) {
+          // O Mercado Pago pode memorizar respostas 4xx pela chave de idempotencia.
+          // Como a rejeicao 4xx confirma que nenhum valor foi devolvido, a proxima
+          // tentativa precisa de uma chave nova. Falhas ambiguas (rede/5xx) mantem
+          // a mesma chave para nunca correr o risco de duplicar o estorno.
+          const retrySuffix = randomUUID().replace(/-/g, "").slice(0, 12);
+          idempotencyKey = `${baseIdempotencyKey}-${retrySuffix}`;
+        }
+        await delay(1500 * attempt);
+      }
     }
+
+    logger.error(
+      { orderId, registrationId, error: lastError },
+      "Falha ao solicitar estorno no Mercado Pago"
+    );
+    if (lastError instanceof AppError) {
+      throw lastError;
+    }
+    const providerStatus = Number(lastError?.status ?? lastError?.response?.status);
+    const statusCode = providerStatus >= 500 ? 502 : 409;
+    throw new AppError(translateRefundError(lastError), statusCode);
   }
 }
 

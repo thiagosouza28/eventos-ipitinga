@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { MulterError } from "multer";
-import { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@prisma/client";
 
 import { AppError } from "../utils/errors";
 import { logger } from "../utils/logger";
@@ -10,13 +10,13 @@ const resolveUniqueConstraintMessage = (target: unknown) => {
   const constraint = Array.isArray(target) ? target.join(",") : String(target ?? "");
   switch (constraint) {
     case "Registration_eventId_cpf_key":
-      return "Este CPF ja possui inscricao ativa para este evento.";
+      return "Este CPF já possui inscrição ativa para este evento.";
     case "User_email_key":
-      return "Ja existe um usuario com este e-mail.";
+      return "Já existe um usuário com este e-mail.";
     case "District_name_key":
-      return "Ja existe um distrito com este nome.";
+      return "Já existe um distrito com este nome.";
     case "Church_name_districtId_key":
-      return "Ja existe uma igreja com este nome neste distrito.";
+      return "Já existe uma igreja com este nome neste distrito.";
     default:
       return "Registro duplicado. Ajuste os dados e tente novamente.";
   }
@@ -24,8 +24,13 @@ const resolveUniqueConstraintMessage = (target: unknown) => {
 
 export const errorHandler = (error: Error, request: Request, response: Response, _next: NextFunction) => {
   if (error instanceof ZodError) {
-    logger.warn({ error: error.flatten() }, "Erro de validacao");
-    return response.status(422).json({ message: "Dados invalidos", issues: error.flatten() });
+    logger.warn({ error: error.flatten() }, "Erro de validação");
+    const firstIssue = error.issues[0];
+    const field = firstIssue?.path.length ? firstIssue.path.join(".") : null;
+    const message = field
+      ? `Dados invalidos no campo ${field}: ${firstIssue.message}`
+      : `Dados invalidos: ${firstIssue?.message ?? "revise os campos informados"}`;
+    return response.status(422).json({ message, issues: error.flatten() });
   }
 
   if (error instanceof AppError) {

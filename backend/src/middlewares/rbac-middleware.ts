@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, type RequestHandler } from "express";
+import type { NextFunction, Request, Response, RequestHandler } from "express";
 
 import { RoleHierarchy } from "../config/roles";
 import type { PermissionAction, PermissionModule } from "../config/permissions";

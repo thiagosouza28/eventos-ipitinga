@@ -1,4 +1,4 @@
-import { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@prisma/client";
 import slugify from "slugify";
 
 import { env } from "../../config/env";
@@ -8,6 +8,7 @@ import { auditService } from "../../services/audit.service";
 import { cacheGetOrSet } from "../../utils/cache";
 import { eventLotService } from "./event-lot.service";
 import { buildNoticeFromFields, type EventNotice, type EventNoticeFields } from "../../config/event-notices";
+import { getPublicAssetBaseUrl } from "../../utils/public-url";
 import {
   invalidatePublicEventCache,
   publicEventListCacheKey,
@@ -24,6 +25,7 @@ import {
   PendingPaymentValueRule
 } from "../../config/pending-payment-value-rule";
 import { normalizeFormConfig, resolveEventFormConfig } from "../forms/form-config";
+import { calculateEventInsuranceDays } from "../../utils/event-insurance";
 
 type EventLotEntity = Awaited<ReturnType<typeof eventLotService.list>>[number];
 type ActorUser = {
@@ -31,6 +33,46 @@ type ActorUser = {
   role?: string | null;
   districtScopeId?: string | null;
   churchId?: string | null;
+};
+
+const buildSupabasePublicUrl = (objectPath: string) => {
+  if (env.STORAGE_DRIVER !== "supabase") return null;
+  const base = (env.SUPABASE_URL ?? "").trim().replace(/\/+$/, "");
+  const bucket = (env.SUPABASE_STORAGE_BUCKET ?? "").trim();
+  if (!base || !bucket) return null;
+
+  const encodedBucket = encodeURIComponent(bucket);
+  const encodedObjectPath = objectPath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  return `${base}/storage/v1/object/public/${encodedBucket}/${encodedObjectPath}`;
+};
+
+const toPublicBannerUrl = (value?: string | null) => {
+  if (!value) return null;
+  if (/^(https?:|data:|blob:)/i.test(value)) {
+    return value;
+  }
+
+  const sanitized = value.replace(/^\/+/, "");
+  if (!sanitized) return null;
+
+  // Most banners are stored as just the filename (returned by `/api/admin/uploads`).
+  // In Supabase mode, `storageService.saveBase64Image()` writes into `photos/<filename>`.
+  if (env.STORAGE_DRIVER === "supabase") {
+    const normalized = sanitized.startsWith("uploads/") ? sanitized.slice("uploads/".length) : sanitized;
+    const objectPath = normalized.includes("/") ? normalized : `photos/${normalized}`;
+    const directUrl = buildSupabasePublicUrl(objectPath);
+    if (directUrl) return directUrl;
+  }
+
+  const base = getPublicAssetBaseUrl();
+  if (sanitized.startsWith("uploads/")) {
+    return `${base}/${sanitized}`;
+  }
+  return `${base}/uploads/${sanitized}`;
 };
 
 const cacheOptions = {
@@ -152,7 +194,7 @@ export class EventService {
         });
 
         if (!event || !event.isActive) {
-          throw new NotFoundError("Evento nao encontrado");
+          throw new NotFoundError("Evento não encontrado");
         }
 
         const paymentMethods = parsePaymentMethods(event.paymentMethods);
@@ -165,6 +207,7 @@ export class EventService {
 
         return {
           ...event,
+          bannerUrl: toPublicBannerUrl(event.bannerUrl),
           isFree,
           lots,
           paymentMethods,
@@ -172,7 +215,8 @@ export class EventService {
           notice: serializeNoticeForResponse(event),
           publicLink: `${env.APP_URL}/evento/${event.slug}`,
           currentLot: serializeLot(activeLot),
-          currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
+          currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
+          insuranceDays: calculateEventInsuranceDays(event.startDate, event.endDate)
         };
       },
       cacheOptions
@@ -227,13 +271,15 @@ export class EventService {
             : eventLotService.resolveActiveFromList(lots, new Date());
           return {
             ...event,
+            bannerUrl: toPublicBannerUrl(event.bannerUrl),
             isFree,
             lots,
             paymentMethods: parsePaymentMethods(event.paymentMethods),
             formConfig: resolveEventFormConfig(event.formConfig),
             notice: serializeNoticeForResponse(event),
             currentLot: serializeLot(activeLot),
-            currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents
+            currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
+            insuranceDays: calculateEventInsuranceDays(event.startDate, event.endDate)
           };
         });
       },
@@ -269,9 +315,9 @@ export class EventService {
       this.getLotsMap(events.map((event) => event.id))
     ]);
 
-    const districtMap = new Map(districts.map((item) => [item.id, item]));
-    const churchMap = new Map(churches.map((item) => [item.id, item]));
-    const ministryMap = new Map(ministries.map((item) => [item.id, item]));
+    const districtMap = new Map(districts.map((item) => [item.id, item] as const));
+    const churchMap = new Map(churches.map((item) => [item.id, item] as const));
+    const ministryMap = new Map(ministries.map((item) => [item.id, item] as const));
 
       return events.map((event) => {
         const isFree = Boolean((event as any).isFree);
@@ -283,11 +329,13 @@ export class EventService {
           : eventLotService.resolveActiveFromList(lots, new Date());
         return {
           ...event,
+          bannerUrl: toPublicBannerUrl(event.bannerUrl),
           isFree,
           lots,
           paymentMethods: parsePaymentMethods(event.paymentMethods),
           currentLot: serializeLot(activeLot),
           currentPriceCents: isFree ? 0 : activeLot?.priceCents ?? event.priceCents,
+          insuranceDays: calculateEventInsuranceDays(event.startDate, event.endDate),
           notice: serializeNoticeForResponse(event),
           formConfig: resolveEventFormConfig(event.formConfig),
           ministry: event.ministryId ? ministryMap.get(event.ministryId) ?? null : null,
@@ -325,6 +373,9 @@ export class EventService {
     slug?: string;
     isFree: boolean;
     priceCents?: number;
+    insuranceEnabled?: boolean;
+    insuranceRequired?: boolean;
+    insuranceDailyCents?: number;
     minAgeYears?: number | null;
     isActive?: boolean;
     paymentMethods?: PaymentMethod[];
@@ -337,6 +388,15 @@ export class EventService {
     },
     actor?: ActorUser
   ) {
+    const insuranceRequired = Boolean(data.insuranceRequired);
+    const insuranceEnabled = Boolean(data.insuranceEnabled || insuranceRequired);
+    const insuranceDailyCents = insuranceEnabled
+      ? Math.max(data.insuranceDailyCents ?? 0, 0)
+      : 0;
+    if (insuranceEnabled && insuranceDailyCents <= 0) {
+      throw new AppError("Informe um valor diário válido para o seguro.", 400);
+    }
+
     const desiredSlug = data.slug ? normalizeSlugInput(data.slug) : null;
     const baseSlug =
       desiredSlug && desiredSlug.length > 0
@@ -351,12 +411,12 @@ export class EventService {
 
     const ministry = await prisma.ministry.findUnique({ where: { id: data.ministryId } });
     if (!ministry || !ministry.isActive) {
-      throw new AppError("Ministerio invalido", 400);
+      throw new AppError("Ministério inválido", 400);
     }
 
     const district = await prisma.district.findUnique({ where: { id: data.districtId } });
     if (!district) {
-      throw new AppError("Distrito invalido", 400);
+      throw new AppError("Distrito inválido", 400);
     }
 
     const isActorDistrictOwner =
@@ -366,7 +426,7 @@ export class EventService {
     if (isActorDistrictOwner) {
       if (!actor?.churchId) {
         throw new AppError(
-          "Usuario nao possui igreja vinculada para eventos do proprio distrito.",
+          "Usuário não possui igreja vinculada para eventos do próprio distrito.",
           400
         );
       }
@@ -378,7 +438,7 @@ export class EventService {
         where: { id: churchId, districtId: data.districtId }
       });
       if (!church) {
-        throw new AppError("Igreja nao pertence ao distrito selecionado.", 400);
+        throw new AppError("Igreja não pertence ao distrito selecionado.", 400);
       }
     }
 
@@ -393,6 +453,9 @@ export class EventService {
         districtId: data.districtId,
         churchId,
         priceCents: data.isFree ? 0 : data.priceCents ?? 0,
+        insuranceEnabled,
+        insuranceRequired,
+        insuranceDailyCents,
         paymentMethods: serializePaymentMethods(
           data.paymentMethods ?? DEFAULT_PAYMENT_METHODS
         ),
@@ -409,9 +472,11 @@ export class EventService {
     });
     const serialized = {
       ...event,
+      bannerUrl: toPublicBannerUrl(event.bannerUrl),
       paymentMethods: parsePaymentMethods(event.paymentMethods),
       notice: serializeNoticeForResponse(event),
-      formConfig: resolveEventFormConfig(event.formConfig)
+      formConfig: resolveEventFormConfig(event.formConfig),
+      insuranceDays: calculateEventInsuranceDays(event.startDate, event.endDate)
     };
     await auditService.log({
       action: "EVENT_CREATED",
@@ -433,6 +498,9 @@ export class EventService {
       location: string;
       bannerUrl?: string;
       priceCents: number;
+      insuranceEnabled?: boolean;
+      insuranceRequired?: boolean;
+      insuranceDailyCents?: number;
       minAgeYears?: number | null;
       isFree?: boolean;
       isActive?: boolean;
@@ -448,7 +516,7 @@ export class EventService {
     actor?: ActorUser
   ) {
     const event = await prisma.event.findUnique({ where: { id } });
-    if (!event) throw new NotFoundError("Evento nao encontrado");
+    if (!event) throw new NotFoundError("Evento não encontrado");
     if (actor) {
       this.assertCanManageEvent(event, actor);
     }
@@ -488,15 +556,29 @@ export class EventService {
 
     const targetDistrictId = data.districtId ?? event.districtId;
     if (!targetDistrictId) {
-      throw new AppError("Distrito invalido", 400);
+      throw new AppError("Distrito inválido", 400);
     }
+
+    const insuranceRequired = data.insuranceRequired ?? event.insuranceRequired;
+    const insuranceEnabled = Boolean(
+      (data.insuranceEnabled ?? event.insuranceEnabled) || insuranceRequired
+    );
+    const insuranceDailyCents = insuranceEnabled
+      ? Math.max(data.insuranceDailyCents ?? event.insuranceDailyCents, 0)
+      : 0;
+    if (insuranceEnabled && insuranceDailyCents <= 0) {
+      throw new AppError("Informe um valor diário válido para o seguro.", 400);
+    }
+    payload.insuranceEnabled = insuranceEnabled;
+    payload.insuranceRequired = insuranceEnabled && insuranceRequired;
+    payload.insuranceDailyCents = insuranceDailyCents;
     const districtChanged = Boolean(data.districtId && data.districtId !== event.districtId);
     const targetChurchIdPayload = data.churchId ?? null;
 
     if (targetDistrictId) {
       const district = await prisma.district.findUnique({ where: { id: targetDistrictId } });
       if (!district) {
-        throw new AppError("Distrito invalido", 400);
+        throw new AppError("Distrito inválido", 400);
       }
       payload.district = { connect: { id: targetDistrictId } };
     }
@@ -507,7 +589,7 @@ export class EventService {
     if (isActorDistrictOwner) {
       if (!actor?.churchId) {
         throw new AppError(
-          "Usuario nao possui igreja vinculada para eventos do proprio distrito.",
+          "Usuário não possui igreja vinculada para eventos do próprio distrito.",
           400
         );
       }
@@ -519,7 +601,7 @@ export class EventService {
         where: { id: effectiveChurchId, districtId: targetDistrictId }
       });
       if (!church) {
-        throw new AppError("Igreja nao pertence ao distrito selecionado.", 400);
+        throw new AppError("Igreja não pertence ao distrito selecionado.", 400);
       }
       payload.church = { connect: { id: effectiveChurchId } };
     } else if (data.churchId === null) {
@@ -529,7 +611,7 @@ export class EventService {
     if (data.ministryId !== undefined) {
       const ministry = await prisma.ministry.findUnique({ where: { id: data.ministryId } });
       if (!ministry || !ministry.isActive) {
-        throw new AppError("Ministerio invalido", 400);
+        throw new AppError("Ministério inválido", 400);
       }
       payload.ministry = { connect: { id: data.ministryId } };
     }
@@ -537,7 +619,7 @@ export class EventService {
     if (data.slug !== undefined) {
       const normalized = normalizeSlugInput(data.slug);
       if (!normalized) {
-        throw new AppError("Slug invalido", 400);
+        throw new AppError("Slug inválido", 400);
       }
       payload.slug = await this.resolveUniqueSlug(normalized, id);
     }
@@ -567,9 +649,11 @@ export class EventService {
 
     const serialized = {
       ...updated,
+      bannerUrl: toPublicBannerUrl(updated.bannerUrl),
       paymentMethods: parsePaymentMethods(updated.paymentMethods),
       notice: serializeNoticeForResponse(updated),
-      formConfig: resolveEventFormConfig(updated.formConfig)
+      formConfig: resolveEventFormConfig(updated.formConfig),
+      insuranceDays: calculateEventInsuranceDays(updated.startDate, updated.endDate)
     };
     await auditService.log({
       action: "EVENT_UPDATED",
@@ -587,7 +671,7 @@ export class EventService {
 
   async delete(id: string, actor?: ActorUser) {
     const event = await prisma.event.findUnique({ where: { id } });
-    if (!event) throw new NotFoundError("Evento nao encontrado");
+    if (!event) throw new NotFoundError("Evento não encontrado");
     if (actor) {
       this.assertCanManageEvent(event, actor);
     }
@@ -598,7 +682,7 @@ export class EventService {
     ]);
 
     if (orderCount > 0 || registrationCount > 0) {
-      throw new ConflictError("Evento possui pedidos ou inscricoes e nao pode ser excluido");
+      throw new ConflictError("Evento possui pedidos ou inscrições e não pode ser excluído");
     }
 
     await prisma.event.delete({ where: { id } });

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { pixConfigService } from "./pix-config.service";
@@ -27,7 +27,7 @@ export const getPixConfigHandler = async (_request: Request, response: Response)
 };
 
 export const upsertPixConfigHandler = async (request: Request, response: Response) => {
-  const payload = upsertSchema.parse(request.body);
+  const payload = upsertSchema.parse(request.body) as any;
   const saved = await pixConfigService.upsert(payload);
   return response.json(saved);
 };

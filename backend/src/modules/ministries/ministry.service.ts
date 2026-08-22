@@ -30,7 +30,7 @@ export class MinistryService {
   async create(data: MinistryPayload, actorUserId?: string) {
     const existing = await prisma.ministry.findUnique({ where: { name: data.name.trim() } });
     if (existing) {
-      throw new ConflictError("Ja existe um ministerio com este nome");
+      throw new ConflictError("Já existe um ministério com este nome");
     }
 
     const ministry = await prisma.ministry.create({
@@ -57,13 +57,13 @@ export class MinistryService {
   async update(id: string, data: Partial<MinistryPayload>, actorUserId?: string) {
     const ministry = await prisma.ministry.findUnique({ where: { id } });
     if (!ministry) {
-      throw new NotFoundError("Ministerio nao encontrado");
+      throw new NotFoundError("Ministério não encontrado");
     }
 
     if (data.name && data.name.trim() !== ministry.name) {
       const existing = await prisma.ministry.findUnique({ where: { name: data.name.trim() } });
       if (existing && existing.id !== id) {
-        throw new ConflictError("Ja existe um ministerio com este nome");
+        throw new ConflictError("Já existe um ministério com este nome");
       }
     }
 
@@ -92,7 +92,7 @@ export class MinistryService {
   async delete(id: string, actorUserId?: string) {
     const ministry = await prisma.ministry.findUnique({ where: { id } });
     if (!ministry) {
-      throw new NotFoundError("Ministerio nao encontrado");
+      throw new NotFoundError("Ministério não encontrado");
     }
 
     const [events, users] = await Promise.all([
@@ -101,7 +101,7 @@ export class MinistryService {
     ]);
 
     if (events > 0 || users > 0) {
-      throw new AppError("Nao e possivel excluir ministerio com eventos ou usuarios vinculados", 400);
+      throw new AppError("Não é possível excluir ministério com eventos ou usuários vinculados", 400);
     }
 
     await prisma.ministry.delete({ where: { id } });

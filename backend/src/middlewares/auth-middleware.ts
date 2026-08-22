@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, type RequestHandler } from "express";
+import type { NextFunction, Request, Response, RequestHandler } from "express";
 import jwt, { JsonWebTokenError, NotBeforeError, TokenExpiredError } from "jsonwebtoken";
 
 import { env } from "../config/env";
@@ -51,14 +51,14 @@ export const authenticate: RequestHandler = (request: Request, _response: Respon
 
   const match = headerValue.match(TOKEN_PATTERN);
   if (!match) {
-    logAuthFailure(request, "TOKEN_MALFORMED", "Formato de token invalido");
-    throw new UnauthorizedError("Formato de token invalido", { code: "TOKEN_MALFORMED" });
+    logAuthFailure(request, "TOKEN_MALFORMED", "Formato de token inválido");
+    throw new UnauthorizedError("Formato de token inválido", { code: "TOKEN_MALFORMED" });
   }
 
   const token = match[1].trim();
   if (!token) {
-    logAuthFailure(request, "TOKEN_MALFORMED", "Formato de token invalido");
-    throw new UnauthorizedError("Formato de token invalido", { code: "TOKEN_MALFORMED" });
+    logAuthFailure(request, "TOKEN_MALFORMED", "Formato de token inválido");
+    throw new UnauthorizedError("Formato de token inválido", { code: "TOKEN_MALFORMED" });
   }
 
   try {
@@ -85,12 +85,12 @@ export const authenticate: RequestHandler = (request: Request, _response: Respon
       throw new UnauthorizedError("Token expirado", { code: "TOKEN_EXPIRED" });
     }
     if (error instanceof JsonWebTokenError || error instanceof NotBeforeError) {
-      logAuthFailure(request, "TOKEN_INVALID", "Token invalido", {
+      logAuthFailure(request, "TOKEN_INVALID", "Token inválido", {
         error: error.message
       });
-      throw new UnauthorizedError("Token invalido", { code: "TOKEN_INVALID" });
+      throw new UnauthorizedError("Token inválido", { code: "TOKEN_INVALID" });
     }
-    logAuthFailure(request, "TOKEN_INVALID", "Token invalido");
-    throw new UnauthorizedError("Token invalido", { code: "TOKEN_INVALID" });
+    logAuthFailure(request, "TOKEN_INVALID", "Token inválido");
+    throw new UnauthorizedError("Token inválido", { code: "TOKEN_INVALID" });
   }
 };

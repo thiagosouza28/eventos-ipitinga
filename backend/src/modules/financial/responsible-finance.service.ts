@@ -43,7 +43,7 @@ export class ResponsibleFinanceService {
     if (this.eventDistrictColumn !== undefined) {
       return this.eventDistrictColumn;
     }
-    this.eventDistrictColumn = await hasColumn("Event", "districtId");
+    this.eventDistrictColumn = await hasColumn("events", "district_id");
     return this.eventDistrictColumn;
   }
   private async ensureAccess(responsibleUserId: string, actor?: Express.User) {
@@ -69,7 +69,7 @@ export class ResponsibleFinanceService {
         }
       });
       if (count > 0) return;
-      throw new UnauthorizedError("Sem permissao para visualizar este responsavel.");
+      throw new UnauthorizedError("Sem permissão para visualizar este responsável.");
     }
     throw new UnauthorizedError();
   }
@@ -330,10 +330,10 @@ export class ResponsibleFinanceService {
 
     const responsibleUser = await prisma.user.findUnique({ where: { id: responsibleUserId } });
     if (!responsibleUser) {
-      throw new NotFoundError("Responsavel nao encontrado");
+      throw new NotFoundError("Responsável não encontrado");
     }
     if (!responsibleUser.pixKey) {
-      throw new AppError("Responsavel sem chave PIX configurada.", 400);
+      throw new AppError("Responsável sem chave PIX configurada.", 400);
     }
 
     const pendingOrders = await prisma.order.findMany({
@@ -366,7 +366,7 @@ export class ResponsibleFinanceService {
     });
 
     if (!pendingOrders.length) {
-      throw new AppError("Nao ha pedidos pendentes de repasse para este responsavel.", 400);
+      throw new AppError("Não ha pedidos pendentes de repasse para este responsável.", 400);
     }
 
     const ordersWithAmounts = pendingOrders.map((order) => ({
@@ -401,7 +401,7 @@ export class ResponsibleFinanceService {
         amount: totalAmount,
         pixKey: responsibleUser.pixKey,
         pixType: responsibleUser.pixType ?? undefined,
-        description: `Repasse responsavel ${responsibleUser.name ?? ""}`.trim()
+        description: `Repasse responsável ${responsibleUser.name ?? ""}`.trim()
       });
 
       const updatedTransfer = await prisma.$transaction(async (tx) => {

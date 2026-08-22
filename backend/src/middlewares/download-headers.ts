@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { env } from "../config/env";
 
 const isProduction = env.NODE_ENV === "production";
@@ -97,6 +97,7 @@ export const downloadCorsMiddleware = (
 export const resolveContentType = (fileName?: string | null) => {
   const safeName = (fileName ?? "").toLowerCase();
   if (safeName.endsWith(".pdf")) return "application/pdf";
+  if (safeName.endsWith(".png")) return "image/png";
   if (safeName.endsWith(".xlsx")) {
     return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   }
@@ -127,15 +128,16 @@ export const setDownloadHeaders = (
 
 export const sendDownloadBuffer = (
   response: Response,
-  payload: { buffer: Buffer; fileName: string; contentType?: string }
+  payload: { buffer: Buffer | Uint8Array; fileName: string; contentType?: string }
 ) => {
+  const buffer = Buffer.isBuffer(payload.buffer) ? payload.buffer : Buffer.from(payload.buffer);
   setDownloadHeaders(
     response,
     payload.fileName,
     payload.contentType ?? resolveContentType(payload.fileName),
-    payload.buffer.length
+    buffer.length
   );
-  return response.status(200).send(payload.buffer);
+  return response.status(200).send(buffer);
 };
 
 export const sendDownloadStream = (

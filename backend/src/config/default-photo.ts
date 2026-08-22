@@ -1,4 +1,10 @@
-const DEFAULT_PHOTO_BASE64 =
-  "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgMzAwIDQwMCI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmOGZhZmMiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2UyZThmMCIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgPC9kZWZzPgogIDxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiByeD0iMjQiIGZpbGw9InVybCgjYmcpIiAvPgogIDxjaXJjbGUgY3g9IjE1MCIgY3k9IjE1MCIgcj0iNzAiIGZpbGw9IiNjYmQ1ZjUiIC8+CiAgPHJlY3QgeD0iNjUiIHk9IjIyMCIgd2lkdGg9IjE3MCIgaGVpZ2h0PSIxMzAiIHJ4PSI4MCIgZmlsbD0iIzk0YTNiOCIgLz4KPC9zdmc+";
+const DEFAULT_PHOTO_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400" viewBox="0 0 300 400" role="img" aria-label="Foto padrão do participante">
+  <rect width="300" height="400" fill="#eef3fa"/>
+  <rect x="12" y="12" width="276" height="376" fill="none" stroke="#d4deeb" stroke-width="3"/>
+  <circle cx="150" cy="142" r="62" fill="#d7e1ef" stroke="#8798b2" stroke-width="4"/>
+  <path d="M48 354c7-83 45-125 102-125s95 42 102 125" fill="#d7e1ef" stroke="#8798b2" stroke-width="4" stroke-linecap="round"/>
+  <path d="M74 354h152" stroke="#8798b2" stroke-width="4" stroke-linecap="round"/>
+</svg>`;
 
-export const DEFAULT_PHOTO_DATA_URL = `data:image/svg+xml;base64,${DEFAULT_PHOTO_BASE64}`;
+export const DEFAULT_PHOTO_DATA_URL = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(DEFAULT_PHOTO_SVG)}`;

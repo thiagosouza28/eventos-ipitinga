@@ -1,8 +1,8 @@
 import { createReadStream, promises as fs } from "fs";
 import path from "path";
 
-import type { Prisma } from "@/prisma/generated/client";
-import * as XLSX from "xlsx";
+import type { Prisma } from "@prisma/client";
+import ExcelJS from "exceljs";
 import { prisma } from "../../lib/prisma";
 import { AppError, ConflictError, NotFoundError, UnauthorizedError } from "../../utils/errors";
 import { calculateAge } from "../../utils/cpf";
@@ -28,7 +28,7 @@ import { storageService } from "../../storage/storage.service";
 import { orderService } from "../orders/order.service";
 import { resolveOrderExpirationDate } from "../../utils/order-expiration";
 import { logger } from "../../utils/logger";
-import { getPublicAppBaseUrl } from "../../utils/public-url";
+import { getPublicApiBaseUrl, getPublicAssetBaseUrl } from "../../utils/public-url";
 
 const backendRoot = path.resolve(__dirname, "..", "..", "..");
 const resolveReceiptsDir = () => {
@@ -37,6 +37,7 @@ const resolveReceiptsDir = () => {
   return path.isAbsolute(customDir) ? customDir : path.resolve(backendRoot, customDir);
 };
 const receiptsDir = resolveReceiptsDir();
+const RECEIPT_TEMPLATE_VERSION = "2026-08-photo-placeholder-v2";
 
 const brDateFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -51,13 +52,7 @@ const brDateTimeFormatter = new Intl.DateTimeFormat("pt-BR", {
   timeStyle: "short"
 });
 
-const normalizeApiBaseUrl = (value: string) => {
-  const trimmed = value.trim().replace(/\/+$/, "");
-  const normalized = trimmed.replace(/(\/api)+$/i, "/api");
-  return normalized.endsWith("/") ? normalized : `${normalized}/`;
-};
-
-const apiBaseUrl = normalizeApiBaseUrl(env.API_URL);
+const apiBaseUrl = `${getPublicApiBaseUrl()}/`;
 const apiBaseOrigin = new URL(apiBaseUrl).origin;
 const localReceiptHosts = new Set(["localhost", "127.0.0.1"]);
 
@@ -88,7 +83,7 @@ const toPublicPhotoUrl = (value?: string | null) => {
   }
   const sanitized = value.replace(/^\/+/, "");
   if (!sanitized) return undefined;
-  const base = getPublicAppBaseUrl();
+  const base = getPublicAssetBaseUrl();
   if (sanitized.startsWith("uploads/")) {
     return `${base}/${sanitized}`;
   }
@@ -122,6 +117,7 @@ const formatCpfFull = (value?: string | null) => {
 };
 
 const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => {
+  const canonicalUrl = new URL(`receipts/${registrationId}.pdf`, apiBaseUrl);
   let baseUrl: URL;
   try {
     if (storedUrl) {
@@ -132,6 +128,11 @@ const buildReceiptLink = (registrationId: string, storedUrl?: string | null) => 
     }
   } catch {
     baseUrl = new URL(`receipts/${registrationId}.pdf`, apiBaseUrl);
+  }
+
+  // Corrige links antigos gravados sem o prefixo /api e impede /api/api.
+  if (/\/receipts\/[^/]+\.pdf$/i.test(baseUrl.pathname)) {
+    baseUrl.pathname = canonicalUrl.pathname;
   }
 
   if (localReceiptHosts.has(baseUrl.hostname) && baseUrl.origin !== apiBaseOrigin) {
@@ -488,8 +489,8 @@ const buildRegistrationListPayload = async (
     cpf: registration.cpf,
     status: registration.status,
     createdAt: registration.createdAt,
-    eventTitle: registration.event?.title ?? "Evento nao informado",
-    churchName: registration.church?.name ?? "Igreja nao informada",
+    eventTitle: registration.event?.title ?? "Evento não informado",
+    churchName: registration.church?.name ?? "Igreja não informada",
     districtName: registration.district?.name ?? registration.church?.district?.name ?? null,
     lotName: registration.order?.pricingLot?.name ?? null
   }));
@@ -510,10 +511,10 @@ const buildRegistrationListPayload = async (
   ]);
 
   const meta: RegistrationListMeta = {
-    eventName: filters.eventId ? eventMeta?.title ?? "Nao informado" : null,
-    churchName: filters.churchId ? churchMeta?.name ?? "Nao informado" : null,
-    districtName: filters.districtId ? districtMeta?.name ?? "Nao informado" : null,
-    lotName: filters.lotId ? lotMeta?.name ?? "Nao informado" : null,
+    eventName: filters.eventId ? eventMeta?.title ?? "Não informado" : null,
+    churchName: filters.churchId ? churchMeta?.name ?? "Não informado" : null,
+    districtName: filters.districtId ? districtMeta?.name ?? "Não informado" : null,
+    lotName: filters.lotId ? lotMeta?.name ?? "Não informado" : null,
     statusLabel: filters.status ? resolvePaymentStatusLabel(filters.status) : null,
     search: filters.search?.trim() ?? null
   };
@@ -736,7 +737,7 @@ export class RegistrationService {
         select: { id: true }
       });
       if (!event) {
-        throw new NotFoundError("Evento nao encontrado");
+        throw new NotFoundError("Evento não encontrado");
       }
     }
 
@@ -744,7 +745,7 @@ export class RegistrationService {
       where: buildRegistrationWhere(filters, ministryIds)
     });
     if (count === 0) {
-      throw new AppError("Nenhuma inscricao encontrada para os filtros informados", 404);
+      throw new AppError("Nenhuma inscrição encontrada para os filtros informados", 404);
     }
     return count;
   }
@@ -762,7 +763,7 @@ export class RegistrationService {
     actorId?: string
   ) {
     const registration = await prisma.registration.findUnique({ where: { id } });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
 
     const payload: Prisma.RegistrationUpdateInput = {};
 
@@ -797,7 +798,7 @@ export class RegistrationService {
           }
         });
         if (exists) {
-          throw new ConflictError(`CPF ${maskCpf(sanitized)} ja possui inscricao para este evento`);
+          throw new ConflictError(`CPF ${maskCpf(sanitized)} já possui inscrição para este evento`);
         }
         payload.cpf = sanitized;
       }
@@ -841,9 +842,21 @@ export class RegistrationService {
       where: { id },
       include: { order: true }
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
-    if (registration.status === "PAID") {
-      throw new AppError("Não é possível cancelar inscrição paga (solicite estorno)", 400);
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
+    if (registration.status === RegistrationStatus.CANCELED) return;
+    if (
+      registration.status === RegistrationStatus.PAID ||
+      registration.status === RegistrationStatus.CHECKED_IN ||
+      registration.status === RegistrationStatus.REFUNDED ||
+      registration.paidAt
+    ) {
+      throw new ConflictError("Inscrição com pagamento confirmado não pode ser cancelada. Realize o estorno primeiro.");
+    }
+    if (
+      registration.status !== RegistrationStatus.DRAFT &&
+      registration.status !== RegistrationStatus.PENDING_PAYMENT
+    ) {
+      throw new ConflictError("Esta inscrição não pode ser cancelada no status atual");
     }
     await prisma.registration.update({
       where: { id },
@@ -881,13 +894,13 @@ export class RegistrationService {
       }
     });
     if (!registration) {
-      throw new NotFoundError("Inscricao nao encontrada");
+      throw new NotFoundError("Inscrição não encontrada");
     }
     if (registration.status !== RegistrationStatus.CANCELED) {
-      throw new AppError("Somente inscricoes canceladas podem ser reativadas", 400);
+      throw new AppError("Somente inscrições canceladas podem ser reativadas", 400);
     }
     if (!registration.orderId || !registration.order) {
-      throw new AppError("Inscricao sem pedido associado", 400);
+      throw new AppError("Inscrição sem pedido associado", 400);
     }
 
     const expiresAt = resolveOrderExpirationDate(registration.order.paymentMethod as PaymentMethod);
@@ -923,14 +936,54 @@ export class RegistrationService {
     return orderService.createIndividualPaymentForRegistration(id);
   }
 
-  async delete(id: string) {
+  async delete(id: string, actorId?: string) {
     const registration = await prisma.registration.findUnique({
       where: { id },
-      include: { order: true, refunds: true, event: true }
+      include: { order: true, refunds: true, event: true, orderItems: true }
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
+
+    const isCanceled = registration.status === RegistrationStatus.CANCELED;
+    const isRefunded = registration.status === RegistrationStatus.REFUNDED;
+    const orderHasConfirmedPayment =
+      Boolean(registration.order.paidAt) ||
+      registration.order.status === OrderStatus.PAID ||
+      registration.order.status === OrderStatus.PARTIALLY_REFUNDED ||
+      registration.order.status === OrderStatus.REFUNDED;
+    const hasConfirmedPayment =
+      Boolean(registration.paidAt) ||
+      registration.status === RegistrationStatus.PAID ||
+      registration.status === RegistrationStatus.CHECKED_IN ||
+      registration.orderItems.some((item) => item.status === "CONFIRMED") ||
+      (registration.priceCents > 0 && orderHasConfirmedPayment);
+
+    if (!isCanceled && !isRefunded) {
+      if (hasConfirmedPayment) {
+        throw new ConflictError(
+          "Inscrição com pagamento confirmado não pode ser excluída. Estorne o valor antes de excluir."
+        );
+      }
+      throw new ConflictError("Cancele a inscrição antes de excluir");
+    }
+    if (isCanceled && hasConfirmedPayment) {
+      throw new ConflictError(
+        "Esta inscrição possui pagamento confirmado. Realize o estorno antes de excluir."
+      );
+    }
+    if (isRefunded && registration.priceCents > 0 && registration.refunds.length === 0) {
+      throw new ConflictError("O estorno desta inscrição ainda não foi confirmado");
+    }
+
+    const refundSnapshot = registration.refunds.map((refund) => ({
+      id: refund.id,
+      amountCents: refund.amountCents,
+      providerRefundId: refund.mpRefundId,
+      reason: refund.reason,
+      createdAt: refund.createdAt
+    }));
 
     await prisma.$transaction(async (tx) => {
+      await tx.orderItem.deleteMany({ where: { registrationId: id } });
       if (registration.refunds.length > 0) {
         await tx.refund.deleteMany({ where: { registrationId: id } });
       }
@@ -946,33 +999,50 @@ export class RegistrationService {
         return sum + price;
       }, 0);
 
-      const orderUpdate: Record<string, unknown> = {
-        totalCents: updatedTotalCents
-      };
+      const orderUpdate: Record<string, unknown> = {};
 
-      if (remainingRegistrations.length === 0 && registration.order.status !== "PAID") {
-        orderUpdate.status = "CANCELED";
+      if (isRefunded) {
+        // O total pago e o status financeiro precisam permanecer para conciliacao,
+        // mesmo depois que a inscricao estornada for removida da listagem.
+        if (remainingRegistrations.length === 0) {
+          orderUpdate.status = OrderStatus.REFUNDED;
+        }
+      } else {
+        orderUpdate.totalCents = updatedTotalCents;
+        if (remainingRegistrations.length === 0) {
+          orderUpdate.status = OrderStatus.CANCELED;
+        }
       }
 
-      await tx.order.update({
-        where: { id: registration.orderId },
-        data: orderUpdate
-      });
+      if (Object.keys(orderUpdate).length > 0) {
+        await tx.order.update({
+          where: { id: registration.orderId },
+          data: orderUpdate
+        });
+      }
     });
 
     await auditService.log({
+      actorUserId: actorId,
       action: "REGISTRATION_DELETED",
       entity: "registration",
       entityId: id,
-      metadata: { orderId: registration.orderId }
+      metadata: {
+        orderId: registration.orderId,
+        previousStatus: registration.status,
+        fullName: registration.fullName,
+        cpf: maskCpf(registration.cpf),
+        priceCents: registration.priceCents,
+        refunds: refundSnapshot
+      }
     });
   }
 
   async markCheckin(id: string, actorId?: string) {
     const registration = await prisma.registration.findUnique({ where: { id } });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
     if (registration.status !== "PAID") {
-      throw new AppError("Apenas inscricoes pagas podem realizar check-in", 400);
+      throw new AppError("Apenas inscrições pagas podem realizar check-in", 400);
     }
     const updated = await prisma.registration.update({
       where: { id },
@@ -1012,7 +1082,7 @@ export class RegistrationService {
           }
         }
       });
-      if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+      if (!registration) throw new NotFoundError("Inscrição não encontrada");
 
       await fs.mkdir(receiptsDir, { recursive: true });
 
@@ -1054,9 +1124,9 @@ export class RegistrationService {
       const receiptTotalCents = isGroupRegistration
         ? unitPriceCents
         : registration.order?.totalCents ?? unitPriceCents;
-      const participantType = isGroupRegistration ? "Inscricao em grupo" : "Inscricao individual";
+      const participantType = isGroupRegistration ? "Inscrição em grupo" : "Inscrição individual";
 
-      const { pdfBuffer, validationUrl } = await generateReceiptPdf({
+      const { pdfBuffer, pngBuffer, validationUrl } = await generateReceiptPdf({
         eventTitle,
         eventLocation,
         eventPeriod,
@@ -1080,7 +1150,13 @@ export class RegistrationService {
       });
 
       const filePath = path.join(receiptsDir, `${registrationId}.pdf`);
-      await fs.writeFile(filePath, pdfBuffer);
+      const imagePath = path.join(receiptsDir, `${registrationId}.png`);
+      const versionPath = path.join(receiptsDir, `${registrationId}.version`);
+      await Promise.all([
+        fs.writeFile(filePath, pdfBuffer),
+        fs.writeFile(imagePath, pngBuffer),
+        fs.writeFile(versionPath, RECEIPT_TEMPLATE_VERSION, "utf8")
+      ]);
 
       const { token, url: receiptUrl, baseUrl } = buildReceiptLink(registrationId);
 
@@ -1101,7 +1177,7 @@ export class RegistrationService {
   }
   async generateReceiptsForOrder(orderId: string) {
     const registrations = await prisma.registration.findMany({
-      where: { orderId, status: "PAID" }
+      where: { orderId, status: "PAID", receiptPdfUrl: null }
     });
     if (!registrations.length) {
       return;
@@ -1117,10 +1193,10 @@ export class RegistrationService {
       select: { status: true, receiptPdfUrl: true }
     });
     if (!registration) {
-      throw new NotFoundError("Inscricao nao encontrada");
+      throw new NotFoundError("Inscrição não encontrada");
     }
     if (!RECEIPT_AVAILABLE_STATUSES.some((status) => status === registration.status)) {
-      throw new AppError("Comprovante disponivel apenas para inscricoes pagas", 400);
+      throw new AppError("Comprovante disponível apenas para inscrições pagas", 400);
     }
     const { url: receiptUrl } = buildReceiptLink(registrationId, registration.receiptPdfUrl);
     return { url: receiptUrl };
@@ -1187,26 +1263,29 @@ export class RegistrationService {
     });
   }
 
-  async streamReceipt(registrationId: string, token: string) {
+  async streamReceipt(registrationId: string, token: string, format: "pdf" | "png" = "pdf") {
     if (!registrationId) {
-      throw new NotFoundError("Comprovante nao encontrado");
+      throw new NotFoundError("Comprovante não encontrado");
     }
 
     if (!verifyReceiptToken(registrationId, token)) {
-      throw new UnauthorizedError("Token invalido ou expirado");
+      throw new UnauthorizedError("Token inválido ou expirado");
     }
 
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
       select: { status: true }
     });
-    if (!registration) throw new NotFoundError("Comprovante nao encontrado");
+    if (!registration) throw new NotFoundError("Comprovante não encontrado");
 
     if (!RECEIPT_AVAILABLE_STATUSES.some((status) => status === registration.status)) {
-      throw new NotFoundError("Comprovante nao encontrado");
+      throw new NotFoundError("Comprovante não encontrado");
     }
 
-    const filePath = path.join(receiptsDir, `${registrationId}.pdf`);
+    const pdfPath = path.join(receiptsDir, `${registrationId}.pdf`);
+    const pngPath = path.join(receiptsDir, `${registrationId}.png`);
+    const versionPath = path.join(receiptsDir, `${registrationId}.version`);
+    const filePath = format === "png" ? pngPath : pdfPath;
 
     const statReceipt = async () => {
       try {
@@ -1218,13 +1297,28 @@ export class RegistrationService {
     };
 
     let stats = await statReceipt();
-    if (!stats) {
+    let companionExists = true;
+    try {
+      await fs.stat(format === "png" ? pdfPath : pngPath);
+    } catch (error: any) {
+      if (error?.code === "ENOENT") companionExists = false;
+      else throw error;
+    }
+
+    let hasCurrentTemplate = false;
+    try {
+      hasCurrentTemplate = (await fs.readFile(versionPath, "utf8")).trim() === RECEIPT_TEMPLATE_VERSION;
+    } catch (error: any) {
+      if (error?.code !== "ENOENT") throw error;
+    }
+
+    if (!stats || !companionExists || !hasCurrentTemplate) {
       try {
         await this.generateReceipt(registrationId);
       } catch (error) {
         logger.error({ error, registrationId }, "Falha ao gerar recibo");
         throw new AppError(
-          "Nao foi possivel gerar o comprovante agora. Tente novamente em instantes.",
+          "Não foi possível gerar o comprovante agora. Tente novamente em instantes.",
           500
         );
       }
@@ -1232,15 +1326,15 @@ export class RegistrationService {
       stats = await statReceipt();
       if (!stats) {
         throw new AppError(
-          "Comprovante ainda nao disponivel. Tente novamente em instantes.",
+          "Comprovante ainda não disponível. Tente novamente em instantes.",
           503
         );
       }
     }
 
     return {
-      stream: createReadStream(filePath),
-      fileName: `comprovante-${registrationId}.pdf`,
+      buffer: await fs.readFile(filePath),
+      fileName: `comprovante-${registrationId}.${format}`,
       size: stats.size
     };
   }
@@ -1281,7 +1375,7 @@ export class RegistrationService {
         if (groupBy === "event") {
           groupsMap.set(mapKey, {
             id: key,
-            title: params.registrationEventTitle ?? "Evento Não informado",
+            title: params.registrationEventTitle ?? "Evento não informado",
             subtitle: params.registrationEventPeriod ?? null,
             extraInfo: params.registrationEventLocation ?? null,
             participants: []
@@ -1289,7 +1383,7 @@ export class RegistrationService {
         } else {
           groupsMap.set(mapKey, {
             id: key,
-            title: params.churchName ?? "Igreja nao informada",
+            title: params.churchName ?? "Igreja não informada",
             subtitle: params.districtName ? `Distrito: ${params.districtName}` : null,
             participants: [],
             extraInfo: null
@@ -1373,7 +1467,7 @@ export class RegistrationService {
     const orderedItems = sortRegistrationListItems(items, orderBy);
 
     const headers = [
-      "N�",
+      "Nº",
       "Inscrito",
       ...(includeCpf ? ["CPF"] : []),
       "Evento",
@@ -1402,24 +1496,31 @@ export class RegistrationService {
         ""
       ];
     });
-
-    const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    sheet["!cols"] = [
-      { wch: 6 },
-      { wch: 32 },
-      ...(includeCpf ? [{ wch: 18 }] : []),
-      { wch: 30 },
-      { wch: 18 },
-      { wch: 28 },
-      { wch: 22 },
-      { wch: 16 },
-      { wch: 20 },
-      { wch: 32 }
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Inscrições");
+    const columnWidths = [
+      6,
+      32,
+      ...(includeCpf ? [18] : []),
+      30,
+      18,
+      28,
+      22,
+      16,
+      20,
+      32
     ];
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, sheet, "Inscricoes");
-    return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
+    sheet.columns = headers.map((header, index) => ({
+      header,
+      key: `col${index}`,
+      width: columnWidths[index] ?? 20
+    }));
+
+    rows.forEach((row) => sheet.addRow(row));
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
   }
 
   async generateEventSheetPdf(
@@ -1492,14 +1593,14 @@ export class RegistrationService {
   }
 
   /**
-   * Retorna histórico consolidado da inscrição (auditoria, pagamentos, estornos, etc.)
+   * Retorna histórico consolidado da inscrição (auditoria, pagamentos, estornos etc.)
    */
   async getHistory(registrationId: string) {
     const registration = await prisma.registration.findUnique({
       where: { id: registrationId },
       include: { order: true }
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
 
     const orderId = registration.orderId;
 

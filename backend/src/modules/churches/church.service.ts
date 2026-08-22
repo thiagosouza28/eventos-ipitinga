@@ -298,7 +298,7 @@ export class ChurchService {
     });
     if (!church) throw new NotFoundError("Igreja não encontrada");
     if (church.registrations.length > 0) {
-      throw new Error("Nao e possivel excluir igreja com registros vinculados");
+      throw new Error("Não é possível excluir igreja com registros vinculados");
     }
     await prisma.church.delete({ where: { id } });
     await auditService.log({

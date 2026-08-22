@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@prisma/client";
 import type { Request } from "express";
 
 import { OrderStatus, RegistrationStatus, type OrderStatus as OrderStatusValue } from "../../config/statuses";
@@ -35,6 +35,7 @@ import { getActivePixProvider } from "../payments/pix-gateway";
 import { pixPaymentService } from "../payments/pix.service";
 import { getTableColumns } from "../../utils/schema-cache";
 import { resolveEventFormConfig, SYSTEM_FIELD_IDS, validateFormResponses } from "../forms/form-config";
+import { calculateEventInsuranceDays, resolveInsuranceAmountCents } from "../../utils/event-insurance";
 
 type GenderInput = Gender | "MASCULINO" | "FEMININO" | "OUTRO";
 
@@ -92,6 +93,11 @@ const resolvePriceCentsForAge = (
   return unitPriceCents;
 };
 
+const resolveStoredInsuranceCents = (registration: {
+  insuranceSelected?: boolean | null;
+  insuranceAmountCents?: number | null;
+}) => registration.insuranceSelected ? Math.max(registration.insuranceAmountCents ?? 0, 0) : 0;
+
 const resolveOrderDistrictId = (
   registrations: Array<{ districtId?: string | null }>,
   eventDistrictId?: string | null
@@ -110,7 +116,7 @@ const resolveOrderDistrictId = (
     return null;
   }
   if (ids.length > 1) {
-    logger.warn({ districts: ids }, "Inscricoes de pedidos com distritos diferentes. Usando o primeiro.");
+    logger.warn({ districts: ids }, "Inscrições de pedidos com distritos diferentes. Usando o primeiro.");
   }
   return ids[0];
 };
@@ -119,17 +125,17 @@ const isPendingTransferStatus = (status?: string | null) =>
   !status || status === OrderTransferStatus.PENDING || status === OrderTransferStatus.FAILED;
 
 const resolveOrderColumns = async () => {
-  const columns = await getTableColumns("Order");
+  const columns = await getTableColumns("orders");
   const columnSet = new Set(columns);
   return {
-    hasFeeCents: columnSet.has("feeCents"),
-    hasNetAmountCents: columnSet.has("netAmountCents"),
-    hasAmountToTransfer: columnSet.has("amountToTransfer"),
-    hasDistrictId: columnSet.has("districtId"),
-    hasDistrictAdminId: columnSet.has("districtAdminId"),
-    hasTransferStatus: columnSet.has("transferStatus"),
-    hasTransferBatchId: columnSet.has("transferBatchId"),
-    hasResponsibleUserId: columnSet.has("responsibleUserId")
+    hasFeeCents: columnSet.has("fee_cents"),
+    hasNetAmountCents: columnSet.has("net_amount_cents"),
+    hasAmountToTransfer: columnSet.has("amount_to_transfer"),
+    hasDistrictId: columnSet.has("district_id"),
+    hasDistrictAdminId: columnSet.has("district_admin_id"),
+    hasTransferStatus: columnSet.has("transfer_status"),
+    hasTransferBatchId: columnSet.has("transfer_batch_id"),
+    hasResponsibleUserId: columnSet.has("responsible_user_id")
   };
 };
 
@@ -186,7 +192,9 @@ export class OrderService {
         const minAgeLimit = typeof order.event?.minAgeYears === "number" ? order.event.minAgeYears : null;
         const registrationsWithPricing = order.registrations.map((registration) => ({
           ...registration,
-          priceCents: resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents)
+          priceCents:
+            resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents) +
+            resolveStoredInsuranceCents(registration)
         }));
         const totalCents = registrationsWithPricing.reduce((acc, reg) => acc + (reg.priceCents ?? 0), 0);
         return {
@@ -252,7 +260,9 @@ export class OrderService {
         const minAgeLimit = typeof order.event?.minAgeYears === "number" ? order.event.minAgeYears : null;
         const registrationsWithPricing = order.registrations.map((registration) => ({
           ...registration,
-          priceCents: resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents)
+          priceCents:
+            resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents) +
+            resolveStoredInsuranceCents(registration)
         }));
         const totalCents = registrationsWithPricing.reduce((acc, reg) => acc + (reg.priceCents ?? 0), 0);
         return {
@@ -267,7 +277,7 @@ export class OrderService {
 
   private async resolveDistrictAdminId(
     districtId: string | null,
-    tx: Prisma.TransactionClient | typeof prisma = prisma
+    tx: any = prisma
   ) {
     if (!districtId) return null;
     const admin = await tx.user.findFirst({
@@ -286,6 +296,8 @@ export class OrderService {
     buyerCpf: string;
     people: BatchPerson[];
     paymentMethod?: PaymentMethod;
+    insuranceSelected?: boolean;
+    insuranceWaiverAccepted?: boolean;
   }, actor?: ActorUser | undefined) {
     const handlerStart = Date.now();
     const participantCount = payload.people.length;
@@ -299,19 +311,41 @@ export class OrderService {
       throw new AppError("Diretor local sem igreja ou distrito definido.", 400);
     }
     if (!payload.people.length) {
-      throw new AppError("Informe ao menos uma inscricao", 400);
+      throw new AppError("Informe ao menos uma inscrição", 400);
     }
 
     const event = await prisma.event.findUnique({ where: { id: payload.eventId } });
     if (!event || !event.isActive) {
-      throw new NotFoundError("Evento nao disponivel");
+      throw new NotFoundError("Evento não disponível");
     }
     if (!event.ministryId) {
-      throw new AppError("Evento sem ministerio associado", 400);
+      throw new AppError("Evento sem ministério associado", 400);
     }
     if (!event.districtId) {
       throw new AppError("Evento sem distrito associado", 400);
     }
+
+    const insuranceEnabled = Boolean(event.insuranceEnabled);
+    const insuranceSelected = insuranceEnabled && (event.insuranceRequired || payload.insuranceSelected === true);
+    const insuranceWaiverAccepted = payload.insuranceWaiverAccepted === true;
+    if (event.insuranceRequired && !insuranceSelected) {
+      throw new AppError("O seguro é obrigatório para este evento.", 400);
+    }
+    if (insuranceEnabled && !insuranceSelected && !insuranceWaiverAccepted) {
+      throw new AppError(
+        "Para continuar sem o seguro, aceite o termo de responsabilidade.",
+        400
+      );
+    }
+    if (insuranceEnabled && event.insuranceDailyCents <= 0) {
+      throw new AppError("A configuração de seguro deste evento é inválida.", 400);
+    }
+    const insuranceDays = insuranceEnabled
+      ? calculateEventInsuranceDays(event.startDate, event.endDate)
+      : 0;
+    const insuranceAmountCents = insuranceSelected
+      ? resolveInsuranceAmountCents(event.insuranceDailyCents, insuranceDays)
+      : 0;
 
     const formConfig = resolveEventFormConfig(event.formConfig);
     const formErrors: Record<number, Record<string, string>> = {};
@@ -340,12 +374,12 @@ export class OrderService {
     // Verificar se método é exclusivo de admin
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
       if (!actorId || !actorRole) {
-        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+        throw new AppError("Este método de pagamento é exclusivo para administradores", 403);
       }
       // Verificar se o usuário é admin (AdminGeral ou AdminDistrital)
       const isAdmin = actorRole === "AdminGeral" || actorRole === "AdminDistrital";
       if (!isAdmin) {
-        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+        throw new AppError("Este método de pagamento é exclusivo para administradores", 403);
       }
     }
 
@@ -365,7 +399,7 @@ export class OrderService {
     const now = new Date();
     const activeLot = (isFreeEvent || isFreePaymentMethod) ? null : await eventService.findActiveLot(payload.eventId, now);
     if (!isFreeEvent && !isFreePaymentMethod && !activeLot) {
-      throw new AppError("Nenhum lote disponivel para inscricao no momento", 400);
+      throw new AppError("Nenhum lote disponível para inscrição no momento", 400);
     }
 
     // Se for método de pagamento gratuito, o valor é sempre 0
@@ -403,15 +437,15 @@ export class OrderService {
     const peopleWithPricing = peoplePrepared.map((person) => {
       const ageYears = calculateAgeAtDate(person.birthDate, event.startDate);
       if (ageYears === null) {
-        throw new AppError("Data de nascimento invalida.", 400);
+        throw new AppError("Data de nascimento inválida.", 400);
       }
       const basePriceCents = resolvePriceCentsForAge(ageYears, minAgeLimit, unitPriceCents);
-      const priceCents = (isFreeEvent || isFreePaymentMethod) ? 0 : basePriceCents;
+      const priceCents = isFreePaymentMethod ? 0 : basePriceCents + insuranceAmountCents;
       return { ...person, ageYears, priceCents };
     });
 
     const totalCents = peopleWithPricing.reduce((acc, person) => acc + person.priceCents, 0);
-    const isFreeOrder = isFreeEvent || isFreePaymentMethod || totalCents === 0;
+    const isFreeOrder = isFreePaymentMethod || totalCents === 0;
     const paidAtValue = isFreeOrder ? new Date() : null;
 
     const orderDistrictId = event.districtId;
@@ -445,6 +479,13 @@ export class OrderService {
           status: isFreeOrder ? RegistrationStatus.PAID : RegistrationStatus.PENDING_PAYMENT,
           responsibleUserId: event.createdById ?? null,
           priceCents: person.priceCents,
+          insuranceSelected,
+          insuranceDailyCents: insuranceSelected ? event.insuranceDailyCents : 0,
+          insuranceDays: insuranceSelected ? insuranceDays : 0,
+          insuranceAmountCents,
+          insuranceWaiverAccepted: insuranceEnabled && !insuranceSelected && insuranceWaiverAccepted,
+          insuranceWaiverAcceptedAt:
+            insuranceEnabled && !insuranceSelected && insuranceWaiverAccepted ? now : null,
           paidAt: paidAtValue
         };
       }
@@ -472,7 +513,7 @@ export class OrderService {
           const order = existing.order;
           if (order && (order.status as OrderStatus) === OrderStatus.PAID) {
             throw new ConflictError(
-              `CPF ${maskCpf(existing.cpf)} ja possui inscricao paga para este evento.`
+              `CPF ${maskCpf(existing.cpf)} já possui inscrição paga para este evento.`
             );
           }
         }
@@ -576,7 +617,7 @@ export class OrderService {
       try {
         await registrationService.generateReceiptsForOrder(order.id);
       } catch (error) {
-        logger.warn({ orderId: order.id, error }, "Falha ao gerar comprovantes de inscricao gratuita");
+        logger.warn({ orderId: order.id, error }, "Falha ao gerar comprovantes de inscrição gratuita");
       }
       return {
         orderId: order.id,
@@ -611,11 +652,11 @@ export class OrderService {
     } catch (error) {
       logger.error(
         { orderId: order.id, error },
-        "Falha ao gerar preferencia de pagamento"
+        "Falha ao gerar preferência de pagamento"
       );
       await prisma.registration.deleteMany({ where: { orderId: order.id } });
       await prisma.order.delete({ where: { id: order.id } });
-      throw new AppError("Nao foi possivel gerar o pagamento. Tente novamente.", 502);
+      throw new AppError("Não foi possível gerar o pagamento. Tente novamente.", 502);
     }
 
     return {
@@ -648,7 +689,7 @@ export class OrderService {
       where: { id: orderId },
       include: { registrations: true, event: true }
     });
-    if (!order) throw new NotFoundError("Pedido nao encontrado");
+    if (!order) throw new NotFoundError("Pedido não encontrado");
     if (order.status === OrderStatus.CANCELED) {
       throw new AppError("Pedido cancelado", 400);
     }
@@ -693,7 +734,8 @@ export class OrderService {
       const unitPriceCents = await resolveCurrentLotPriceCents(order.eventId, fallbackPriceCents);
       recalculatedUnitPrice = unitPriceCents;
       recalculatedPrices = order.registrations.map((registration) =>
-        resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents)
+        resolvePriceCentsForAge(registration.ageYears ?? null, minAgeLimit, unitPriceCents) +
+        resolveStoredInsuranceCents(registration)
       );
       totalCents = recalculatedPrices.reduce((acc, price) => acc + price, 0);
       needsPriceUpdate =
@@ -708,25 +750,14 @@ export class OrderService {
           data: { totalCents }
         })
       ];
-      if (minAgeLimit !== null) {
-        updates.push(
-          prisma.registration.updateMany({
-            where: { orderId: order.id, ageYears: { lte: minAgeLimit } },
-            data: { priceCents: 0 }
-          }),
-          prisma.registration.updateMany({
-            where: { orderId: order.id, ageYears: { gt: minAgeLimit } },
-            data: { priceCents: recalculatedUnitPrice }
+      updates.push(
+        ...order.registrations.map((registration, index) =>
+          prisma.registration.update({
+            where: { id: registration.id },
+            data: { priceCents: recalculatedPrices?.[index] ?? registration.priceCents }
           })
-        );
-      } else {
-        updates.push(
-          prisma.registration.updateMany({
-            where: { orderId: order.id },
-            data: { priceCents: recalculatedUnitPrice }
-          })
-        );
-      }
+        )
+      );
       await prisma.$transaction(updates);
       order.totalCents = totalCents;
       if (recalculatedPrices) {
@@ -746,8 +777,7 @@ export class OrderService {
     }));
     const manualPaymentProofUrl = order.manualPaymentProofUrl ?? undefined;
 
-    const isFreeEvent = Boolean((order.event as any)?.isFree);
-    const isFreeOrder = isFreeEvent || totalCents === 0;
+    const isFreeOrder = totalCents === 0;
     if (isFreeOrder) {
       return {
         status: order.status,
@@ -845,7 +875,7 @@ export class OrderService {
       order.mpPaymentId = null;
     }
     const latestStatus = latestPayment?.status;
-    if (latestPayment?.id && (latestStatus === "approved" || latestStatus === "authorized")) {
+    if (latestPayment?.id && latestStatus === "approved") {
       let metadataVersion: number | null = null;
       try {
         const paymentDetails = await paymentService.fetchPayment(String(latestPayment.id));
@@ -853,7 +883,7 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId, paymentId: latestPayment.id, error },
-          "Falha ao validar pagamento aprovado. Prosseguindo com verificacao padrao."
+          "Falha ao validar pagamento aprovado. Prosseguindo com verificação padrão."
         );
       }
       const updated = await this.markPaid(
@@ -886,7 +916,7 @@ export class OrderService {
       try {
         preference = await paymentService.getPreference(order.mpPreferenceId);
       } catch (error) {
-        logger.warn({ orderId, error }, "Falha ao reaproveitar preferencia existente. Gerando nova.");
+        logger.warn({ orderId, error }, "Falha ao reaproveitar preferência existente. Gerando nova.");
       }
     }
 
@@ -1037,13 +1067,13 @@ export class OrderService {
       }
     });
     if (!registration) {
-      throw new NotFoundError("Inscricao nao encontrada");
+      throw new NotFoundError("Inscrição não encontrada");
     }
     if (registration.status === RegistrationStatus.PAID) {
-      throw new AppError("Inscricao ja paga", 400);
+      throw new AppError("Inscrição já paga", 400);
     }
     if (registration.status === RegistrationStatus.CANCELED) {
-      throw new AppError("Inscricao cancelada", 400);
+      throw new AppError("Inscrição cancelada", 400);
     }
     if (!registration.event?.districtId) {
       throw new AppError("Evento sem distrito associado", 400);
@@ -1051,10 +1081,10 @@ export class OrderService {
 
     const order = registration.order;
     if (!order) {
-      throw new NotFoundError("Pedido associado nao encontrado");
+      throw new NotFoundError("Pedido associado não encontrado");
     }
     if (order.mpPaymentId) {
-      throw new AppError("Pedido ja possui pagamento registrado. Aguarde confirmacao ou estorne.", 400);
+      throw new AppError("Pedido já possui pagamento registrado. Aguarde confirmação ou estorne.", 400);
     }
 
     const paymentMethod = (order.paymentMethod as PaymentMethod) ?? PaymentMethod.PIX_MP;
@@ -1077,7 +1107,7 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { registrationId, orderId: order.id, error },
-          "Preferencia existente invalida, gerando nova"
+          "Preferencia existente inválida, gerando nova"
         );
       }
     }
@@ -1187,7 +1217,7 @@ export class OrderService {
       new Set(registrationIds.map((id) => id.trim()).filter(Boolean))
     );
     if (!uniqueRegistrationIds.length) {
-      throw new AppError("Informe ao menos uma inscricao para gerar pagamento", 400);
+      throw new AppError("Informe ao menos uma inscrição para gerar pagamento", 400);
     }
 
     const registrations = await prisma.registration.findMany({
@@ -1203,17 +1233,17 @@ export class OrderService {
     });
 
     if (!registrations.length || registrations.length !== uniqueRegistrationIds.length) {
-      throw new NotFoundError("Algumas inscricoes nao foram encontradas");
+      throw new NotFoundError("Algumas inscrições não foram encontradas");
     }
 
     const eventId = registrations[0].eventId;
     if (!registrations.every((reg) => reg.eventId === eventId)) {
-      throw new AppError("Selecione apenas inscricoes do mesmo evento", 400);
+      throw new AppError("Selecione apenas inscrições do mesmo evento", 400);
     }
 
     const event = registrations[0].event;
     if (!event || !event.isActive) {
-      throw new AppError("Evento indisponivel para pagamento", 400);
+      throw new AppError("Evento indisponível para pagamento", 400);
     }
 
     if (!event.districtId) {
@@ -1229,7 +1259,7 @@ export class OrderService {
     for (const reg of registrations) {
       if (disallowedStatuses.has(reg.status as RegistrationStatus)) {
         throw new AppError(
-          `Inscricao ${reg.fullName ?? reg.id} ja paga ou confirmada. Remova-a da selecao.`,
+          `Inscrição ${reg.fullName ?? reg.id} já paga ou confirmada. Remova-a da seleção.`,
           400
         );
       }
@@ -1246,11 +1276,11 @@ export class OrderService {
 
     if (AdminOnlyPaymentMethods.includes(resolvedMethod as PaymentMethod)) {
       if (!actor?.id || !actor.role) {
-        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+        throw new AppError("Este método de pagamento é exclusivo para administradores", 403);
       }
       const isAdmin = actor.role === "AdminGeral" || actor.role === "AdminDistrital";
       if (!isAdmin) {
-        throw new AppError("Este metodo de pagamento e exclusivo para administradores", 403);
+        throw new AppError("Este método de pagamento é exclusivo para administradores", 403);
       }
     }
 
@@ -1289,7 +1319,7 @@ export class OrderService {
     const totalCents = prices.reduce((acc, price) => acc + (price ?? 0), 0);
 
     const orderStatus =
-      isFreeEvent || isFreePaymentMethod || totalCents === 0
+      isFreePaymentMethod || totalCents === 0
         ? OrderStatus.PAID
         : OrderStatus.PENDING;
     const paidAtValue = orderStatus === OrderStatus.PAID ? new Date() : null;
@@ -1410,7 +1440,7 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId: order.id, error },
-          "Falha ao gerar preferencia para pagamento em massa de inscricoes"
+          "Falha ao gerar preferência para pagamento em massa de inscrições"
         );
       }
     }
@@ -1447,7 +1477,7 @@ export class OrderService {
         }
       }
     });
-    if (!order) throw new NotFoundError("Pedido nao encontrado");
+    if (!order) throw new NotFoundError("Pedido não encontrado");
 
     const orderColumns = await resolveOrderColumns();
 
@@ -1534,6 +1564,9 @@ export class OrderService {
       if (shouldUpdateProof && order.manualPaymentProofUrl && order.manualPaymentProofUrl !== newProofUrl) {
         await storageService.deleteByUrl(order.manualPaymentProofUrl).catch(() => undefined);
       }
+      void registrationService.generateReceiptsForOrder(orderId).catch((error) => {
+        logger.error({ orderId, error }, "Falha ao completar comprovantes de pedido já pago");
+      });
       return updatedOrder;
     }
 
@@ -1545,7 +1578,7 @@ export class OrderService {
       } catch (error) {
         logger.warn(
           { orderId, paymentId, error },
-          "Falha ao recuperar detalhes do pagamento para validar preferencia ativa"
+          "Falha ao recuperar detalhes do pagamento para validar preferência ativa"
         );
       }
     }
@@ -1562,7 +1595,7 @@ export class OrderService {
           receivedVersion: effectiveVersion,
           activeVersion: order.preferenceVersion
         },
-        "Pagamento associado a preferencia expirada foi ignorado"
+        "Pagamento associado a preferência expirada foi ignorado"
       );
       return order;
     }
@@ -1680,7 +1713,11 @@ export class OrderService {
     if (shouldUpdateProof && order.manualPaymentProofUrl && order.manualPaymentProofUrl !== newProofUrl) {
       await storageService.deleteByUrl(order.manualPaymentProofUrl).catch(() => undefined);
     }
-    await registrationService.generateReceiptsForOrder(orderId);
+    // A baixa financeira não deve falhar nem atrasar a resposta do webhook por
+    // causa da renderização de PDFs. O download regenera ausentes sob demanda.
+    void registrationService.generateReceiptsForOrder(orderId).catch((error) => {
+      logger.error({ orderId, error }, "Falha ao gerar comprovantes após confirmação do pagamento");
+    });
     await auditService.log({
       actorUserId: options?.actorUserId ?? undefined,
       action: "ORDER_PAID",
@@ -1707,21 +1744,50 @@ export class OrderService {
     actorUserId?: string | null;
   }) {
     const order = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!order) throw new NotFoundError("Pedido nao encontrado");
+    if (!order) throw new NotFoundError("Pedido não encontrado");
 
-    await prisma.$transaction([
-      prisma.registration.update({
+    const result = await prisma.$transaction(async (tx) => {
+      const registration = await tx.registration.findFirst({
+        where: { id: registrationId, orderId },
+        include: { refunds: true }
+      });
+      if (!registration) throw new NotFoundError("Inscrição não pertence ao pedido informado");
+
+      const existingRefund = registration.refunds[0];
+      if (existingRefund) {
+        return { alreadyRecorded: true };
+      }
+      if (![RegistrationStatus.PAID, RegistrationStatus.CHECKED_IN].includes(registration.status as any)) {
+        throw new ConflictError("Somente inscrições pagas podem ser estornadas");
+      }
+      if (amountCents !== registration.priceCents) {
+        throw new ConflictError("O valor do estorno deve corresponder ao valor da inscrição");
+      }
+
+      await tx.registration.update({
         where: { id: registrationId },
         data: { status: RegistrationStatus.REFUNDED }
-      }),
-      prisma.order.update({
-        where: { id: orderId },
-        data: { status: OrderStatus.PARTIALLY_REFUNDED }
-      }),
-      prisma.refund.create({
+      });
+      await tx.refund.create({
         data: { orderId, registrationId, amountCents, mpRefundId, reason }
-      })
-    ]);
+      });
+
+      const activeRegistrations = await tx.registration.count({
+        where: {
+          orderId,
+          status: { notIn: [RegistrationStatus.REFUNDED, RegistrationStatus.CANCELED] }
+        }
+      });
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: activeRegistrations === 0 ? OrderStatus.REFUNDED : OrderStatus.PARTIALLY_REFUNDED
+        }
+      });
+      return { alreadyRecorded: false };
+    }, { timeout: INTERACTIVE_TX_TIMEOUT_MS });
+
+    if (result.alreadyRecorded) return;
 
     await auditService.log({
       actorUserId: actorUserId ?? undefined,
@@ -1738,7 +1804,7 @@ export class OrderService {
     actorUserId?: string | null
   ) {
     if (!registrationIds.length) {
-      throw new AppError("Informe ao menos uma inscricao para quitacao", 400);
+      throw new AppError("Informe ao menos uma inscrição para quitação", 400);
     }
 
     const registrations = await prisma.registration.findMany({
@@ -1750,17 +1816,17 @@ export class OrderService {
     });
 
     if (!registrations.length) {
-      throw new NotFoundError("Nenhuma inscricao encontrada para quitacao");
+      throw new NotFoundError("Nenhuma inscrição encontrada para quitação");
     }
 
     const eventIds = new Set(registrations.map((r) => r.eventId));
     if (eventIds.size > 1) {
-      throw new AppError("Selecione apenas inscricoes do mesmo evento para confirmar manualmente.", 400);
+      throw new AppError("Selecione apenas inscrições do mesmo evento para confirmar manualmente.", 400);
     }
 
     const event = registrations[0].event;
     if (!event || !event.isActive) {
-      throw new AppError("Evento indisponivel para confirmacao.", 400);
+      throw new AppError("Evento indisponível para confirmação.", 400);
     }
 
     const allowedMethods = parsePaymentMethods(event.paymentMethods);
@@ -1787,14 +1853,14 @@ export class OrderService {
             : allowedMethods[0];
 
       if (!allowedMethods.includes(methodToUse)) {
-        throw new AppError(`Metodo de pagamento nao permitido para o evento.`, 400);
+        throw new AppError(`Método de pagamento não permitido para o evento.`, 400);
       }
       if (registration.status === RegistrationStatus.PAID) {
         continue;
       }
       if (registration.status !== RegistrationStatus.PENDING_PAYMENT) {
         throw new AppError(
-          `Inscricao ${registration.id} nao esta pendente para pagamento.`,
+          `Inscrição ${registration.id} não está pendente para pagamento.`,
           400
         );
       }
@@ -1809,7 +1875,7 @@ export class OrderService {
     }
 
     if (!grouped.size) {
-      throw new AppError("As inscricoes selecionadas ja estao quitadas.", 400);
+      throw new AppError("As inscrições selecionadas já estáo quitadas.", 400);
     }
 
     const paidAt = options?.paidAt ?? new Date();

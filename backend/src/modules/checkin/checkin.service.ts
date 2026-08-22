@@ -16,7 +16,7 @@ const registrationInclude = {
 } as const;
 
 const formatDateBr = (date: Date | null | undefined) =>
-  date ? brDateFormatter.format(date) : "Nao informado";
+  date ? brDateFormatter.format(date) : "Não informado";
 
 const buildRegistrationPayload = (registration: any) => {
   const event = registration.event ?? {};
@@ -27,11 +27,11 @@ const buildRegistrationPayload = (registration: any) => {
     eventId: registration.eventId,
     fullName: registration.fullName,
     cpf: registration.cpf,
-    eventTitle: event.title ?? "Nao informado",
-    eventLocation: event.location ?? "Nao informado",
+    eventTitle: event.title ?? "Não informado",
+    eventLocation: event.location ?? "Não informado",
     eventPeriod: `${formatDateBr(event.startDate)} - ${formatDateBr(event.endDate)}`,
-    districtName: district.name ?? "Nao informado",
-    churchName: church.name ?? "Nao informado",
+    districtName: district.name ?? "Não informado",
+    churchName: church.name ?? "Não informado",
     photoUrl: registration.photoUrl ?? null,
     checkinAt: registration.checkinAt ? registration.checkinAt.toISOString() : null
   };
@@ -40,7 +40,7 @@ const buildRegistrationPayload = (registration: any) => {
 export class CheckinService {
   async getEventDashboard(eventId: string) {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!event) throw new NotFoundError("Evento nao encontrado");
+    if (!event) throw new NotFoundError("Evento não encontrado");
 
     const [counts, latest] = await Promise.all([
       prisma.registration.groupBy({
@@ -77,13 +77,13 @@ export class CheckinService {
       where: { id: registrationId },
       include: registrationInclude
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
     if (!signature) {
-      throw new AppError("QR Code invalido", 400);
+      throw new AppError("QR Code inválido", 400);
     }
     const isValid = verifyCheckinSignature(registration.id, registration.createdAt, signature);
     if (!isValid) {
-      throw new AppError("QR Code invalido", 400);
+      throw new AppError("QR Code inválido", 400);
     }
 
     const payload = buildRegistrationPayload(registration);
@@ -96,7 +96,7 @@ export class CheckinService {
     }
 
     if (registration.status !== "PAID") {
-      throw new AppError("Pagamento ainda nao confirmado. Tente novamente em instantes.", 400);
+      throw new AppError("Pagamento ainda não confirmado. Tente novamente em instantes.", 400);
     }
 
     return {
@@ -119,7 +119,7 @@ export class CheckinService {
     const sanitizedCpf = sanitizeCpf(cpf);
     const parsedBirth = new Date(birthDate);
     if (Number.isNaN(parsedBirth.getTime())) {
-      throw new AppError("Data de nascimento invalida", 400);
+      throw new AppError("Data de nascimento inválida", 400);
     }
     const start = new Date(parsedBirth);
     start.setHours(0, 0, 0, 0);
@@ -138,7 +138,7 @@ export class CheckinService {
       include: registrationInclude
     });
     if (!registration) {
-      throw new NotFoundError("Inscricao nao localizada para CPF/Data informados");
+      throw new NotFoundError("Inscrição não localizada para CPF/Data informados");
     }
 
     const payload = buildRegistrationPayload(registration);
@@ -151,7 +151,7 @@ export class CheckinService {
     }
 
     if (registration.status !== "PAID") {
-      throw new AppError("Pagamento ainda nao confirmado. Tente novamente em instantes.", 400);
+      throw new AppError("Pagamento ainda não confirmado. Tente novamente em instantes.", 400);
     }
 
     return {
@@ -174,12 +174,12 @@ export class CheckinService {
       where: { id: registrationId },
       include: registrationInclude
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
 
     if (signature) {
       const isValid = verifyCheckinSignature(registration.id, registration.createdAt, signature);
       if (!isValid) {
-        throw new AppError("QR Code invalido ou expirado", 400);
+        throw new AppError("QR Code inválido ou expirado", 400);
       }
     }
 
@@ -191,7 +191,7 @@ export class CheckinService {
     }
 
     if (registration.status !== "PAID") {
-      throw new AppError("Pagamento ainda nao confirmado. Tente novamente em instantes.", 400);
+      throw new AppError("Pagamento ainda não confirmado. Tente novamente em instantes.", 400);
     }
 
     await registrationService.markCheckin(registration.id);
@@ -200,7 +200,7 @@ export class CheckinService {
       include: registrationInclude
     });
     if (!updated) {
-      throw new NotFoundError("Inscricao nao encontrada apos confirmacao");
+      throw new NotFoundError("Inscrição não encontrada após confirmação");
     }
 
     return {
@@ -220,11 +220,11 @@ export class CheckinService {
       where: { id: registrationId },
       include: registrationInclude
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
 
     const isValid = verifyCheckinSignature(registration.id, registration.createdAt, signature);
     if (!isValid) {
-      throw new AppError("Link de check-in invalido ou expirado", 400);
+      throw new AppError("Link de check-in inválido ou expirado", 400);
     }
 
     if (registration.status === "CHECKED_IN") {
@@ -235,7 +235,7 @@ export class CheckinService {
     }
 
     if (registration.status !== "PAID") {
-      throw new AppError("Pagamento ainda nao confirmado. Tente novamente em instantes.", 400);
+      throw new AppError("Pagamento ainda não confirmado. Tente novamente em instantes.", 400);
     }
 
     return {
@@ -266,11 +266,11 @@ export class CheckinService {
       where: { id: registrationId },
       include: registrationInclude
     });
-    if (!registration) throw new NotFoundError("Inscricao nao encontrada");
+    if (!registration) throw new NotFoundError("Inscrição não encontrada");
 
     const isValid = verifyCheckinSignature(registration.id, registration.createdAt, signature);
     if (!isValid) {
-      throw new AppError("Link de check-in invalido ou expirado", 400);
+      throw new AppError("Link de check-in inválido ou expirado", 400);
     }
 
     if (registration.status === "CHECKED_IN") {
@@ -281,7 +281,7 @@ export class CheckinService {
     }
 
     if (registration.status !== "PAID") {
-      throw new AppError("Pagamento ainda nao confirmado. Tente novamente em instantes.", 400);
+      throw new AppError("Pagamento ainda não confirmado. Tente novamente em instantes.", 400);
     }
 
     await registrationService.markCheckin(registration.id);
@@ -290,7 +290,7 @@ export class CheckinService {
       include: registrationInclude
     });
     if (!updated) {
-      throw new NotFoundError("Inscricao nao encontrada apos confirmacao");
+      throw new NotFoundError("Inscrição não encontrada após confirmação");
     }
 
     return {

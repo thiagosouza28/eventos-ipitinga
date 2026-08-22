@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { registrationService } from "../registrations/registration.service";
@@ -6,7 +6,7 @@ import { sanitizeCpf } from "../../utils/mask";
 import { env } from "../../config/env";
 import { AppError, ForbiddenError, NotFoundError, UnauthorizedError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
-import { applyDownloadHeaders, sendDownloadStream } from "../../middlewares/download-headers";
+import { applyDownloadHeaders, sendDownloadBuffer } from "../../middlewares/download-headers";
 
 const lookupSchema = z.object({
   cpf: z.string().min(11),
@@ -22,8 +22,8 @@ export const lookupReceiptsHandler = async (request: Request, response: Response
   return response.json(receipts);
 };
 
-const RECEIPT_ERROR_MESSAGE = "Comprovante nao encontrado ou token invalido.";
-const RECEIPT_INTERNAL_MESSAGE = "Nao foi possivel gerar o comprovante agora.";
+const RECEIPT_ERROR_MESSAGE = "Comprovante não encontrado ou token inválido.";
+const RECEIPT_INTERNAL_MESSAGE = "Não foi possível gerar o comprovante agora.";
 
 const sendReceiptError = (response: Response, status: number, message: string) =>
   response.status(status).json({ error: true, message });
@@ -47,7 +47,7 @@ const resolveReceiptError = (error: unknown) => {
   return { status: 500, message: RECEIPT_INTERNAL_MESSAGE };
 };
 
-export const downloadReceiptHandler = async (request: Request, response: Response) => {
+const downloadReceipt = async (request: Request, response: Response, format: "pdf" | "png") => {
   const { registrationId } = request.params;
   const token = typeof request.query.token === "string" ? request.query.token : undefined;
 
@@ -67,8 +67,8 @@ export const downloadReceiptHandler = async (request: Request, response: Respons
   }
 
   try {
-    const { stream, size, fileName } = await registrationService.streamReceipt(registrationId, token);
-    sendDownloadStream(response, { stream, fileName, contentLength: size });
+    const { buffer, fileName } = await registrationService.streamReceipt(registrationId, token, format);
+    sendDownloadBuffer(response, { buffer, fileName });
     return;
   } catch (error) {
     const resolved = resolveReceiptError(error);
@@ -82,6 +82,12 @@ export const downloadReceiptHandler = async (request: Request, response: Respons
     }
   }
 };
+
+export const downloadReceiptHandler = (request: Request, response: Response) =>
+  downloadReceipt(request, response, "pdf");
+
+export const downloadReceiptImageHandler = (request: Request, response: Response) =>
+  downloadReceipt(request, response, "png");
 
 
 

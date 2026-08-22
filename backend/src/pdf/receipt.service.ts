@@ -2,12 +2,14 @@ import { promises as fs, existsSync } from "fs";
 import path from "path";
 
 import QRCode from "qrcode";
-import { chromium, Browser } from "playwright";
 
 import { env } from "../config/env";
 import { AppError } from "../utils/errors";
 import { generateCheckinSignature } from "../utils/hmac";
 import { maskCpf } from "../utils/mask";
+import { closePdfBrowser, renderPdfAndPngFromHtml } from "./pdf-engine";
+import { getPublicApiBaseUrl } from "../utils/public-url";
+import { DEFAULT_PHOTO_DATA_URL } from "../config/default-photo";
 
 type ReceiptPayload = {
   eventTitle: string;
@@ -32,10 +34,9 @@ type ReceiptPayload = {
   participantType?: string;
 };
 
-let browser: Browser | null = null;
 let templateCache: string | null = null;
 const receiptConcurrency = Math.max(1, env.RECEIPT_MAX_CONCURRENCY);
-const backendRoot = path.resolve(__dirname, "..", "..");
+const backendRoot = path.resolve(process.cwd());
 
 const createLimiter = (maxConcurrent: number) => {
   let active = 0;
@@ -79,47 +80,12 @@ const resolveTemplatePath = () => {
   const candidates = [
     path.resolve(__dirname, "templates", "receipt.html"),
     path.resolve(backendRoot, "dist", "pdf", "templates", "receipt.html"),
-    path.resolve(backendRoot, "src", "pdf", "templates", "receipt.html")
+    path.resolve(backendRoot, "public", "pdf-templates", "receipt.html")
   ];
   return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
 };
 
-const resolveExecutablePath = () => {
-  const rawPath = env.PLAYWRIGHT_EXECUTABLE_PATH?.trim();
-  if (!rawPath) return undefined;
-  const resolved = path.isAbsolute(rawPath) ? rawPath : path.resolve(backendRoot, rawPath);
-  if (!existsSync(resolved)) {
-    throw new AppError(
-      `Chromium nao encontrado em ${resolved}. Ajuste PLAYWRIGHT_EXECUTABLE_PATH ou execute \`npm run playwright:install\`.`,
-      500
-    );
-  }
-  return resolved;
-};
-
-const ensureBrowser = async () => {
-  if (browser && browser.isConnected()) return browser;
-  try {
-    const executablePath = resolveExecutablePath();
-    browser = await chromium.launch({
-      headless: true,
-      // Flags help when running inside containers/servers without sandbox enabled.
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-      ...(executablePath ? { executablePath } : {})
-    });
-    return browser;
-  } catch (error: any) {
-    browser = null;
-    const message = String(error?.message ?? "");
-    if (message.includes("executable doesn't exist") || message.includes("Failed to launch")) {
-      throw new AppError(
-        "Motor de PDF indisponivel. Execute `npm run playwright:install` ou configure PLAYWRIGHT_EXECUTABLE_PATH.",
-        500
-      );
-    }
-    throw error;
-  }
-};
+// Browser lifecycle is handled by pdf-engine (serverless friendly).
 
 const loadReceiptTemplate = async () => {
   const shouldBypassCache = env.NODE_ENV !== "production";
@@ -135,7 +101,7 @@ const loadReceiptTemplate = async () => {
   } catch (error: any) {
     if (error && error.code === "ENOENT") {
       throw new AppError(
-        "Template do recibo nao encontrado. Execute o build novamente ou reinstale a aplicacao.",
+        "Template do recibo não encontrado. Execute o build novamente ou reinstale a aplicação.",
         500
       );
     }
@@ -148,11 +114,9 @@ export const generateReceiptPdf = async (payload: ReceiptPayload) => {
     const htmlTemplate = await loadReceiptTemplate();
 
     const signature = generateCheckinSignature(payload.registrationId, payload.createdAt);
-    const validationUrl = `${env.API_URL}/checkin/validate?rid=${payload.registrationId}&sig=${signature}`;
+    const validationUrl = `${getPublicApiBaseUrl()}/checkin/validate?rid=${encodeURIComponent(payload.registrationId)}&sig=${encodeURIComponent(signature)}`;
     const qrDataUrl = await QRCode.toDataURL(validationUrl, { errorCorrectionLevel: "H" });
-    const photoUrl =
-      payload.photoUrl ||
-      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNkYmVhZmUiIG9mZnNldD0iMCUiIC8+CiAgICAgIDxzdG9wIHN0b3AtY29sb3I9IiNlZWYyZmYiIG9mZnNldD0iMTAwJSIgLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8ZmlsdGVyIGlkPSJibCIgeD0iLTAlIiB5PSItMCUiIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAuMSIgZmxvb2Qtb2Zmc2V0PSIwIi8+CiAgICA8L2ZpbHRlcj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9InVybCgjZykiIHN0cm9rZT0iI2Q3ZWFmZSIvPgogIDxyZWN0IHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgcng9IjIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmNGY3ZmYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDxjaXJjbGUgY3g9IjQ4IiBjeT0iMzYiIHI9IjE4IiBmaWxsPSIjZjBmMmZmIiBzdHJva2U9IiM5NGEzYjgiLz4KICA8cGF0aCBkPSJNNzMgODIuN2MwLTMuNy0zLjgtNy4zLTEwLjUtOS41LTYuOS0yLjMtMTYuOS0yLjMtMjMuOCAwQzMyIDc1LjQgMjggNzkgMjggODIuN2MwIDMuNSAzLjQgNi4zIDkuNCA3LjlsLjguMmMxMy4xIDMuNiAzNi4zIDMuNiA0OS41IDBsLjgtMmM2LTQuOCA5LjQtOC4yIDkuNC0xMi4xWiIgZmlsbD0iI2YwZjJmZiIgc3Ryb2tlPSIjOTRhM2I4Ii8+Cjwvc3ZnPg==";
+    const photoUrl = payload.photoUrl?.trim() || DEFAULT_PHOTO_DATA_URL;
 
     const formatMoney = (value: number | undefined | null) => {
       const normalized = typeof value === "number" && Number.isFinite(value) ? Math.max(0, value) : 0;
@@ -187,6 +151,7 @@ export const generateReceiptPdf = async (payload: ReceiptPayload) => {
       registrationDate: formatDate(payload.createdAt),
       paymentDate: formatDate(payload.paymentDate),
       photoUrl,
+      defaultPhotoUrl: DEFAULT_PHOTO_DATA_URL,
       generatedAt: new Date().toLocaleString("pt-BR"),
       validationUrl,
       qrDataUrl,
@@ -202,28 +167,19 @@ export const generateReceiptPdf = async (payload: ReceiptPayload) => {
       htmlTemplate
     );
 
-    const browserInstance = await ensureBrowser();
-    const page = await browserInstance.newPage();
-    try {
-      await page.setContent(compiledHtml, { waitUntil: "networkidle" });
-      const pdfBuffer = await page.pdf({
-        width: "210mm",
-        height: "297mm",
-        printBackground: true,
-        margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" }
-      });
-      return { pdfBuffer, validationUrl };
-    } finally {
-      await page.close().catch(() => undefined);
-    }
+    const { pdfBuffer, pngBuffer } = await renderPdfAndPngFromHtml(compiledHtml, {
+      width: "210mm",
+      height: "297mm",
+      printBackground: true,
+      margin: { top: "0", bottom: "0", left: "0", right: "0" }
+    });
+
+    return { pdfBuffer, pngBuffer, validationUrl };
   });
 };
 
 export const closeReceiptBrowser = async () => {
-  if (browser) {
-    await browser.close();
-    browser = null;
-  }
+  await closePdfBrowser();
 };
 
 

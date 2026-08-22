@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { ministryService } from "./ministry.service";
@@ -18,7 +18,7 @@ export const listMinistriesHandler = async (request: Request, response: Response
 };
 
 export const createMinistryHandler = async (request: Request, response: Response) => {
-  const payload = createSchema.parse(request.body);
+  const payload = createSchema.parse(request.body) as any;
   const ministry = await ministryService.create(payload, request.user?.id);
   return response.status(201).json(ministry);
 };

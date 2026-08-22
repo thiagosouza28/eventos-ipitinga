@@ -89,7 +89,7 @@ export class DistrictService {
   async update(id: string, data: { name?: unknown; pastorName?: unknown }, actorId?: string) {
     const existing = await prisma.district.findUnique({ where: { id } });
     if (!existing) {
-      throw new NotFoundError("Distrito nao encontrado");
+      throw new NotFoundError("Distrito não encontrado");
     }
     const payload: { name?: string; pastorName?: string | null } = {};
     if (data.name !== undefined) {
@@ -144,10 +144,10 @@ export class DistrictService {
       }
     });
     if (!district) {
-      throw new NotFoundError("Distrito nao encontrado");
+      throw new NotFoundError("Distrito não encontrado");
     }
     if (district.churches.length > 0) {
-      throw new Error("Nao e possivel excluir distrito com igrejas vinculadas");
+      throw new Error("Não é possível excluir distrito com igrejas vinculadas");
     }
     await prisma.district.delete({
       where: { id }

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local databases and service runtime data
+.local/
+**/public/uploads/
+**/uploads/
+**/supabase/.temp/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Local archives that may contain environment files
+*.zip
+
+# Generated output and caches
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+*.log
+.cache/
+.turbo/
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

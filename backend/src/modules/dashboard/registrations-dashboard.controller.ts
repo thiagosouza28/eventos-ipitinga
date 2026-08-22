@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { registrationsDashboardService } from "./registrations-dashboard.service";
@@ -6,7 +6,7 @@ import { AppError } from "../../utils/errors";
 import { logger } from "../../utils/logger";
 import { getScopedMinistryIds } from "../../utils/user-scope";
 
-const REPORT_ERROR_MESSAGE = "Nao foi possivel carregar as metricas de inscricoes.";
+const REPORT_ERROR_MESSAGE = "Não foi possível carregar as métricas de inscrições.";
 const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
 
 const respondReportError = (response: Response, error: unknown, context: string) => {
@@ -69,9 +69,9 @@ export const registrationsDashboardHandler = async (request: Request, response: 
     return response.json(data);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao carregar metricas de inscricoes");
+    return respondReportError(response, error, "Erro ao carregar métricas de inscrições");
   }
 };

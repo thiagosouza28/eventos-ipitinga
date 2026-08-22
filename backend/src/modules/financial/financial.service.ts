@@ -1,5 +1,6 @@
 import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
+import { logger } from "../../utils/logger";
 import { getTableColumns, hasTable } from "../../utils/schema-cache";
 
 export class FinancialService {
@@ -27,7 +28,7 @@ export class FinancialService {
       where: { id: eventId }
     });
     if (!event) {
-      throw new NotFoundError("Evento nao encontrado");
+      throw new NotFoundError("Evento não encontrado");
     }
 
     const district = event.districtId
@@ -38,13 +39,13 @@ export class FinancialService {
       : null;
 
     // Verificar se as colunas existem antes de usar
-    const columnNames = await getTableColumns("Order");
-    const hasFeeCents = columnNames.includes("feeCents");
-    const hasNetAmountCents = columnNames.includes("netAmountCents");
+    const columnNames = await getTableColumns("orders");
+    const hasFeeCents = columnNames.includes("fee_cents");
+    const hasNetAmountCents = columnNames.includes("net_amount_cents");
 
     // Usar query raw para evitar problemas com Prisma Client não regenerado
-    const feeCentsSelect = hasFeeCents ? "COALESCE(o.feeCents, 0) as feeCents" : "0 as feeCents";
-    const netAmountCentsSelect = hasNetAmountCents ? "COALESCE(o.netAmountCents, o.totalCents) as netAmountCents" : "o.totalCents as netAmountCents";
+    const feeCentsSelect = hasFeeCents ? "COALESCE(o.fee_cents, 0) as feeCents" : "0 as feeCents";
+    const netAmountCentsSelect = hasNetAmountCents ? "COALESCE(o.net_amount_cents, o.total_cents) as netAmountCents" : "o.total_cents as netAmountCents";
 
     let paidOrdersRaw: Array<{
       id: string;
@@ -57,13 +58,13 @@ export class FinancialService {
       paidOrdersRaw = await prisma.$queryRawUnsafe(`
         SELECT 
           o.id,
-          o.totalCents,
+          o.total_cents as totalCents,
           ${feeCentsSelect},
           ${netAmountCentsSelect},
-          o.paymentMethod
-        FROM \`Order\` o
-        WHERE o.eventId = '${eventId}' AND o.status = 'PAID'
-      `);
+          o.payment_method as paymentMethod
+        FROM orders o
+        WHERE o.event_id = ? AND o.status = 'PAID'
+      `, eventId);
     } catch (error: any) {
       throw new AppError("Falha ao consultar pedidos pagos do evento", 500, {
         error: error?.message
@@ -242,7 +243,7 @@ export class FinancialService {
   async getDistrictSummary(eventId: string, districtId: string) {
     const district = await prisma.district.findUnique({ where: { id: districtId } });
     if (!district) {
-      throw new NotFoundError("Distrito nao encontrado");
+      throw new NotFoundError("Distrito não encontrado");
     }
 
     const paidRegistrations = await prisma.registration.findMany({
@@ -318,7 +319,7 @@ export class FinancialService {
       include: { district: true }
     });
     if (!church) {
-      throw new NotFoundError("Igreja nao encontrada");
+      throw new NotFoundError("Igreja não encontrada");
     }
 
     const paidRegistrations = await prisma.registration.findMany({
@@ -418,31 +419,31 @@ export class FinancialService {
   async getGeneralSummary() {
     try {
       // Verificar se as colunas existem antes de usar
-      const columnNames = await getTableColumns("Order");
-      const hasFeeCents = columnNames.includes("feeCents");
-      const hasNetAmountCents = columnNames.includes("netAmountCents");
+      const columnNames = await getTableColumns("orders");
+      const hasFeeCents = columnNames.includes("fee_cents");
+      const hasNetAmountCents = columnNames.includes("net_amount_cents");
 
       // Construir query dinamicamente baseado nas colunas disponíveis
       // Usar COALESCE para lidar com valores NULL
-      const feeCentsSelect = hasFeeCents ? "COALESCE(o.feeCents, 0) as feeCents" : "0 as feeCents";
-      const netAmountCentsSelect = hasNetAmountCents ? "COALESCE(o.netAmountCents, o.totalCents) as netAmountCents" : "o.totalCents as netAmountCents";
+      const feeCentsSelect = hasFeeCents ? "COALESCE(o.fee_cents, 0) as feeCents" : "0 as feeCents";
+      const netAmountCentsSelect = hasNetAmountCents ? "COALESCE(o.net_amount_cents, o.total_cents) as netAmountCents" : "o.total_cents as netAmountCents";
 
       const query = `
         SELECT 
           o.id,
-          o.eventId,
-          o.totalCents,
+          o.event_id as eventId,
+          o.total_cents as totalCents,
           ${feeCentsSelect},
           ${netAmountCentsSelect},
-          o.paymentMethod,
+          o.payment_method as paymentMethod,
           e.id as event_id,
           e.title as event_title,
           e.slug as event_slug,
-          e.districtId as event_district_id,
+          e.district_id as event_district_id,
           d.name as event_district_name
-        FROM \`Order\` o
-        INNER JOIN \`Event\` e ON o.eventId = e.id
-        LEFT JOIN \`District\` d ON e.districtId = d.id
+        FROM orders o
+        INNER JOIN events e ON o.event_id = e.id
+        LEFT JOIN districts d ON e.district_id = d.id
         WHERE o.status = 'PAID'
       `;
 
@@ -501,7 +502,7 @@ export class FinancialService {
     // Verificar se a tabela Expense existe antes de tentar consultar
     let expensesCents = 0;
     try {
-      const hasExpenseTable = await hasTable("Expense");
+      const hasExpenseTable = await hasTable("expenses");
       if (hasExpenseTable) {
         const expensesTotal = await prisma.expense.aggregate({
           _sum: {
@@ -563,7 +564,7 @@ export class FinancialService {
         events: Array.from(eventSummaries.values())
       };
     } catch (error: any) {
-      console.error("Erro em getGeneralSummary:", error);
+      logger.error({ error }, "Erro em getGeneralSummary");
       throw error;
     }
   }

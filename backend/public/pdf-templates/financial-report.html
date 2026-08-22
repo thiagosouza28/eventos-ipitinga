@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{title}}</title>
+    <style>
+      :root {
+        --bg: radial-gradient(circle at 20% 20%, #132040, #0b1224 55%, #0a1021 100%);
+        --panel: rgba(19, 29, 55, 0.78);
+        --card: rgba(16, 24, 40, 0.88);
+        --card-border: rgba(255, 255, 255, 0.08);
+        --accent: #3ec4ff;
+        --accent-strong: #70f0c0;
+        --text: #e7ecf7;
+        --muted: #94a3b8;
+        --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+        --table-head: rgba(255, 255, 255, 0.06);
+        --table-row: rgba(255, 255, 255, 0.02);
+        --pill: rgba(255, 255, 255, 0.06);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 22px;
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-print-color-adjust: exact;
+      }
+      .page {
+        max-width: 980px;
+        margin: 0 auto;
+        background: linear-gradient(180deg, rgba(11, 18, 36, 0.85), rgba(9, 14, 28, 0.9));
+        border: 1px solid var(--card-border);
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+      .hero {
+        padding: 22px;
+        background: linear-gradient(135deg, #0f1a32, #111c38);
+        border-bottom: 1px solid var(--card-border);
+      }
+      .hero .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        font-size: 11px;
+        margin: 0 0 6px;
+        color: var(--muted);
+      }
+      .hero h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0.04em;
+        color: var(--text);
+      }
+      .hero p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .section {
+        padding: 18px 20px;
+      }
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 12px;
+        margin: 12px 0 16px;
+      }
+      .meta .item {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: var(--panel);
+        border: 1px solid var(--card-border);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      }
+      .meta .item .label {
+        display: block;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .meta .item span:last-child { font-weight: 700; color: var(--text); }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+      }
+      .card {
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+        border: 1px solid var(--card-border);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+      }
+      .card h3 {
+        margin: 0;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+      }
+      .card p {
+        margin: 8px 0 0;
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--accent-strong);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--pill);
+        color: var(--text);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+        text-transform: uppercase;
+        border: 1px solid var(--card-border);
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        border: 1px solid var(--card-border);
+        overflow: hidden;
+      }
+      .table thead {
+        background: var(--table-head);
+        color: var(--text);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+      }
+      .table th, .table td {
+        padding: 10px 12px;
+        border: 1px solid var(--card-border);
+        font-size: 12px;
+        color: var(--text);
+      }
+      .table tbody tr:nth-child(even) { background: var(--table-row); }
+      .amount { text-align: right; font-weight: 700; color: var(--accent-strong); }
+      .muted { color: var(--muted); font-size: 12px; margin: 6px 0 10px; }
+      .empty {
+        text-align: center;
+        padding: 14px;
+        color: var(--muted);
+        font-style: italic;
+        border: 1px dashed var(--card-border);
+        border-radius: 12px;
+        background: var(--panel);
+      }
+
+      .footer {
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--card-border);
+        font-size: 12px;
+        color: var(--muted);
+        background: linear-gradient(180deg, rgba(12, 19, 36, 0.9), rgba(9, 13, 24, 0.9));
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="hero">
+        <p class="eyebrow">Relatorio Financeiro</p>
+        <h1>{{title}}</h1>
+        <p>{{subtitle}}</p>
+      </div>
+
+      <div class="section">
+        <div class="meta">
+          <div class="item">
+            <span class="label">Evento</span>
+            <span>{{eventTitle}}</span>
+          </div>
+          <div class="item">
+            <span class="label">Slug</span>
+            <span>{{eventSlug}}</span>
+          </div>
+          <div class="item">
+            <span class="label">Pedidos pagos</span>
+            <span>{{paidOrdersCount}}</span>
+          </div>
+          <div class="item">
+            <span class="label">Inscricoes pagas</span>
+            <span>{{paidRegistrationsCount}}</span>
+          </div>
+        </div>
+
+        <div class="cards">
+          {{cards}}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="pill">Receita por meio de pagamento</div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Metodo</th>
+              <th>Valor bruto</th>
+              <th>Taxas</th>
+              <th>Valor liquido</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{paymentRows}}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="pill">Despesas registradas</div>
+        <p class="muted">{{expensesHint}}</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descricao</th>
+              <th>Responsavel</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{expenseRows}}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        Documento gerado em {{generatedAt}} - Sistema Eventos Ipitinga
+      </div>
+    </div>
+  </body>
+</html>

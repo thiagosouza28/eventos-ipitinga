@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { authService } from "./auth.service";
@@ -27,7 +27,7 @@ export const loginHandler = async (request: Request, response: Response) => {
 export const changePasswordHandler = async (request: Request, response: Response) => {
   const { currentPassword, newPassword } = changePasswordSchema.parse(request.body);
   if (!request.user) {
-    throw new Error("Usuario nao autenticado");
+    throw new Error("Usuário não autenticado");
   }
   const result = await authService.changePassword(request.user.id, currentPassword, newPassword);
   return response.json(result);
@@ -41,7 +41,7 @@ export const recoverPasswordHandler = async (request: Request, response: Respons
 
 export const getProfileHandler = async (request: Request, response: Response) => {
   if (!request.user) {
-    throw new UnauthorizedError("Usuario nao autenticado");
+    throw new UnauthorizedError("Usuário não autenticado");
   }
   const session = await authService.getSession(request.user.id);
   return response.json(session);

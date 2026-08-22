@@ -84,7 +84,7 @@ class MercadoPagoTransferService {
               (responseBody as any)?.error;
             const friendly =
               response.status === 404
-                ? "Transferencia PIX indisponivel: verifique token, ambiente (prod) e habilitacao de PIX out no Mercado Pago."
+                ? "Transferência PIX indisponível: verifique o token, o ambiente de produção e a habilitação de PIX Out no Mercado Pago."
                 : undefined;
             const message = friendly || fallback || "Falha ao criar transferencia PIX";
             if (this.shouldRetryStatus(response.status) && attempt <= maxRetries) {
@@ -120,7 +120,7 @@ class MercadoPagoTransferService {
       if (error instanceof AppError) {
         throw error;
       }
-      const message = error?.message ?? "Erro de comunicacao com Mercado Pago";
+      const message = error?.message ?? "Erro de comunicação com o Mercado Pago";
       throw new AppError(message, 502);
     }
   }

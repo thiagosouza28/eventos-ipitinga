@@ -1,50 +1,31 @@
 {
-  "name": "frontend",
-  "version": "1.0.0",
+  "name": "@eventos-ipitinga/frontend",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc --noEmit && cross-env NO_COLOR=1 vite build",
-    "preview": "vite preview",
-    "lint": "eslint \"src/**/*.{ts,tsx,vue}\"",
-    "test": "vitest",
-    "type-check": "vue-tsc --noEmit",
-    "analyze": "vite build --mode analyze"
+    "dev": "node node_modules/next/dist/bin/next dev -p 3000",
+    "build": "node node_modules/next/dist/bin/next build",
+    "start": "node server.js",
+    "type-check": "node node_modules/typescript/bin/tsc --noEmit",
+    "deploy:cpanel": "npm run type-check && npm run build"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.23",
-    "@heroicons/vue": "^2.1.5",
-    "@vueuse/core": "^11.1.0",
-    "axios": "^1.7.7",
-    "dayjs": "^1.11.13",
-    "jszip": "^3.10.1",
-    "maska": "^2.1.0",
-    "pdfjs-dist": "^5.4.449",
-    "pinia": "^2.2.4",
-    "tailwindcss-animate": "^1.0.7",
-    "vue": "^3.5.10",
-    "vue-qrcode-reader": "^5.2.2",
-    "vue-router": "^4.4.5",
-    "xlsx": "^0.18.5"
+    "@heroicons/react": "^2.2.0",
+    "axios": "^1.7.9",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "@vitejs/plugin-vue": "^6.0.3",
-    "@vue/test-utils": "^2.4.6",
+    "@types/react": "19.2.11",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.20",
-    "baseline-browser-mapping": "^2.9.15",
-    "cross-env": "^7.0.3",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-vue": "^9.28.0",
     "postcss": "^8.4.45",
-    "tailwindcss": "^3.4.14",
-    "terser": "^5.44.1",
-    "typescript": "^5.5.4",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.17",
-    "vue-tsc": "^2.1.6"
-  }
+    "tailwindcss": "^3.4.13",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.5.4"
+  },
+  "engines": { "node": ">=22.17.0" }
 }

@@ -1,4 +1,4 @@
-import type { PixGatewayConfig } from "@/prisma/generated/client";
+import type { PixGatewayConfig } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/utils/errors";
@@ -61,7 +61,7 @@ export const getActivePixGatewayConfig = async (): Promise<PixGatewayConfig | nu
     });
     return config ?? null;
   } catch (error) {
-    logger.warn({ error }, "Falha ao buscar configuracao PixGatewayConfig");
+    logger.warn({ error }, "Falha ao buscar configuração PixGatewayConfig");
     return null;
   }
 };
@@ -75,7 +75,7 @@ export const getActivePixProvider = async (): Promise<PixGatewayProvider | null>
 export const getActivePixGateway = async (): Promise<BasePixGateway> => {
   const config = await getActivePixGatewayConfig();
   if (!config) {
-    logger.warn("Nenhuma configuracao PIX ativa encontrada. Usando fallback Mercado Pago.");
+    logger.warn("Nenhuma configuração PIX ativa encontrada. Usando fallback Mercado Pago.");
     return new MercadoPagoPixGateway(fallbackConfig);
   }
 

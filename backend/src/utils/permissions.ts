@@ -1,4 +1,4 @@
-import type { ProfilePermission, UserPermission } from "@/prisma/generated/client";
+import type { ProfilePermission, UserPermission } from "@prisma/client";
 
 import type { PermissionAction, PermissionEntry, PermissionModule } from "../config/permissions";
 

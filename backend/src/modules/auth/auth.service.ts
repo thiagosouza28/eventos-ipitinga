@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import type { Secret, SignOptions } from "jsonwebtoken";
-import type { Prisma } from "@/prisma/generated/client";
+import type { Prisma } from "@prisma/client";
 
 import { env } from "../../config/env";
 import { RolePermissionPresets } from "../../config/permissions";
@@ -23,19 +23,41 @@ const userInclude = {
 
 type UserWithRelations = Prisma.UserGetPayload<{ include: typeof userInclude }>;
 
+const parseProfileMeta = (value: string | null | undefined) => {
+  if (!value) return { description: null as string | null, isActive: true };
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") {
+      return { description: null as string | null, isActive: true };
+    }
+    const descriptionRaw = (parsed as any).description;
+    const isActiveRaw = (parsed as any).isActive;
+    const description =
+      typeof descriptionRaw === "string"
+        ? descriptionRaw.trim() || null
+        : descriptionRaw === null
+          ? null
+          : null;
+    const isActive = typeof isActiveRaw === "boolean" ? isActiveRaw : true;
+    return { description, isActive };
+  } catch {
+    return { description: null as string | null, isActive: true };
+  }
+};
+
 export class AuthService {
   async login(identifier: string, password: string) {
     const user = await this.findByIdentifier(identifier);
     if (!user) {
-      throw new UnauthorizedError("Credenciais invalidas");
+      throw new UnauthorizedError("Credenciais inválidas");
     }
     if (user.status === "INACTIVE") {
-      throw new UnauthorizedError("Usuario desativado");
+      throw new UnauthorizedError("Usuário desativado");
     }
 
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatches) {
-      throw new UnauthorizedError("Credenciais invalidas");
+      throw new UnauthorizedError("Credenciais inválidas");
     }
 
     return this.buildSession(user);
@@ -177,13 +199,16 @@ export class AuthService {
         status: user.status,
         photoUrl: user.photoUrl,
         profile: user.profile
-          ? {
-              id: user.profile.id,
-              name: user.profile.name,
-              description: user.profile.description,
-              isActive: user.profile.isActive,
-              permissions: user.profile.permissions.map(toPermissionEntry)
-            }
+          ? (() => {
+              const meta = parseProfileMeta(user.profile.avatarUrl);
+              return {
+                id: user.profile.id,
+                name: user.profile.name,
+                description: meta.description,
+                isActive: meta.isActive,
+                permissions: user.profile.permissions.map(toPermissionEntry)
+              };
+            })()
           : null,
         ministries:
           user.ministries?.map((relation) => ({

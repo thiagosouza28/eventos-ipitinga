@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 import { adminRegistrationsReportService } from "./admin-registrations-report.service";
 import { applyDownloadHeaders, sendDownloadBuffer } from "../../middlewares/download-headers";
@@ -9,7 +9,7 @@ import { logger } from "../../utils/logger";
 import { getScopedMinistryIds } from "../../utils/user-scope";
 import { generateAdminRegistrationsReportPdf } from "../../pdf/admin-registrations-report.service";
 
-const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio administrativo.";
+const REPORT_ERROR_MESSAGE = "Não foi possível gerar o relatório administrativo.";
 const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
 
 const respondReportError = (response: Response, error: unknown, context: string) => {
@@ -74,7 +74,10 @@ const buildCsv = (items: { districtName: string; eventTitle: string; lotName: st
   return Buffer.from(`\uFEFF${csv}`, "utf-8");
 };
 
-const buildXlsx = (items: { districtName: string; eventTitle: string; lotName: string; registrationsCount: number }[], total: number) => {
+const buildXlsx = async (
+  items: { districtName: string; eventTitle: string; lotName: string; registrationsCount: number }[],
+  total: number
+) => {
   const rows = [
     ["Distrito", "Evento", "Lote", "Quantidade"],
     ...items.map((item) => [item.districtName, item.eventTitle, item.lotName, item.registrationsCount]),
@@ -82,11 +85,20 @@ const buildXlsx = (items: { districtName: string; eventTitle: string; lotName: s
     ["Total geral", "", "", total]
   ];
 
-  const sheet = XLSX.utils.aoa_to_sheet(rows);
-  sheet["!cols"] = [{ wch: 26 }, { wch: 34 }, { wch: 26 }, { wch: 14 }];
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, sheet, "Relatorio");
-  return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" }) as Buffer;
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Relatório");
+  const columnWidths = [26, 34, 26, 14];
+
+  sheet.columns = rows[0].map((header, index) => ({
+    header: String(header),
+    key: `col${index}`,
+    width: columnWidths[index] ?? 20
+  }));
+
+  rows.slice(1).forEach((row) => sheet.addRow(row));
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
 };
 
 const getReportData = async (request: Request) => {
@@ -105,10 +117,10 @@ export const adminRegistrationsReportHandler = async (request: Request, response
     return response.json(report);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao carregar relatorio administrativo");
+    return respondReportError(response, error, "Erro ao carregar relatório administrativo");
   }
 };
 
@@ -124,10 +136,10 @@ export const downloadAdminRegistrationsReportCsvHandler = async (request: Reques
     return sendDownloadBuffer(response, { buffer, fileName, contentType: "text/csv" });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao exportar relatorio administrativo em CSV");
+    return respondReportError(response, error, "Erro ao exportar relatório administrativo em CSV");
   }
 };
 
@@ -138,7 +150,7 @@ export const downloadAdminRegistrationsReportXlsxHandler = async (request: Reque
   }
   try {
     const report = await getReportData(request);
-    const buffer = buildXlsx(report.items, report.totals.total);
+    const buffer = await buildXlsx(report.items, report.totals.total);
     const fileName = `relatorio-administrativo-inscricoes-${Date.now()}.xlsx`;
     return sendDownloadBuffer(response, {
       buffer,
@@ -147,10 +159,10 @@ export const downloadAdminRegistrationsReportXlsxHandler = async (request: Reque
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao exportar relatorio administrativo em Excel");
+    return respondReportError(response, error, "Erro ao exportar relatório administrativo em Excel");
   }
 };
 
@@ -166,9 +178,9 @@ export const downloadAdminRegistrationsReportPdfHandler = async (request: Reques
     return sendDownloadBuffer(response, { buffer: pdfBuffer, fileName });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao exportar relatorio administrativo em PDF");
+    return respondReportError(response, error, "Erro ao exportar relatório administrativo em PDF");
   }
 };

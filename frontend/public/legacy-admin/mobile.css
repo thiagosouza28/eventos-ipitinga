@@ -1,0 +1,256 @@
+@media (max-width: 639px) {
+  :root {
+    --font-size-base: 15px;
+    --card-radius: 20px;
+    --input-radius: 0px;
+    --button-radius: 14px;
+    --modal-radius: 22px;
+  }
+
+  html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+  body { min-width: 320px; overflow-x: hidden; background-attachment: scroll !important; }
+
+  header { padding: 8px !important; }
+  header > div { border-radius: 22px !important; padding: 10px 12px !important; gap: 8px !important; }
+  header a { min-width: 0; flex: 1 1 auto; gap: 8px !important; }
+  header a > div {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex: 0 0 40px !important;
+  }
+  header a > div span {
+    display: inline !important;
+    width: auto !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+    letter-spacing: 0 !important;
+  }
+  header a > span {
+    display: block;
+    width: min-content;
+    min-width: 62px;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1.08 !important;
+    letter-spacing: 0.02em;
+  }
+  header img { max-width: 100%; }
+
+  main { padding: 16px 12px 92px !important; }
+  main > div { max-width: 100% !important; }
+
+  h1 {
+    max-width: 100%;
+    font-size: clamp(1.55rem, 7.4vw, 2.15rem) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.025em !important;
+    overflow-wrap: normal;
+  }
+  h2 { font-size: clamp(1.25rem, 6vw, 1.65rem) !important; }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  select,
+  textarea {
+    width: 100% !important;
+    min-height: 48px;
+    font-size: 16px !important;
+    border-radius: 0 !important;
+  }
+  textarea { min-height: 104px; }
+
+  button, a.btn, .btn, .btn-primary, .btn-outline, .btn-muted, .btn-danger {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  main .grid { grid-template-columns: minmax(0, 1fr) !important; }
+  main .flex-wrap { row-gap: 10px; }
+
+  table {
+    display: block !important;
+    width: 100% !important;
+    max-width: calc(100vw - 24px);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  th, td { min-width: 120px; white-space: nowrap; }
+
+  [role="dialog"], .modal-content {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    margin: 8px !important;
+    overflow-y: auto !important;
+    border-radius: 22px !important;
+  }
+
+  .fixed.inset-0 { padding: 8px !important; }
+  .rounded-\[32px\], .rounded-\[36px\] { border-radius: 22px !important; }
+  .p-8, .p-10, .px-8, .px-10 { padding-left: 16px !important; padding-right: 16px !important; }
+  .gap-8, .gap-10 { gap: 16px !important; }
+}
+
+/* Keep the migrated administration screens consistent with the main app. */
+:root {
+  --radius-sm: 0px !important;
+  --radius-md: 0px !important;
+  --radius: 0px !important;
+  --radius-lg: 0px !important;
+  --radius-pill: 0px !important;
+  --button-radius: 0px !important;
+  --input-radius: 0px !important;
+  --card-radius: 0px !important;
+  --modal-radius: 0px !important;
+}
+
+*:not(.loading-spinner):not(.loading-spinner__ring),
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+/* Modal workspace: calm light backdrop and a header that never leaves the viewport. */
+:root:not(.dark) {
+  --modal-backdrop: rgb(248 250 252 / 94%) !important;
+}
+
+:root.dark {
+  --modal-backdrop: rgb(2 6 23 / 76%) !important;
+}
+
+body > div.fixed.inset-0.z-50 {
+  background: var(--modal-backdrop) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root:not(.dark) body > div.fixed.inset-0.z-50 input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+:root:not(.dark) body > div.fixed.inset-0.z-50 select,
+:root:not(.dark) body > div.fixed.inset-0.z-50 textarea {
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #172033 !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) body > div.fixed.inset-0.z-50 input::placeholder,
+:root:not(.dark) body > div.fixed.inset-0.z-50 textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
+}
+
+/* The shared Vue modal has two regions: header and scrollable form body. */
+body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] {
+  display: flex !important;
+  max-height: min(94dvh, 960px) !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  border-color: #cbd5e1 !important;
+  background: #ffffff !important;
+  box-shadow: 0 18px 50px rgb(15 23 42 / 16%) !important;
+}
+
+.dark body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] {
+  border-color: #334155 !important;
+  background: #0f172a !important;
+  box-shadow: 0 22px 60px rgb(0 0 0 / 42%) !important;
+}
+
+body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  flex: 0 0 auto !important;
+  min-height: 64px;
+  margin: 0 !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff !important;
+}
+
+.dark body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child {
+  border-bottom-color: #334155;
+  background: #0f172a !important;
+}
+
+body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child h2 {
+  min-width: 0;
+  padding-right: 12px;
+  overflow-wrap: anywhere;
+}
+
+body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child button {
+  position: sticky !important;
+  top: 12px !important;
+  z-index: 21 !important;
+  display: inline-flex !important;
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 40px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+}
+
+.dark body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child button {
+  border-color: #475569 !important;
+  background: #111827 !important;
+  color: #e2e8f0 !important;
+}
+
+body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :last-child {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  padding: 20px !important;
+  scrollbar-gutter: stable;
+}
+
+/* Long custom detail dialogs keep their own header visible as well. */
+body > div.fixed.inset-0.z-50 > div[class*="max-h-[90vh]"] > header:first-child {
+  position: sticky !important;
+  top: -24px !important;
+  z-index: 15 !important;
+  margin: -24px -24px 0 !important;
+  padding: 20px 24px !important;
+  background: #0f172a !important;
+}
+
+@media (max-width: 639px) {
+  body > div.fixed.inset-0.z-50 {
+    align-items: stretch !important;
+    padding: 8px !important;
+  }
+
+  body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 16px) !important;
+    margin: 0 !important;
+  }
+
+  body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child {
+    min-height: 58px;
+    padding: 10px 12px !important;
+  }
+
+  body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :first-child h2 {
+    font-size: 1.05rem !important;
+  }
+
+  body > div.fixed.inset-0.z-50 > div[class*="max-h-[96vh]"] > :last-child {
+    padding: 16px 12px 24px !important;
+  }
+}

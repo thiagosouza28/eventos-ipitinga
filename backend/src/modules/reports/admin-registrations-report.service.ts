@@ -1,4 +1,4 @@
-import { Prisma } from "@/prisma/generated/client";
+import { Prisma } from "@prisma/client";
 
 import { prisma } from "../../lib/prisma";
 import { registrationLotFallback } from "../../utils/registration-lot-fallback";
@@ -63,12 +63,12 @@ const parseDateInput = (value: string, mode: "start" | "end") => {
   } else {
     parsed = new Date(trimmed);
     if (Number.isNaN(parsed.getTime())) {
-      throw new AppError("Data invalida.", 400);
+      throw new AppError("Data inválida.", 400);
     }
   }
 
   if (Number.isNaN(parsed.getTime())) {
-    throw new AppError("Data invalida.", 400);
+    throw new AppError("Data inválida.", 400);
   }
 
   if (mode === "start" && DATE_ONLY_REGEX.test(trimmed)) {
@@ -85,7 +85,7 @@ const normalizeFilters = (filters: AdminRegistrationsReportFilters) => {
   const endDate = endDateRaw ? parseDateInput(endDateRaw, "end") : null;
 
   if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
-    throw new AppError("Data inicial nao pode ser maior que a data final.", 400);
+    throw new AppError("Data inicial não pode ser maior que a data final.", 400);
   }
 
   return {
@@ -182,22 +182,22 @@ export const adminRegistrationsReportService = {
 
     const whereParts: Prisma.Sql[] = [];
     if (filters.districtId) {
-      whereParts.push(Prisma.sql`e.districtId = ${filters.districtId}`);
+      whereParts.push(Prisma.sql`e.district_id = ${filters.districtId}`);
     }
     if (filters.eventId) {
       whereParts.push(Prisma.sql`e.id = ${filters.eventId}`);
     }
     if (filters.churchId) {
-      whereParts.push(Prisma.sql`e.churchId = ${filters.churchId}`);
+      whereParts.push(Prisma.sql`e.church_id = ${filters.churchId}`);
     }
     if (normalized.startDate) {
-      whereParts.push(Prisma.sql`r.createdAt >= ${normalized.startDate}`);
+      whereParts.push(Prisma.sql`r.created_at >= ${normalized.startDate}`);
     }
     if (normalized.endDate) {
-      whereParts.push(Prisma.sql`r.createdAt <= ${normalized.endDate}`);
+      whereParts.push(Prisma.sql`r.created_at <= ${normalized.endDate}`);
     }
     if (filters.ministryIds && filters.ministryIds.length) {
-      whereParts.push(Prisma.sql`e.ministryId IN (${Prisma.join(filters.ministryIds)})`);
+      whereParts.push(Prisma.sql`e.ministry_id IN (${Prisma.join(filters.ministryIds)})`);
     }
 
     const baseWhereParts = [...whereParts, registrationLotFallback.latestLotCondition];
@@ -228,11 +228,11 @@ export const adminRegistrationsReportService = {
         ${registrationLotFallback.lotIdExpr} AS lotId,
         ${registrationLotFallback.lotNameExpr} AS lotName,
         COUNT(r.id) AS registrationsCount
-      FROM Registration r
-      INNER JOIN Event e ON e.id = r.eventId
-      INNER JOIN District d ON d.id = e.districtId
-      LEFT JOIN \`Order\` o ON o.id = r.orderId
-      LEFT JOIN EventLot el ON el.id = o.pricingLotId
+      FROM registrations r
+      INNER JOIN events e ON e.id = r.event_id
+      INNER JOIN districts d ON d.id = e.district_id
+      LEFT JOIN orders o ON o.id = r.order_id
+      LEFT JOIN event_lots el ON el.id = o.pricing_lot_id
       ${registrationLotFallback.joinSql}
       ${whereClause}
       GROUP BY
@@ -247,9 +247,9 @@ export const adminRegistrationsReportService = {
 
     const items: AdminRegistrationsReportItem[] = rows.map((row) => ({
       districtId: row.districtId ?? null,
-      districtName: row.districtName ?? "Nao informado",
+      districtName: row.districtName ?? "Não informado",
       eventId: row.eventId ?? null,
-      eventTitle: row.eventTitle ?? "Evento nao informado",
+      eventTitle: row.eventTitle ?? "Evento não informado",
       lotId: row.lotId ?? null,
       lotName: row.lotName ?? "Sem lote",
       registrationsCount: safeCount(row.registrationsCount)

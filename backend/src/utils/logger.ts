@@ -4,21 +4,10 @@ import { env } from "../config/env";
 import { maskCpf } from "./mask";
 
 const redactPaths = ["req.headers.authorization", "req.body.password", "req.body.buyerCpf"];
-
 const isProduction = env.NODE_ENV === "production";
 
-export const logger = pino({
+const baseOptions = {
   level: isProduction ? "info" : "debug",
-  transport:
-    isProduction
-      ? undefined
-      : {
-          target: "pino-pretty",
-          options: {
-            translateTime: "SYS:standard",
-            ignore: "pid,hostname"
-          }
-        },
   redact: {
     paths: redactPaths,
     censor: (value: unknown) => {
@@ -28,6 +17,8 @@ export const logger = pino({
       return "***";
     }
   }
-});
+} as const;
 
+const destination = isProduction ? undefined : pino.destination({ sync: true });
+export const logger = pino(baseOptions, destination);
 export const requestLogger = logger.child({ module: "http" });

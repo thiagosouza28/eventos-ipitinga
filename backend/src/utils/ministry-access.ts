@@ -10,6 +10,6 @@ export const ensureEventMinistryAccess = async (eventId: string, ministryIds?: s
     select: { ministryId: true }
   });
   if (!event || !event.ministryId || !ministryIds.includes(event.ministryId)) {
-    throw new ForbiddenError("Evento nao pertence ao ministerio do usuario");
+    throw new ForbiddenError("Evento não pertence ao ministério do usuário");
   }
 };

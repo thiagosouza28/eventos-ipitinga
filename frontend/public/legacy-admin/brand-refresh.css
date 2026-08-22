@@ -1,0 +1,219 @@
+:root {
+  --background: #f7f8f4 !important;
+  --app-bg: #f7f8f4 !important;
+  --app-shell-bg: rgba(255, 255, 252, 0.94) !important;
+  --app-shell-border: rgba(25, 63, 43, 0.11) !important;
+  --surface-card: #fffefa !important;
+  --card: #fffefa !important;
+  --surface-card-alt: #f1f4ed !important;
+  --surface-blur: rgba(255, 255, 252, 0.9) !important;
+  --text: #183328 !important;
+  --text-base: #183328 !important;
+  --text-muted: #64736b !important;
+  --border: #dbe3dc !important;
+  --border-card: #dfe6df !important;
+  --primary-rgb: 0 146 73 !important;
+  --primary: rgb(0 146 73) !important;
+  --primary-hover: rgb(0 119 61) !important;
+  --palette-primary-50: 236 253 243 !important;
+  --palette-primary-100: 209 250 226 !important;
+  --palette-primary-200: 166 243 198 !important;
+  --palette-primary-300: 108 231 162 !important;
+  --palette-primary-400: 50 207 119 !important;
+  --palette-primary-500: 0 146 73 !important;
+  --palette-primary-600: 0 119 61 !important;
+  --palette-primary-700: 0 96 51 !important;
+  --palette-primary-800: 5 76 43 !important;
+  --palette-primary-900: 6 63 38 !important;
+  --palette-primary-950: 2 35 21 !important;
+  --radius-sm: 10px !important;
+  --radius-md: 14px !important;
+  --radius-lg: 22px !important;
+  --radius-pill: 999px !important;
+  --radius: 14px !important;
+  --button-radius: 12px !important;
+  --input-radius: 12px !important;
+  --card-radius: 20px !important;
+  --modal-radius: 22px !important;
+  --input-border-color: #ccd7cf !important;
+  --input-bg: #fff !important;
+  --input-focus-ring: 0 0 0 4px rgb(0 146 73 / 13%) !important;
+  --input-shadow: 0 1px 2px rgb(15 23 42 / 3%) !important;
+  --button-shadow: 0 10px 24px rgb(0 119 61 / 18%) !important;
+  --card-shadow: 0 1px 2px rgb(20 48 35 / 4%), 0 14px 40px rgb(20 48 35 / 7%) !important;
+  --card-shadow-strong: 0 26px 70px rgb(8 62 35 / 14%) !important;
+  --admin-module-bg: linear-gradient(145deg, #073d25 0%, #00683b 100%);
+  --admin-module-border: rgb(5 76 43 / 34%);
+  --admin-module-text: #fff;
+  --admin-module-muted: #ccebd9;
+  --admin-module-accent: #facc15;
+  --admin-module-shadow: 0 16px 36px rgb(5 76 43 / 18%);
+}
+
+.dark {
+  --background: #07130e !important;
+  --app-bg: #07130e !important;
+  --app-shell-bg: rgba(9, 29, 20, 0.94) !important;
+  --surface-card: #0d2017 !important;
+  --card: #0d2017 !important;
+  --surface-card-alt: #12291d !important;
+  --surface-blur: rgba(9, 28, 19, 0.9) !important;
+  --text: #eef8f1 !important;
+  --text-base: #f4fbf6 !important;
+  --text-muted: #a8b8ad !important;
+  --border: #294337 !important;
+  --border-card: #284237 !important;
+  --input-border-color: #345246 !important;
+  --input-bg: #0a1a12 !important;
+  --admin-module-bg: linear-gradient(145deg, #0b3120 0%, #061f15 100%);
+  --admin-module-border: rgb(110 231 165 / 22%);
+  --admin-module-text: #f3fff7;
+  --admin-module-muted: #acd7bd;
+  --admin-module-accent: #fde047;
+  --admin-module-shadow: 0 18px 44px rgb(0 0 0 / 32%);
+}
+
+html,
+body {
+  background: var(--background) !important;
+  color: var(--text) !important;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.03em !important;
+}
+
+button,
+.btn,
+.btn-primary,
+.btn-outline,
+.btn-muted,
+.btn-danger {
+  border-radius: var(--button-radius) !important;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, rgb(0 119 61), rgb(0 146 73)) !important;
+  box-shadow: var(--button-shadow) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+select,
+textarea {
+  border-color: var(--input-border-color) !important;
+  border-radius: var(--input-radius) !important;
+  background: var(--input-bg) !important;
+  box-shadow: var(--input-shadow) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgb(0 146 73) !important;
+  box-shadow: var(--input-focus-ring) !important;
+}
+
+.admin-sidebar-panel {
+  border-color: #1e4935 !important;
+  background: radial-gradient(circle at 15% 0%, rgb(250 204 21 / 11%), transparent 28%), linear-gradient(180deg, #073d25 0%, #052d1c 54%, #041f15 100%) !important;
+  color: #d9ece2 !important;
+}
+
+.admin-sidebar-panel .text-white {
+  color: #fff !important;
+}
+
+.admin-sidebar-panel .text-slate-400,
+.admin-sidebar-panel .text-slate-500,
+.admin-sidebar-panel .text-slate-600 {
+  color: rgb(209 250 229 / 62%) !important;
+}
+
+.admin-sidebar-panel .bg-blue-500\/10 {
+  background: rgb(255 255 255 / 10%) !important;
+}
+
+.admin-sidebar-panel .text-blue-300 {
+  color: #fde68a !important;
+}
+
+.admin-sidebar-panel .border-blue-500,
+.admin-sidebar-panel .border-blue-500\/60 {
+  border-color: #facc15 !important;
+}
+
+.admin-sidebar-panel .hover\:bg-white\/5:hover {
+  background: rgb(255 255 255 / 7%) !important;
+}
+
+/* Dashboard modules use the same institutional green as the admin menu. */
+body:has(.admin-sidebar-panel) main .grid.sm\:grid-cols-2.lg\:grid-cols-3 > .flex.flex-col.gap-3.rounded-lg.bg-gradient-to-br {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--admin-module-border) !important;
+  background: var(--admin-module-bg) !important;
+  box-shadow: var(--admin-module-shadow) !important;
+  color: var(--admin-module-text) !important;
+}
+
+body:has(.admin-sidebar-panel) main .grid.sm\:grid-cols-2.lg\:grid-cols-3 > .flex.flex-col.gap-3.rounded-lg.bg-gradient-to-br::after {
+  position: absolute;
+  top: -44px;
+  right: -32px;
+  width: 128px;
+  height: 128px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(250 204 21 / 15%), transparent 68%);
+  content: "";
+  pointer-events: none;
+}
+
+body:has(.admin-sidebar-panel) main .grid.sm\:grid-cols-2.lg\:grid-cols-3 > .flex.flex-col.gap-3.rounded-lg.bg-gradient-to-br :is(.text-4xl, .text-3xl, [class*="text-[color:var(--text)]"]) {
+  color: var(--admin-module-text) !important;
+}
+
+body:has(.admin-sidebar-panel) main .grid.sm\:grid-cols-2.lg\:grid-cols-3 > .flex.flex-col.gap-3.rounded-lg.bg-gradient-to-br :is([class*="text-muted"], .text-xs, .text-sm) {
+  color: var(--admin-module-muted) !important;
+}
+
+body:has(.admin-sidebar-panel) main .grid.sm\:grid-cols-2.lg\:grid-cols-3 > .flex.flex-col.gap-3.rounded-lg.bg-gradient-to-br svg {
+  color: var(--admin-module-accent) !important;
+}
+
+.loading-overlay__panel {
+  border-color: var(--border-card) !important;
+  border-radius: var(--card-radius) !important;
+  background: var(--surface-card) !important;
+}
+
+@media (max-width: 639px) {
+  main {
+    padding-inline: 12px !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  select,
+  textarea {
+    min-height: 48px;
+    font-size: 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

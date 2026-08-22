@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 
 import { responsibleFinanceService } from "./responsible-finance.service";
 
@@ -8,7 +8,7 @@ export const listResponsibleFinanceHandler = async (request: Request, response: 
     return response.json(result);
   } catch (error: any) {
     return response.status(error.statusCode ?? 500).json({
-      message: error.message ?? "Erro ao carregar financeiro por responsavel"
+      message: error.message ?? "Erro ao carregar financeiro por responsável"
     });
   }
 };
@@ -20,7 +20,7 @@ export const listResponsiblePendingOrdersHandler = async (request: Request, resp
     return response.json(result);
   } catch (error: any) {
     return response.status(error.statusCode ?? 500).json({
-      message: error.message ?? "Erro ao listar pedidos pendentes do responsavel"
+      message: error.message ?? "Erro ao listar pedidos pendentes do responsável"
     });
   }
 };
@@ -32,7 +32,7 @@ export const listResponsibleTransfersHandler = async (request: Request, response
     return response.json(result);
   } catch (error: any) {
     return response.status(error.statusCode ?? 500).json({
-      message: error.message ?? "Erro ao listar repasses do responsavel"
+      message: error.message ?? "Erro ao listar repasses do responsável"
     });
   }
 };

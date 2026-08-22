@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { UserStatus, PixType } from "@/prisma/generated/client";
+import { UserStatus, PixType } from "@prisma/client";
 
 import { prisma } from "../../lib/prisma";
 import { ConflictError, NotFoundError, AppError } from "../../utils/errors";
@@ -8,6 +8,8 @@ import { env } from "../../config/env";
 import { storageService } from "../../storage/storage.service";
 import { toPermissionEntry } from "../../utils/permissions";
 import { generateTemporaryPassword } from "../../utils/password";
+
+const RBAC_PROFILE_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 type UserInput = {
   name: string;
@@ -72,26 +74,51 @@ const userIncludes = {
   }
 } as const;
 
+const parseProfileMeta = (value: string | null | undefined) => {
+  if (!value) return { description: null as string | null, isActive: true };
+  try {
+    const parsed = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") {
+      return { description: null as string | null, isActive: true };
+    }
+    const descriptionRaw = (parsed as any).description;
+    const isActiveRaw = (parsed as any).isActive;
+    const description =
+      typeof descriptionRaw === "string"
+        ? descriptionRaw.trim() || null
+        : descriptionRaw === null
+          ? null
+          : null;
+    const isActive = typeof isActiveRaw === "boolean" ? isActiveRaw : true;
+    return { description, isActive };
+  } catch {
+    return { description: null as string | null, isActive: true };
+  }
+};
+
 const ensureActiveProfile = async (profileId?: string | null) => {
   if (!profileId) {
     return null;
   }
-  const profile = await prisma.profile.findFirst({
-    where: { id: profileId, isActive: true }
-  });
-  if (!profile) {
-    throw new AppError("Perfil informado nao encontrado ou inativo", 400);
+  const profile = await prisma.profile.findUnique({ where: { id: profileId } });
+  if (!profile || profile.userId !== RBAC_PROFILE_USER_ID) {
+    throw new AppError("Perfil informado não encontrado ou inativo", 400);
+  }
+  const meta = parseProfileMeta(profile.avatarUrl);
+  if (!meta.isActive) {
+    throw new AppError("Perfil informado não encontrado ou inativo", 400);
   }
   return profile.id;
 };
 
 const serializeUser = (user: any) => {
+  const meta = user.profile ? parseProfileMeta(user.profile.avatarUrl) : null;
   const profile = user.profile
     ? {
         id: user.profile.id,
         name: user.profile.name,
-        description: user.profile.description,
-        isActive: user.profile.isActive,
+        description: meta?.description ?? null,
+        isActive: meta?.isActive ?? true,
         permissions: user.profile.permissions?.map(toPermissionEntry) ?? []
       }
     : null;
@@ -130,22 +157,22 @@ export class UserService {
     if (cpf) {
       const cpfExists = await prisma.user.findFirst({ where: { cpf } });
       if (cpfExists) {
-        throw new ConflictError("CPF ja cadastrado");
+        throw new ConflictError("CPF já cadastrado");
       }
     }
     const emailExists = await prisma.user.findUnique({ where: { email } });
     if (emailExists) {
-      throw new ConflictError("E-mail ja cadastrado");
+      throw new ConflictError("E-mail já cadastrado");
     }
 
     if (payload.role === "CoordenadorMinisterio" && (!payload.ministryIds || !payload.ministryIds.length)) {
-      throw new AppError("Selecione ao menos um ministerio para o usuario", 400);
+      throw new AppError("Selecione ao menos um ministério para o usuário", 400);
     }
 
     if (payload.ministryIds?.length) {
       const count = await prisma.ministry.count({ where: { id: { in: payload.ministryIds } } });
       if (count !== payload.ministryIds.length) {
-        throw new AppError("Ministerio informado nao encontrado", 400);
+        throw new AppError("Ministério informado não encontrado", 400);
       }
     }
 
@@ -208,14 +235,14 @@ export class UserService {
   async update(id: string, payload: Partial<UserInput>, actorUser?: { id?: string; role?: string }) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new NotFoundError("Usuario nao encontrado");
+      throw new NotFoundError("Usuário não encontrado");
     }
 
     if (payload.email && payload.email.toLowerCase().trim() !== user.email) {
       const email = payload.email.toLowerCase().trim();
       const existing = await prisma.user.findUnique({ where: { email } });
       if (existing && existing.id !== id) {
-        throw new ConflictError("E-mail ja cadastrado");
+        throw new ConflictError("E-mail já cadastrado");
       }
     }
 
@@ -224,13 +251,13 @@ export class UserService {
       if (cpf && cpf !== user.cpf) {
         const cpfExists = await prisma.user.findFirst({ where: { cpf } });
         if (cpfExists && cpfExists.id !== id) {
-          throw new ConflictError("CPF ja cadastrado");
+          throw new ConflictError("CPF já cadastrado");
         }
       }
     }
 
     if (payload.role === "CoordenadorMinisterio" && (!payload.ministryIds || !payload.ministryIds.length)) {
-      throw new AppError("Selecione ao menos um ministerio para o usuario", 400);
+      throw new AppError("Selecione ao menos um ministério para o usuário", 400);
     }
 
     if (user.role === "AdminDistrital" && hasPixPayload(payload) && actorUser?.role !== "AdminGeral") {
@@ -264,8 +291,8 @@ export class UserService {
         cpf: payload.cpf ? normalizeCpf(payload.cpf) : payload.cpf === null ? null : undefined,
         phone: payload.phone !== undefined ? payload.phone?.trim() ?? null : undefined,
         role: payload.role,
-        districtScopeId: payload.districtScopeId ?? undefined,
-        churchId: payload.churchScopeId ?? undefined,
+        districtScopeId: payload.districtScopeId !== undefined ? payload.districtScopeId : undefined,
+        churchId: payload.churchScopeId !== undefined ? payload.churchScopeId : undefined,
         ministryId: payload.ministryIds ? payload.ministryIds[0] ?? null : undefined,
         photoUrl: photoUrlUpdate,
         profileId: profileIdUpdate,
@@ -299,7 +326,7 @@ export class UserService {
   async updateStatus(id: string, status: UserStatus, actorUserId?: string) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new NotFoundError("Usuario nao encontrado");
+      throw new NotFoundError("Usuário não encontrado");
     }
 
     const updated = await prisma.user.update({
@@ -321,12 +348,12 @@ export class UserService {
 
   async delete(id: string, actorUserId?: string) {
     if (actorUserId && actorUserId === id) {
-      throw new AppError("Nao e possivel excluir o proprio usuario", 400);
+      throw new AppError("Não é possível excluir o próprio usuário", 400);
     }
 
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new NotFoundError("Usuario nao encontrado");
+      throw new NotFoundError("Usuário não encontrado");
     }
 
     await prisma.ministryUser.deleteMany({ where: { userId: id } });
@@ -343,7 +370,7 @@ export class UserService {
   async resetPassword(id: string, actorUserId?: string) {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      throw new NotFoundError("Usuario nao encontrado");
+      throw new NotFoundError("Usuário não encontrado");
     }
 
     const temporaryPassword = generateTemporaryPassword();

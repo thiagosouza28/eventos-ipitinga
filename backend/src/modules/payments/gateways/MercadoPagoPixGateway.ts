@@ -14,7 +14,7 @@ import {
 
 const mapStatus = (value?: string | null): PixChargeStatus["status"] => {
   const normalized = (value ?? "").toString().toLowerCase();
-  if (["approved", "authorized", "paid", "success", "succeeded"].includes(normalized)) return "PAID";
+  if (normalized === "approved") return "PAID";
   if (["cancelled", "canceled", "rejected", "charged_back"].includes(normalized)) return "CANCELED";
   if (["expired"].includes(normalized)) return "EXPIRED";
   if (normalized) return "PENDING";

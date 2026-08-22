@@ -1,4 +1,4 @@
-import type { PixGatewayConfig } from "@/prisma/generated/client";
+import type { PixGatewayConfig } from "@prisma/client";
 
 export type PixGatewayProvider =
   | "mercadopago"

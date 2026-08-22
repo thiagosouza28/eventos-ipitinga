@@ -275,7 +275,7 @@ export class DistrictFinanceService {
 
     const district = await prisma.district.findUnique({ where: { id: districtId } });
     if (!district) {
-      throw new NotFoundError("Distrito nao encontrado");
+      throw new NotFoundError("Distrito não encontrado");
     }
 
     const districtAdmin = await prisma.user.findFirst({
@@ -318,7 +318,7 @@ export class DistrictFinanceService {
     });
 
     if (!pendingOrders.length) {
-      throw new AppError("Nao ha pedidos pendentes de repasse para este distrito.", 400);
+      throw new AppError("Não ha pedidos pendentes de repasse para este distrito.", 400);
     }
 
     const ordersWithAmounts = pendingOrders.map((order) => ({

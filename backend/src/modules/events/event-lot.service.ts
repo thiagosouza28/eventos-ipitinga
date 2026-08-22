@@ -28,20 +28,20 @@ const normalizeRange = (
 ) => {
   const start = new Date(startsAt);
   if (Number.isNaN(start.getTime())) {
-    throw new AppError("Data inicial invalida", 400);
+    throw new AppError("Data inicial inválida", 400);
   }
   let end: Date | null = null;
   if (endsAt) {
     end = new Date(endsAt);
     if (Number.isNaN(end.getTime())) {
-      throw new AppError("Data final invalida", 400);
+      throw new AppError("Data final inválida", 400);
     }
     if (end <= start) {
       throw new AppError("Data final deve ser posterior a data inicial", 400);
     }
   }
   if (options?.requireEnd && !end) {
-    throw new AppError("Data final obrigatoria para lote promocional", 400);
+    throw new AppError("Data final obrigatória para lote promocional", 400);
   }
   return { start, end };
 };
@@ -69,7 +69,7 @@ const ensureNoOverlap = async (
     }
   });
   if (overlap) {
-    throw new ConflictError("Periodo informado conflita com outro lote do evento");
+    throw new ConflictError("Período informado conflita com outro lote do evento");
   }
 };
 
@@ -224,14 +224,14 @@ class EventLotService {
   async create(eventId: string, input: LotInput, actor?: ActorUser) {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) {
-      throw new NotFoundError("Evento nao encontrado");
+      throw new NotFoundError("Evento não encontrado");
     }
     if (actor) {
       this.assertCanManage(event, actor);
     }
     const isFree = Boolean((event as any).isFree);
     if (isFree) {
-      throw new AppError("Eventos gratuitos nao aceitam cadastro de lotes", 400);
+      throw new AppError("Eventos gratuitos não aceitam cadastro de lotes", 400);
     }
     if (input.priceCents < 0) {
       throw new AppError("Valor deve ser maior ou igual a zero", 400);
@@ -267,18 +267,18 @@ class EventLotService {
       include: { event: true }
     });
     if (!lot) {
-      throw new NotFoundError("Lote nao encontrado");
+      throw new NotFoundError("Lote não encontrado");
     }
     if (actor) {
       this.assertCanManage(lot.event, actor);
     }
     if (resolveLotStatus(lot.status) === "ENCERRADO") {
-      throw new AppError("Lote encerrado nao pode ser atualizado", 400);
+      throw new AppError("Lote encerrado não pode ser atualizado", 400);
     }
 
     const isFree = Boolean((lot.event as any)?.isFree);
     if (isFree) {
-      throw new AppError("Eventos gratuitos nao aceitam cadastro de lotes", 400);
+      throw new AppError("Eventos gratuitos não aceitam cadastro de lotes", 400);
     }
 
     let startsAt = lot.startsAt;
@@ -298,7 +298,7 @@ class EventLotService {
       }
     }
     if (nextType === PROMOTIONAL_LOT_TYPE && !endsAt) {
-      throw new AppError("Data final obrigatoria para lote promocional", 400);
+      throw new AppError("Data final obrigatória para lote promocional", 400);
     }
 
     if (data.priceCents !== undefined && data.priceCents < 0) {
@@ -330,7 +330,7 @@ class EventLotService {
       include: { event: true }
     });
     if (!lot) {
-      throw new NotFoundError("Lote nao encontrado");
+      throw new NotFoundError("Lote não encontrado");
     }
     if (actor) {
       this.assertCanManage(lot.event, actor);
@@ -339,7 +339,7 @@ class EventLotService {
       await prisma.eventLot.delete({ where: { id: lotId } });
     } catch (error: any) {
       if (error?.code === "P2003") {
-        throw new ConflictError("Lote vinculado a pedidos nao pode ser removido");
+        throw new ConflictError("Lote vinculado a pedidos não pode ser removido");
       }
       throw error;
     }

@@ -52,7 +52,7 @@ class PixPaymentService {
       include: { registrations: true, event: true }
     });
     if (!order) {
-      throw new NotFoundError("Pedido nao encontrado");
+      throw new NotFoundError("Pedido não encontrado");
     }
 
     const gateway = await getActivePixGateway();
@@ -83,7 +83,7 @@ class PixPaymentService {
         }
       })
       .catch((error) => {
-        logger.warn({ orderId, error }, "Falha ao atualizar pedido apos criar cobranca PIX");
+        logger.warn({ orderId, error }, "Falha ao atualizar pedido após criar cobrança PIX");
       });
 
     return {
@@ -203,7 +203,7 @@ class PixPaymentService {
     });
 
     if (this.isApproved(normalized.status)) {
-      const { orderService } = await import("../orders/order.service");
+      const { orderService } = await import("../orders/order.service.js");
       await orderService.markPaid(normalized.orderId, normalized.paymentId ?? normalized.orderId, {
         paymentMethod: PaymentMethod.PIX_MP
       });

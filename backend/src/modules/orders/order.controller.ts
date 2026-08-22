@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { orderService } from "./order.service";
@@ -67,6 +67,8 @@ const batchSchema = z.object({
   eventId: cuidOrUuid,
   buyerCpf: cpfSchema,
   paymentMethod: z.nativeEnum(PaymentMethod).optional(),
+  insuranceSelected: z.boolean().optional(),
+  insuranceWaiverAccepted: z.boolean().optional(),
   people: z
     .array(
       z.object({
@@ -134,15 +136,12 @@ export const startInscriptionHandler = async (request: Request, response: Respon
 
 export const createBatchInscriptionHandler = async (request: Request, response: Response) => {
   try {
-    const payload = batchSchema.parse(request.body);
+    const payload = batchSchema.parse(request.body) as any;
     const result = await orderService.createBatch(payload, request.user);
     return response.status(201).json(result);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      console.error('[ERROR] createBatchInscriptionHandler - Erro de validação:');
-      console.error('[ERROR] - Erros detalhados:', JSON.stringify(error.errors, null, 2));
-      console.error('[ERROR] - Request body:', JSON.stringify(request.body, null, 2));
-      
+      logger.warn({ issues: error.flatten() }, "Erro de validação em createBatchInscriptionHandler");
       return response.status(422).json({
         message: "Dados inválidos",
         issues: error.flatten(),
@@ -244,8 +243,8 @@ export const markOrderPaidHandler = async (request: Request, response: Response)
 
 export const listOrdersHandler = async (request: Request, response: Response) => {
   const schema = z.object({
-    eventId: z.string().uuid().optional(),
-    status: z.enum(["PENDING", "PAID", "PARTIALLY_REFUNDED", "CANCELED", "EXPIRED"]).optional(),
+    eventId: z.string().uuid().or(z.string().cuid()).optional(),
+    status: z.enum(["PENDING", "PAID", "PARTIALLY_REFUNDED", "REFUNDED", "CANCELED", "EXPIRED"]).optional(),
     churchId: z.string().min(1).optional(),
     districtId: z.string().min(1).optional()
   });

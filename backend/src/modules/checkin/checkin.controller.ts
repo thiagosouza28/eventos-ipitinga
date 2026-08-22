@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { checkinService } from "./checkin.service";
@@ -38,31 +38,47 @@ const confirmAdminSchema = z.object({
 });
 
 export const scanCheckinHandler = async (request: Request, response: Response) => {
-  const payload = scanSchema.parse(request.body);
+  const payload = scanSchema.parse(request.body) as {
+    registrationId: string;
+    signature: string;
+  };
   const registration = await checkinService.scan(payload);
   return response.json(registration);
 };
 
 export const manualCheckinHandler = async (request: Request, response: Response) => {
-  const payload = manualSchema.parse(request.body);
+  const payload = manualSchema.parse(request.body) as {
+    cpf: string;
+    birthDate: string;
+  };
   const result = await checkinService.manualLookup(payload);
   return response.json(result);
 };
 
 export const confirmAdminCheckinHandler = async (request: Request, response: Response) => {
-  const payload = confirmAdminSchema.parse(request.body);
+  const payload = confirmAdminSchema.parse(request.body) as {
+    registrationId: string;
+    signature?: string;
+  };
   const result = await checkinService.confirm(payload);
   return response.json(result);
 };
 
 export const validateCheckinLinkHandler = async (request: Request, response: Response) => {
-  const { rid, sig } = validateSchema.parse(request.query);
+  const { rid, sig } = validateSchema.parse(request.query) as {
+    rid: string;
+    sig: string;
+  };
   const result = await checkinService.validateLink({ registrationId: rid, signature: sig });
   return response.json(result);
 };
 
 export const confirmCheckinLinkHandler = async (request: Request, response: Response) => {
-  const { rid, sig, password } = confirmSchema.parse(request.body);
+  const { rid, sig, password } = confirmSchema.parse(request.body) as {
+    rid: string;
+    sig: string;
+    password: string;
+  };
   const result = await checkinService.confirmLink({ registrationId: rid, signature: sig, password });
   return response.json(result);
 };

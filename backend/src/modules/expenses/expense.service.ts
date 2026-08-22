@@ -1,4 +1,4 @@
-import cuid2 from "@paralleldrive/cuid2";
+import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "../../lib/prisma";
 import { AppError, NotFoundError } from "../../utils/errors";
 import { auditService } from "../../services/audit.service";
@@ -19,12 +19,12 @@ export class ExpenseService {
     // Verificar se o evento existe
     const event = await prisma.event.findUnique({ where: { id: payload.eventId } });
     if (!event) {
-      throw new NotFoundError("Evento nao encontrado");
+      throw new NotFoundError("Evento não encontrado");
     }
 
     const expense = await prisma.expense.create({
       data: {
-        id: cuid2.createId(),
+        id: createId(),
         eventId: payload.eventId,
         description: payload.description.trim(),
         date: payload.date,
@@ -61,7 +61,7 @@ export class ExpenseService {
   ) {
     const expense = await prisma.expense.findUnique({ where: { id } });
     if (!expense) {
-      throw new NotFoundError("Despesa nao encontrada");
+      throw new NotFoundError("Despesa não encontrada");
     }
 
     const updated = await prisma.expense.update({
@@ -91,7 +91,7 @@ export class ExpenseService {
   async delete(id: string) {
     const expense = await prisma.expense.findUnique({ where: { id } });
     if (!expense) {
-      throw new NotFoundError("Despesa nao encontrada");
+      throw new NotFoundError("Despesa não encontrada");
     }
 
     await prisma.expense.delete({ where: { id } });
@@ -106,7 +106,7 @@ export class ExpenseService {
   async listByEvent(eventId: string) {
     try {
       // Verificar se a tabela Expense existe
-      const hasExpenseTable = await hasTable("Expense");
+      const hasExpenseTable = await hasTable("expenses");
       if (!hasExpenseTable) {
         return [];
       }
@@ -149,7 +149,7 @@ export class ExpenseService {
     });
 
     if (!expense) {
-      throw new NotFoundError("Despesa nao encontrada");
+      throw new NotFoundError("Despesa não encontrada");
     }
 
     return expense;

@@ -109,10 +109,11 @@ const updateJob = (job: ReportJob, patch: Partial<ReportJob>) => {
   return updated;
 };
 
-const persistJobPdf = async (job: ReportJob, buffer: Buffer) => {
+const persistJobPdf = async (job: ReportJob, buffer: Buffer | Uint8Array) => {
   await ensureReportsDir();
   const filePath = path.join(REPORTS_DIR, `${job.id}.pdf`);
-  await fs.writeFile(filePath, buffer);
+  const resolved = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  await fs.writeFile(filePath, resolved);
   return updateJob(job, {
     status: "DONE",
     filePath,
@@ -123,12 +124,12 @@ const persistJobPdf = async (job: ReportJob, buffer: Buffer) => {
 const resolveReportErrorMessage = (error: unknown) => {
   if (error instanceof AppError) return error.message;
   if (error instanceof Error && error.message) return error.message;
-  return "Nao foi possivel gerar o relatorio agora.";
+  return "Não foi possível gerar o relatório agora.";
 };
 
 const failJob = (job: ReportJob, error: unknown) => {
   const message = resolveReportErrorMessage(error);
-  logger.error({ err: error, jobId: job.id, jobType: job.type }, "Erro ao processar relatorio");
+  logger.error({ err: error, jobId: job.id, jobType: job.type }, "Erro ao processar relatório");
   return updateJob(job, {
     status: "FAILED",
     errorMessage: message,
@@ -195,7 +196,7 @@ const processJob = async (job: ReportJob) => {
   if (job.type === "FINANCIAL_REPORT") {
     return processFinancialReport(job);
   }
-  throw new AppError("Tipo de relatorio nao suportado", 400);
+  throw new AppError("Tipo de relatório não suportado", 400);
 };
 
 const processQueue = async () => {
@@ -219,7 +220,7 @@ const scheduleProcessing = () => {
   processing = true;
   setImmediate(() => {
     processQueue().catch((error) => {
-      logger.error({ error }, "Erro no processamento da fila de relatorios");
+      logger.error({ error }, "Erro no processamento da fila de relatórios");
       processing = false;
     });
   });
@@ -229,7 +230,7 @@ const enqueueJob = (job: ReportJob) => {
   jobStore.set(job.id, job);
   jobQueue.push(job.id);
   cleanupExpiredJobs().catch((error) =>
-    logger.error({ error }, "Erro ao limpar relatorios expirados")
+    logger.error({ error }, "Erro ao limpar relatórios expirados")
   );
   scheduleProcessing();
   return job;

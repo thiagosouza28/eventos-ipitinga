@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 
 import { orderService } from "../orders/order.service";
@@ -15,7 +15,7 @@ import { hasPermission } from "../../utils/permissions";
 import { reportJobService } from "../reports/report-job.service";
 import { applyDownloadHeaders, sendDownloadBuffer } from "../../middlewares/download-headers";
 
-const REPORT_ERROR_MESSAGE = "Nao foi possivel gerar o relatorio. Verifique os dados do evento.";
+const REPORT_ERROR_MESSAGE = "Não foi possível gerar o relatório. Verifique os dados do evento.";
 const reportErrorPayload = { success: false, message: REPORT_ERROR_MESSAGE };
 
 const respondReportError = (response: Response, error: unknown, context: string) => {
@@ -91,13 +91,13 @@ const onlyDigits = (v: unknown) => (typeof v === "string" ? v.replace(/\D/g, "")
 const toUppercase = (value: string) => value.trim().toUpperCase();
 
 const updateSchema = z.object({
-  districtId: z.string().uuid().optional(),
-  churchId: z.string().uuid().optional(),
+  districtId: cuidOrUuid.optional(),
+  churchId: cuidOrUuid.optional(),
   fullName: z.string().min(3).transform(toUppercase).optional(),
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   cpf: z
     .preprocess(onlyDigits, z.string().length(11))
-    .refine((v) => isValidCpf(String(v)), { message: "CPF invalido" })
+    .refine((v) => isValidCpf(String(v)), { message: "CPF inválido" })
     .optional(),
   gender: z.nativeEnum(Gender).optional(),
   photoUrl: z.string().min(20).optional().or(z.literal(null))
@@ -171,9 +171,9 @@ export const listRegistrationsHandler = async (request: Request, response: Respo
     const registrations = await registrationService.list(scopedFilters, ministryIds);
     return response.json(registrations);
   } catch (error: any) {
-    console.error("Erro ao listar inscricoes:", error);
+    logger.error({ error }, "Erro ao listar inscrições");
     return response.status(500).json({
-      message: "Erro ao listar inscricoes",
+      message: "Erro ao listar inscrições",
       error: error.message
     });
   }
@@ -189,10 +189,10 @@ export const registrationsReportHandler = async (request: Request, response: Res
     return response.json(report);
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao carregar relatorio de inscricoes");
+    return respondReportError(response, error, "Erro ao carregar relatório de inscrições");
   }
 };
 
@@ -234,10 +234,10 @@ export const downloadRegistrationsReportHandler = async (request: Request, respo
     return sendDownloadBuffer(response, { buffer: pdfBuffer, fileName: filename });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao gerar relatorio de inscricoes");
+    return respondReportError(response, error, "Erro ao gerar relatório de inscrições");
   }
 };
 
@@ -273,10 +273,10 @@ export const downloadRegistrationsListPdfHandler = async (request: Request, resp
     return sendDownloadBuffer(response, { buffer: pdfBuffer, fileName: filename });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao gerar lista de inscricoes em PDF");
+    return respondReportError(response, error, "Erro ao gerar lista de inscrições em PDF");
   }
 };
 
@@ -305,10 +305,10 @@ export const downloadRegistrationsListXlsxHandler = async (request: Request, res
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      logger.warn({ error: error.flatten() }, "Parametros invalidos");
+      logger.warn({ error: error.flatten() }, "Parâmetros inválidos");
       return response.status(400).json(reportErrorPayload);
     }
-    return respondReportError(response, error, "Erro ao gerar lista de inscricoes em Excel");
+    return respondReportError(response, error, "Erro ao gerar lista de inscrições em Excel");
   }
 };
 
@@ -335,7 +335,7 @@ export const getRegistrationReceiptLinkHandler = async (request: Request, respon
 };
 
 export const deleteRegistrationHandler = async (request: Request, response: Response) => {
-  await registrationService.delete(request.params.id);
+  await registrationService.delete(request.params.id, request.user?.id);
   return response.status(204).send();
 };
 
@@ -380,37 +380,22 @@ export const refundRegistrationHandler = async (request: Request, response: Resp
     return registerManualRefund();
   }
 
-  try {
-    const refund = await paymentService.refundRegistration(
-      registration.orderId,
-      registration.id,
-      amountCents
-    );
+  const refund = await paymentService.refundRegistration(
+    registration.orderId,
+    registration.id,
+    amountCents
+  );
 
-    await orderService.markRefunded({
-      orderId: registration.orderId,
-      registrationId: registration.id,
-      amountCents,
-      mpRefundId: String(refund.id),
-      reason: payload.reason,
-      actorUserId: request.user?.id
-    });
+  await orderService.markRefunded({
+    orderId: registration.orderId,
+    registrationId: registration.id,
+    amountCents,
+    mpRefundId: String(refund.id),
+    reason: payload.reason,
+    actorUserId: request.user?.id
+  });
 
-    return response.json({ refundId: refund.id, status: refund.status });
-  } catch (error) {
-    if (error instanceof AppError && error.statusCode >= 500) {
-      logger.warn(
-        {
-          registrationId: registration.id,
-          orderId: registration.orderId,
-          message: error.message
-        },
-        "Falha no estorno Mercado Pago, registrando manualmente"
-      );
-      return registerManualRefund({ warning: error.message });
-    }
-    throw error;
-  }
+  return response.json({ refundId: refund.id, status: refund.status });
 };
 
 export const markRegistrationsPaidHandler = async (request: Request, response: Response) => {

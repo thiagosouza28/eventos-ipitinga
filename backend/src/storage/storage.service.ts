@@ -5,13 +5,15 @@ import path from "path";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 import { env } from "../config/env";
-import { getPublicAppBaseUrl } from "../utils/public-url";
+import { getPublicAssetBaseUrl } from "../utils/public-url";
 import { logger } from "../utils/logger";
 
 class StorageService {
-  private uploadsDir = path.resolve(__dirname, "..", "..", "uploads");
+  private uploadsDir = path.resolve(process.cwd(), "public", "uploads");
   private supabase: SupabaseClient | null = null;
   private supabaseBucket: string | null = null;
+  private bucketReady = false;
+  private ensureBucketPromise: Promise<void> | null = null;
 
   constructor() {
     if (env.STORAGE_DRIVER === "supabase") {
@@ -23,6 +25,49 @@ class StorageService {
       this.supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_KEY);
       this.supabaseBucket = env.SUPABASE_STORAGE_BUCKET;
     }
+  }
+
+  private isBucketNotFoundError(error: unknown) {
+    if (!error || typeof error !== "object") return false;
+    const err = error as Record<string, unknown>;
+    const message = String(err.message ?? "");
+    const statusCode = String(err.statusCode ?? err.status ?? "");
+    return message.toLowerCase().includes("bucket not found") || statusCode === "404";
+  }
+
+  private async ensureSupabaseBucket() {
+    if (!this.supabase || !this.supabaseBucket || this.bucketReady) return;
+    if (this.ensureBucketPromise) {
+      await this.ensureBucketPromise;
+      return;
+    }
+
+    this.ensureBucketPromise = (async () => {
+      const { data, error } = await this.supabase!.storage.listBuckets();
+      if (error) {
+        logger.warn({ error }, "Falha ao listar buckets do Supabase");
+        return;
+      }
+      const exists = (data ?? []).some((bucket) => bucket.name === this.supabaseBucket);
+      if (exists) {
+        this.bucketReady = true;
+        return;
+      }
+
+      const { error: createError } = await this.supabase!.storage.createBucket(this.supabaseBucket!, {
+        public: true
+      });
+      if (createError) {
+        logger.warn({ error: createError, bucket: this.supabaseBucket }, "Falha ao criar bucket do Supabase");
+        return;
+      }
+      this.bucketReady = true;
+      logger.info({ bucket: this.supabaseBucket }, "Bucket do Supabase criado automaticamente");
+    })();
+
+    await this.ensureBucketPromise.finally(() => {
+      this.ensureBucketPromise = null;
+    });
   }
 
   async saveBase64Image(base64: string | null | undefined) {
@@ -46,10 +91,18 @@ class StorageService {
 
     if (env.STORAGE_DRIVER === "supabase" && this.supabase && this.supabaseBucket) {
       const filePath = `photos/${filename}`;
-      const { error } = await this.supabase.storage.from(this.supabaseBucket).upload(filePath, buffer, {
+      let { error } = await this.supabase.storage.from(this.supabaseBucket).upload(filePath, buffer, {
         contentType: mime,
         upsert: false
       });
+      if (error && this.isBucketNotFoundError(error)) {
+        await this.ensureSupabaseBucket();
+        const retry = await this.supabase.storage.from(this.supabaseBucket).upload(filePath, buffer, {
+          contentType: mime,
+          upsert: false
+        });
+        error = retry.error;
+      }
       if (error) {
         logger.error({ error }, "Falha ao enviar imagem para Supabase Storage");
         throw new Error("Não foi possível salvar a imagem no storage");
@@ -67,7 +120,7 @@ class StorageService {
     await fs.writeFile(filepath, buffer);
 
     const inlineBase64 = env.STORAGE_DRIVER === "in-memory" && env.NODE_ENV === "test";
-    const appBase = getPublicAppBaseUrl();
+    const appBase = getPublicAssetBaseUrl();
     const publicUrl = inlineBase64
       ? `data:${mime};base64,${data}`
       : `${appBase}/uploads/${filename}`;
@@ -113,9 +166,16 @@ class StorageService {
 
     if (env.STORAGE_DRIVER === "supabase" && this.supabase && this.supabaseBucket) {
       const filePath = `${folder}/${filename}`;
-      const { error } = await this.supabase.storage
+      let { error } = await this.supabase.storage
         .from(this.supabaseBucket)
         .upload(filePath, buffer, { contentType: mime, upsert: false });
+      if (error && this.isBucketNotFoundError(error)) {
+        await this.ensureSupabaseBucket();
+        const retry = await this.supabase.storage
+          .from(this.supabaseBucket)
+          .upload(filePath, buffer, { contentType: mime, upsert: false });
+        error = retry.error;
+      }
       if (error) {
         logger.error({ error }, "Falha ao enviar comprovante para Supabase Storage");
         throw new Error("Não foi possível salvar o arquivo no storage");
@@ -134,7 +194,7 @@ class StorageService {
     await fs.writeFile(filepath, buffer);
 
     const inlineBase64 = env.STORAGE_DRIVER === "in-memory" && env.NODE_ENV === "test";
-    const appBase = getPublicAppBaseUrl();
+    const appBase = getPublicAssetBaseUrl();
     const publicUrl = inlineBase64
       ? `data:${mime};base64,${data}`
       : `${appBase}/uploads/${folder}/${filename}`;
@@ -198,7 +258,7 @@ class StorageService {
         logger.info({ filename }, "Imagem removida do storage local");
       }
     } catch (err) {
-      logger.warn({ err, url }, "Nao foi possivel remover imagem anterior");
+      logger.warn({ err, url }, "Não foi possível remover imagem anterior");
     }
   }
 }

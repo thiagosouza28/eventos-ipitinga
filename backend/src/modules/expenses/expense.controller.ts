@@ -1,7 +1,8 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import { expenseService } from "./expense.service";
 import { storageService } from "../../storage/storage.service";
+import { logger } from "../../utils/logger";
 
 const cuidOrUuid = z.string().uuid().or(z.string().cuid());
 
@@ -92,7 +93,7 @@ export const listExpensesByEventHandler = async (request: Request, response: Res
     const expenses = await expenseService.listByEvent(eventId);
     return response.json(expenses);
   } catch (error: any) {
-    console.error("Erro ao listar despesas:", error);
+    logger.error({ error }, "Erro ao listar despesas");
     return response.status(500).json({
       message: "Erro ao listar despesas",
       error: error.message

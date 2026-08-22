@@ -4,11 +4,29 @@ import { logger } from "../../utils/logger";
 import { paymentService, extractPreferenceVersion } from "../../services/payment.service";
 import { orderService } from "../orders/order.service";
 
+type WebhookDependencies = {
+  prisma: typeof prisma;
+  paymentService: typeof paymentService;
+  orderService: typeof orderService;
+};
+
+const isUniqueConstraintError = (error: unknown) =>
+  Boolean(error && typeof error === "object" && "code" in error && error.code === "P2002");
+
 export class WebhookService {
+  constructor(
+    private readonly dependencies: WebhookDependencies = {
+      prisma,
+      paymentService,
+      orderService
+    }
+  ) {}
+
   async handleMercadoPago(payload: any, signature?: string, topic?: string) {
+    const { prisma, paymentService, orderService } = this.dependencies;
     const resourceId = payload?.data?.id ?? payload?.id;
     if (!resourceId) {
-      throw new AppError("Payload invalido", 400);
+      throw new AppError("Payload inválido", 400);
     }
 
     const topicValue = String(topic ?? payload?.type ?? payload?.action ?? "");
@@ -26,9 +44,8 @@ export class WebhookService {
       try {
         merchantOrder = await paymentService.fetchMerchantOrder(String(resourceId));
         merchantApprovedPayment =
-          merchantOrder?.payments?.find(
-            (p: any) => p?.status === "approved" || p?.status === "authorized"
-          ) ?? merchantOrder?.payments?.[0];
+          merchantOrder?.payments?.find((p: any) => p?.status === "approved") ??
+          merchantOrder?.payments?.[0];
       } catch (merchantError) {
         logger.warn({ resourceId, topic: topicValue, error: merchantError }, "Falha ao buscar merchant order no webhook");
       }
@@ -64,14 +81,25 @@ export class WebhookService {
 
     const externalRef = String(rawOrderId);
     const isBulk = externalRef.startsWith("BULK:");
-    const orderIds = isBulk
+    const orderIds = (isBulk
       ? externalRef.replace("BULK:", "").split(",")
-      : [externalRef];
+      : [externalRef]
+    ).map((orderId) => orderId.trim()).filter(Boolean);
 
-    const baseIdempotencyKey = `${paymentIdForReference ?? resourceId}:${
-      payload?.type ?? payload?.action ?? topic ?? "unknown"
-    }`;
-    const processedOrders: string[] = [];
+    if (!orderIds.length) {
+      throw new AppError("Webhook sem pedidos associados", 400);
+    }
+
+    const status =
+      (payment?.status as string | undefined) ??
+      (merchantApprovedPayment?.status as string | undefined) ??
+      (merchantOrder?.order_status as string | undefined);
+
+    const eventName = payload?.action ?? payload?.type ?? topic ?? "unknown";
+    // `payment.updated` pode chegar primeiro como pending e depois como approved.
+    // O status precisa fazer parte da chave para a aprovação não ser descartada.
+    const baseIdempotencyKey = `${paymentIdForReference ?? resourceId}:${eventName}:${status ?? "unknown"}`;
+    const pendingEvents: Array<{ orderId: string; idempotencyKey: string }> = [];
 
     for (const orderId of orderIds) {
       const idempotencyKey = `${baseIdempotencyKey}:${orderId}`;
@@ -79,53 +107,102 @@ export class WebhookService {
         where: { idempotencyKey }
       });
 
-      if (alreadyProcessed) {
+      if (alreadyProcessed?.processedAt) {
         logger.info({ idempotencyKey, orderId }, "Webhook Mercado Pago ignorado (idempotente)");
-        processedOrders.push(orderId);
         continue;
       }
 
-      await prisma.webhookEvent.create({
-        data: {
-          provider: "mercadopago",
-          eventType: payload.type ?? payload.action ?? "unknown",
-          payloadJson: JSON.stringify(payload),
-          idempotencyKey,
-          order: {
-            connect: { id: orderId }
-          }
+      if (!alreadyProcessed) {
+        try {
+          await prisma.webhookEvent.create({
+            data: {
+              provider: "mercadopago",
+              eventType: payload.type ?? payload.action ?? "unknown",
+              payloadJson: JSON.stringify(payload),
+              idempotencyKey,
+              order: {
+                connect: { id: orderId }
+              }
+            }
+          });
+        } catch (error) {
+          if (!isUniqueConstraintError(error)) throw error;
+          const concurrentEvent = await prisma.webhookEvent.findUnique({
+            where: { idempotencyKey }
+          });
+          if (concurrentEvent?.processedAt) continue;
+          if (!concurrentEvent) throw error;
         }
-      });
+      }
+
+      pendingEvents.push({ orderId, idempotencyKey });
     }
 
-    if (processedOrders.length === orderIds.length) {
+    if (!pendingEvents.length) {
       return { status: "ignored" };
     }
 
-    const status =
-      (payment?.status as string | undefined) ??
-      (merchantApprovedPayment?.status as string | undefined) ??
-      (merchantOrder?.order_status as string | undefined);
-    logger.info({ orderIds, status, isBulk, topic: topicValue }, "Webhook Mercado Pago recebido");
+    const pendingOrderIds = pendingEvents.map(({ orderId }) => orderId);
+    const orders = await prisma.order.findMany({
+      where: { id: { in: pendingOrderIds } },
+      select: { id: true, totalCents: true }
+    });
+    if (orders.length !== pendingOrderIds.length) {
+      throw new AppError("Webhook referencia pedido inexistente", 404);
+    }
+
+    const transactionAmount = Number(payment?.transaction_amount);
+    if (Number.isFinite(transactionAmount)) {
+      const paidAmountCents = Math.round(transactionAmount * 100);
+      const expectedAmountCents = orders.reduce((total, order) => total + order.totalCents, 0);
+      if (paidAmountCents !== expectedAmountCents) {
+        logger.error(
+          { pendingOrderIds, paidAmountCents, expectedAmountCents, paymentIdForReference },
+          "Pagamento Mercado Pago com valor divergente"
+        );
+        throw new AppError("Valor do pagamento diverge do valor do pedido", 409);
+      }
+    }
+
+    if (payment?.currency_id && payment.currency_id !== "BRL") {
+      throw new AppError("Moeda do pagamento Mercado Pago inválida", 409);
+    }
+
+    const markEventsProcessed = async () => {
+      await prisma.webhookEvent.updateMany({
+        where: {
+          idempotencyKey: { in: pendingEvents.map(({ idempotencyKey }) => idempotencyKey) }
+        },
+        data: { processedAt: new Date() }
+      });
+    };
+
+    logger.info({ orderIds: pendingOrderIds, status, isBulk, topic: topicValue }, "Webhook Mercado Pago recebido");
 
     const isApprovedStatus =
-      status === "approved" || status === "authorized" || status === "paid";
+      payment?.status === "approved" ||
+      (!payment && merchantApprovedPayment?.status === "approved") ||
+      (!payment && merchantOrder?.order_status === "paid");
 
     if (isApprovedStatus) {
       const metadataVersion = extractPreferenceVersion((payment as any)?.metadata);
       if (!paymentIdForReference) {
-        logger.warn({ orderIds, status }, "Pagamento aprovado recebido sem ID resolvido");
-      } else {
-        for (const orderId of orderIds) {
-          await orderService.markPaid(orderId, paymentIdForReference, {
-            preferenceVersion: metadataVersion ?? undefined
-          });
-        }
+        throw new AppError("Pagamento aprovado sem identificador", 502);
+      }
+
+      const approvedAtRaw = payment?.date_approved;
+      const approvedAt = approvedAtRaw ? new Date(approvedAtRaw) : undefined;
+      const paidAt = approvedAt && !Number.isNaN(approvedAt.getTime()) ? approvedAt : undefined;
+      for (const orderId of pendingOrderIds) {
+        await orderService.markPaid(orderId, paymentIdForReference, {
+          preferenceVersion: metadataVersion ?? undefined,
+          paidAt
+        });
       }
     }
 
     if ((status === "refunded" || status === "charged_back") && payment) {
-      for (const orderId of orderIds) {
+      for (const orderId of pendingOrderIds) {
         const order = await prisma.order.findUnique({
           where: { id: orderId },
           include: { registrations: true }
@@ -133,21 +210,19 @@ export class WebhookService {
 
         if (order) {
           for (const registration of order.registrations) {
-            const item = payment.additional_info?.items?.find((i: any) => i.id === registration.id);
-            if (item) {
-              await orderService.markRefunded({
-                orderId,
-                registrationId: registration.id,
-                amountCents: Math.round(item.unit_price * 100),
-                mpRefundId: `${payment.id}-${registration.id}`,
-                reason: "Webhook Mercado Pago"
-              });
-            }
+            await orderService.markRefunded({
+              orderId,
+              registrationId: registration.id,
+              amountCents: registration.priceCents,
+              mpRefundId: `${payment.id}-${registration.id}`,
+              reason: "Webhook Mercado Pago"
+            });
           }
         }
       }
     }
 
+    await markEventsProcessed();
     return { status: "processed" };
   }
 }

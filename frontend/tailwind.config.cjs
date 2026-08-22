@@ -17,7 +17,14 @@ const buildPalette = (prefix) =>
 
 module.exports = {
   darkMode: "class",
-  content: ["./index.html", "./src/**/*.{vue,ts}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./hooks/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
+    "./services/**/*.{ts,tsx}",
+    "./styles/**/*.{css,ts,tsx}"
+  ],
   theme: {
     extend: {
       colors: {

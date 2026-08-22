@@ -1,33 +1,11 @@
 ﻿import { promises as fs } from "fs";
 import path from "path";
 
-import { chromium, Browser } from "playwright";
-
 import { AppError } from "../utils/errors";
+import { renderPdfFromHtml } from "./pdf-engine";
 
 const templateCache = new Map<string, string>();
-const templatesDir = path.resolve(__dirname, "templates");
-
-let browser: Browser | null = null;
-
-const ensureBrowser = async () => {
-  if (browser) return browser;
-  try {
-    browser = await chromium.launch({ headless: true });
-    return browser;
-  } catch (error: any) {
-    browser = null;
-    const message = String(error?.message ?? "");
-    const normalized = message.toLowerCase();
-    if (normalized.includes("executable doesn't exist") || normalized.includes("failed to launch")) {
-      throw new AppError(
-        "Motor de PDF indisponivel. Execute `npm run playwright:install` e tente novamente.",
-        500
-      );
-    }
-    throw error;
-  }
-};
+const templatesDir = path.resolve(process.cwd(), "public", "pdf-templates");
 
 const loadTemplate = async (fileName: string) => {
   const cached = templateCache.get(fileName);
@@ -136,7 +114,7 @@ const buildAvatarMarkup = (photoUrl?: string | null) => {
     return `<div class="avatar photo"><img src="${escapeHtml(photoUrl)}" alt="Foto do participante" /></div>`;
   }
   return `
-    <div class="avatar placeholder" aria-label="Avatar padrao">
+    <div class="avatar placeholder" aria-label="Avatar padrão">
       <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
         <circle cx="32" cy="24" r="12" fill="none" stroke="currentColor" stroke-width="4"></circle>
         <path
@@ -219,9 +197,9 @@ export const generateRegistrationReportPdf = async ({
 
   const firstGroup = groupsWithFallback[0];
   const metaCards = [
-    { label: groupBy === "event" ? "Evento" : "Igreja/Distrito", value: firstGroup?.title ?? "Nao informado" },
-    { label: "Periodo", value: firstGroup?.subtitle ?? "Nao informado" },
-    { label: "Local / Extra", value: firstGroup?.extraInfo ?? "Nao informado" },
+    { label: groupBy === "event" ? "Evento" : "Igreja/Distrito", value: firstGroup?.title ?? "Não informado" },
+    { label: "Período", value: firstGroup?.subtitle ?? "Não informado" },
+    { label: "Local / Extra", value: firstGroup?.extraInfo ?? "Não informado" },
     { label: "Gerado em", value: generatedAt }
   ]
     .map(
@@ -302,8 +280,8 @@ export const generateRegistrationReportPdf = async ({
   const htmlTemplate = await loadTemplate(templateName);
 
   const html = htmlTemplate
-    .replaceAll("{{eyebrow}}", groupBy === "event" ? "Relatorio por evento" : "Relatorio por igreja/distrito")
-    .replaceAll("{{title}}", "Relatorio Oficial de Inscricoes")
+    .replaceAll("{{eyebrow}}", groupBy === "event" ? "Relatório por evento" : "Relatório por igreja/distrito")
+    .replaceAll("{{title}}", "Relatório Oficial de Inscrições")
     .replaceAll(
       "{{subtitle}}",
       `Total: ${totals.totalParticipants} participantes • ${totals.totalGroups} grupos • Gerado em ${escapeHtml(generatedAt)}`
@@ -314,15 +292,11 @@ export const generateRegistrationReportPdf = async ({
     .replaceAll("{{sections}}", sectionHtml)
     .replaceAll("{{generatedAt}}", escapeHtml(generatedAt));
 
-  const browserInstance = await ensureBrowser();
-  const page = await browserInstance.newPage();
-  await page.setContent(html, { waitUntil: "networkidle" });
-  const pdfBuffer = await page.pdf({
+  const pdfBuffer = await renderPdfFromHtml(html, {
     format: "A4",
     printBackground: true,
     margin: { top: "12mm", bottom: "18mm", left: "10mm", right: "10mm" }
   });
-  await page.close();
   return pdfBuffer;
 };
 
@@ -345,7 +319,7 @@ export const generateRegistrationListPdf = async ({
     { label: "Distrito", value: meta.districtName ?? "Todos" },
     { label: "Lote", value: meta.lotName ?? "Todos" },
     { label: "Status", value: meta.statusLabel ?? "Todos" },
-    { label: "Filtro", value: meta.search ?? "Nao aplicado" }
+    { label: "Filtro", value: meta.search ?? "Não aplicado" }
   ]
     .map(
       (item) => `
@@ -383,7 +357,7 @@ export const generateRegistrationListPdf = async ({
           const createdAtValue = item.createdAt
             ? brDateTimeFormatter.format(new Date(item.createdAt))
             : "-";
-          const churchLabel = item.churchName || "Nao informado";
+          const churchLabel = item.churchName || "Não informado";
           const districtLabel = item.districtName ? `Distrito: ${item.districtName}` : "";
           const lotLabel = item.lotName ? `Lote: ${item.lotName}` : "";
           const nameCell = `
@@ -416,11 +390,11 @@ export const generateRegistrationListPdf = async ({
           return `<tr>${nameCell}${cpfCell}${eventCell}${churchCell}${statusCell}${dateCell}</tr>`;
         })
         .join("")
-    : `<tr><td class="empty" colspan="${colSpan}">Nenhuma inscricao encontrada para os filtros selecionados.</td></tr>`;
+    : `<tr><td class="empty" colspan="${colSpan}">Nenhuma inscrição encontrada para os filtros selecionados.</td></tr>`;
 
   const htmlTemplate = await loadTemplate("registration-list.html");
   const html = htmlTemplate
-    .replaceAll("{{title}}", "Lista de inscricoes")
+    .replaceAll("{{title}}", "Lista de inscrições")
     .replaceAll(
       "{{subtitle}}",
       `Total: ${total} inscritos - Gerado em ${escapeHtml(generatedAt)}`
@@ -431,19 +405,15 @@ export const generateRegistrationListPdf = async ({
     .replaceAll("{{tableRows}}", rows)
     .replaceAll("{{generatedAt}}", escapeHtml(generatedAt));
 
-  const browserInstance = await ensureBrowser();
-  const page = await browserInstance.newPage();
-  await page.setContent(html, { waitUntil: "networkidle" });
-  const pdfBuffer = await page.pdf({
+  const pdfBuffer = await renderPdfFromHtml(html, {
     format: "A4",
     printBackground: true,
     margin: { top: "12mm", bottom: "16mm", left: "10mm", right: "10mm" }
   });
-  await page.close();
   return pdfBuffer;
 };
 
-// Gera PDF com fichas individuais simplificadas para confirmacao presencial no evento
+// Gera PDF com fichas individuais simplificadas para confirmação presencial no evento
 export const generateRegistrationEventSheetPdf = async ({
   generatedAt,
   context,
@@ -484,7 +454,7 @@ export const generateRegistrationEventSheetPdf = async ({
           </p>
           ${
             minor
-              ? `<p class="minor-alert">Participante menor de idade: a confirmacao presencial requer autorizacao e assinatura do responsavel legal.</p>`
+              ? `<p class="minor-alert">Participante menor de idade: a confirmação presencial requer autorização e assinatura do responsável legal.</p>`
               : ""
           }
         </section>
@@ -503,11 +473,11 @@ export const generateRegistrationEventSheetPdf = async ({
             minor
               ? `<div class="line-group">
                   <div class="sign-field">
-                    <span class="label">Nome do responsavel</span>
+                    <span class="label">Nome do responsável</span>
                     <span class="line"></span>
                   </div>
                   <div class="sign-field">
-                    <span class="label">Assinatura do responsavel</span>
+                    <span class="label">Assinatura do responsável</span>
                     <span class="line"></span>
                   </div>
                 </div>`
@@ -545,13 +515,13 @@ export const generateRegistrationEventSheetPdf = async ({
 
   const bodyContainer = layout === "single" ? `<div class="cards">${bodyHtml}</div>` : bodyHtml;
 
-  const headerTitle = context?.title ? escapeHtml(context.title) : "Confirmacao Presencial";
+  const headerTitle = context?.title ? escapeHtml(context.title) : "Confirmação presencial";
   const html = `
     <!DOCTYPE html>
     <html lang="pt-BR">
       <head>
         <meta charset="UTF-8" />
-        <title>Confirmacao Presencial</title>
+        <title>Confirmação presencial</title>
         <style>
           @page { size: A4; margin: 16mm; }
           * { box-sizing: border-box; font-family: "Inter", Arial, sans-serif; }
@@ -616,7 +586,7 @@ export const generateRegistrationEventSheetPdf = async ({
       </head>
       <body>
         <header class="sheet-header">
-          <p class="eyebrow">Confirmacao Presencial</p>
+          <p class="eyebrow">Confirmação presencial</p>
           <h1>${headerTitle}</h1>
           <p>Gerado em ${generatedAt} · Total de participantes: ${participants.length}</p>
         </header>
@@ -625,14 +595,10 @@ export const generateRegistrationEventSheetPdf = async ({
     </html>
   `;
 
-  const browserInstance = await ensureBrowser();
-  const page = await browserInstance.newPage();
-  await page.setContent(html, { waitUntil: "networkidle" });
-  const pdfBuffer = await page.pdf({
+  const pdfBuffer = await renderPdfFromHtml(html, {
     format: "A4",
     printBackground: true,
     margin: { top: "16mm", bottom: "16mm", left: "16mm", right: "16mm" }
   });
-  await page.close();
   return pdfBuffer;
 };
